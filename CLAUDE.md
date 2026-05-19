@@ -1,0 +1,66 @@
+# Real Estate Project
+
+## Core Rule
+- **ALWAYS** read this `CLAUDE.md` file in full before performing any task in this project
+
+## Project Overview
+Laravel 12 real estate application.
+
+## Tech Stack
+- **Framework**: Laravel 12 (PHP)
+- **Database**: SQLite (default, can be changed)
+- **Frontend**: Blade templates
+
+## Common Commands
+```bash
+php artisan serve          # Start dev server
+php artisan migrate        # Run migrations
+php artisan make:model     # Create model
+php artisan make:controller # Create controller
+php artisan make:migration # Create migration
+```
+
+## Design Reference
+- **Template**: Evohus — Symfony 8 Real-Estate Admin & Dashboard Template
+- **Preview**: https://preview.themeforest.net/item/evohus-symfony-8-realestate-admin-dashboard-template/full_screen_preview/62580194
+- All UI must follow Evohus's visual style: clean sidebar navigation, Bootstrap 5 components, dark/light mode support, dashboard cards, charts, tables, and modals
+- The Evohus HTML/CSS/JS structure should be used as the base and adapted into Laravel Blade templates
+
+## Frontend Design Rules
+- **ALWAYS** use the `frontend-design` skill when creating or modifying any UI component, page, layout, or view
+- This applies to all Blade templates, partials, and any frontend assets
+- The skill must be invoked before writing any HTML/CSS to ensure production-grade, distinctive design quality
+- Do not write generic or plain UI — every interface element must go through the `frontend-design` skill
+
+## Validation & Filtering Rules
+- **ALWAYS** implement validation on both frontend (immediate user feedback) and backend (Laravel Form Requests) for every CRUD operation
+- Backend validation must use dedicated `FormRequest` classes — never validate inline in controllers
+- **ALL filtering, searching, and sorting must be done server-side** — the backend must return already-filtered data, never send the full dataset to the frontend and filter there
+- Filters must be passed as query parameters to the backend (e.g. `GET /customers?age=18&status=active`) and applied in the query before returning the response
+- Use Laravel query scopes or dedicated filter classes to keep controller logic clean
+- Frontend filter UI (dropdowns, inputs, date pickers) must trigger a new backend request — never manipulate an already-loaded dataset on the client side
+- Pagination must always be applied server-side alongside filters
+
+## Input Validation Rules
+- **ALWAYS** validate every field at both the frontend and backend — no field may be saved without explicit validation rules
+- Use the correct rule for each data type: `integer` for numeric IDs and counts, `decimal` for monetary and area values, `date` for date fields, `string` with `max:` for text fields, `in:` for enum-like fields with a fixed set of allowed values
+- Required vs optional must be intentional: `property_name`, `property_code`, and `unit_name` are always required; all other fields must be explicitly marked `nullable` in both the migration and the Form Request
+- Numeric fields must enforce realistic bounds (e.g. `min:0` for counts, areas, and prices — negative values are not allowed)
+- String fields must have a `max:` cap matching the column length defined in the migration — never leave string length unconstrained
+- Enum fields (e.g. `unit_type`, `unit_condition`, `type_of_ownership`) must use an `in:` rule with the exact allowed values — free-text entry into these fields is not permitted
+- Date fields must use the `date` rule and, where applicable, `after_or_equal:` / `before_or_equal:` constraints (e.g. installation dates should not be in the future)
+- Frontend validation must mirror backend rules: use HTML5 attributes (`required`, `min`, `max`, `maxlength`, `pattern`) and, where needed, JS validation to give immediate feedback before form submission
+- Validation error messages must be specific and field-level — never show a generic "something went wrong" message
+- Form Requests must return a `422` JSON response for API calls and redirect back with errors for Blade forms — do not swallow validation errors silently
+
+## Testing Rules
+- **ALWAYS** write test cases for every feature, controller, model, and service created
+- Tests must be written before marking any task as complete
+- Run tests after writing them using `php artisan test` to verify they pass
+- Cover both happy path and edge cases
+- Use Laravel's built-in PHPUnit test suite (`tests/Feature` for HTTP/integration tests, `tests/Unit` for isolated logic)
+- Fix any failing tests before moving on to the next task
+
+## Notes
+- App key is already generated
+- Default database is SQLite at `database/database.sqlite`
