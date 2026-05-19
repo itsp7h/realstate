@@ -29,9 +29,10 @@
 </div>
 
 @include('property-units._form', [
-    'unit'   => $unit,
-    'action' => route('property-units.update', $unit),
-    'method' => 'PUT',
+    'unit'       => $unit,
+    'action'     => route('property-units.update', $unit),
+    'method'     => 'PUT',
+    'formFields' => $formFields,
 ])
 
 @endsection

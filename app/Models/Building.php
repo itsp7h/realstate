@@ -25,6 +25,7 @@ class Building extends Model
         'total_no_of_blocks',
         'total_no_of_floors',
         'total_no_of_units',
+        'custom_fields',
     ];
 
     protected $casts = [
@@ -33,7 +34,13 @@ class Building extends Model
         'total_no_of_blocks' => 'integer',
         'total_no_of_floors' => 'integer',
         'total_no_of_units'  => 'integer',
+        'custom_fields'      => 'array',
     ];
+
+    public function units()
+    {
+        return $this->hasMany(PropertyUnit::class);
+    }
 
     public function scopeFilter($query, array $filters): void
     {

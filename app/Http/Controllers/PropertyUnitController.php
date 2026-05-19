@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Building;
+use App\Models\CustomFieldDefinition;
 use App\Models\PropertyUnit;
 use App\Http\Requests\StorePropertyUnitRequest;
 use App\Http\Requests\UpdatePropertyUnitRequest;
+use App\Services\FormConfigService;
 use Illuminate\Http\Request;
 
 class PropertyUnitController extends Controller
@@ -32,15 +35,29 @@ class PropertyUnitController extends Controller
 
     public function create()
     {
-        $unit = new PropertyUnit();
-        return view('property-units.create', compact('unit'));
+        $unit            = new PropertyUnit();
+        $formFields      = app(FormConfigService::class)->getFormFields('unit');
+        $customFieldDefs = CustomFieldDefinition::getForForm('unit');
+        $buildings       = Building::orderBy('property_name')->get(['id', 'property_name', 'property_code']);
+        return view('property-units.create', compact('unit', 'formFields', 'customFieldDefs', 'buildings'));
     }
 
     public function store(StorePropertyUnitRequest $request)
     {
-        PropertyUnit::create($request->validated());
+        $validated = $request->validated();
+        $validated['custom_fields'] = $request->input('custom_fields', []);
+        PropertyUnit::create($validated);
         return redirect()->route('property-units.index')
             ->with('success', 'Property unit created successfully.');
+    }
+
+    public function buildingData(Building $building)
+    {
+        return response()->json($building->only([
+            'property_name', 'property_code', 'type_of_ownership', 'property_type',
+            'land_lord_name', 'building_no', 'road', 'block', 'area', 'city',
+            'total_no_of_blocks', 'total_no_of_floors',
+        ]));
     }
 
     public function show(PropertyUnit $propertyUnit)
@@ -50,12 +67,22 @@ class PropertyUnitController extends Controller
 
     public function edit(PropertyUnit $propertyUnit)
     {
-        return view('property-units.edit', ['unit' => $propertyUnit]);
+        $formFields      = app(FormConfigService::class)->getFormFields('unit');
+        $customFieldDefs = CustomFieldDefinition::getForForm('unit');
+        $buildings       = Building::orderBy('property_name')->get(['id', 'property_name', 'property_code']);
+        return view('property-units.edit', [
+            'unit'            => $propertyUnit,
+            'formFields'      => $formFields,
+            'customFieldDefs' => $customFieldDefs,
+            'buildings'       => $buildings,
+        ]);
     }
 
     public function update(UpdatePropertyUnitRequest $request, PropertyUnit $propertyUnit)
     {
-        $propertyUnit->update($request->validated());
+        $validated = $request->validated();
+        $validated['custom_fields'] = $request->input('custom_fields', []);
+        $propertyUnit->update($validated);
         return redirect()->route('property-units.index')
             ->with('success', 'Property unit updated successfully.');
     }

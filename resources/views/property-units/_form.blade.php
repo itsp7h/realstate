@@ -48,8 +48,35 @@
         height: 1px;
         background: var(--card-border);
     }
+    .building-locked input,
+    .building-locked select {
+        background: var(--page-bg) !important;
+        color: var(--text-muted) !important;
+        cursor: not-allowed;
+        border-color: var(--card-border) !important;
+    }
+    .building-locked .lock-badge {
+        display: inline-flex;
+    }
+    .lock-badge {
+        display: none;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
 </style>
 @endpush
+
+@php
+    $visibleFields = collect($formFields ?? [])
+        ->filter(fn($f) => !empty($f['visible']))
+        ->pluck('name')
+        ->all();
+    $showAll = empty($visibleFields);
+    $selectedBuildingId = old('building_id', $unit->building_id ?? null);
+@endphp
 
 <form method="POST" action="{{ $action }}" id="unitForm" novalidate>
     @csrf
@@ -57,8 +84,38 @@
 
     <div class="form-section-stack">
 
-        {{-- 1. PROPERTY LEVEL --}}
+        {{-- 0. SELECT BUILDING --}}
         <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon"><i class="fa-solid fa-link"></i></div>
+                <div>
+                    <h3>Select Building</h3>
+                    <p>Property-level fields will auto-fill from the selected building</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="form-grid">
+                    <div class="form-group col-span-2">
+                        <label>Building <span class="required">*</span></label>
+                        <select name="building_id" id="buildingSelect"
+                                class="{{ $errors->has('building_id') ? 'error' : '' }}"
+                                onchange="loadBuildingData(this.value)">
+                            <option value="">— Select a building —</option>
+                            @foreach($buildings ?? [] as $b)
+                                <option value="{{ $b->id }}" {{ $selectedBuildingId == $b->id ? 'selected' : '' }}>
+                                    {{ $b->property_code }} — {{ $b->property_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('building_id') <span class="field-error">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- 1. PROPERTY LEVEL --}}
+        @if($showAll || array_intersect(['property_name','property_code','type_of_ownership','property_type','land_lord_name'], $visibleFields))
+        <div class="card" id="property-section">
             <div class="card-header">
                 <div class="card-header-icon"><i class="fa-solid fa-building"></i></div>
                 <div>
@@ -69,6 +126,7 @@
             </div>
             <div class="card-body">
                 <div class="form-grid">
+                    @if($showAll || in_array('property_name', $visibleFields))
                     <div class="form-group">
                         <label>Property Name <span class="required">*</span></label>
                         <input type="text" name="property_name"
@@ -77,6 +135,8 @@
                             class="{{ $errors->has('property_name') ? 'error' : '' }}" required>
                         @error('property_name') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('property_code', $visibleFields))
                     <div class="form-group">
                         <label>Property Code <span class="required">*</span></label>
                         <select name="property_code" class="{{ $errors->has('property_code') ? 'error' : '' }}" required>
@@ -87,6 +147,8 @@
                         </select>
                         @error('property_code') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('type_of_ownership', $visibleFields))
                     <div class="form-group">
                         <label>Type of Ownership</label>
                         <select name="type_of_ownership">
@@ -97,6 +159,8 @@
                         </select>
                         @error('type_of_ownership') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('property_type', $visibleFields))
                     <div class="form-group">
                         <label>Property Type</label>
                         <select name="property_type">
@@ -107,6 +171,8 @@
                         </select>
                         @error('property_type') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('land_lord_name', $visibleFields))
                     <div class="form-group">
                         <label>Land Lord Name</label>
                         <input type="text" name="land_lord_name"
@@ -114,11 +180,14 @@
                             placeholder="e.g. Akram Miknas">
                         @error('land_lord_name') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
                 </div>
             </div>
         </div>
+        @endif
 
         {{-- 2. ADDRESS --}}
+        @if($showAll || array_intersect(['building_no','road','block','area','city'], $visibleFields))
         <div class="card">
             <div class="card-header">
                 <div class="card-header-icon"><i class="fa-solid fa-location-dot"></i></div>
@@ -130,6 +199,7 @@
             </div>
             <div class="card-body">
                 <div class="form-grid">
+                    @if($showAll || in_array('building_no', $visibleFields))
                     <div class="form-group">
                         <label>Building No.</label>
                         <input type="number" name="building_no"
@@ -137,6 +207,8 @@
                             placeholder="e.g. 202" min="1">
                         @error('building_no') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('road', $visibleFields))
                     <div class="form-group col-span-2">
                         <label>Road</label>
                         <input type="text" name="road"
@@ -144,6 +216,8 @@
                             placeholder="e.g. Avenue 0022">
                         @error('road') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('block', $visibleFields))
                     <div class="form-group">
                         <label>Block</label>
                         <input type="number" name="block"
@@ -151,6 +225,8 @@
                             placeholder="e.g. 324" min="1">
                         @error('block') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('area', $visibleFields))
                     <div class="form-group">
                         <label>Area</label>
                         <input type="text" name="area"
@@ -158,6 +234,8 @@
                             placeholder="e.g. Capital Governorate">
                         @error('area') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('city', $visibleFields))
                     <div class="form-group">
                         <label>City</label>
                         <input type="text" name="city"
@@ -165,11 +243,14 @@
                             placeholder="e.g. Manama">
                         @error('city') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
                 </div>
             </div>
         </div>
+        @endif
 
         {{-- 3. BLOCK LEVEL --}}
+        @if($showAll || array_intersect(['total_no_of_blocks','block_name','block_code','building_no_2'], $visibleFields))
         <div class="card">
             <div class="card-header">
                 <div class="card-header-icon"><i class="fa-solid fa-cubes"></i></div>
@@ -181,6 +262,7 @@
             </div>
             <div class="card-body">
                 <div class="form-grid">
+                    @if($showAll || in_array('total_no_of_blocks', $visibleFields))
                     <div class="form-group">
                         <label>Total No. of Blocks</label>
                         <input type="number" name="total_no_of_blocks"
@@ -188,6 +270,8 @@
                             placeholder="e.g. 3" min="1">
                         @error('total_no_of_blocks') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('block_name', $visibleFields))
                     <div class="form-group">
                         <label>Block Name</label>
                         <input type="text" name="block_name"
@@ -195,6 +279,8 @@
                             placeholder="e.g. Block 1">
                         @error('block_name') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('block_code', $visibleFields))
                     <div class="form-group">
                         <label>Block Code</label>
                         <input type="text" name="block_code"
@@ -202,6 +288,8 @@
                             placeholder="e.g. BL1">
                         @error('block_code') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('building_no_2', $visibleFields))
                     <div class="form-group">
                         <label>Building No. (Block Ref)</label>
                         <input type="number" name="building_no_2"
@@ -209,11 +297,14 @@
                             placeholder="e.g. 202" min="1">
                         @error('building_no_2') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
                 </div>
             </div>
         </div>
+        @endif
 
         {{-- 4. FLOOR LEVEL --}}
+        @if($showAll || array_intersect(['total_no_of_floors','floor_name','floor_code'], $visibleFields))
         <div class="card">
             <div class="card-header">
                 <div class="card-header-icon"><i class="fa-solid fa-layer-group"></i></div>
@@ -225,6 +316,7 @@
             </div>
             <div class="card-body">
                 <div class="form-grid">
+                    @if($showAll || in_array('total_no_of_floors', $visibleFields))
                     <div class="form-group">
                         <label>Total No. of Floors</label>
                         <input type="number" name="total_no_of_floors"
@@ -232,6 +324,8 @@
                             placeholder="e.g. 10" min="1">
                         @error('total_no_of_floors') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('floor_name', $visibleFields))
                     <div class="form-group">
                         <label>Floor Name</label>
                         <input type="text" name="floor_name"
@@ -239,6 +333,8 @@
                             placeholder="e.g. Floor 1">
                         @error('floor_name') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('floor_code', $visibleFields))
                     <div class="form-group">
                         <label>Floor Code</label>
                         <input type="text" name="floor_code"
@@ -246,11 +342,14 @@
                             placeholder="e.g. FL1">
                         @error('floor_code') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
                 </div>
             </div>
         </div>
+        @endif
 
         {{-- 5. UNIT LEVEL --}}
+        @if($showAll || array_intersect(['total_no_of_units','unit_name','description','unit_type','creation_date','unit_condition','view','no_of_parkings_foc'], $visibleFields))
         <div class="card">
             <div class="card-header">
                 <div class="card-header-icon"><i class="fa-solid fa-door-open"></i></div>
@@ -262,6 +361,7 @@
             </div>
             <div class="card-body">
                 <div class="form-grid">
+                    @if($showAll || in_array('total_no_of_units', $visibleFields))
                     <div class="form-group">
                         <label>Total No. of Units</label>
                         <input type="number" name="total_no_of_units"
@@ -269,6 +369,8 @@
                             placeholder="e.g. 20" min="1">
                         @error('total_no_of_units') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('unit_name', $visibleFields))
                     <div class="form-group">
                         <label>Unit Name <span class="required">*</span></label>
                         <input type="text" name="unit_name"
@@ -277,6 +379,8 @@
                             class="{{ $errors->has('unit_name') ? 'error' : '' }}" required>
                         @error('unit_name') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('description', $visibleFields))
                     <div class="form-group col-span-2">
                         <label>Description</label>
                         <input type="text" name="description"
@@ -284,6 +388,8 @@
                             placeholder="e.g. Miknas Plaza 2 - Flat 11">
                         @error('description') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('unit_type', $visibleFields))
                     <div class="form-group">
                         <label>Unit Type</label>
                         <select name="unit_type">
@@ -294,6 +400,8 @@
                         </select>
                         @error('unit_type') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('unit_condition', $visibleFields))
                     <div class="form-group">
                         <label>Unit Condition</label>
                         <select name="unit_condition">
@@ -304,6 +412,8 @@
                         </select>
                         @error('unit_condition') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('view', $visibleFields))
                     <div class="form-group">
                         <label>View</label>
                         <input type="text" name="view"
@@ -311,12 +421,16 @@
                             placeholder="e.g. City View, Sea View">
                         @error('view') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('creation_date', $visibleFields))
                     <div class="form-group">
                         <label>Creation Date</label>
                         <input type="date" name="creation_date"
                             value="{{ old('creation_date', isset($unit->creation_date) ? \Carbon\Carbon::parse($unit->creation_date)->format('Y-m-d') : '') }}">
                         @error('creation_date') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('no_of_parkings_foc', $visibleFields))
                     <div class="form-group">
                         <label>No. of Parkings (FOC)</label>
                         <input type="number" name="no_of_parkings_foc"
@@ -324,11 +438,14 @@
                             placeholder="e.g. 1" min="0">
                         @error('no_of_parkings_foc') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
                 </div>
             </div>
         </div>
+        @endif
 
         {{-- 6. AREA & PRICING --}}
+        @if($showAll || array_intersect(['area_unit','area_inside','area_terrace','rate_per_area_unit','rent_per_month','security_deposit_amount'], $visibleFields))
         <div class="card">
             <div class="card-header">
                 <div class="card-header-icon"><i class="fa-solid fa-coins"></i></div>
@@ -340,6 +457,7 @@
             </div>
             <div class="card-body">
                 <div class="form-grid">
+                    @if($showAll || in_array('area_unit', $visibleFields))
                     <div class="form-group">
                         <label>Area Unit (Sq. Mt. / Sq. Ft.)</label>
                         <select name="area_unit">
@@ -350,6 +468,8 @@
                         </select>
                         @error('area_unit') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('area_inside', $visibleFields))
                     <div class="form-group">
                         <label>Area (Inside)</label>
                         <input type="number" name="area_inside" step="0.01" min="0"
@@ -357,6 +477,8 @@
                             placeholder="0.00">
                         @error('area_inside') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('area_terrace', $visibleFields))
                     <div class="form-group">
                         <label>Area (Terrace)</label>
                         <input type="number" name="area_terrace" step="0.01" min="0"
@@ -364,6 +486,8 @@
                             placeholder="0.00">
                         @error('area_terrace') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('rate_per_area_unit', $visibleFields))
                     <div class="form-group">
                         <label>Rate (per Sq. Mt. / Sq. Ft.)</label>
                         <input type="number" name="rate_per_area_unit" step="0.01" min="0"
@@ -371,6 +495,8 @@
                             placeholder="0.00">
                         @error('rate_per_area_unit') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('rent_per_month', $visibleFields))
                     <div class="form-group">
                         <label>Rent (Amount per month)</label>
                         <input type="number" name="rent_per_month" step="0.01" min="0"
@@ -378,6 +504,8 @@
                             placeholder="0.00">
                         @error('rent_per_month') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('security_deposit_amount', $visibleFields))
                     <div class="form-group">
                         <label>Security Deposit Amount</label>
                         <input type="number" name="security_deposit_amount" step="0.01" min="0"
@@ -385,11 +513,14 @@
                             placeholder="0.00">
                         @error('security_deposit_amount') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
                 </div>
             </div>
         </div>
+        @endif
 
         {{-- 7. LEGAL --}}
+        @if($showAll || in_array('municipality_nos', $visibleFields))
         <div class="card">
             <div class="card-header">
                 <div class="card-header-icon"><i class="fa-solid fa-scale-balanced"></i></div>
@@ -411,8 +542,10 @@
                 </div>
             </div>
         </div>
+        @endif
 
         {{-- 8. UTILITIES --}}
+        @if($showAll || array_intersect(['electricity_installation_date','electricity_meter_no','electricity_ac_no','water_installation_date','water_meter_no'], $visibleFields))
         <div class="card">
             <div class="card-header">
                 <div class="card-header-icon"><i class="fa-solid fa-bolt"></i></div>
@@ -423,14 +556,18 @@
                 <span class="section-number" style="margin-left:auto;">8</span>
             </div>
             <div class="card-body">
+                @if($showAll || array_intersect(['electricity_installation_date','electricity_meter_no','electricity_ac_no'], $visibleFields))
                 <div class="divider-label"><i class="fa-solid fa-bolt" style="font-size:10px;"></i> Electricity</div>
                 <div class="form-grid" style="margin-bottom:20px;">
+                    @if($showAll || in_array('electricity_installation_date', $visibleFields))
                     <div class="form-group">
                         <label>Installation Date</label>
                         <input type="date" name="electricity_installation_date"
                             value="{{ old('electricity_installation_date', isset($unit->electricity_installation_date) ? \Carbon\Carbon::parse($unit->electricity_installation_date)->format('Y-m-d') : '') }}">
                         @error('electricity_installation_date') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('electricity_meter_no', $visibleFields))
                     <div class="form-group">
                         <label>Meter No.</label>
                         <input type="text" name="electricity_meter_no"
@@ -438,6 +575,8 @@
                             placeholder="e.g. KS003472">
                         @error('electricity_meter_no') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('electricity_ac_no', $visibleFields))
                     <div class="form-group">
                         <label>Electricity A/c No</label>
                         <input type="text" name="electricity_ac_no"
@@ -445,16 +584,22 @@
                             placeholder="Account number">
                         @error('electricity_ac_no') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
                 </div>
+                @endif
 
+                @if($showAll || array_intersect(['water_installation_date','water_meter_no'], $visibleFields))
                 <div class="divider-label"><i class="fa-solid fa-droplet" style="font-size:10px;"></i> Water</div>
                 <div class="form-grid">
+                    @if($showAll || in_array('water_installation_date', $visibleFields))
                     <div class="form-group">
                         <label>Installation Date</label>
                         <input type="date" name="water_installation_date"
                             value="{{ old('water_installation_date', isset($unit->water_installation_date) ? \Carbon\Carbon::parse($unit->water_installation_date)->format('Y-m-d') : '') }}">
                         @error('water_installation_date') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                    @if($showAll || in_array('water_meter_no', $visibleFields))
                     <div class="form-group">
                         <label>Meter No.</label>
                         <input type="text" name="water_meter_no"
@@ -462,9 +607,54 @@
                             placeholder="e.g. 23H163009453">
                         @error('water_meter_no') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
+                    @endif
+                </div>
+                @endif
+            </div>
+        </div>
+        @endif
+
+        {{-- CUSTOM FIELDS --}}
+        @if(count($customFieldDefs ?? []) > 0)
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon"><i class="fa-solid fa-puzzle-piece"></i></div>
+                <div>
+                    <h3>Custom Fields</h3>
+                    <p>Additional fields configured for this form</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="form-grid">
+                    @foreach($customFieldDefs as $def)
+                        @if($showAll || in_array($def->name, $visibleFields))
+                        <div class="form-group {{ $def->field_type === 'textarea' ? 'col-span-full' : '' }}">
+                            <label>{{ $def->label }}{!! $def->is_required ? ' <span class="required">*</span>' : '' !!}</label>
+                            @php $val = old('custom_fields.'.$def->name, ($unit->custom_fields[$def->name] ?? '')); @endphp
+                            @if($def->field_type === 'text')
+                                <input type="text" name="custom_fields[{{ $def->name }}]" value="{{ $val }}" {{ $def->is_required ? 'required' : '' }}>
+                            @elseif($def->field_type === 'number')
+                                <input type="number" name="custom_fields[{{ $def->name }}]" value="{{ $val }}" {{ $def->is_required ? 'required' : '' }}>
+                            @elseif($def->field_type === 'date')
+                                <input type="date" name="custom_fields[{{ $def->name }}]" value="{{ $val }}" {{ $def->is_required ? 'required' : '' }}>
+                            @elseif($def->field_type === 'textarea')
+                                <textarea name="custom_fields[{{ $def->name }}]" {{ $def->is_required ? 'required' : '' }}>{{ $val }}</textarea>
+                            @elseif($def->field_type === 'select')
+                                <select name="custom_fields[{{ $def->name }}]" {{ $def->is_required ? 'required' : '' }}>
+                                    <option value="">Select…</option>
+                                    @foreach($def->options ?? [] as $opt)
+                                        <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                    @endforeach
+                                </select>
+                            @endif
+                            @error('custom_fields.'.$def->name) <span class="field-error">{{ $message }}</span> @enderror
+                        </div>
+                        @endif
+                    @endforeach
                 </div>
             </div>
         </div>
+        @endif
 
     </div>{{-- /form-section-stack --}}
 
@@ -485,3 +675,67 @@
     </div>
 
 </form>
+
+@push('scripts')
+<script>
+const BUILDING_DATA_URL = '{{ url("/property-units/building") }}';
+
+// Fields that are locked/auto-filled from the building
+const BUILDING_FIELDS = [
+    'property_name','property_code','type_of_ownership','property_type',
+    'land_lord_name','building_no','road','block','area','city',
+    'total_no_of_blocks','total_no_of_floors'
+];
+
+async function loadBuildingData(buildingId) {
+    const propertySection = document.getElementById('property-section');
+
+    if (!buildingId) {
+        unlockBuildingFields();
+        return;
+    }
+
+    try {
+        const res  = await fetch(`${BUILDING_DATA_URL}/${buildingId}/data`);
+        const data = await res.json();
+
+        BUILDING_FIELDS.forEach(field => {
+            const el = document.querySelector(`[name="${field}"]`);
+            if (!el) return;
+            if (el.tagName === 'SELECT') {
+                el.value = data[field] ?? '';
+            } else {
+                el.value = data[field] ?? '';
+            }
+            el.setAttribute('readonly', true);
+            el.setAttribute('disabled', false);
+        });
+
+        if (propertySection) propertySection.classList.add('building-locked');
+
+        // Show lock badges
+        document.querySelectorAll('.lock-badge').forEach(b => b.style.display = 'inline-flex');
+
+    } catch (e) {
+        console.error('Failed to load building data', e);
+    }
+}
+
+function unlockBuildingFields() {
+    BUILDING_FIELDS.forEach(field => {
+        const el = document.querySelector(`[name="${field}"]`);
+        if (!el) return;
+        el.removeAttribute('readonly');
+    });
+    const propertySection = document.getElementById('property-section');
+    if (propertySection) propertySection.classList.remove('building-locked');
+    document.querySelectorAll('.lock-badge').forEach(b => b.style.display = 'none');
+}
+
+// On page load: if a building is already selected (edit mode), lock the fields
+document.addEventListener('DOMContentLoaded', () => {
+    const sel = document.getElementById('buildingSelect');
+    if (sel && sel.value) loadBuildingData(sel.value);
+});
+</script>
+@endpush

@@ -524,11 +524,13 @@
 
     <div class="sidebar-section">
         <div class="sidebar-section-label">Form / Template Management</div>
-        <a href="#" class="nav-item">
-            <i class="fa-solid fa-layer-group nav-icon"></i> Template Management
-        </a>
-        <a href="#" class="nav-item">
+        <a href="{{ route('form-configs.index') }}?tab=forms"
+           class="nav-item {{ request()->is('form-configs*') && request('tab', 'forms') === 'forms' ? 'active' : '' }}">
             <i class="fa-solid fa-wpforms nav-icon"></i> Forms Management
+        </a>
+        <a href="{{ route('form-configs.index') }}?tab=templates"
+           class="nav-item {{ request()->is('form-configs*') && request('tab') === 'templates' ? 'active' : '' }}">
+            <i class="fa-solid fa-layer-group nav-icon"></i> Template Management
         </a>
     </div>
 

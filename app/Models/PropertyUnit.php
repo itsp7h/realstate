@@ -12,6 +12,7 @@ class PropertyUnit extends Model
     protected $table = 'property_units';
 
     protected $fillable = [
+        'building_id',
         // Property Level
         'property_name',
         'property_code',
@@ -57,6 +58,7 @@ class PropertyUnit extends Model
         'water_installation_date',
         'water_meter_no',
         'electricity_ac_no',
+        'custom_fields',
     ];
 
     protected $casts = [
@@ -75,7 +77,13 @@ class PropertyUnit extends Model
         'rate_per_area_unit'            => 'decimal:2',
         'rent_per_month'                => 'decimal:2',
         'security_deposit'              => 'decimal:2',
+        'custom_fields'                 => 'array',
     ];
+
+    public function building()
+    {
+        return $this->belongsTo(Building::class);
+    }
 
     public function scopeFilter($query, array $filters): void
     {

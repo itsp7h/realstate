@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Building;
+use App\Models\CustomFieldDefinition;
 use App\Http\Requests\StoreBuildingRequest;
 use App\Http\Requests\UpdateBuildingRequest;
+use App\Services\FormConfigService;
 use Illuminate\Http\Request;
 
 class BuildingController extends Controller
@@ -30,13 +32,17 @@ class BuildingController extends Controller
 
     public function create()
     {
-        $building = new Building();
-        return view('buildings.create', compact('building'));
+        $building        = new Building();
+        $formFields      = app(FormConfigService::class)->getFormFields('building');
+        $customFieldDefs = CustomFieldDefinition::getForForm('building');
+        return view('buildings.create', compact('building', 'formFields', 'customFieldDefs'));
     }
 
     public function store(StoreBuildingRequest $request)
     {
-        Building::create($request->validated());
+        $validated = $request->validated();
+        $validated['custom_fields'] = $request->input('custom_fields', []);
+        Building::create($validated);
         return redirect()->route('buildings.index')
             ->with('success', 'Building created successfully.');
     }
@@ -48,12 +54,16 @@ class BuildingController extends Controller
 
     public function edit(Building $building)
     {
-        return view('buildings.edit', compact('building'));
+        $formFields      = app(FormConfigService::class)->getFormFields('building');
+        $customFieldDefs = CustomFieldDefinition::getForForm('building');
+        return view('buildings.edit', compact('building', 'formFields', 'customFieldDefs'));
     }
 
     public function update(UpdateBuildingRequest $request, Building $building)
     {
-        $building->update($request->validated());
+        $validated = $request->validated();
+        $validated['custom_fields'] = $request->input('custom_fields', []);
+        $building->update($validated);
         return redirect()->route('buildings.index')
             ->with('success', 'Building updated successfully.');
     }

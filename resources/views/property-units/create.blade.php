@@ -20,9 +20,10 @@
 </div>
 
 @include('property-units._form', [
-    'unit'   => $unit,
-    'action' => route('property-units.store'),
-    'method' => 'POST',
+    'unit'       => $unit,
+    'action'     => route('property-units.store'),
+    'method'     => 'POST',
+    'formFields' => $formFields,
 ])
 
 @endsection

@@ -20,9 +20,10 @@
 </div>
 
 @include('buildings._form', [
-    'building' => $building,
-    'action'   => route('buildings.store'),
-    'method'   => 'POST',
+    'building'   => $building,
+    'action'     => route('buildings.store'),
+    'method'     => 'POST',
+    'formFields' => $formFields,
 ])
 
 @endsection

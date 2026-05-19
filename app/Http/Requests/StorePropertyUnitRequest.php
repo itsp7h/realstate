@@ -14,6 +14,7 @@ class StorePropertyUnitRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'building_id'      => ['nullable', 'exists:buildings,id'],
             // Property Level
             'property_name'    => ['required', 'string', 'max:255'],
             'property_code'    => ['required', 'string', 'in:AAL,MP1,MP2,MP3,MP4,MP5'],
