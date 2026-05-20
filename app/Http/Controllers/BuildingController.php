@@ -27,7 +27,10 @@ class BuildingController extends Controller
             'properties'  => Building::count(),
         ];
 
-        return view('buildings.index', compact('buildings', 'stats'));
+        $formFields      = app(FormConfigService::class)->getFormFields('building');
+        $customFieldDefs = CustomFieldDefinition::getForForm('building');
+
+        return view('buildings.index', compact('buildings', 'stats', 'formFields', 'customFieldDefs'));
     }
 
     public function create()
@@ -49,7 +52,8 @@ class BuildingController extends Controller
 
     public function show(Building $building)
     {
-        return view('buildings.show', compact('building'));
+        $floors = $building->floors()->orderBy('floor_name')->get();
+        return view('buildings.show', compact('building', 'floors'));
     }
 
     public function edit(Building $building)

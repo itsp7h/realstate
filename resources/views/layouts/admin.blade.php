@@ -493,8 +493,11 @@
 
     <div class="sidebar-section">
         <div class="sidebar-section-label">Property Management</div>
-        <a href="{{ route('buildings.index') }}" class="nav-item {{ request()->is('buildings*') ? 'active' : '' }}">
+        <a href="{{ route('buildings.index') }}" class="nav-item {{ request()->is('buildings*') && !request()->is('floors') ? 'active' : '' }}">
             <i class="fa-solid fa-building nav-icon"></i> Buildings
+        </a>
+        <a href="{{ route('floors.global') }}" class="nav-item {{ request()->is('floors') ? 'active' : '' }}">
+            <i class="fa-solid fa-layer-group nav-icon"></i> Floors
         </a>
         <a href="{{ route('property-units.index') }}" class="nav-item {{ request()->is('property-units*') ? 'active' : '' }}">
             <i class="fa-solid fa-door-open nav-icon"></i> Units

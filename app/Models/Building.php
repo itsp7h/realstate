@@ -42,6 +42,11 @@ class Building extends Model
         return $this->hasMany(PropertyUnit::class);
     }
 
+    public function floors()
+    {
+        return $this->hasMany(Floor::class);
+    }
+
     public function scopeFilter($query, array $filters): void
     {
         $query->when($filters['search'] ?? null, function ($q, $search) {

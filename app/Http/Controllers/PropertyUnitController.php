@@ -14,11 +14,10 @@ class PropertyUnitController extends Controller
 {
     public function index(Request $request)
     {
-        $filters = $request->only(['search', 'property_code', 'unit_type', 'unit_condition', 'floor_name']);
+        $filters = $request->only(['search', 'property_code', 'unit_type', 'unit_condition']);
 
         $units = PropertyUnit::filter($filters)
             ->orderBy('property_code')
-            ->orderBy('floor_name')
             ->orderBy('unit_name')
             ->paginate(20)
             ->withQueryString();
@@ -30,7 +29,11 @@ class PropertyUnitController extends Controller
             'properties' => PropertyUnit::distinct('property_code')->count('property_code'),
         ];
 
-        return view('property-units.index', compact('units', 'stats'));
+        $formFields      = app(FormConfigService::class)->getFormFields('unit');
+        $customFieldDefs = CustomFieldDefinition::getForForm('unit');
+        $buildings       = Building::orderBy('property_name')->get(['id', 'property_name', 'property_code']);
+
+        return view('property-units.index', compact('units', 'stats', 'formFields', 'customFieldDefs', 'buildings'));
     }
 
     public function create()
@@ -56,8 +59,14 @@ class PropertyUnitController extends Controller
         return response()->json($building->only([
             'property_name', 'property_code', 'type_of_ownership', 'property_type',
             'land_lord_name', 'building_no', 'road', 'block', 'area', 'city',
-            'total_no_of_blocks', 'total_no_of_floors',
         ]));
+    }
+
+    public function floorsByBuilding(Building $building)
+    {
+        return response()->json(
+            $building->floors()->orderBy('floor_name')->get(['id', 'floor_name', 'floor_code', 'block_name'])
+        );
     }
 
     public function show(PropertyUnit $propertyUnit)
@@ -96,8 +105,6 @@ class PropertyUnitController extends Controller
 
     public function export(Request $request)
     {
-        // Export logic will be implemented when the maatwebsite/excel package is added.
-        // Filters from $request->only([...]) will be applied before export.
-        abort(501, 'Export not yet implemented.');
+        return redirect()->route('export.units', $request->only(['search', 'property_code', 'unit_type', 'unit_condition']));
     }
 }

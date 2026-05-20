@@ -13,6 +13,7 @@ class PropertyUnit extends Model
 
     protected $fillable = [
         'building_id',
+        'floor_id',
         // Property Level
         'property_name',
         'property_code',
@@ -25,17 +26,7 @@ class PropertyUnit extends Model
         'block',
         'area',
         'city',
-        // Block Level
-        'total_no_of_blocks',
-        'block_name',
-        'block_code',
-        'building_no_2',
-        // Floor Level
-        'total_no_of_floors',
-        'floor_name',
-        'floor_code',
         // Unit Level
-        'total_no_of_units',
         'unit_name',
         'description',
         'unit_type',
@@ -67,22 +58,23 @@ class PropertyUnit extends Model
         'water_installation_date'       => 'date',
         'building_no'                   => 'integer',
         'block'                         => 'integer',
-        'total_no_of_blocks'            => 'integer',
-        'building_no_2'                 => 'integer',
-        'total_no_of_floors'            => 'integer',
-        'total_no_of_units'             => 'integer',
         'no_of_parkings_foc'            => 'integer',
         'area_inside'                   => 'decimal:2',
         'area_terrace'                  => 'decimal:2',
         'rate_per_area_unit'            => 'decimal:2',
         'rent_per_month'                => 'decimal:2',
-        'security_deposit'              => 'decimal:2',
+        'security_deposit_amount'       => 'decimal:2',
         'custom_fields'                 => 'array',
     ];
 
     public function building()
     {
         return $this->belongsTo(Building::class);
+    }
+
+    public function floor()
+    {
+        return $this->belongsTo(Floor::class);
     }
 
     public function scopeFilter($query, array $filters): void
@@ -98,6 +90,5 @@ class PropertyUnit extends Model
         $query->when($filters['property_code'] ?? null, fn($q, $v) => $q->where('property_code', $v));
         $query->when($filters['unit_type'] ?? null,     fn($q, $v) => $q->where('unit_type', $v));
         $query->when($filters['unit_condition'] ?? null, fn($q, $v) => $q->where('unit_condition', $v));
-        $query->when($filters['floor_name'] ?? null,    fn($q, $v) => $q->where('floor_name', 'like', "%{$v}%"));
     }
 }
