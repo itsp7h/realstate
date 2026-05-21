@@ -10,6 +10,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\TenantController;
+use App\Http\Controllers\LeaseContractController;
 
 // Unified data import/export
 Route::get('/data',                      [DataController::class, 'index'])->name('data.index');
@@ -38,8 +39,7 @@ Route::resource('property-units', PropertyUnitController::class);
 
 Route::resource('tenants', TenantController::class);
 
-// Lease Contracts (placeholder index — full CRUD to be added)
-Route::get('/lease-contracts', fn() => redirect()->route('dashboard'))->name('lease-contracts.index');
+Route::resource('lease-contracts', LeaseContractController::class);
 
 Route::resource('buildings', BuildingController::class);
 Route::get('/floors', [FloorController::class, 'globalIndex'])->name('floors.global');

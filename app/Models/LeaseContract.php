@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 class LeaseContract extends Model
 {
@@ -48,6 +50,17 @@ class LeaseContract extends Model
         'service_start_date' => 'date',
         'service_end_date'   => 'date',
     ];
+
+    protected function status(): Attribute
+    {
+        return Attribute::make(get: function () {
+            $today = Carbon::today();
+            if ($this->lease_end_date < $today) return 'expired';
+            if ($this->lease_start_date > $today) return 'upcoming';
+            if ($this->lease_end_date <= $today->copy()->addDays(30)) return 'expiring';
+            return 'active';
+        });
+    }
 
     public function tenant(): BelongsTo
     {

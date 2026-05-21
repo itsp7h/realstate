@@ -509,12 +509,8 @@
         <a href="{{ route('tenants.index') }}" class="nav-item {{ request()->is('tenants*') ? 'active' : '' }}">
             <i class="fa-solid fa-users nav-icon"></i> Tenants
         </a>
-        <a href="#" class="nav-item">
-            <i class="fa-solid fa-handshake nav-icon"></i> Sales
-        </a>
-        <a href="#" class="nav-item">
-            <i class="fa-solid fa-file-contract nav-icon"></i> Documents
-            <span class="nav-badge">New</span>
+        <a href="{{ route('lease-contracts.index') }}" class="nav-item {{ request()->is('lease-contracts*') ? 'active' : '' }}">
+            <i class="fa-solid fa-file-contract nav-icon"></i> Lease Contracts
         </a>
     </div>
 

@@ -111,7 +111,7 @@
     <button class="tab-btn" id="tab-forms" onclick="switchTab('forms')">
         <i class="fa-solid fa-wpforms"></i>
         Forms Management
-        <span class="tab-count">2</span>
+        <span class="tab-count">3</span>
     </button>
     <button class="tab-btn" id="tab-templates" onclick="switchTab('templates')">
         <i class="fa-solid fa-file-export"></i>
@@ -193,6 +193,36 @@
             <div class="fc-card-footer">
                 <a href="{{ route('form-configs.edit', ['unit', 'form']) }}" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-pen-to-square"></i> Edit Configuration
+                </a>
+            </div>
+        </div>
+
+        {{-- Lease Contract Form --}}
+        <div class="fc-card">
+            <div class="fc-card-header">
+                <div class="fc-icon"><i class="fa-solid fa-file-contract"></i></div>
+                <div>
+                    <div class="fc-title">Lease Contract Form</div>
+                    <div class="fc-desc">6-section form: Contract Info, Location, Lease Term, Rent, Service Charge, Financial</div>
+                </div>
+            </div>
+            <div class="fc-card-body">
+                <div class="fc-meta">
+                    <i class="fa-solid fa-circle-dot"></i>
+                    <span>Status:</span>
+                    <span class="badge badge-green"><i class="fa-solid fa-check"></i> Available</span>
+                </div>
+                <div class="fc-meta">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>26 fields across 6 sections</span>
+                </div>
+            </div>
+            <div class="fc-card-footer">
+                <a href="{{ route('lease-contracts.create') }}" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-plus"></i> New Contract
+                </a>
+                <a href="{{ route('lease-contracts.index') }}" class="btn btn-outline btn-sm" style="margin-left:6px;">
+                    <i class="fa-solid fa-list"></i> View All
                 </a>
             </div>
         </div>
