@@ -512,6 +512,9 @@
         <a href="{{ route('lease-contracts.index') }}" class="nav-item {{ request()->is('lease-contracts*') ? 'active' : '' }}">
             <i class="fa-solid fa-file-contract nav-icon"></i> Lease Contracts
         </a>
+        <a href="{{ route('maintenance.index') }}" class="nav-item {{ request()->is('maintenance*') ? 'active' : '' }}">
+            <i class="fa-solid fa-wrench nav-icon"></i> Maintenance
+        </a>
     </div>
 
     <div class="sidebar-section">

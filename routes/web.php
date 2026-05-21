@@ -9,6 +9,7 @@ use App\Http\Controllers\CustomFieldController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\MaintenanceRequestController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\LeaseContractController;
@@ -43,6 +44,9 @@ Route::get('/property-units/building/{building}/floors', [PropertyUnitController
 Route::resource('property-units', PropertyUnitController::class);
 
 Route::resource('tenants', TenantController::class);
+
+Route::resource('maintenance', MaintenanceRequestController::class)
+    ->parameters(['maintenance' => 'maintenanceRequest']);
 
 Route::resource('lease-contracts', LeaseContractController::class);
 
