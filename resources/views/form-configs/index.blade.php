@@ -116,7 +116,7 @@
     <button class="tab-btn" id="tab-templates" onclick="switchTab('templates')">
         <i class="fa-solid fa-file-export"></i>
         Template Management
-        <span class="tab-count">2</span>
+        <span class="tab-count">3</span>
     </button>
 </div>
 
@@ -277,8 +277,49 @@
             </div>
         </div>
 
+        {{-- Lease Contracts Template --}}
+        <div class="fc-card">
+            <div class="fc-card-header">
+                <div class="fc-icon tpl"><i class="fa-solid fa-file-contract"></i></div>
+                <div>
+                    <div class="fc-title">Lease Contracts Template</div>
+                    <div class="fc-desc">Import opening lease contracts — 26 columns matching the standard Tally sheet format</div>
+                </div>
+            </div>
+            <div class="fc-card-body">
+                <div class="fc-meta">
+                    <i class="fa-solid fa-table-columns"></i>
+                    <span>26 columns — Agreement No, Tenant, Dates, Rent, Service Charge, and more</span>
+                </div>
+                <div class="fc-meta">
+                    <i class="fa-solid fa-link"></i>
+                    <span>Auto-links to existing Tenants and Units by name</span>
+                </div>
+                <div style="display:flex;gap:6px;margin-top:4px;">
+                    <a href="{{ route('import.template', ['contracts', 'xlsx']) }}" class="btn btn-outline btn-sm" download>
+                        <i class="fa-solid fa-file-excel"></i> XLSX Template
+                    </a>
+                    <a href="{{ route('import.template', ['contracts', 'csv']) }}" class="btn btn-outline btn-sm" download>
+                        <i class="fa-solid fa-file-csv"></i> CSV Template
+                    </a>
+                </div>
+            </div>
+            <div class="fc-card-footer">
+                <button type="button" class="btn btn-primary btn-sm" onclick="openImport_contracts()">
+                    <i class="fa-solid fa-file-import"></i> Import Contracts
+                </button>
+            </div>
+        </div>
+
     </div>
 </div>
+
+@include('components.import-modal', [
+    'type'      => 'contracts',
+    'label'     => 'Contracts',
+    'icon'      => 'fa-file-contract',
+    'routeName' => 'import.contracts',
+])
 
 @endsection
 

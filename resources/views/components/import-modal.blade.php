@@ -133,6 +133,28 @@
                         <i class="fa-solid fa-circle-info"></i>
                         <strong>Property Code</strong> must match an existing building.
                     </div>
+                @elseif($type === 'contracts')
+                    <span class="col-badge required-col">Lease Agreement No *</span>
+                    <span class="col-badge required-col">Tenant Name *</span>
+                    <span class="col-badge required-col">Lease Start Date *</span>
+                    <span class="col-badge required-col">Lease End Date *</span>
+                    <span class="col-badge">Date</span>
+                    <span class="col-badge">Prop Code</span>
+                    <span class="col-badge">Floor Name / Code</span>
+                    <span class="col-badge">Unit</span>
+                    <span class="col-badge">Description</span>
+                    <span class="col-badge">Rent per Month</span>
+                    <span class="col-badge">Currency</span>
+                    <span class="col-badge">Invoicing Frequency</span>
+                    <span class="col-badge">Service Amount in BD (Excl. VAT)</span>
+                    <span class="col-badge">Security Deposit</span>
+                    <span class="col-badge">Lease Break Date</span>
+                    <span class="col-badge">Notice Period</span>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:6px;width:100%;">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <strong>Tenant Name</strong> will auto-link to an existing tenant if the name matches exactly.
+                        Dates must be in <strong>YYYY-MM-DD</strong> format or standard Excel date format.
+                    </div>
                 @else
                     <span class="col-badge required-col">Property Code *</span>
                     <span class="col-badge required-col">Unit Name *</span>
@@ -150,7 +172,7 @@
             </div>
 
             {{-- Upload form --}}
-            <form id="{{ $formId }}" method="POST" action="{{ route($routeName) }}" enctype="multipart/form-data">
+            <form id="{{ $formId }}" method="POST" action="{{ isset($routeName) ? route($routeName) : route('data.import') }}" enctype="multipart/form-data">
                 @csrf
                 <div class="import-drop-zone" id="{{ $dropId }}"
                      onclick="document.getElementById('{{ $inputId }}').click()"

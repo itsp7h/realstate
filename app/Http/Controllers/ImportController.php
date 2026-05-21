@@ -7,7 +7,9 @@ use App\Exports\FloorsExport;
 use App\Exports\UnitsExport;
 use App\Models\Building;
 use App\Models\Floor;
+use App\Models\LeaseContract;
 use App\Models\PropertyUnit;
+use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -101,6 +103,57 @@ class ImportController extends Controller
         'SRT001', 'Ground Floor', 'GF', 'Block A', 'BLA', '8',
     ];
 
+    private const CONTRACT_COLUMNS = [
+        'date', 'lease_agreement_no', 'tenant_name',
+        'property_name', 'property_code', 'block_name', 'block_code', 'floor_name', 'floor_code',
+        'unit', 'description',
+        'lease_start_date', 'lease_end_date',
+        'rental_income_ledger', 'invoicing_frequency',
+        'rent_start_date', 'rent_end_date', 'currency', 'rent_per_month',
+        'service_frequency', 'service_start_date', 'service_end_date', 'service_amount_bd_excl_vat',
+        'security_deposit', 'lease_break_date', 'notice_period',
+    ];
+
+    private const CONTRACT_LABELS = [
+        'Date'                              => 'date',
+        'Lease Agreement No'                => 'lease_agreement_no',
+        'Tenant Name'                       => 'tenant_name',
+        'Property Name'                     => 'property_name',
+        'Prop Code'                         => 'property_code',
+        'Block Name'                        => 'block_name',
+        'Block Code'                        => 'block_code',
+        'Floor Name'                        => 'floor_name',
+        'Floor Code'                        => 'floor_code',
+        'Unit'                              => 'unit',
+        'Description'                       => 'description',
+        'Lease Start Date'                  => 'lease_start_date',
+        'Lease End Date'                    => 'lease_end_date',
+        'Rental Income Ledger'              => 'rental_income_ledger',
+        'Invoicing Frequency'               => 'invoicing_frequency',
+        'Rent Start Date'                   => 'rent_start_date',
+        'Rent End Date'                     => 'rent_end_date',
+        'Currency'                          => 'currency',
+        'Rent per Month'                    => 'rent_per_month',
+        'Service Frequency'                 => 'service_frequency',
+        'Service Start Date'                => 'service_start_date',
+        'Service End Date'                  => 'service_end_date',
+        'Service Amount in BD (Excl. VAT)'  => 'service_amount_bd_excl_vat',
+        'Security Deposit'                  => 'security_deposit',
+        'Lease Break Date'                  => 'lease_break_date',
+        'Notice Period'                     => 'notice_period',
+    ];
+
+    private const CONTRACT_SAMPLE = [
+        '2025-03-01', 'LA/0001', 'Ahmed Al-Khalifa',
+        'P7H Muharraq Bldg. 2', 'P7H-1130N', 'Block 1', 'BL1', 'Floor 1', 'FL1',
+        '1130N-F1-110', 'Fitted',
+        '2025-03-01', '2026-02-28',
+        '41010011', 'Monthly',
+        '2025-03-01', '2026-02-28', 'BHD', '450.000',
+        'Monthly', '2025-03-01', '2026-02-28', '50.000',
+        '900.000', '2026-02-28', '1 Month',
+    ];
+
     private const UNIT_SAMPLE = [
         'SRT001', 'GF', '101', '1-bedroom apartment with city view', 'Apartment',
         '2024-01-15', 'Furnished', 'City', '1', 'sqft', '850.00', '0.00',
@@ -113,9 +166,10 @@ class ImportController extends Controller
     public function template(string $type, string $format = 'csv'): StreamedResponse|BinaryFileResponse
     {
         [$labelMap, $sample] = match ($type) {
-            'buildings' => [self::BUILDING_LABELS, self::BUILDING_SAMPLE],
-            'floors'    => [self::FLOOR_LABELS,    self::FLOOR_SAMPLE],
-            'units'     => [self::UNIT_LABELS,     self::UNIT_SAMPLE],
+            'buildings' => [self::BUILDING_LABELS,  self::BUILDING_SAMPLE],
+            'floors'    => [self::FLOOR_LABELS,      self::FLOOR_SAMPLE],
+            'units'     => [self::UNIT_LABELS,       self::UNIT_SAMPLE],
+            'contracts' => [self::CONTRACT_LABELS,   self::CONTRACT_SAMPLE],
             default     => abort(404),
         };
 
@@ -266,6 +320,90 @@ class ImportController extends Controller
 
         return redirect()->route('property-units.index')
             ->with(['import_type' => 'units', 'import_count' => $imported, 'import_errors' => $errors]);
+    }
+
+    public function contracts(Request $request): RedirectResponse
+    {
+        $request->validate(['file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240']);
+
+        // Pre-load tenant name → id and unit identifier → id lookups
+        $tenantMap = Tenant::pluck('id', 'name')->mapWithKeys(
+            fn($id, $name) => [strtolower(trim($name)) => $id]
+        )->all();
+
+        $unitMap = PropertyUnit::whereNotNull('unit_name')->pluck('id', 'unit_name')
+            ->mapWithKeys(fn($id, $name) => [strtolower(trim($name)) => $id])
+            ->all();
+
+        [$imported, $errors] = $this->parseFile(
+            $request->file('file'),
+            self::CONTRACT_LABELS,
+            ['lease_agreement_no', 'tenant_name', 'lease_start_date', 'lease_end_date'],
+            function (array $record, int $row) use ($tenantMap, $unitMap): array {
+                $agreementNo = trim($record['lease_agreement_no']);
+                if (LeaseContract::where('lease_agreement_no', $agreementNo)->exists()) {
+                    return ['error' => "Row {$row}: Lease Agreement No '{$agreementNo}' already exists — skipped."];
+                }
+
+                $data = $this->onlyFillable($record, self::CONTRACT_COLUMNS);
+
+                // Normalize date fields — accept Excel serial numbers or string dates
+                foreach (['date', 'lease_start_date', 'lease_end_date', 'lease_break_date',
+                          'rent_start_date', 'rent_end_date', 'service_start_date', 'service_end_date'] as $dateField) {
+                    if (!empty($data[$dateField])) {
+                        $data[$dateField] = $this->parseDate($data[$dateField]);
+                    }
+                }
+
+                // Link tenant by name (case-insensitive)
+                $tenantKey = strtolower(trim($record['tenant_name'] ?? ''));
+                if (isset($tenantMap[$tenantKey])) {
+                    $data['tenant_id'] = $tenantMap[$tenantKey];
+                }
+
+                // Link unit by identifier (case-insensitive)
+                $unitKey = strtolower(trim($record['unit'] ?? ''));
+                if ($unitKey && isset($unitMap[$unitKey])) {
+                    $data['unit_id'] = $unitMap[$unitKey];
+                }
+
+                return ['data' => $data];
+            },
+            fn(array $data) => LeaseContract::create($data)
+        );
+
+        return redirect()->route('lease-contracts.index')
+            ->with(['import_type' => 'contracts', 'import_count' => $imported, 'import_errors' => $errors]);
+    }
+
+    private function parseDate(mixed $value): ?string
+    {
+        if (is_numeric($value)) {
+            // Excel serial date
+            try {
+                return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float) $value)
+                    ->format('Y-m-d');
+            } catch (\Exception) {
+                return null;
+            }
+        }
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        // Try common formats
+        foreach (['Y-m-d', 'd/m/Y', 'm/d/Y', 'd-m-Y', 'Y/m/d'] as $fmt) {
+            $dt = \DateTime::createFromFormat($fmt, $value);
+            if ($dt && $dt->format($fmt) === $value) {
+                return $dt->format('Y-m-d');
+            }
+        }
+
+        // Fall back to strtotime
+        $ts = strtotime($value);
+        return $ts ? date('Y-m-d', $ts) : null;
     }
 
     // ── INTERNALS ─────────────────────────────────────────────────────────────
