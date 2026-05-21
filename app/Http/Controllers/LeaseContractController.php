@@ -62,7 +62,10 @@ class LeaseContractController extends Controller
             ->orderBy('property_code')
             ->pluck('property_code');
 
-        return view('lease-contracts.index', compact('contracts', 'stats', 'propertyCodes'));
+        $tenants = Tenant::orderBy('name')->get(['id', 'name', 'tenant_type']);
+        $units   = PropertyUnit::orderBy('unit_name')->get(['id', 'unit_name']);
+
+        return view('lease-contracts.index', compact('contracts', 'stats', 'propertyCodes', 'tenants', 'units'));
     }
 
     public function create()
