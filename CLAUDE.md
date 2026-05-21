@@ -53,6 +53,21 @@ php artisan make:migration # Create migration
 - Validation error messages must be specific and field-level — never show a generic "something went wrong" message
 - Form Requests must return a `422` JSON response for API calls and redirect back with errors for Blade forms — do not swallow validation errors silently
 
+## Git Branching Rules
+- **ALWAYS** create a new git branch before starting any feature or task — never work directly on `main`
+- Branch names must be descriptive and kebab-case, e.g. `feature/tenant-crud`, `feature/lease-contracts-import`, `fix/floor-migration`
+- One branch per feature — do not mix unrelated changes on the same branch
+- When a feature is complete and tested, it is ready to be merged via PR into `main`
+
+## Form & Template Configuration Rules
+- **EVERY** CRUD module built must have a corresponding entry in the **Forms Management** tab at `/form-configs?tab=forms`
+  - This lets the user control which fields are visible in the add/edit form for that module
+  - Follow the exact same pattern as the existing Building Form and Unit Form config cards
+- **EVERY** module that supports import/export must have a corresponding entry in the **Template Management** tab at `/form-configs?tab=templates`
+  - This gives the user download buttons (XLSX + CSV) and an import modal for that module
+  - Follow the exact same pattern as the existing Building Template, Unit Template, and Lease Contracts Template cards
+- These entries must be added as part of the feature — never ship a CRUD module without its Form Config card
+
 ## Testing Rules
 - **ALWAYS** write test cases for every feature, controller, model, and service created
 - Tests must be written before marking any task as complete

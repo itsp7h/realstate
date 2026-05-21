@@ -506,8 +506,8 @@
 
     <div class="sidebar-section">
         <div class="sidebar-section-label">Management</div>
-        <a href="#" class="nav-item">
-            <i class="fa-solid fa-users nav-icon"></i> Tenant Management
+        <a href="{{ route('tenants.index') }}" class="nav-item {{ request()->is('tenants*') ? 'active' : '' }}">
+            <i class="fa-solid fa-users nav-icon"></i> Tenants
         </a>
         <a href="#" class="nav-item">
             <i class="fa-solid fa-handshake nav-icon"></i> Sales
