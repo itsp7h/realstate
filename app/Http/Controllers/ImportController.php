@@ -7,6 +7,7 @@ use App\Exports\FloorsExport;
 use App\Exports\LeaseContractsExport;
 use App\Exports\TenantsExport;
 use App\Exports\UnitsExport;
+use App\Models\AuditLog;
 use App\Models\Building;
 use App\Models\Floor;
 use App\Models\LeaseContract;
@@ -413,6 +414,7 @@ class ImportController extends Controller
             fn(array $data) => Building::create($data)
         );
 
+        if ($imported > 0) AuditLog::record('imported', 'Building', null, "{$imported} row(s)");
         return redirect()->route('buildings.index')
             ->with(['import_type' => 'buildings', 'import_count' => $imported, 'import_errors' => $errors]);
     }
@@ -441,6 +443,7 @@ class ImportController extends Controller
             fn(array $data) => Floor::create($data)
         );
 
+        if ($imported > 0) AuditLog::record('imported', 'Floor', null, "{$imported} row(s)");
         return redirect()->route('floors.global')
             ->with(['import_type' => 'floors', 'import_count' => $imported, 'import_errors' => $errors]);
     }
@@ -488,6 +491,7 @@ class ImportController extends Controller
             fn(array $data) => PropertyUnit::create($data)
         );
 
+        if ($imported > 0) AuditLog::record('imported', 'PropertyUnit', null, "{$imported} row(s)");
         return redirect()->route('property-units.index')
             ->with(['import_type' => 'units', 'import_count' => $imported, 'import_errors' => $errors]);
     }
@@ -522,6 +526,7 @@ class ImportController extends Controller
             fn(array $data) => Tenant::create($data)
         );
 
+        if ($imported > 0) AuditLog::record('imported', 'Tenant', null, "{$imported} row(s)");
         return redirect()->route('tenants.index')
             ->with(['import_type' => 'tenants', 'import_count' => $imported, 'import_errors' => $errors]);
     }
@@ -576,6 +581,7 @@ class ImportController extends Controller
             fn(array $data) => LeaseContract::create($data)
         );
 
+        if ($imported > 0) AuditLog::record('imported', 'LeaseContract', null, "{$imported} row(s)");
         return redirect()->route('lease-contracts.index')
             ->with(['import_type' => 'contracts', 'import_count' => $imported, 'import_errors' => $errors]);
     }

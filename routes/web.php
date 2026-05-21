@@ -8,6 +8,7 @@ use App\Http\Controllers\FormConfigController;
 use App\Http\Controllers\CustomFieldController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\LeaseContractController;
@@ -51,6 +52,12 @@ Route::resource('buildings.floors', FloorController::class)->shallow()->except([
 
 Route::post('/custom-fields', [CustomFieldController::class, 'store'])->name('custom-fields.store');
 Route::delete('/custom-fields/{customField}', [CustomFieldController::class, 'destroy'])->name('custom-fields.destroy');
+
+// Admin
+Route::get('/admin/audit-log',         [AdminController::class, 'auditLog'])->name('admin.audit-log');
+Route::delete('/admin/audit-log',      [AdminController::class, 'clearAuditLog'])->name('admin.audit-log.clear');
+Route::get('/admin/error-log',         [AdminController::class, 'errorLog'])->name('admin.error-log');
+Route::delete('/admin/error-log',      [AdminController::class, 'clearErrorLog'])->name('admin.error-log.clear');
 
 Route::get('/form-configs', [FormConfigController::class, 'index'])->name('form-configs.index');
 Route::get('/form-configs/{formType}/{configType}/edit', [FormConfigController::class, 'edit'])->name('form-configs.edit');

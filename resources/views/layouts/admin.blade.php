@@ -534,9 +534,12 @@
     </div>
 
     <div class="sidebar-section">
-        <div class="sidebar-section-label">System</div>
-        <a href="#" class="nav-item">
-            <i class="fa-solid fa-shield-halved nav-icon"></i> Admin
+        <div class="sidebar-section-label">Admin</div>
+        <a href="{{ route('admin.audit-log') }}" class="nav-item {{ request()->is('admin/audit-log*') ? 'active' : '' }}">
+            <i class="fa-solid fa-clock-rotate-left nav-icon"></i> Audit Log
+        </a>
+        <a href="{{ route('admin.error-log') }}" class="nav-item {{ request()->is('admin/error-log*') ? 'active' : '' }}">
+            <i class="fa-solid fa-triangle-exclamation nav-icon"></i> Error Log
         </a>
     </div>
 
