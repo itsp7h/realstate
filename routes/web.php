@@ -22,11 +22,15 @@ Route::get('/import/template/{type}/{format?}', [ImportController::class, 'templ
 Route::post('/import/buildings', [ImportController::class, 'buildings'])->name('import.buildings');
 Route::post('/import/floors',    [ImportController::class, 'floors'])->name('import.floors');
 Route::post('/import/units',     [ImportController::class, 'units'])->name('import.units');
+Route::post('/import/tenants',   [ImportController::class, 'tenants'])->name('import.tenants');
 Route::post('/import/contracts', [ImportController::class, 'contracts'])->name('import.contracts');
+Route::post('/import/smart',    [ImportController::class, 'smart'])->name('import.smart');
 
 Route::get('/export/buildings', [ImportController::class, 'exportBuildings'])->name('export.buildings');
 Route::get('/export/floors',    [ImportController::class, 'exportFloors'])->name('export.floors');
 Route::get('/export/units',     [ImportController::class, 'exportUnits'])->name('export.units');
+Route::get('/export/tenants',   [ImportController::class, 'exportTenants'])->name('export.tenants');
+Route::get('/export/contracts', [ImportController::class, 'exportContracts'])->name('export.contracts');
 
 Route::get('/', fn() => redirect()->route('dashboard'));
 

@@ -133,6 +133,18 @@
                         <i class="fa-solid fa-circle-info"></i>
                         <strong>Property Code</strong> must match an existing building.
                     </div>
+                @elseif($type === 'tenants')
+                    <span class="col-badge required-col">Name *</span>
+                    <span class="col-badge">Tenant Type</span>
+                    <span class="col-badge">ID / CR Number</span>
+                    <span class="col-badge">Phone</span>
+                    <span class="col-badge">Email</span>
+                    <span class="col-badge">Nationality / Country</span>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:6px;width:100%;">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <strong>Tenant Type</strong> must be <code>individual</code> or <code>company</code> (defaults to individual).
+                        Rows with a duplicate name are skipped.
+                    </div>
                 @elseif($type === 'contracts')
                     <span class="col-badge required-col">Lease Agreement No *</span>
                     <span class="col-badge required-col">Tenant Name *</span>

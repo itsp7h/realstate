@@ -14,6 +14,7 @@ class FloorController extends Controller
         $buildingId = $request->input('building_id');
 
         $floors = Floor::with('building')
+            ->withCount('units')
             ->when($buildingId, fn(Builder $q) => $q->where('building_id', $buildingId))
             ->orderBy('building_id')
             ->orderBy('floor_name')

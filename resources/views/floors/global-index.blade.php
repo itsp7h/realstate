@@ -217,6 +217,8 @@
     'routeName'   => 'import.floors',
 ])
 
+@include('components.import-result')
+
 {{-- STATS --}}
 <div class="stats-grid">
     <div class="stat-card">
@@ -304,8 +306,9 @@
                     <td>{{ $floor->block_name ?? '—' }}</td>
                     <td>{{ $floor->block_code ?? '—' }}</td>
                     <td>
-                        @if($floor->total_no_of_units !== null)
-                            <span style="font-family:'Outfit',sans-serif;font-weight:700;">{{ $floor->total_no_of_units }}</span>
+                        @php $uCount = $floor->total_no_of_units ?? $floor->units_count; @endphp
+                        @if($uCount)
+                            <span style="font-family:'Outfit',sans-serif;font-weight:700;">{{ $uCount }}</span>
                         @else
                             <span style="color:var(--text-muted);">—</span>
                         @endif

@@ -192,6 +192,12 @@
         <p class="page-header-sub">Manage all lease agreements and contract records</p>
     </div>
     <div class="page-header-actions">
+        <a href="{{ route('export.contracts', request()->only(['search','property_code'])) }}" class="btn btn-outline">
+            <i class="fa-solid fa-file-export"></i> Export
+        </a>
+        <button type="button" class="btn btn-outline" onclick="openImport_contracts()">
+            <i class="fa-solid fa-file-import"></i> Import
+        </button>
         <button type="button" class="btn btn-primary" onclick="openContractModal()">
             <i class="fa-solid fa-plus"></i> New Contract
         </button>
@@ -400,6 +406,13 @@
     </div>
 
 </div>
+
+@include('components.import-modal', [
+    'type'      => 'contracts',
+    'label'     => 'Contracts',
+    'icon'      => 'fa-file-contract',
+    'routeName' => 'import.contracts',
+])
 
 {{-- ═══════════════════════════════════════════════════════
      NEW CONTRACT MODAL

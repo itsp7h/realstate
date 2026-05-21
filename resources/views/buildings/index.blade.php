@@ -366,6 +366,8 @@
     'routeName'   => 'import.buildings',
 ])
 
+@include('components.import-result')
+
 {{-- STATS --}}
 <div class="stats-grid">
     <div class="stat-card">
@@ -465,13 +467,15 @@
                         <div style="font-size:11px;color:var(--text-muted);">{{ $building->area ?? '' }}</div>
                     </td>
                     <td>
-                        @if($building->total_no_of_floors !== null)
-                            <div style="font-family:'Outfit',sans-serif;font-weight:700;">{{ $building->total_no_of_floors }}</div>
+                        @php $floorCount = $building->total_no_of_floors ?? $building->floors_count; @endphp
+                        @if($floorCount)
+                            <div style="font-family:'Outfit',sans-serif;font-weight:700;">{{ $floorCount }}</div>
                         @else <span style="color:var(--text-muted);">—</span> @endif
                     </td>
                     <td>
-                        @if($building->total_no_of_units !== null)
-                            <div style="font-family:'Outfit',sans-serif;font-weight:700;">{{ $building->total_no_of_units }}</div>
+                        @php $unitCount = $building->total_no_of_units ?? $building->units_count; @endphp
+                        @if($unitCount)
+                            <div style="font-family:'Outfit',sans-serif;font-weight:700;">{{ $unitCount }}</div>
                         @else <span style="color:var(--text-muted);">—</span> @endif
                     </td>
                     <td>

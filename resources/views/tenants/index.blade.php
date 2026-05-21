@@ -218,6 +218,12 @@
         <p class="page-header-sub">Manage all tenant profiles and contact records</p>
     </div>
     <div class="page-header-actions">
+        <a href="{{ route('export.tenants', request()->only(['search','tenant_type'])) }}" class="btn btn-outline">
+            <i class="fa-solid fa-file-export"></i> Export
+        </a>
+        <button type="button" class="btn btn-outline" onclick="openImport_tenants()">
+            <i class="fa-solid fa-file-import"></i> Import
+        </button>
         <button type="button" class="btn btn-primary" onclick="openTenantModal()">
             <i class="fa-solid fa-plus"></i> Add Tenant
         </button>
@@ -393,6 +399,13 @@
     </div>
 
 </div>
+
+@include('components.import-modal', [
+    'type'      => 'tenants',
+    'label'     => 'Tenants',
+    'icon'      => 'fa-users',
+    'routeName' => 'import.tenants',
+])
 
 {{-- ═══════════════════════════════════════════════════════
      ADD TENANT MODAL

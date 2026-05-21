@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Exports\BuildingsExport;
 use App\Exports\FloorsExport;
+use App\Exports\LeaseContractsExport;
+use App\Exports\TenantsExport;
 use App\Exports\UnitsExport;
 use App\Models\Building;
 use App\Models\Floor;
@@ -45,51 +47,75 @@ class ImportController extends Controller
 
     private const BUILDING_LABELS = [
         'Property Name'       => 'property_name',
+        'Prop Name'           => 'property_name',
         'Property Code'       => 'property_code',
+        'Prop Code'           => 'property_code',
         'Type of Ownership'   => 'type_of_ownership',
+        'Ownership Type'      => 'type_of_ownership',
         'Property Type'       => 'property_type',
         'Land Lord'           => 'land_lord_name',
+        'Landlord'            => 'land_lord_name',
+        'Land Lord Name'      => 'land_lord_name',
         'Building No.'        => 'building_no',
+        'Building No'         => 'building_no',
         'Road'                => 'road',
         'Block'               => 'block',
         'Area'                => 'area',
         'City'                => 'city',
         'Total Blocks'        => 'total_no_of_blocks',
+        'Total No of Blocks'  => 'total_no_of_blocks',
         'Total Floors'        => 'total_no_of_floors',
+        'Total No of Floors'  => 'total_no_of_floors',
         'Total Units'         => 'total_no_of_units',
+        'Total No of Units'   => 'total_no_of_units',
     ];
 
     private const FLOOR_LABELS = [
-        'Property Code'  => 'property_code',
-        'Floor Name'     => 'floor_name',
-        'Floor Code'     => 'floor_code',
-        'Block Name'     => 'block_name',
-        'Block Code'     => 'block_code',
-        'Units'          => 'total_no_of_units',
+        'Property Code'      => 'property_code',
+        'Prop Code'          => 'property_code',
+        'Floor Name'         => 'floor_name',
+        'Floor Code'         => 'floor_code',
+        'Block Name'         => 'block_name',
+        'Block Code'         => 'block_code',
+        'Units'              => 'total_no_of_units',
+        'Total Units'        => 'total_no_of_units',
+        'Total No of Units'  => 'total_no_of_units',
     ];
 
     private const UNIT_LABELS = [
         'Property Code'                  => 'property_code',
+        'Prop Code'                      => 'property_code',
         'Floor Code'                     => 'floor_code',
         'Unit Name'                      => 'unit_name',
+        'Unit'                           => 'unit_name',
         'Description'                    => 'description',
         'Unit Type'                      => 'unit_type',
+        'Type'                           => 'unit_type',
         'Creation Date'                  => 'creation_date',
         'Condition'                      => 'unit_condition',
+        'Unit Condition'                 => 'unit_condition',
         'View'                           => 'view',
         'Parking (FOC)'                  => 'no_of_parkings_foc',
+        'Parkings FOC'                   => 'no_of_parkings_foc',
         'Area Unit'                      => 'area_unit',
         'Area Inside'                    => 'area_inside',
         'Area Terrace'                   => 'area_terrace',
         'Rate per Area Unit'             => 'rate_per_area_unit',
+        'Rate/Area Unit'                 => 'rate_per_area_unit',
         'Rent/Month'                     => 'rent_per_month',
+        'Rent per Month'                 => 'rent_per_month',
         'Security Deposit'               => 'security_deposit_amount',
+        'Security Deposit Amount'        => 'security_deposit_amount',
         'Municipality Nos.'              => 'municipality_nos',
+        'Municipality Nos'               => 'municipality_nos',
         'Electricity Installation Date'  => 'electricity_installation_date',
         'Electricity Meter No.'          => 'electricity_meter_no',
+        'Electricity Meter No'           => 'electricity_meter_no',
         'Water Installation Date'        => 'water_installation_date',
         'Water Meter No.'                => 'water_meter_no',
+        'Water Meter No'                 => 'water_meter_no',
         'Electricity A/C No.'            => 'electricity_ac_no',
+        'Electricity AC No'              => 'electricity_ac_no',
     ];
 
     // ── SAMPLE ROWS ───────────────────────────────────────────────────────────
@@ -115,32 +141,74 @@ class ImportController extends Controller
     ];
 
     private const CONTRACT_LABELS = [
-        'Date'                              => 'date',
-        'Lease Agreement No'                => 'lease_agreement_no',
-        'Tenant Name'                       => 'tenant_name',
-        'Property Name'                     => 'property_name',
-        'Prop Code'                         => 'property_code',
-        'Block Name'                        => 'block_name',
-        'Block Code'                        => 'block_code',
-        'Floor Name'                        => 'floor_name',
-        'Floor Code'                        => 'floor_code',
-        'Unit'                              => 'unit',
-        'Description'                       => 'description',
-        'Lease Start Date'                  => 'lease_start_date',
-        'Lease End Date'                    => 'lease_end_date',
-        'Rental Income Ledger'              => 'rental_income_ledger',
-        'Invoicing Frequency'               => 'invoicing_frequency',
-        'Rent Start Date'                   => 'rent_start_date',
-        'Rent End Date'                     => 'rent_end_date',
-        'Currency'                          => 'currency',
-        'Rent per Month'                    => 'rent_per_month',
-        'Service Frequency'                 => 'service_frequency',
-        'Service Start Date'                => 'service_start_date',
-        'Service End Date'                  => 'service_end_date',
-        'Service Amount in BD (Excl. VAT)'  => 'service_amount_bd_excl_vat',
-        'Security Deposit'                  => 'security_deposit',
-        'Lease Break Date'                  => 'lease_break_date',
-        'Notice Period'                     => 'notice_period',
+        'Date'                                       => 'date',
+        'Lease Agreement No'                         => 'lease_agreement_no',
+        'Lease Agreement No.'                        => 'lease_agreement_no',
+        'Agreement No'                               => 'lease_agreement_no',
+        'Tenant Name'                                => 'tenant_name',
+        'Tenant'                                     => 'tenant_name',
+        'Property Name'                              => 'property_name',
+        'Prop Name'                                  => 'property_name',
+        'Property Code'                              => 'property_code',
+        'Prop Code'                                  => 'property_code',
+        'Block Name'                                 => 'block_name',
+        'Block Code'                                 => 'block_code',
+        'Floor Name'                                 => 'floor_name',
+        'Floor Code'                                 => 'floor_code',
+        'Unit'                                       => 'unit',
+        'Unit Name'                                  => 'unit',
+        'Description'                                => 'description',
+        'Lease Start Date'                           => 'lease_start_date',
+        'Lease End Date'                             => 'lease_end_date',
+        'Rental Income Ledger'                       => 'rental_income_ledger',
+        'Invoicing Frequency'                        => 'invoicing_frequency',
+        'Invoicing Frequncy'                         => 'invoicing_frequency',  // typo alias
+        'Invoicing Freq'                             => 'invoicing_frequency',
+        'Rent Start Date'                            => 'rent_start_date',
+        'Rent End Date'                              => 'rent_end_date',
+        'Currency'                                   => 'currency',
+        'Rent per Month'                             => 'rent_per_month',
+        'Rent/Month'                                 => 'rent_per_month',
+        'Service Frequency'                          => 'service_frequency',
+        'Service Freq'                               => 'service_frequency',
+        'Service Start Date'                         => 'service_start_date',
+        'Service End Date'                           => 'service_end_date',
+        'Service Amount in BD (Excl. VAT)'           => 'service_amount_bd_excl_vat',
+        'Service Amount in BD (Exclusive VAT)'       => 'service_amount_bd_excl_vat',
+        'Service Amount in BD (Exlusive VAT)'        => 'service_amount_bd_excl_vat',  // typo alias
+        'Service Amount BD'                          => 'service_amount_bd_excl_vat',
+        'Security Deposit'                           => 'security_deposit',
+        'Lease Break Date'                           => 'lease_break_date',
+        'Notice Period'                              => 'notice_period',
+    ];
+
+    private const TENANT_COLUMNS = [
+        'name', 'tenant_type', 'id_cr_number', 'phone', 'email', 'nationality_country',
+    ];
+
+    private const TENANT_LABELS = [
+        'Name'                  => 'name',
+        'Tenant Name'           => 'name',
+        'Full Name'             => 'name',
+        'Tenant Type'           => 'tenant_type',
+        'Type'                  => 'tenant_type',
+        'ID / CR Number'        => 'id_cr_number',
+        'ID/CR Number'          => 'id_cr_number',
+        'CR Number'             => 'id_cr_number',
+        'ID Number'             => 'id_cr_number',
+        'Phone'                 => 'phone',
+        'Phone Number'          => 'phone',
+        'Mobile'                => 'phone',
+        'Email'                 => 'email',
+        'Email Address'         => 'email',
+        'Nationality / Country' => 'nationality_country',
+        'Nationality/Country'   => 'nationality_country',
+        'Nationality'           => 'nationality_country',
+        'Country'               => 'nationality_country',
+    ];
+
+    private const TENANT_SAMPLE = [
+        'Ahmed Al-Khalifa', 'individual', '840912345', '+973 3300 0000', 'ahmed@email.com', 'Bahraini',
     ];
 
     private const CONTRACT_SAMPLE = [
@@ -161,15 +229,105 @@ class ImportController extends Controller
         '2023-06-01', 'EL-001', '2023-06-01', 'WM-001', 'AC-001',
     ];
 
+    // ── CANONICAL TEMPLATE LABELS (download templates — no aliases) ──────────
+
+    private const BUILDING_TEMPLATE_LABELS = [
+        'Property Name'       => 'property_name',
+        'Property Code'       => 'property_code',
+        'Type of Ownership'   => 'type_of_ownership',
+        'Property Type'       => 'property_type',
+        'Land Lord'           => 'land_lord_name',
+        'Building No.'        => 'building_no',
+        'Road'                => 'road',
+        'Block'               => 'block',
+        'Area'                => 'area',
+        'City'                => 'city',
+        'Total Blocks'        => 'total_no_of_blocks',
+        'Total Floors'        => 'total_no_of_floors',
+        'Total Units'         => 'total_no_of_units',
+    ];
+
+    private const FLOOR_TEMPLATE_LABELS = [
+        'Property Code'  => 'property_code',
+        'Floor Name'     => 'floor_name',
+        'Floor Code'     => 'floor_code',
+        'Block Name'     => 'block_name',
+        'Block Code'     => 'block_code',
+        'Units'          => 'total_no_of_units',
+    ];
+
+    private const UNIT_TEMPLATE_LABELS = [
+        'Property Code'                  => 'property_code',
+        'Floor Code'                     => 'floor_code',
+        'Unit Name'                      => 'unit_name',
+        'Description'                    => 'description',
+        'Unit Type'                      => 'unit_type',
+        'Creation Date'                  => 'creation_date',
+        'Condition'                      => 'unit_condition',
+        'View'                           => 'view',
+        'Parking (FOC)'                  => 'no_of_parkings_foc',
+        'Area Unit'                      => 'area_unit',
+        'Area Inside'                    => 'area_inside',
+        'Area Terrace'                   => 'area_terrace',
+        'Rate per Area Unit'             => 'rate_per_area_unit',
+        'Rent/Month'                     => 'rent_per_month',
+        'Security Deposit'               => 'security_deposit_amount',
+        'Municipality Nos.'              => 'municipality_nos',
+        'Electricity Installation Date'  => 'electricity_installation_date',
+        'Electricity Meter No.'          => 'electricity_meter_no',
+        'Water Installation Date'        => 'water_installation_date',
+        'Water Meter No.'                => 'water_meter_no',
+        'Electricity A/C No.'            => 'electricity_ac_no',
+    ];
+
+    private const TENANT_TEMPLATE_LABELS = [
+        'Name'                  => 'name',
+        'Tenant Type'           => 'tenant_type',
+        'ID / CR Number'        => 'id_cr_number',
+        'Phone'                 => 'phone',
+        'Email'                 => 'email',
+        'Nationality / Country' => 'nationality_country',
+    ];
+
+    private const CONTRACT_TEMPLATE_LABELS = [
+        'Date'                             => 'date',
+        'Lease Agreement No'               => 'lease_agreement_no',
+        'Tenant Name'                      => 'tenant_name',
+        'Property Name'                    => 'property_name',
+        'Prop Code'                        => 'property_code',
+        'Block Name'                       => 'block_name',
+        'Block Code'                       => 'block_code',
+        'Floor Name'                       => 'floor_name',
+        'Floor Code'                       => 'floor_code',
+        'Unit'                             => 'unit',
+        'Description'                      => 'description',
+        'Lease Start Date'                 => 'lease_start_date',
+        'Lease End Date'                   => 'lease_end_date',
+        'Rental Income Ledger'             => 'rental_income_ledger',
+        'Invoicing Frequency'              => 'invoicing_frequency',
+        'Rent Start Date'                  => 'rent_start_date',
+        'Rent End Date'                    => 'rent_end_date',
+        'Currency'                         => 'currency',
+        'Rent per Month'                   => 'rent_per_month',
+        'Service Frequency'                => 'service_frequency',
+        'Service Start Date'               => 'service_start_date',
+        'Service End Date'                 => 'service_end_date',
+        'Service Amount in BD (Excl. VAT)' => 'service_amount_bd_excl_vat',
+        'Security Deposit'                 => 'security_deposit',
+        'Lease Break Date'                 => 'lease_break_date',
+        'Notice Period'                    => 'notice_period',
+    ];
+
     // ── TEMPLATE DOWNLOADS ────────────────────────────────────────────────────
 
     public function template(string $type, string $format = 'csv'): StreamedResponse|BinaryFileResponse
     {
         [$labelMap, $sample] = match ($type) {
-            'buildings' => [self::BUILDING_LABELS,  self::BUILDING_SAMPLE],
-            'floors'    => [self::FLOOR_LABELS,      self::FLOOR_SAMPLE],
-            'units'     => [self::UNIT_LABELS,       self::UNIT_SAMPLE],
-            'contracts' => [self::CONTRACT_LABELS,   self::CONTRACT_SAMPLE],
+            'buildings' => [self::BUILDING_TEMPLATE_LABELS,  self::BUILDING_SAMPLE],
+            'floors'    => [self::FLOOR_TEMPLATE_LABELS,     self::FLOOR_SAMPLE],
+            'units'     => [self::UNIT_TEMPLATE_LABELS,      self::UNIT_SAMPLE],
+            'tenants'   => [self::TENANT_TEMPLATE_LABELS,    self::TENANT_SAMPLE],
+            'contracts' => [self::CONTRACT_TEMPLATE_LABELS,  self::CONTRACT_SAMPLE],
             default     => abort(404),
         };
 
@@ -220,6 +378,18 @@ class ImportController extends Controller
     {
         $filters = $request->only(['search', 'property_code', 'unit_type', 'unit_condition']);
         return Excel::download(new UnitsExport($filters), 'units-' . now()->format('Y-m-d') . '.xlsx');
+    }
+
+    public function exportTenants(Request $request): BinaryFileResponse
+    {
+        $filters = $request->only(['search', 'tenant_type']);
+        return Excel::download(new TenantsExport($filters), 'tenants-' . now()->format('Y-m-d') . '.xlsx');
+    }
+
+    public function exportContracts(Request $request): BinaryFileResponse
+    {
+        $filters = $request->only(['search', 'property_code']);
+        return Excel::download(new LeaseContractsExport($filters), 'lease-contracts-' . now()->format('Y-m-d') . '.xlsx');
     }
 
     // ── IMPORTS ───────────────────────────────────────────────────────────────
@@ -322,6 +492,40 @@ class ImportController extends Controller
             ->with(['import_type' => 'units', 'import_count' => $imported, 'import_errors' => $errors]);
     }
 
+    public function tenants(Request $request): RedirectResponse
+    {
+        $request->validate(['file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240']);
+
+        [$imported, $errors] = $this->parseFile(
+            $request->file('file'),
+            self::TENANT_LABELS,
+            ['name'],
+            function (array $record, int $row): array {
+                $name = trim($record['name']);
+                if (Tenant::whereRaw('LOWER(name) = ?', [strtolower($name)])->exists()) {
+                    return ['error' => "Row {$row}: Tenant '{$name}' already exists — skipped."];
+                }
+
+                $data = $this->onlyFillable($record, self::TENANT_COLUMNS);
+
+                if (!empty($data['tenant_type'])) {
+                    $data['tenant_type'] = strtolower($data['tenant_type']);
+                    if (!in_array($data['tenant_type'], ['individual', 'company'])) {
+                        $data['tenant_type'] = 'individual';
+                    }
+                } else {
+                    $data['tenant_type'] = 'individual';
+                }
+
+                return ['data' => $data];
+            },
+            fn(array $data) => Tenant::create($data)
+        );
+
+        return redirect()->route('tenants.index')
+            ->with(['import_type' => 'tenants', 'import_count' => $imported, 'import_errors' => $errors]);
+    }
+
     public function contracts(Request $request): RedirectResponse
     {
         $request->validate(['file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240']);
@@ -374,6 +578,316 @@ class ImportController extends Controller
 
         return redirect()->route('lease-contracts.index')
             ->with(['import_type' => 'contracts', 'import_count' => $imported, 'import_errors' => $errors]);
+    }
+
+    // ── SMART / UNIVERSAL IMPORT ─────────────────────────────────────────────
+
+    public function smart(Request $request): RedirectResponse
+    {
+        $request->validate(['file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240']);
+
+        $ext     = strtolower($request->file('file')->getClientOriginalExtension());
+        $allRows = in_array($ext, ['xlsx', 'xls'])
+            ? $this->readXlsx($request->file('file'))
+            : $this->readCsv($request->file('file'));
+
+        if (!$allRows || count($allRows) < 1) {
+            return redirect()->route('dashboard')
+                ->with('smart_import_error', 'File appears empty or could not be read.');
+        }
+
+        $rawHeaders = array_shift($allRows);
+        $dataRows   = $allRows;
+
+        // Combined label→field map; CONTRACT_LABELS last so 'Tenant Name' → 'tenant_name'
+        $combinedLabels = array_merge(
+            self::BUILDING_LABELS, self::FLOOR_LABELS, self::UNIT_LABELS,
+            self::TENANT_LABELS,   self::CONTRACT_LABELS,
+        );
+        $fieldByLabel = [];
+        foreach ($combinedLabels as $label => $field) {
+            $fieldByLabel[strtolower($label)] = $field;
+        }
+
+        $headers = array_map(function ($h) use ($fieldByLabel) {
+            $h = trim((string) $h);
+            return $fieldByLabel[strtolower($h)] ?? $h;
+        }, $rawHeaders);
+
+        $detected = $this->detectEntities($headers);
+
+        if (empty($detected)) {
+            return redirect()->route('dashboard')
+                ->with('smart_import_error',
+                    'Could not detect any known data type. Columns found: '
+                    . implode(', ', array_filter($rawHeaders)));
+        }
+
+        $results = [];
+
+        if (in_array('contracts', $detected)) {
+            [$tImported, $tErrors, $cImported, $cErrors] =
+                $this->smartImportContractsWithTenants($dataRows, $headers);
+            $results['tenants']   = ['imported' => $tImported, 'errors' => $tErrors];
+            $results['contracts'] = ['imported' => $cImported, 'errors' => $cErrors];
+        } else {
+            foreach ($detected as $entity) {
+                $results[$entity] = $this->smartImportGeneric($entity, $dataRows, $headers);
+            }
+        }
+
+        return redirect()->route('dashboard')->with('smart_import_results', $results);
+    }
+
+    private function detectEntities(array $headers): array
+    {
+        $weights = [
+            'lease_agreement_no'         => ['contracts' => 15],
+            'lease_start_date'           => ['contracts' => 8],
+            'lease_end_date'             => ['contracts' => 8],
+            'invoicing_frequency'        => ['contracts' => 6],
+            'rent_start_date'            => ['contracts' => 5],
+            'rental_income_ledger'       => ['contracts' => 5],
+            'lease_break_date'           => ['contracts' => 5],
+            'service_amount_bd_excl_vat' => ['contracts' => 5],
+            'unit_name'                  => ['units' => 15],
+            'unit_type'                  => ['units' => 8],
+            'unit_condition'             => ['units' => 8],
+            'area_inside'                => ['units' => 6],
+            'electricity_meter_no'       => ['units' => 8],
+            'water_meter_no'             => ['units' => 8],
+            'floor_name'                 => ['floors' => 12],
+            'floor_code'                 => ['floors' => 8],
+            'block_name'                 => ['floors' => 4, 'buildings' => 1],
+            'property_name'              => ['buildings' => 10],
+            'type_of_ownership'          => ['buildings' => 10],
+            'land_lord_name'             => ['buildings' => 8],
+            'total_no_of_floors'         => ['buildings' => 8],
+            'total_no_of_blocks'         => ['buildings' => 8],
+            'name'                       => ['tenants' => 10],
+            'tenant_type'                => ['tenants' => 8],
+            'id_cr_number'               => ['tenants' => 8],
+            'nationality_country'        => ['tenants' => 8],
+        ];
+
+        $scores = ['contracts' => 0, 'units' => 0, 'floors' => 0, 'buildings' => 0, 'tenants' => 0];
+
+        foreach ($headers as $h) {
+            if (isset($weights[$h])) {
+                foreach ($weights[$h] as $entity => $pts) {
+                    $scores[$entity] += $pts;
+                }
+            }
+        }
+
+        if ($scores['contracts'] >= 15) {
+            return ['contracts'];
+        }
+
+        $detected = [];
+        arsort($scores);
+        foreach ($scores as $entity => $score) {
+            if ($score >= 10) {
+                $detected[] = $entity;
+            }
+        }
+
+        return $detected;
+    }
+
+    private function smartImportContractsWithTenants(array $dataRows, array $headers): array
+    {
+        $headerCount = count($headers);
+
+        $tenantMap = Tenant::pluck('id', 'name')
+            ->mapWithKeys(fn($id, $n) => [strtolower(trim($n)) => $id])
+            ->all();
+
+        $unitMap = PropertyUnit::whereNotNull('unit_name')->pluck('id', 'unit_name')
+            ->mapWithKeys(fn($id, $n) => [strtolower(trim($n)) => $id])
+            ->all();
+
+        $tImported = 0; $tErrors = [];
+        $cImported = 0; $cErrors = [];
+        $row = 1;
+
+        foreach ($dataRows as $raw) {
+            $row++;
+            $cells = array_map(fn($v) => trim((string) ($v ?? '')), $raw);
+            if (array_filter($cells) === []) continue;
+
+            $values = array_slice(array_pad($cells, $headerCount, null), 0, $headerCount);
+            $record = array_combine($headers, $values);
+
+            // Extract & upsert tenant from this row
+            $tenantName = trim($record['tenant_name'] ?? $record['name'] ?? '');
+            if ($tenantName !== '') {
+                $tenantKey = strtolower($tenantName);
+                if (!isset($tenantMap[$tenantKey])) {
+                    $td = ['name' => $tenantName, 'tenant_type' => 'individual'];
+                    foreach (['tenant_type', 'id_cr_number', 'phone', 'email', 'nationality_country'] as $f) {
+                        if (!empty($record[$f])) $td[$f] = $record[$f];
+                    }
+                    if (!empty($td['tenant_type'])) {
+                        $t = strtolower($td['tenant_type']);
+                        $td['tenant_type'] = in_array($t, ['individual', 'company']) ? $t : 'individual';
+                    }
+                    try {
+                        $tenant = Tenant::create($td);
+                        $tenantMap[$tenantKey] = $tenant->id;
+                        $tImported++;
+                    } catch (\Exception $e) {
+                        $tErrors[] = "Row {$row} (tenant): " . $e->getMessage();
+                    }
+                }
+            }
+
+            // Import contract
+            $agreementNo = trim($record['lease_agreement_no'] ?? '');
+            if (!$agreementNo) {
+                $cErrors[] = "Row {$row}: 'Lease Agreement No' is required — skipped.";
+                continue;
+            }
+            if (LeaseContract::where('lease_agreement_no', $agreementNo)->exists()) {
+                $cErrors[] = "Row {$row}: Agreement No '{$agreementNo}' already exists — skipped.";
+                continue;
+            }
+
+            $data = $this->onlyFillable($record, self::CONTRACT_COLUMNS);
+
+            foreach (['date', 'lease_start_date', 'lease_end_date', 'lease_break_date',
+                      'rent_start_date', 'rent_end_date', 'service_start_date', 'service_end_date'] as $df) {
+                if (!empty($data[$df])) $data[$df] = $this->parseDate($data[$df]);
+            }
+
+            $tenantKey = strtolower(trim($record['tenant_name'] ?? $record['name'] ?? ''));
+            if ($tenantKey && isset($tenantMap[$tenantKey])) {
+                $data['tenant_id'] = $tenantMap[$tenantKey];
+            }
+
+            $unitKey = strtolower(trim($record['unit'] ?? $record['unit_name'] ?? ''));
+            if ($unitKey && isset($unitMap[$unitKey])) {
+                $data['unit_id'] = $unitMap[$unitKey];
+            }
+
+            try {
+                LeaseContract::create($data);
+                $cImported++;
+            } catch (\Exception $e) {
+                $cErrors[] = "Row {$row} (contract): " . $e->getMessage();
+            }
+        }
+
+        return [$tImported, $tErrors, $cImported, $cErrors];
+    }
+
+    private function smartImportGeneric(string $entity, array $dataRows, array $headers): array
+    {
+        $headerCount = count($headers);
+        $imported = 0;
+        $errors   = [];
+
+        [$required, $transform, $persist] = match ($entity) {
+
+            'buildings' => [
+                ['property_name', 'property_code'],
+                function (array $r, int $row): array {
+                    $code = strtoupper(trim($r['property_code']));
+                    if (Building::where('property_code', $code)->exists())
+                        return ['error' => "Row {$row}: Property Code '{$code}' already exists — skipped."];
+                    $r['property_code'] = $code;
+                    return ['data' => $this->onlyFillable($r, self::BUILDING_COLUMNS)];
+                },
+                fn($d) => Building::create($d),
+            ],
+
+            'floors' => [
+                ['property_code', 'floor_name'],
+                function (array $r, int $row): array {
+                    $code     = strtoupper(trim($r['property_code']));
+                    $building = Building::where('property_code', $code)->first();
+                    if (!$building)
+                        return ['error' => "Row {$row}: Property Code '{$code}' not found — skipped."];
+                    $data = $this->onlyFillable($r, self::FLOOR_COLUMNS, exclude: ['property_code']);
+                    $data['building_id'] = $building->id;
+                    return ['data' => $data];
+                },
+                fn($d) => Floor::create($d),
+            ],
+
+            'units' => [
+                ['unit_name'],
+                function (array $r, int $_row): array {
+                    $bCode    = strtoupper(trim($r['property_code'] ?? ''));
+                    $building = $bCode ? Building::where('property_code', $bCode)->first() : null;
+                    $data = $this->onlyFillable($r, self::UNIT_COLUMNS, exclude: ['property_code', 'floor_code']);
+                    if ($building) {
+                        $data['building_id']       = $building->id;
+                        $data['property_code']     = $building->property_code;
+                        $data['property_name']     ??= $building->property_name;
+                        $data['type_of_ownership'] ??= $building->type_of_ownership;
+                        $data['property_type']     ??= $building->property_type;
+                        $data['land_lord_name']    ??= $building->land_lord_name;
+                    }
+                    return ['data' => $data];
+                },
+                fn($d) => PropertyUnit::create($d),
+            ],
+
+            'tenants' => [
+                [],
+                function (array $r, int $row): array {
+                    $name = trim($r['name'] ?? $r['tenant_name'] ?? '');
+                    if (!$name) return ['error' => "Row {$row}: Name is required — skipped."];
+                    $r['name'] = $name;
+                    if (Tenant::whereRaw('LOWER(name) = ?', [strtolower($name)])->exists())
+                        return ['error' => "Row {$row}: Tenant '{$name}' already exists — skipped."];
+                    $data = $this->onlyFillable($r, self::TENANT_COLUMNS);
+                    $data['name'] = $name;
+                    $t = strtolower($data['tenant_type'] ?? '');
+                    $data['tenant_type'] = in_array($t, ['individual', 'company']) ? $t : 'individual';
+                    return ['data' => $data];
+                },
+                fn($d) => Tenant::create($d),
+            ],
+
+            default => [[], fn($_r, $_row) => ['error' => 'Unknown entity.'], fn($_d) => null],
+        };
+
+        // Pre-flight: check required columns are present in headers
+        $missing = array_diff($required, $headers);
+        if (!empty($missing)) {
+            return ['imported' => 0, 'errors' => ['Missing required columns: ' . implode(', ', $missing)]];
+        }
+
+        $row = 1;
+        foreach ($dataRows as $raw) {
+            $row++;
+            $cells = array_map(fn($v) => trim((string) ($v ?? '')), $raw);
+            if (array_filter($cells) === []) continue;
+
+            $values = array_slice(array_pad($cells, $headerCount, null), 0, $headerCount);
+            $record = array_combine($headers, $values);
+
+            foreach ($required as $col) {
+                if (empty($record[$col] ?? null)) {
+                    $errors[] = "Row {$row}: '{$col}' is required — skipped.";
+                    continue 2;
+                }
+            }
+
+            $result = $transform($record, $row);
+            if (isset($result['error'])) { $errors[] = $result['error']; continue; }
+
+            try {
+                $persist($result['data']);
+                $imported++;
+            } catch (\Exception $e) {
+                $errors[] = "Row {$row}: " . $e->getMessage();
+            }
+        }
+
+        return ['imported' => $imported, 'errors' => $errors];
     }
 
     private function parseDate(mixed $value): ?string
@@ -448,12 +962,15 @@ class ImportController extends Controller
 
         $missing = array_diff($requiredFields, $headers);
         if ($missing) {
-            // Also check whether any required field's label is present under a different case
             $humanMissing = array_map(
                 fn($f) => array_search($f, $labelMap) ?: $f,
                 $missing
             );
-            return [0, ['Missing required columns: ' . implode(', ', $humanMissing) . '. Extra columns are fine and will be ignored.']];
+            $foundLabels = array_map(
+                fn($f) => array_search($f, $labelMap) ?: $f,
+                $rawHeaders
+            );
+            return [0, ['Missing required columns: ' . implode(', ', $humanMissing) . '. Columns found in your file: ' . implode(', ', $foundLabels) . '.']];
         }
 
         $imported = 0;
@@ -504,8 +1021,15 @@ class ImportController extends Controller
     {
         $handle = fopen($file->getRealPath(), 'r');
         $rows   = [];
+        $first  = true;
         while (($raw = fgetcsv($handle)) !== false) {
-            $rows[] = array_map('trim', $raw);
+            $raw = array_map('trim', $raw);
+            if ($first) {
+                // Strip UTF-8 BOM (\xEF\xBB\xBF) that Excel adds to the first cell
+                $raw[0] = ltrim($raw[0], "\xEF\xBB\xBF");
+                $first  = false;
+            }
+            $rows[] = $raw;
         }
         fclose($handle);
         return $rows ?: null;

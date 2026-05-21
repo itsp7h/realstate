@@ -190,6 +190,8 @@
     'routeName'   => 'import.units',
 ])
 
+@include('components.import-result')
+
 {{-- STATS --}}
 <div class="stats-grid">
     <div class="stat-card">

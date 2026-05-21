@@ -116,7 +116,7 @@
     <button class="tab-btn" id="tab-templates" onclick="switchTab('templates')">
         <i class="fa-solid fa-file-export"></i>
         Template Management
-        <span class="tab-count">3</span>
+        <span class="tab-count">4</span>
     </button>
 </div>
 
@@ -307,6 +307,40 @@
             </div>
         </div>
 
+        {{-- Tenant Template --}}
+        <div class="fc-card">
+            <div class="fc-card-header">
+                <div class="fc-icon tpl"><i class="fa-solid fa-users"></i></div>
+                <div>
+                    <div class="fc-title">Tenant Template</div>
+                    <div class="fc-desc">Bulk-import tenant profiles — 6 columns covering name, type, contact details</div>
+                </div>
+            </div>
+            <div class="fc-card-body">
+                <div class="fc-meta">
+                    <i class="fa-solid fa-table-columns"></i>
+                    <span>6 columns — Name (required), Type, ID/CR Number, Phone, Email, Nationality</span>
+                </div>
+                <div class="fc-meta">
+                    <i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i>
+                    <span>Duplicate names are skipped. Type must be <code>individual</code> or <code>company</code>.</span>
+                </div>
+                <div style="display:flex;gap:6px;margin-top:4px;">
+                    <a href="{{ route('import.template', ['tenants', 'xlsx']) }}" class="btn btn-outline btn-sm" download>
+                        <i class="fa-solid fa-file-excel"></i> XLSX Template
+                    </a>
+                    <a href="{{ route('import.template', ['tenants', 'csv']) }}" class="btn btn-outline btn-sm" download>
+                        <i class="fa-solid fa-file-csv"></i> CSV Template
+                    </a>
+                </div>
+            </div>
+            <div class="fc-card-footer">
+                <button type="button" class="btn btn-primary btn-sm" onclick="openImport_tenants()">
+                    <i class="fa-solid fa-file-import"></i> Import Tenants
+                </button>
+            </div>
+        </div>
+
         {{-- Lease Contracts Template --}}
         <div class="fc-card">
             <div class="fc-card-header">
@@ -343,6 +377,13 @@
 
     </div>
 </div>
+
+@include('components.import-modal', [
+    'type'      => 'tenants',
+    'label'     => 'Tenants',
+    'icon'      => 'fa-users',
+    'routeName' => 'import.tenants',
+])
 
 @include('components.import-modal', [
     'type'      => 'contracts',

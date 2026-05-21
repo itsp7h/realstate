@@ -15,7 +15,8 @@ class BuildingController extends Controller
     {
         $filters = $request->only(['search', 'property_type', 'type_of_ownership']);
 
-        $buildings = Building::filter($filters)
+        $buildings = Building::withCount(['floors', 'units'])
+            ->filter($filters)
             ->orderBy('property_code')
             ->paginate(20)
             ->withQueryString();
