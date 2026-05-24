@@ -17,6 +17,7 @@ class BuildingController extends Controller
         $filters = $request->only(['search', 'property_type', 'type_of_ownership']);
 
         $buildings = Building::withCount(['floors', 'units'])
+            ->with('images')
             ->filter($filters)
             ->orderBy('property_code')
             ->paginate(20)
@@ -54,6 +55,7 @@ class BuildingController extends Controller
 
     public function show(Building $building)
     {
+        $building->load('images');
         $floors = $building->floors()->orderBy('floor_name')->get();
 
         $units = $building->units()->with('floor')->orderBy('unit_name')->get();

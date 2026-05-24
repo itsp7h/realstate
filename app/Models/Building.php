@@ -49,6 +49,11 @@ class Building extends Model
         return $this->hasMany(Floor::class);
     }
 
+    public function images()
+    {
+        return $this->hasMany(BuildingImage::class)->orderBy('sort_order');
+    }
+
     public function scopeFilter($query, array $filters): void
     {
         $query->when($filters['search'] ?? null, function ($q, $search) {

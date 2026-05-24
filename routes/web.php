@@ -13,6 +13,7 @@ use App\Http\Controllers\MaintenanceRequestController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\LeaseContractController;
+use App\Http\Controllers\BuildingImageController;
 
 // Unified data import/export
 Route::get('/data',                      [DataController::class, 'index'])->name('data.index');
@@ -51,6 +52,9 @@ Route::resource('maintenance', MaintenanceRequestController::class)
 Route::resource('lease-contracts', LeaseContractController::class);
 
 Route::resource('buildings', BuildingController::class);
+Route::post('/buildings/{building}/images',                        [BuildingImageController::class, 'store'])->name('buildings.images.store');
+Route::delete('/buildings/{building}/images/{image}',              [BuildingImageController::class, 'destroy'])->name('buildings.images.destroy');
+Route::post('/buildings/{building}/images/reorder',                [BuildingImageController::class, 'reorder'])->name('buildings.images.reorder');
 Route::get('/floors', [FloorController::class, 'globalIndex'])->name('floors.global');
 Route::resource('buildings.floors', FloorController::class)->shallow()->except(['show']);
 

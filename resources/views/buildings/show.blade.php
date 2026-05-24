@@ -159,6 +159,71 @@
         gap: 10px;
     }
 
+    /* ── PHOTOS PANEL ───────────────────────────────────── */
+    .photos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+    }
+    .photo-thumb {
+        position: relative; border-radius: 10px; overflow: hidden;
+        aspect-ratio: 4/3; background: var(--page-bg);
+        border: 1.5px solid var(--card-border);
+        group: true;
+    }
+    .photo-thumb img {
+        width: 100%; height: 100%; object-fit: cover; display: block;
+        cursor: zoom-in; transition: transform 0.25s;
+    }
+    .photo-thumb:hover img { transform: scale(1.05); }
+    .photo-delete-btn {
+        position: absolute; top: 6px; right: 6px;
+        width: 24px; height: 24px; border-radius: 50%;
+        background: rgba(239,68,68,0.9); border: none;
+        color: #fff; font-size: 10px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; transition: opacity 0.18s, transform 0.18s;
+        transform: scale(0.8);
+    }
+    .photo-thumb:hover .photo-delete-btn { opacity: 1; transform: scale(1); }
+    .photo-delete-form { position: absolute; top: 6px; right: 6px; }
+
+    /* Upload zone */
+    .upload-zone {
+        border: 2px dashed var(--card-border);
+        border-radius: 12px;
+        padding: 40px 24px;
+        text-align: center;
+        cursor: pointer;
+        background: var(--page-bg);
+        transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+        border-color: var(--accent);
+        background: var(--accent-dim);
+    }
+    .upload-zone-icon {
+        font-size: 32px; color: var(--text-muted); margin-bottom: 12px;
+        transition: color 0.2s, transform 0.2s;
+    }
+    .upload-zone:hover .upload-zone-icon { color: var(--accent); transform: translateY(-3px); }
+    .upload-zone-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+    .upload-zone-sub { font-size: 12px; color: var(--text-muted); }
+
+    /* Preview thumb (pre-upload) */
+    .preview-thumb {
+        position: relative; border-radius: 10px; overflow: hidden;
+        aspect-ratio: 4/3; background: var(--page-bg);
+        border: 1.5px solid var(--card-border);
+    }
+    .preview-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .preview-remove {
+        position: absolute; top: 6px; right: 6px;
+        width: 22px; height: 22px; border-radius: 50%;
+        background: rgba(239,68,68,0.88); border: none;
+        color: #fff; font-size: 9px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+    }
     .empty-floors {
         text-align: center;
         padding: 56px 20px;
@@ -247,6 +312,11 @@
         <i class="fa-solid fa-file-contract"></i>
         Agreements
         <span class="tab-badge">{{ $contracts->count() }}</span>
+    </button>
+    <button class="tab-btn" id="tab-photos" onclick="switchTab('photos')">
+        <i class="fa-solid fa-images"></i>
+        Photos
+        <span class="tab-badge">{{ $building->images->count() }}</span>
     </button>
 </div>
 
@@ -714,6 +784,76 @@
     </div>
 </div>
 
+{{-- ===================== PHOTOS TAB ===================== --}}
+<div class="tab-panel" id="panel-photos">
+    <div class="card" style="overflow:hidden;">
+        <div style="padding:20px 24px 16px; border-bottom:1px solid var(--card-border); display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <div>
+                <div style="font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;color:var(--text-primary);">Building Photos</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">{{ $building->images->count() }} photo{{ $building->images->count() !== 1 ? 's' : '' }} uploaded</div>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('photoUploadZone').scrollIntoView({behavior:'smooth'})">
+                <i class="fa-solid fa-plus"></i> Add Photos
+            </button>
+        </div>
+
+        {{-- Existing photos grid --}}
+        @if($building->images->isNotEmpty())
+        <div style="padding:20px;">
+            <div class="photos-grid">
+                @foreach($building->images as $img)
+                <div class="photo-thumb" id="thumb-{{ $img->id }}">
+                    <img src="{{ $img->url }}" alt="Building photo" loading="lazy" onclick="openLightbox('{{ $img->url }}')">
+                    <form method="POST" action="{{ route('buildings.images.destroy', [$building, $img]) }}" class="photo-delete-form"
+                          onsubmit="return confirm('Remove this photo?')">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="photo-delete-btn" title="Remove photo">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </form>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        {{-- Upload zone --}}
+        <div style="padding: {{ $building->images->isNotEmpty() ? '0 20px 20px' : '20px' }};" id="photoUploadZone">
+            <form method="POST" action="{{ route('buildings.images.store', $building) }}" enctype="multipart/form-data" id="photoUploadForm">
+                @csrf
+                <div class="upload-zone" id="uploadZone" onclick="document.getElementById('photoFileInput').click()">
+                    <div class="upload-zone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                    <div class="upload-zone-title">Drop photos here or click to browse</div>
+                    <div class="upload-zone-sub">JPG, PNG or WEBP · Max 4 MB each · Up to 10 photos</div>
+                    <input type="file" id="photoFileInput" name="images[]" multiple accept="image/jpeg,image/png,image/webp"
+                           style="display:none;" onchange="handlePhotoSelect(this)">
+                </div>
+
+                {{-- Client-side previews before upload --}}
+                <div id="uploadPreviewGrid" class="photos-grid" style="display:none;margin-top:16px;"></div>
+
+                <div id="uploadActions" style="display:none;margin-top:14px;display:none;gap:10px;align-items:center;">
+                    <span id="uploadFileCount" style="font-size:13px;color:var(--text-muted);"></span>
+                    <div style="margin-left:auto;display:flex;gap:8px;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="clearPhotoSelection()">
+                            <i class="fa-solid fa-xmark"></i> Clear
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-sm" id="uploadSubmitBtn">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Upload Photos
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+{{-- Lightbox --}}
+<div id="photoLightbox" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.88);backdrop-filter:blur(6px);align-items:center;justify-content:center;cursor:zoom-out;" onclick="closeLightbox()">
+    <img id="lightboxImg" src="" alt="" style="max-width:92vw;max-height:88vh;border-radius:8px;box-shadow:0 24px 64px rgba(0,0,0,0.5);object-fit:contain;">
+</div>
+
 @endsection
 
 @push('scripts')
@@ -731,7 +871,7 @@
 
     // Activate tab from URL, default to details
     const urlTab = new URLSearchParams(window.location.search).get('tab');
-    const validTabs = ['details', 'floors', 'units', 'tenants', 'agreements'];
+    const validTabs = ['details', 'floors', 'units', 'tenants', 'agreements', 'photos'];
     switchTab(validTabs.includes(urlTab) ? urlTab : 'details');
 
     if (hasModalError) {
@@ -757,7 +897,94 @@
     }
 
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeAddFloorModal();
+        if (e.key === 'Escape') { closeAddFloorModal(); closeLightbox(); }
     });
+
+    // ── PHOTO UPLOAD ──────────────────────────────────────
+    let selectedFiles = [];
+
+    const uploadZone = document.getElementById('uploadZone');
+    if (uploadZone) {
+        uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+        uploadZone.addEventListener('drop', e => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag-over');
+            addFiles(Array.from(e.dataTransfer.files));
+        });
+    }
+
+    function handlePhotoSelect(input) {
+        addFiles(Array.from(input.files));
+        input.value = '';
+    }
+
+    function addFiles(newFiles) {
+        const allowed = newFiles.filter(f => ['image/jpeg','image/png','image/webp'].includes(f.type) && f.size <= 4 * 1024 * 1024);
+        selectedFiles = [...selectedFiles, ...allowed].slice(0, 10);
+        renderPreviews();
+    }
+
+    function renderPreviews() {
+        const grid    = document.getElementById('uploadPreviewGrid');
+        const actions = document.getElementById('uploadActions');
+        const count   = document.getElementById('uploadFileCount');
+        grid.innerHTML = '';
+
+        if (!selectedFiles.length) {
+            grid.style.display = 'none';
+            actions.style.display = 'none';
+            return;
+        }
+
+        grid.style.display = 'grid';
+        actions.style.display = 'flex';
+        count.textContent = selectedFiles.length + ' photo' + (selectedFiles.length > 1 ? 's' : '') + ' ready to upload';
+
+        selectedFiles.forEach((file, idx) => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const div = document.createElement('div');
+                div.className = 'preview-thumb';
+                div.innerHTML = `<img src="${e.target.result}" alt="Preview">
+                    <button type="button" class="preview-remove" onclick="removePreview(${idx})"><i class="fa-solid fa-xmark"></i></button>`;
+                grid.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Sync files to a DataTransfer so the form sends them
+        const dt = new DataTransfer();
+        selectedFiles.forEach(f => dt.items.add(f));
+        document.getElementById('photoFileInput').files = dt.files;
+    }
+
+    function removePreview(idx) {
+        selectedFiles.splice(idx, 1);
+        renderPreviews();
+    }
+
+    function clearPhotoSelection() {
+        selectedFiles = [];
+        renderPreviews();
+    }
+
+    document.getElementById('photoUploadForm')?.addEventListener('submit', function() {
+        const btn = document.getElementById('uploadSubmitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading…';
+    });
+
+    // ── LIGHTBOX ──────────────────────────────────────────
+    function openLightbox(src) {
+        const lb = document.getElementById('photoLightbox');
+        document.getElementById('lightboxImg').src = src;
+        lb.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+        document.getElementById('photoLightbox').style.display = 'none';
+        document.body.style.overflow = '';
+    }
 </script>
 @endpush

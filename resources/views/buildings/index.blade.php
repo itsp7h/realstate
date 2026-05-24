@@ -115,45 +115,118 @@
     /* ── BUILDINGS CARD GRID ────────────────────────────── */
     .buildings-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 18px;
+        grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+        gap: 20px;
         padding: 20px;
     }
     .bldg-card {
         background: var(--card-bg);
         border: 1.5px solid var(--card-border);
-        border-radius: 12px;
+        border-radius: 14px;
         overflow: hidden;
         cursor: pointer;
-        transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+        transition: box-shadow 0.22s, transform 0.22s, border-color 0.22s;
         display: flex; flex-direction: column;
         position: relative;
     }
     .bldg-card:hover {
-        box-shadow: var(--shadow-md);
-        transform: translateY(-3px);
+        box-shadow: 0 12px 36px rgba(0,0,0,0.13);
+        transform: translateY(-4px);
         border-color: var(--accent);
     }
-    .bldg-card-accent {
-        height: 3px;
-        background: linear-gradient(90deg, var(--accent), #F5C842);
+
+    /* ── CARD PHOTO AREA ─────────────────────────────────── */
+    .bldg-card-photo {
+        position: relative;
+        height: 185px;
+        overflow: hidden;
+        background: var(--page-bg);
         flex-shrink: 0;
     }
-    .bldg-card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 12px; }
+    .bldg-card-type-bar {
+        position: absolute; top: 0; left: 0; right: 0;
+        height: 3px; z-index: 3;
+    }
+    /* Slides */
+    .photo-slides { width: 100%; height: 100%; position: relative; }
+    .photo-slide {
+        position: absolute; inset: 0;
+        opacity: 0; transition: opacity 0.4s ease;
+        pointer-events: none;
+    }
+    .photo-slide.active { opacity: 1; pointer-events: auto; }
+    .photo-slide img {
+        width: 100%; height: 100%;
+        object-fit: cover; display: block;
+    }
+    /* Carousel arrows */
+    .photo-arrow {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        z-index: 4; width: 28px; height: 28px;
+        background: rgba(11,17,32,0.52); backdrop-filter: blur(4px);
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 50%; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 10px;
+        opacity: 0; transition: opacity 0.2s, background 0.2s;
+    }
+    .photo-arrow:hover { background: rgba(11,17,32,0.82); }
+    .photo-arrow.prev { left: 8px; }
+    .photo-arrow.next { right: 8px; }
+    .bldg-card-photo:hover .photo-arrow { opacity: 1; }
+    /* Dots */
+    .photo-dots {
+        position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+        z-index: 4; display: flex; gap: 5px;
+    }
+    .photo-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: rgba(255,255,255,0.45);
+        cursor: pointer; transition: background 0.2s, transform 0.2s;
+        border: none; padding: 0;
+    }
+    .photo-dot.active { background: #fff; transform: scale(1.3); }
+    /* Photo count badge */
+    .photo-count-badge {
+        position: absolute; top: 10px; right: 10px; z-index: 4;
+        background: rgba(11,17,32,0.62); backdrop-filter: blur(4px);
+        color: #fff; font-size: 10.5px; font-weight: 700;
+        padding: 3px 8px; border-radius: 20px;
+        display: flex; align-items: center; gap: 4px;
+    }
+    /* Placeholder */
+    .photo-placeholder {
+        width: 100%; height: 100%;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 8px;
+        background:
+            radial-gradient(ellipse at 20% 50%, rgba(232,184,109,0.06) 0%, transparent 60%),
+            repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 18px,
+                rgba(var(--card-border-rgb, 200,210,225), 0.25) 18px,
+                rgba(var(--card-border-rgb, 200,210,225), 0.25) 19px
+            );
+    }
+    .photo-placeholder i { font-size: 28px; color: var(--text-muted); opacity: 0.35; }
+    .photo-placeholder span { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+
+    /* ── CARD BODY ───────────────────────────────────────── */
+    .bldg-card-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
     .bldg-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
     .bldg-card-title {
         font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 15px;
         color: var(--text-primary); line-height: 1.25; flex: 1;
     }
     .bldg-card-badges { display: flex; flex-wrap: wrap; gap: 5px; }
-    .bldg-card-meta {
-        display: flex; flex-direction: column; gap: 5px;
-    }
+    .bldg-card-meta { display: flex; flex-direction: column; gap: 4px; }
     .bldg-card-meta-row {
         display: flex; align-items: center; gap: 7px;
         font-size: 12px; color: var(--text-muted);
     }
-    .bldg-card-meta-row i { width: 13px; text-align: center; color: var(--text-muted); opacity: 0.7; font-size: 11px; flex-shrink: 0; }
+    .bldg-card-meta-row i { width: 13px; text-align: center; opacity: 0.6; font-size: 11px; flex-shrink: 0; }
     .bldg-card-stats {
         display: flex; gap: 8px; padding-top: 10px;
         border-top: 1px solid var(--card-border);
@@ -648,11 +721,53 @@
                     'Retail'       => '#EC4899',
                 ];
                 $accentColor = $typeColors[$building->property_type ?? ''] ?? 'var(--accent)';
-                $floorCount = $building->total_no_of_floors ?? $building->floors_count ?? 0;
-                $unitCount  = $building->total_no_of_units  ?? $building->units_count  ?? 0;
+                $floorCount  = $building->total_no_of_floors ?? $building->floors_count ?? 0;
+                $unitCount   = $building->total_no_of_units  ?? $building->units_count  ?? 0;
+                $images      = $building->images ?? collect();
+                $cardId      = 'card-'.$building->id;
             @endphp
             <div class="bldg-card" onclick="window.location='{{ route('buildings.show', $building) }}'">
-                <div class="bldg-card-accent" style="background: linear-gradient(90deg, {{ $accentColor }}, {{ $accentColor }}88);"></div>
+
+                {{-- PHOTO AREA --}}
+                <div class="bldg-card-photo">
+                    <div class="bldg-card-type-bar" style="background: linear-gradient(90deg, {{ $accentColor }}, {{ $accentColor }}88);"></div>
+
+                    @if($images->isNotEmpty())
+                        <div class="photo-slides" id="{{ $cardId }}-slides">
+                            @foreach($images as $i => $img)
+                                <div class="photo-slide {{ $i === 0 ? 'active' : '' }}">
+                                    <img src="{{ $img->url }}" alt="Building photo {{ $i + 1 }}" loading="lazy">
+                                </div>
+                            @endforeach
+                        </div>
+
+                        @if($images->count() > 1)
+                            <button class="photo-arrow prev" onclick="event.stopPropagation(); photoSlide('{{ $cardId }}', -1)" title="Previous">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button class="photo-arrow next" onclick="event.stopPropagation(); photoSlide('{{ $cardId }}', 1)" title="Next">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                            <div class="photo-dots" id="{{ $cardId }}-dots">
+                                @foreach($images as $i => $img)
+                                    <button class="photo-dot {{ $i === 0 ? 'active' : '' }}" onclick="event.stopPropagation(); photoGoTo('{{ $cardId }}', {{ $i }})"></button>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <div class="photo-count-badge">
+                            <i class="fa-solid fa-camera" style="font-size:9px;"></i>
+                            {{ $images->count() }}
+                        </div>
+                    @else
+                        <div class="photo-placeholder">
+                            <i class="fa-solid fa-building"></i>
+                            <span>No photos yet</span>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- CARD BODY --}}
                 <div class="bldg-card-body">
                     <div class="bldg-card-head">
                         <div>
@@ -699,6 +814,8 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- ACTIONS --}}
                 <div class="bldg-card-actions" onclick="event.stopPropagation()">
                     <a href="{{ route('buildings.show', $building) }}?tab=floors" class="btn btn-outline btn-sm" title="Floors">
                         <i class="fa-solid fa-layer-group"></i>
@@ -1116,6 +1233,25 @@
 
 @push('scripts')
 <script>
+// ── CARD PHOTO CAROUSEL ───────────────────────────────────
+const photoState = {};
+
+function photoSlide(cardId, dir) {
+    const slides = document.querySelectorAll(`#${cardId}-slides .photo-slide`);
+    if (!slides.length) return;
+    const cur = photoState[cardId] ?? 0;
+    const next = (cur + dir + slides.length) % slides.length;
+    photoGoTo(cardId, next);
+}
+
+function photoGoTo(cardId, idx) {
+    const slides = document.querySelectorAll(`#${cardId}-slides .photo-slide`);
+    const dots   = document.querySelectorAll(`#${cardId}-dots .photo-dot`);
+    slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+    dots.forEach((d, i)   => d.classList.toggle('active', i === idx));
+    photoState[cardId] = idx;
+}
+
 // ── VIEW TOGGLE ───────────────────────────────────────────
 function setView(mode) {
     const rows  = document.getElementById('view-rows');
