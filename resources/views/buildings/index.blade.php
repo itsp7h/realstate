@@ -86,6 +86,107 @@
     .empty-state h4 { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
     .empty-state p { font-size: 13px; color: var(--text-muted); }
 
+    /* ── VIEW TOGGLE ────────────────────────────────────── */
+    .view-toggle {
+        display: flex; align-items: center;
+        border: 1.5px solid var(--card-border);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    .view-toggle-btn {
+        width: 34px; height: 34px;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--card-bg); border: none; cursor: pointer;
+        color: var(--text-muted); font-size: 13px;
+        transition: background 0.15s, color 0.15s;
+    }
+    .view-toggle-btn:first-child { border-right: 1.5px solid var(--card-border); }
+    .view-toggle-btn:hover { background: var(--page-bg); color: var(--text-primary); }
+    .view-toggle-btn.active { background: var(--accent); color: #0B1120; }
+
+    /* ── VIEW PANELS ────────────────────────────────────── */
+    .view-panel { animation: viewFadeIn 0.22s ease both; }
+    @keyframes viewFadeIn {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── BUILDINGS CARD GRID ────────────────────────────── */
+    .buildings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 18px;
+        padding: 20px;
+    }
+    .bldg-card {
+        background: var(--card-bg);
+        border: 1.5px solid var(--card-border);
+        border-radius: 12px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+        display: flex; flex-direction: column;
+        position: relative;
+    }
+    .bldg-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-3px);
+        border-color: var(--accent);
+    }
+    .bldg-card-accent {
+        height: 3px;
+        background: linear-gradient(90deg, var(--accent), #F5C842);
+        flex-shrink: 0;
+    }
+    .bldg-card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 12px; }
+    .bldg-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .bldg-card-title {
+        font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 15px;
+        color: var(--text-primary); line-height: 1.25; flex: 1;
+    }
+    .bldg-card-badges { display: flex; flex-wrap: wrap; gap: 5px; }
+    .bldg-card-meta {
+        display: flex; flex-direction: column; gap: 5px;
+    }
+    .bldg-card-meta-row {
+        display: flex; align-items: center; gap: 7px;
+        font-size: 12px; color: var(--text-muted);
+    }
+    .bldg-card-meta-row i { width: 13px; text-align: center; color: var(--text-muted); opacity: 0.7; font-size: 11px; flex-shrink: 0; }
+    .bldg-card-stats {
+        display: flex; gap: 8px; padding-top: 10px;
+        border-top: 1px solid var(--card-border);
+        margin-top: auto;
+    }
+    .bldg-stat-pill {
+        flex: 1; background: var(--page-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 8px; padding: 8px 10px;
+        text-align: center;
+    }
+    .bldg-stat-pill-val {
+        font-family: 'Outfit', sans-serif; font-weight: 800;
+        font-size: 18px; color: var(--text-primary); line-height: 1;
+    }
+    .bldg-stat-pill-lbl {
+        font-size: 10px; color: var(--text-muted); font-weight: 600;
+        text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px;
+    }
+    .bldg-card-actions {
+        padding: 10px 16px 14px;
+        display: flex; gap: 6px;
+        border-top: 1px solid var(--card-border);
+    }
+    .bldg-card-actions .btn { flex: 1; justify-content: center; font-size: 12px; }
+
+    @media (max-width: 768px) {
+        .buildings-grid { grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px; }
+    }
+    @media (max-width: 480px) {
+        .buildings-grid { grid-template-columns: 1fr; }
+    }
+
     /* ── MODAL OVERLAY ──────────────────────────────────── */
     .modal-overlay {
         position: fixed; inset: 0; z-index: 1000;
@@ -418,10 +519,20 @@
                         <i class="fa-solid fa-xmark"></i> Clear
                     </a>
                 @endif
+                <div class="view-toggle" title="Switch view">
+                    <button type="button" class="view-toggle-btn active" id="btnViewRows" onclick="setView('rows')" title="Table view">
+                        <i class="fa-solid fa-list"></i>
+                    </button>
+                    <button type="button" class="view-toggle-btn" id="btnViewCards" onclick="setView('cards')" title="Card view">
+                        <i class="fa-solid fa-grip"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </form>
 
+    {{-- ROWS VIEW --}}
+    <div id="view-rows" class="view-panel">
     <div class="table-wrap">
         <table>
             <thead>
@@ -513,6 +624,104 @@
             </tbody>
         </table>
     </div>
+    </div>{{-- /view-rows --}}
+
+    {{-- CARDS VIEW --}}
+    <div id="view-cards" class="view-panel" style="display:none;">
+        @if($buildings->isEmpty())
+        <div class="empty-state">
+            <div class="empty-icon"><i class="fa-solid fa-building"></i></div>
+            <h4>No buildings found</h4>
+            <p>Try adjusting your filters or
+                <button type="button" onclick="openBuildingModal()" style="background:none;border:none;cursor:pointer;color:var(--accent);font-weight:600;padding:0;">add a new building</button>.
+            </p>
+        </div>
+        @else
+        <div class="buildings-grid">
+            @foreach($buildings as $building)
+            @php
+                $typeColors = [
+                    'Residential'  => '#10B981',
+                    'Commercial'   => '#3B82F6',
+                    'Mixed Use'    => '#8B5CF6',
+                    'Industrial'   => '#F59E0B',
+                    'Retail'       => '#EC4899',
+                ];
+                $accentColor = $typeColors[$building->property_type ?? ''] ?? 'var(--accent)';
+                $floorCount = $building->total_no_of_floors ?? $building->floors_count ?? 0;
+                $unitCount  = $building->total_no_of_units  ?? $building->units_count  ?? 0;
+            @endphp
+            <div class="bldg-card" onclick="window.location='{{ route('buildings.show', $building) }}'">
+                <div class="bldg-card-accent" style="background: linear-gradient(90deg, {{ $accentColor }}, {{ $accentColor }}88);"></div>
+                <div class="bldg-card-body">
+                    <div class="bldg-card-head">
+                        <div>
+                            <span class="badge badge-gold" style="font-size:11px;margin-bottom:6px;display:inline-block;">{{ $building->property_code }}</span>
+                            <div class="bldg-card-title">{{ $building->property_name }}</div>
+                        </div>
+                    </div>
+                    <div class="bldg-card-badges">
+                        @if($building->property_type)
+                            <span class="badge badge-blue">{{ $building->property_type }}</span>
+                        @endif
+                        @if($building->type_of_ownership)
+                            <span class="badge badge-gray">{{ $building->type_of_ownership }}</span>
+                        @endif
+                    </div>
+                    <div class="bldg-card-meta">
+                        @if($building->land_lord_name)
+                        <div class="bldg-card-meta-row">
+                            <i class="fa-solid fa-user-tie"></i>
+                            <span>{{ $building->land_lord_name }}</span>
+                        </div>
+                        @endif
+                        @if($building->building_no || $building->road)
+                        <div class="bldg-card-meta-row">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <span>{{ collect([$building->building_no, $building->road])->filter()->implode(', ') }}</span>
+                        </div>
+                        @endif
+                        @if($building->block || $building->area)
+                        <div class="bldg-card-meta-row">
+                            <i class="fa-solid fa-map"></i>
+                            <span>{{ collect([$building->block ? 'Block '.$building->block : null, $building->area])->filter()->implode(' · ') }}</span>
+                        </div>
+                        @endif
+                    </div>
+                    <div class="bldg-card-stats">
+                        <div class="bldg-stat-pill">
+                            <div class="bldg-stat-pill-val">{{ $floorCount ?: '—' }}</div>
+                            <div class="bldg-stat-pill-lbl">Floors</div>
+                        </div>
+                        <div class="bldg-stat-pill">
+                            <div class="bldg-stat-pill-val">{{ $unitCount ?: '—' }}</div>
+                            <div class="bldg-stat-pill-lbl">Units</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bldg-card-actions" onclick="event.stopPropagation()">
+                    <a href="{{ route('buildings.show', $building) }}?tab=floors" class="btn btn-outline btn-sm" title="Floors">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </a>
+                    <a href="{{ route('buildings.show', $building) }}" class="btn btn-outline btn-sm">
+                        <i class="fa-regular fa-eye"></i>
+                    </a>
+                    <a href="{{ route('buildings.edit', $building) }}" class="btn btn-outline btn-sm">
+                        <i class="fa-regular fa-pen-to-square"></i>
+                    </a>
+                    <form method="POST" action="{{ route('buildings.destroy', $building) }}"
+                          onsubmit="return confirm('Delete this building? This cannot be undone.')">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="btn btn-danger btn-sm" style="width:100%;">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            @endforeach
+        </div>
+        @endif
+    </div>{{-- /view-cards --}}
 
     <div class="table-footer">
         <div class="result-count">
@@ -907,6 +1116,33 @@
 
 @push('scripts')
 <script>
+// ── VIEW TOGGLE ───────────────────────────────────────────
+function setView(mode) {
+    const rows  = document.getElementById('view-rows');
+    const cards = document.getElementById('view-cards');
+    const btnRows  = document.getElementById('btnViewRows');
+    const btnCards = document.getElementById('btnViewCards');
+
+    if (mode === 'cards') {
+        rows.style.display  = 'none';
+        cards.style.display = 'block';
+        btnRows.classList.remove('active');
+        btnCards.classList.add('active');
+    } else {
+        cards.style.display = 'none';
+        rows.style.display  = 'block';
+        btnCards.classList.remove('active');
+        btnRows.classList.add('active');
+    }
+    localStorage.setItem('buildings_view', mode);
+}
+
+// Restore saved view on load
+(function() {
+    const saved = localStorage.getItem('buildings_view');
+    if (saved === 'cards') setView('cards');
+})();
+
 // ── FILTER DEBOUNCE ───────────────────────────────────────
 let debounceTimer;
 function debounceSubmit() {
