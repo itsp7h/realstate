@@ -71,7 +71,14 @@ class PropertyUnitController extends Controller
 
     public function show(PropertyUnit $propertyUnit)
     {
-        return view('property-units.show', ['unit' => $propertyUnit]);
+        $propertyUnit->load(['building', 'floor']);
+
+        $contracts = \App\Models\LeaseContract::where('property_code', $propertyUnit->property_code)
+            ->with('tenant')
+            ->orderByDesc('lease_start_date')
+            ->get();
+
+        return view('property-units.show', ['unit' => $propertyUnit, 'contracts' => $contracts]);
     }
 
     public function edit(PropertyUnit $propertyUnit)
