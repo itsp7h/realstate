@@ -218,6 +218,49 @@
 
 @push('styles')
 <style>
+/* ── MODAL OVERLAY (self-contained) ─────────────────────── */
+.modal-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(11,17,32,0.55); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal-box {
+    background: var(--card-bg); border: 1px solid var(--card-border);
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.10);
+    width: 100%; max-width: 680px; max-height: 90vh;
+    display: flex; flex-direction: column; overflow: hidden;
+    transform: translateY(20px) scale(0.98);
+    transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);
+}
+.modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
+.modal-header { padding: 20px 24px 0; flex-shrink: 0; }
+.modal-header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.modal-header-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--accent-dim); border: 1px solid rgba(232,184,109,0.25);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent); font-size: 16px; flex-shrink: 0;
+}
+.modal-header-text { flex: 1; }
+.modal-header-title { font-family: 'Outfit',sans-serif; font-size: 17px; font-weight: 800; color: var(--text-primary); line-height: 1; }
+.modal-header-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.modal-close-btn {
+    width: 32px; height: 32px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--card-border); background: transparent;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); font-size: 13px; transition: all 0.15s; flex-shrink: 0;
+}
+.modal-close-btn:hover { background: var(--page-bg); color: var(--text-primary); }
+.modal-footer {
+    padding: 16px 24px; border-top: 1px solid var(--card-border);
+    display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+    flex-shrink: 0; background: var(--card-bg);
+}
+
 /* ── IMPORT BANNER ───────────────────────────────────────── */
 .import-banner {
     display: flex;
