@@ -233,6 +233,21 @@
         Floors
         <span class="tab-badge">{{ $floors->count() }}</span>
     </button>
+    <button class="tab-btn" id="tab-units" onclick="switchTab('units')">
+        <i class="fa-solid fa-door-open"></i>
+        Units
+        <span class="tab-badge">{{ $units->count() }}</span>
+    </button>
+    <button class="tab-btn" id="tab-tenants" onclick="switchTab('tenants')">
+        <i class="fa-solid fa-users"></i>
+        Tenants
+        <span class="tab-badge">{{ $tenants->count() }}</span>
+    </button>
+    <button class="tab-btn" id="tab-agreements" onclick="switchTab('agreements')">
+        <i class="fa-solid fa-file-contract"></i>
+        Agreements
+        <span class="tab-badge">{{ $contracts->count() }}</span>
+    </button>
 </div>
 
 {{-- ===================== DETAILS TAB ===================== --}}
@@ -395,6 +410,223 @@
 
 </div>
 
+{{-- ===================== UNITS TAB ===================== --}}
+<div class="tab-panel" id="panel-units">
+    <div class="card" style="overflow:hidden;">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div class="card-header-icon"><i class="fa-solid fa-door-open"></i></div>
+                <div>
+                    <h3>Units</h3>
+                    <p>{{ $units->count() }} unit{{ $units->count() !== 1 ? 's' : '' }} in this building</p>
+                </div>
+            </div>
+            <a href="{{ route('property-units.index', ['property_code' => $building->property_code]) }}" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> View All
+            </a>
+        </div>
+        @if($units->isNotEmpty())
+        <div class="floor-table-wrap">
+            <table class="floor-table">
+                <thead>
+                    <tr>
+                        <th>Unit Name</th>
+                        <th>Floor</th>
+                        <th>Type</th>
+                        <th>Condition</th>
+                        <th>Description</th>
+                        <th>Rent / Month</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($units as $unit)
+                    <tr style="cursor:pointer" onclick="window.location='{{ route('property-units.show', $unit) }}'">
+                        <td>
+                            <span style="font-family:'Outfit',sans-serif;font-weight:700;">{{ $unit->unit_name }}</span>
+                        </td>
+                        <td>{{ $unit->floor?->floor_name ?? '—' }}</td>
+                        <td>
+                            @if($unit->unit_type)
+                                <span class="badge badge-blue">{{ $unit->unit_type }}</span>
+                            @else <span style="color:var(--text-muted);">—</span> @endif
+                        </td>
+                        <td>
+                            @if($unit->unit_condition)
+                                <span class="badge badge-gray">{{ $unit->unit_condition }}</span>
+                            @else <span style="color:var(--text-muted);">—</span> @endif
+                        </td>
+                        <td style="font-size:12px;color:var(--text-muted);">{{ $unit->description ?? '—' }}</td>
+                        <td>
+                            @if($unit->rent_per_month)
+                                <span style="font-family:'Outfit',sans-serif;font-weight:700;">BHD {{ number_format($unit->rent_per_month, 3) }}</span>
+                            @else <span style="color:var(--text-muted);">—</span> @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @else
+        <div class="empty-floors">
+            <div class="empty-icon"><i class="fa-solid fa-door-open"></i></div>
+            <h4>No units yet</h4>
+            <p>Units linked to this building will appear here.</p>
+        </div>
+        @endif
+    </div>
+</div>
+
+{{-- ===================== TENANTS TAB ===================== --}}
+<div class="tab-panel" id="panel-tenants">
+    <div class="card" style="overflow:hidden;">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div class="card-header-icon"><i class="fa-solid fa-users"></i></div>
+                <div>
+                    <h3>Tenants</h3>
+                    <p>{{ $tenants->count() }} tenant{{ $tenants->count() !== 1 ? 's' : '' }} with agreements in this building</p>
+                </div>
+            </div>
+            <a href="{{ route('tenants.index') }}" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> All Tenants
+            </a>
+        </div>
+        @if($tenants->isNotEmpty())
+        <div class="floor-table-wrap">
+            <table class="floor-table">
+                <thead>
+                    <tr>
+                        <th>Tenant</th>
+                        <th>Type</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Active Agreements</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($tenants as $tenant)
+                    @php
+                        $activeContracts = $contracts->where('tenant_id', $tenant->id)
+                            ->filter(fn($c) => in_array($c->status, ['active','expiring','upcoming']))->count();
+                    @endphp
+                    <tr style="cursor:pointer" onclick="window.location='{{ route('tenants.show', $tenant) }}'">
+                        <td>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div style="width:32px;height:32px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-weight:700;font-size:13px;flex-shrink:0;">
+                                    {{ strtoupper(substr($tenant->name, 0, 1)) }}
+                                </div>
+                                <span style="font-weight:600;font-size:13.5px;">{{ $tenant->name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            @if($tenant->tenant_type)
+                                <span class="badge badge-gray">{{ ucfirst($tenant->tenant_type) }}</span>
+                            @else <span style="color:var(--text-muted);">—</span> @endif
+                        </td>
+                        <td style="font-size:13px;">{{ $tenant->phone ?? '—' }}</td>
+                        <td style="font-size:13px;">{{ $tenant->email ?? '—' }}</td>
+                        <td>
+                            @if($activeContracts > 0)
+                                <span class="badge" style="background:#ECFDF5;color:#059669;">{{ $activeContracts }} active</span>
+                            @else
+                                <span style="color:var(--text-muted);">—</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @else
+        <div class="empty-floors">
+            <div class="empty-icon"><i class="fa-solid fa-users"></i></div>
+            <h4>No tenants yet</h4>
+            <p>Tenants with lease agreements in this building will appear here.</p>
+        </div>
+        @endif
+    </div>
+</div>
+
+{{-- ===================== AGREEMENTS TAB ===================== --}}
+<div class="tab-panel" id="panel-agreements">
+    <div class="card" style="overflow:hidden;">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div class="card-header-icon"><i class="fa-solid fa-file-contract"></i></div>
+                <div>
+                    <h3>Lease Agreements</h3>
+                    <p>{{ $contracts->count() }} agreement{{ $contracts->count() !== 1 ? 's' : '' }} for this building</p>
+                </div>
+            </div>
+            <a href="{{ route('lease-contracts.index', ['property_code' => $building->property_code]) }}" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> View All
+            </a>
+        </div>
+        @if($contracts->isNotEmpty())
+        <div class="floor-table-wrap">
+            <table class="floor-table">
+                <thead>
+                    <tr>
+                        <th>Agreement No.</th>
+                        <th>Tenant</th>
+                        <th>Unit</th>
+                        <th>Lease Period</th>
+                        <th>Rent / Month</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($contracts as $contract)
+                    @php
+                        $status = $contract->status;
+                        $statusLabel = match($status) {
+                            'active'   => 'Active',
+                            'expiring' => 'Expiring',
+                            'upcoming' => 'Upcoming',
+                            'expired'  => 'Expired',
+                            default    => ucfirst($status),
+                        };
+                        $statusStyle = match($status) {
+                            'active'   => 'background:#ECFDF5;color:#059669;',
+                            'expiring' => 'background:#FFFBEB;color:#D97706;',
+                            'upcoming' => 'background:#EFF6FF;color:#2563EB;',
+                            'expired'  => 'background:#F1F5F9;color:#64748B;',
+                            default    => 'background:#F1F5F9;color:#64748B;',
+                        };
+                    @endphp
+                    <tr style="cursor:pointer" onclick="window.location='{{ route('lease-contracts.show', $contract) }}'">
+                        <td>
+                            <span style="font-family:'Outfit',sans-serif;font-weight:700;">{{ $contract->lease_agreement_no }}</span>
+                        </td>
+                        <td>{{ $contract->tenant_name ?? $contract->tenant?->name ?? '—' }}</td>
+                        <td>{{ $contract->unit ?? '—' }}</td>
+                        <td style="font-size:12px;white-space:nowrap;">
+                            {{ $contract->lease_start_date?->format('d M Y') }} →
+                            {{ $contract->lease_end_date?->format('d M Y') }}
+                        </td>
+                        <td>
+                            @if($contract->rent_per_month)
+                                <span style="font-family:'Outfit',sans-serif;font-weight:700;">{{ $contract->currency ?? 'BHD' }} {{ number_format($contract->rent_per_month, 3) }}</span>
+                            @else <span style="color:var(--text-muted);">—</span> @endif
+                        </td>
+                        <td>
+                            <span class="badge" style="{{ $statusStyle }}">{{ $statusLabel }}</span>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @else
+        <div class="empty-floors">
+            <div class="empty-icon"><i class="fa-solid fa-file-contract"></i></div>
+            <h4>No agreements yet</h4>
+            <p>Lease agreements for this property code will appear here.</p>
+        </div>
+        @endif
+    </div>
+</div>
+
 {{-- ===================== ADD FLOOR MODAL ===================== --}}
 <div class="modal-overlay" id="addFloorModal" onclick="closeAddFloorModalOnOverlay(event)">
     <div class="modal-box">
@@ -499,7 +731,8 @@
 
     // Activate tab from URL, default to details
     const urlTab = new URLSearchParams(window.location.search).get('tab');
-    switchTab(urlTab === 'floors' ? 'floors' : 'details');
+    const validTabs = ['details', 'floors', 'units', 'tenants', 'agreements'];
+    switchTab(validTabs.includes(urlTab) ? urlTab : 'details');
 
     if (hasModalError) {
         openAddFloorModal();

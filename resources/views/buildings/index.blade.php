@@ -440,7 +440,7 @@
             </thead>
             <tbody>
                 @forelse($buildings as $building)
-                <tr>
+                <tr data-href="{{ route('buildings.show', $building) }}" style="cursor:pointer">
                     <td><span class="badge badge-gold">{{ $building->property_code }}</span></td>
                     <td><div class="bldg-code">{{ $building->property_name }}</div></td>
                     <td>
@@ -478,7 +478,7 @@
                             <div style="font-family:'Outfit',sans-serif;font-weight:700;">{{ $unitCount }}</div>
                         @else <span style="color:var(--text-muted);">—</span> @endif
                     </td>
-                    <td>
+                    <td onclick="event.stopPropagation()">
                         <div class="action-btns" style="justify-content:flex-end;">
                             <a href="{{ route('buildings.show', $building) }}?tab=floors" class="btn btn-outline btn-sm" title="Floors">
                                 <i class="fa-solid fa-layer-group"></i>

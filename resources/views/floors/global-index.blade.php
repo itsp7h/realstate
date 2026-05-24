@@ -280,7 +280,7 @@
             </thead>
             <tbody>
                 @forelse($floors as $floor)
-                <tr>
+                <tr data-href="{{ route('buildings.show', $floor->building) }}?tab=floors" style="cursor:pointer">
                     <td>
                         <a href="{{ route('buildings.show', $floor->building) }}?tab=floors"
                            style="text-decoration:none;">
@@ -313,7 +313,7 @@
                             <span style="color:var(--text-muted);">—</span>
                         @endif
                     </td>
-                    <td>
+                    <td onclick="event.stopPropagation()">
                         <div class="action-btns">
                             <a href="{{ route('buildings.show', $floor->building) }}?tab=floors"
                                class="btn btn-outline btn-sm" title="View in building">

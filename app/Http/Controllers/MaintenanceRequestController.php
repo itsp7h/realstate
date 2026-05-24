@@ -66,7 +66,7 @@ class MaintenanceRequestController extends Controller
 
         $record = MaintenanceRequest::create($data);
 
-        return redirect()->route('maintenance.show', $record)
+        return redirect()->route('maintenance.index')
             ->with('success', "Maintenance request {$record->job_order} submitted successfully.");
     }
 

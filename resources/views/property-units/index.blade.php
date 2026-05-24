@@ -276,7 +276,7 @@
             </thead>
             <tbody>
                 @forelse($units as $unit)
-                <tr>
+                <tr data-href="{{ route('property-units.show', $unit) }}" style="cursor:pointer">
                     <td>
                         <div class="unit-code">{{ $unit->unit_name }}</div>
                         <div class="unit-prop">{{ $unit->description }}</div>
@@ -326,7 +326,7 @@
                         @if($unit->view) <span class="badge badge-gray">{{ $unit->view }}</span>
                         @else <span style="color:var(--text-muted);">—</span> @endif
                     </td>
-                    <td>
+                    <td onclick="event.stopPropagation()">
                         <div class="action-btns" style="justify-content:flex-end;">
                             <a href="{{ route('property-units.show', $unit) }}" class="btn btn-outline btn-sm"><i class="fa-regular fa-eye"></i></a>
                             <a href="{{ route('property-units.edit', $unit) }}" class="btn btn-outline btn-sm"><i class="fa-regular fa-pen-to-square"></i></a>

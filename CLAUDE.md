@@ -76,6 +76,12 @@ php artisan make:migration # Create migration
 - Use Laravel's built-in PHPUnit test suite (`tests/Feature` for HTTP/integration tests, `tests/Unit` for isolated logic)
 - Fix any failing tests before moving on to the next task
 
+## Index Page Row Click Rule
+- **EVERY** index/listing page must make each table row clickable — clicking anywhere on a row navigates to that record's show/view page
+- Implement this with a `data-href` attribute on the `<tr>` and a global JS handler (or inline `onclick`), styled with `cursor: pointer` on the row
+- The dedicated action buttons (edit, delete) in the Actions column must still work independently — use `e.stopPropagation()` on those cells/buttons so they do not trigger the row click
+- This applies to all CRUD modules: buildings, floors, units, tenants, lease contracts, maintenance requests, and any future modules
+
 ## Notes
 - App key is already generated
 - Default database is SQLite at `database/database.sqlite`

@@ -637,7 +637,10 @@ class ImportController extends Controller
             $results['tenants']   = ['imported' => $tImported, 'errors' => $tErrors];
             $results['contracts'] = ['imported' => $cImported, 'errors' => $cErrors];
         } else {
-            foreach ($detected as $entity) {
+            // Always process in dependency order: buildings → floors → units → tenants
+            $order = ['buildings', 'floors', 'units', 'tenants'];
+            $sorted = array_values(array_intersect($order, $detected));
+            foreach ($sorted as $entity) {
                 $results[$entity] = $this->smartImportGeneric($entity, $dataRows, $headers);
             }
         }
@@ -795,35 +798,61 @@ class ImportController extends Controller
 
         [$required, $transform, $persist] = match ($entity) {
 
-            'buildings' => [
-                ['property_name', 'property_code'],
-                function (array $r, int $row): array {
-                    $code = strtoupper(trim($r['property_code']));
-                    if (Building::where('property_code', $code)->exists())
-                        return ['error' => "Row {$row}: Property Code '{$code}' already exists — skipped."];
-                    $r['property_code'] = $code;
-                    return ['data' => $this->onlyFillable($r, self::BUILDING_COLUMNS)];
-                },
-                fn($d) => Building::create($d),
-            ],
+            'buildings' => (function () {
+                $seenCodes = [];
+                return [
+                    ['property_name', 'property_code'],
+                    function (array $r, int $_row) use (&$seenCodes): array {
+                        $code = strtoupper(trim($r['property_code']));
+                        if (isset($seenCodes[$code]))
+                            return ['skip' => true];  // silent within-batch duplicate
+                        if (Building::where('property_code', $code)->exists()) {
+                            $seenCodes[$code] = true;
+                            return ['error' => "Property Code '{$code}' already exists — skipped."];
+                        }
+                        $seenCodes[$code] = true;
+                        $r['property_code'] = $code;
+                        return ['data' => $this->onlyFillable($r, self::BUILDING_COLUMNS)];
+                    },
+                    fn($d) => Building::create($d),
+                ];
+            })(),
 
-            'floors' => [
-                ['property_code', 'floor_name'],
-                function (array $r, int $row): array {
-                    $code     = strtoupper(trim($r['property_code']));
-                    $building = Building::where('property_code', $code)->first();
-                    if (!$building)
-                        return ['error' => "Row {$row}: Property Code '{$code}' not found — skipped."];
-                    $data = $this->onlyFillable($r, self::FLOOR_COLUMNS, exclude: ['property_code']);
-                    $data['building_id'] = $building->id;
-                    return ['data' => $data];
-                },
-                fn($d) => Floor::create($d),
-            ],
+            'floors' => (function () {
+                $seen = [];
+                return [
+                    ['property_code', 'floor_name'],
+                    function (array $r, int $row) use (&$seen): array {
+                        $code     = strtoupper(trim($r['property_code']));
+                        $building = Building::where('property_code', $code)->first();
+                        if (!$building)
+                            return ['error' => "Row {$row}: Property Code '{$code}' not found — skipped."];
+                        $data = $this->onlyFillable($r, self::FLOOR_COLUMNS, exclude: ['property_code']);
+                        $data['building_id'] = $building->id;
+                        $key = $building->id . '|' . strtolower($data['floor_name']);
+                        if (isset($seen[$key]))
+                            return ['skip' => true];  // silent within-batch duplicate
+                        if (Floor::where('building_id', $building->id)->where('floor_name', $data['floor_name'])->exists()) {
+                            $seen[$key] = true;
+                            return ['error' => "Floor '{$data['floor_name']}' already exists for '{$code}' — skipped."];
+                        }
+                        $seen[$key] = true;
+                        return ['data' => $data];
+                    },
+                    fn($d) => Floor::create($d),
+                ];
+            })(),
 
             'units' => [
-                ['unit_name'],
-                function (array $r, int $_row): array {
+                [],
+                function (array $r, int $row): array {
+                    // Accept 'unit' (from combined label map) as alias for 'unit_name'
+                    if (empty($r['unit_name']) && !empty($r['unit'])) {
+                        $r['unit_name'] = $r['unit'];
+                    }
+                    if (empty($r['unit_name'])) {
+                        return ['error' => "Row {$row}: 'unit_name' is required — skipped."];
+                    }
                     $bCode    = strtoupper(trim($r['property_code'] ?? ''));
                     $building = $bCode ? Building::where('property_code', $bCode)->first() : null;
                     $data = $this->onlyFillable($r, self::UNIT_COLUMNS, exclude: ['property_code', 'floor_code']);
@@ -883,6 +912,7 @@ class ImportController extends Controller
             }
 
             $result = $transform($record, $row);
+            if (isset($result['skip'])) { continue; }
             if (isset($result['error'])) { $errors[] = $result['error']; continue; }
 
             try {

@@ -283,6 +283,9 @@
             <tbody>
                 @forelse($contracts as $contract)
                 @php
+                    $contractShowUrl = route('lease-contracts.show', $contract);
+                @endphp
+                @php
                     $status = $contract->status;
                     $statusLabel = match($status) {
                         'active'   => 'Active',
@@ -301,7 +304,7 @@
                     $now   = min(now()->timestamp, $end);
                     $pct   = $end > $start ? max(0, min(100, round(($now - $start) / ($end - $start) * 100))) : 100;
                 @endphp
-                <tr>
+                <tr data-href="{{ $contractShowUrl }}" style="cursor:pointer">
                     <td>
                         <span class="agr-no">{{ $contract->lease_agreement_no }}</span>
                         <div class="cell-sub">{{ $contract->date->format('d M Y') }}</div>
@@ -351,7 +354,7 @@
                         </span>
                     </td>
                     <td>
-                        <div class="action-btns" style="justify-content:flex-end;">
+                        <div class="action-btns" style="justify-content:flex-end;" onclick="event.stopPropagation()">
                             <a href="{{ route('lease-contracts.show', $contract) }}" class="btn btn-outline btn-sm" title="View">
                                 <i class="fa-regular fa-eye"></i>
                             </a>

@@ -602,5 +602,11 @@
 </script>
 
 @stack('scripts')
+<script>
+document.addEventListener('click', function(e) {
+    const tr = e.target.closest('tr[data-href]');
+    if (tr) window.location = tr.dataset.href;
+});
+</script>
 </body>
 </html>

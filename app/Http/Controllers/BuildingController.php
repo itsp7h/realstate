@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Building;
 use App\Models\CustomFieldDefinition;
+use App\Models\LeaseContract;
 use App\Http\Requests\StoreBuildingRequest;
 use App\Http\Requests\UpdateBuildingRequest;
 use App\Services\FormConfigService;
@@ -54,7 +55,18 @@ class BuildingController extends Controller
     public function show(Building $building)
     {
         $floors = $building->floors()->orderBy('floor_name')->get();
-        return view('buildings.show', compact('building', 'floors'));
+
+        $units = $building->units()->with('floor')->orderBy('unit_name')->get();
+
+        $contracts = LeaseContract::where('property_code', $building->property_code)
+            ->with('tenant')
+            ->orderByDesc('lease_start_date')
+            ->get();
+
+        // Unique tenants derived from contracts for this building
+        $tenants = $contracts->pluck('tenant')->filter()->unique('id')->values();
+
+        return view('buildings.show', compact('building', 'floors', 'units', 'contracts', 'tenants'));
     }
 
     public function edit(Building $building)

@@ -296,7 +296,7 @@
             </thead>
             <tbody>
                 @forelse($tenants as $tenant)
-                <tr>
+                <tr data-href="{{ route('tenants.show', $tenant) }}" style="cursor:pointer">
                     <td>
                         <div style="display:flex;align-items:center;gap:10px;">
                             <div class="tenant-avatar {{ $tenant->tenant_type }}">
@@ -343,7 +343,7 @@
                             <span style="color:var(--text-muted);">—</span>
                         @endif
                     </td>
-                    <td>
+                    <td onclick="event.stopPropagation()">
                         <div class="action-btns" style="justify-content:flex-end;">
                             <a href="{{ route('tenants.show', $tenant) }}" class="btn btn-outline btn-sm" title="View">
                                 <i class="fa-regular fa-eye"></i>
