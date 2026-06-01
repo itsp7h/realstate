@@ -14,7 +14,7 @@ class MaintenanceRequest extends Model
         'date', 'job_order', 'property', 'tenant', 'flat', 'contact_no',
         'available_datetime', 'apartment_status', 'request_date', 'status',
         'supervisor_name', 'supervisor_datetime',
-        'job_assessment', 'quotation_1', 'quotation_2', 'quotation_3', 'maintenance_remarks',
+        'job_assessment', 'quotation_1', 'quotation_1_file', 'quotation_2', 'quotation_2_file', 'quotation_3', 'quotation_3_file', 'maintenance_remarks',
         'approved_supervisor', 'approved_dept_head',
         'job_lines',
     ];

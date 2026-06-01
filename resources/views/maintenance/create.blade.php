@@ -66,6 +66,47 @@
 }
 .remove-line-btn:hover { background: #FEF2F2; }
 
+/* ── QUOTATION ATTACHMENT ────────────────────────────────── */
+.quot-block { display: flex; flex-direction: column; gap: 8px; }
+.quot-attach-area {
+    border: 1.5px dashed var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    background: var(--page-bg);
+    transition: border-color 0.18s;
+}
+.quot-attach-area:focus-within { border-color: var(--accent); }
+.quot-existing-file {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; margin-bottom: 7px;
+    background: var(--accent-dim); border-radius: var(--radius-sm);
+    font-size: 12px; color: var(--text-primary);
+}
+.quot-existing-file a { color: var(--accent); font-weight: 600; text-decoration: none; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quot-existing-file a:hover { text-decoration: underline; }
+.quot-remove-label { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #DC2626; cursor: pointer; white-space: nowrap; }
+.quot-remove-label input { accent-color: #DC2626; }
+.quot-file-row { display: flex; align-items: center; gap: 8px; }
+.quot-choose-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 10px; font-size: 11.5px; font-weight: 600;
+    background: var(--card-bg); border: 1.5px solid var(--card-border);
+    border-radius: var(--radius-sm); color: var(--text-secondary);
+    cursor: pointer; transition: border-color 0.15s, color 0.15s; white-space: nowrap;
+}
+.quot-choose-btn:hover { border-color: var(--accent); color: var(--accent); }
+.quot-file-name {
+    font-size: 11.5px; color: var(--text-muted); overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; flex: 1;
+}
+.quot-file-name.has-file { color: var(--text-primary); font-weight: 500; }
+.quot-clear-btn {
+    background: none; border: none; color: var(--text-muted); cursor: pointer;
+    font-size: 13px; padding: 2px 4px; border-radius: 4px; line-height: 1;
+    transition: color 0.15s;
+}
+.quot-clear-btn:hover { color: #DC2626; }
+
 /* ── READONLY NOTE ───────────────────────────────────────── */
 .section-note {
     font-size: 11px; color: var(--text-muted);
@@ -106,7 +147,8 @@
 @endif
 
 <form method="POST"
-      action="{{ $record ? route('maintenance.update', $record) : route('maintenance.store') }}">
+      action="{{ $record ? route('maintenance.update', $record) : route('maintenance.store') }}"
+      enctype="multipart/form-data">
     @csrf
     @if($record) @method('PUT') @endif
 
@@ -265,18 +307,43 @@
                 <textarea name="job_assessment" rows="3" placeholder="Assessment notes and findings…">{{ old('job_assessment', $record?->job_assessment) }}</textarea>
             </div>
             <div class="form-grid-3" style="margin-bottom:16px">
+                @foreach([1,2,3] as $n)
+                @php $fileField = "quotation_{$n}_file"; $existingFile = $record?->$fileField; @endphp
                 <div class="form-group">
-                    <label>Quotation 1 (BHD)</label>
-                    <input type="number" name="quotation_1" value="{{ old('quotation_1', $record?->quotation_1) }}" step="0.001" min="0" placeholder="0.000">
+                    <label>Quotation {{ $n }} (BHD)</label>
+                    <div class="quot-block">
+                        <input type="number" name="quotation_{{ $n }}" value="{{ old('quotation_'.$n, $record?->{'quotation_'.$n}) }}" step="0.001" min="0" placeholder="0.000">
+                        <div class="quot-attach-area">
+                            @if($existingFile)
+                            <div class="quot-existing-file">
+                                <i class="fa-solid fa-paperclip" style="font-size:11px;color:var(--accent);flex-shrink:0"></i>
+                                <a href="{{ Storage::url($existingFile) }}" target="_blank" title="{{ basename($existingFile) }}">{{ basename($existingFile) }}</a>
+                                <label class="quot-remove-label" title="Remove this file">
+                                    <input type="checkbox" name="remove_{{ $fileField }}" value="1" style="margin:0">
+                                    Remove
+                                </label>
+                            </div>
+                            @endif
+                            <div class="quot-file-row">
+                                <label class="quot-choose-btn" for="quot_file_{{ $n }}">
+                                    <i class="fa-solid fa-arrow-up-from-bracket" style="font-size:10px"></i>
+                                    {{ $existingFile ? 'Replace' : 'Attach file' }}
+                                </label>
+                                <input type="file" id="quot_file_{{ $n }}" name="{{ $fileField }}"
+                                       accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                       class="quot-file-input" data-index="{{ $n }}" style="display:none">
+                                <span class="quot-file-name" id="quot_fname_{{ $n }}">No file chosen</span>
+                                <button type="button" class="quot-clear-btn" id="quot_clear_{{ $n }}" style="display:none" title="Clear selection">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+                        @error($fileField)
+                        <div style="font-size:12px;color:#DC2626;margin-top:2px"><i class="fa-solid fa-triangle-exclamation"></i> {{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Quotation 2 (BHD)</label>
-                    <input type="number" name="quotation_2" value="{{ old('quotation_2', $record?->quotation_2) }}" step="0.001" min="0" placeholder="0.000">
-                </div>
-                <div class="form-group">
-                    <label>Quotation 3 (BHD)</label>
-                    <input type="number" name="quotation_3" value="{{ old('quotation_3', $record?->quotation_3) }}" step="0.001" min="0" placeholder="0.000">
-                </div>
+                @endforeach
             </div>
             <div class="form-group">
                 <label>Maintenance Remarks</label>
@@ -345,9 +412,34 @@ function removeJobLine(btn) {
     if (tbody.querySelectorAll('tr').length > 1) {
         row.remove();
     } else {
-        // Clear the last row instead of removing it
         row.querySelectorAll('input, textarea').forEach(el => el.value = '');
     }
 }
+
+// Quotation file inputs
+document.querySelectorAll('.quot-file-input').forEach(input => {
+    const n     = input.dataset.index;
+    const label = document.getElementById('quot_fname_' + n);
+    const clear = document.getElementById('quot_clear_' + n);
+
+    input.addEventListener('change', () => {
+        if (input.files.length) {
+            const f    = input.files[0];
+            const size = f.size < 1024 * 1024
+                ? (f.size / 1024).toFixed(1) + ' KB'
+                : (f.size / 1024 / 1024).toFixed(1) + ' MB';
+            label.textContent = f.name + ' (' + size + ')';
+            label.classList.add('has-file');
+            clear.style.display = '';
+        }
+    });
+
+    clear.addEventListener('click', () => {
+        input.value = '';
+        label.textContent = 'No file chosen';
+        label.classList.remove('has-file');
+        clear.style.display = 'none';
+    });
+});
 </script>
 @endpush

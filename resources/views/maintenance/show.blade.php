@@ -204,18 +204,23 @@
         </div>
         @endif
         <div class="detail-grid" style="margin-bottom:{{ $record->maintenance_remarks ? '18px' : '0' }}">
+            @foreach([1,2,3] as $n)
+            @php $fileField = "quotation_{$n}_file"; @endphp
             <div class="detail-item">
-                <div class="detail-label">Quotation 1</div>
-                <div class="detail-value mono">{{ $record->quotation_1 ? 'BHD '.number_format($record->quotation_1, 3) : '—' }}</div>
+                <div class="detail-label">Quotation {{ $n }}</div>
+                <div class="detail-value mono">{{ $record->{"quotation_{$n}"} ? 'BHD '.number_format($record->{"quotation_{$n}"}, 3) : '—' }}</div>
+                @if($record->$fileField)
+                <div style="margin-top:6px">
+                    <a href="{{ Storage::url($record->$fileField) }}" target="_blank"
+                       style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;padding:4px 8px;border-radius:var(--radius-sm);background:var(--accent-dim);transition:opacity .15s"
+                       onmouseover="this.style.opacity='.75'" onmouseout="this.style.opacity='1'">
+                        <i class="fa-solid fa-paperclip" style="font-size:10px"></i>
+                        {{ basename($record->$fileField) }}
+                    </a>
+                </div>
+                @endif
             </div>
-            <div class="detail-item">
-                <div class="detail-label">Quotation 2</div>
-                <div class="detail-value mono">{{ $record->quotation_2 ? 'BHD '.number_format($record->quotation_2, 3) : '—' }}</div>
-            </div>
-            <div class="detail-item">
-                <div class="detail-label">Quotation 3</div>
-                <div class="detail-value mono">{{ $record->quotation_3 ? 'BHD '.number_format($record->quotation_3, 3) : '—' }}</div>
-            </div>
+            @endforeach
         </div>
         @if($record->maintenance_remarks)
         <div>

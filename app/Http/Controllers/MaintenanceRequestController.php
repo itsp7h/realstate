@@ -8,6 +8,7 @@ use App\Models\MaintenanceRequest;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class MaintenanceRequestController extends Controller
 {
@@ -64,6 +65,12 @@ class MaintenanceRequestController extends Controller
         $data['status']       = $data['status'] ?? 'open';
         $data['request_date'] = $data['request_date'] ?? now()->toDateString();
 
+        foreach (['quotation_1_file', 'quotation_2_file', 'quotation_3_file'] as $field) {
+            if ($request->hasFile($field)) {
+                $data[$field] = $request->file($field)->store('maintenance/quotations', 'public');
+            }
+        }
+
         $record = MaintenanceRequest::create($data);
 
         return redirect()->route('maintenance.index')
@@ -82,7 +89,25 @@ class MaintenanceRequestController extends Controller
 
     public function update(UpdateMaintenanceRequest $request, MaintenanceRequest $maintenanceRequest): RedirectResponse
     {
-        $maintenanceRequest->update($request->validated());
+        $data = $request->validated();
+
+        foreach (['quotation_1_file', 'quotation_2_file', 'quotation_3_file'] as $field) {
+            if ($request->hasFile($field)) {
+                if ($maintenanceRequest->$field) {
+                    Storage::disk('public')->delete($maintenanceRequest->$field);
+                }
+                $data[$field] = $request->file($field)->store('maintenance/quotations', 'public');
+            } elseif ($request->boolean("remove_{$field}")) {
+                if ($maintenanceRequest->$field) {
+                    Storage::disk('public')->delete($maintenanceRequest->$field);
+                }
+                $data[$field] = null;
+            } else {
+                unset($data[$field]);
+            }
+        }
+
+        $maintenanceRequest->update($data);
 
         return redirect()->route('maintenance.show', $maintenanceRequest)
             ->with('success', "Maintenance request {$maintenanceRequest->job_order} updated.");
@@ -90,6 +115,12 @@ class MaintenanceRequestController extends Controller
 
     public function destroy(MaintenanceRequest $maintenanceRequest): RedirectResponse
     {
+        foreach (['quotation_1_file', 'quotation_2_file', 'quotation_3_file'] as $field) {
+            if ($maintenanceRequest->$field) {
+                Storage::disk('public')->delete($maintenanceRequest->$field);
+            }
+        }
+
         $maintenanceRequest->delete();
 
         return redirect()->route('maintenance.index')

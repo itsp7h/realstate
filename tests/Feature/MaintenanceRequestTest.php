@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\MaintenanceRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class MaintenanceRequestTest extends TestCase
@@ -165,6 +167,76 @@ class MaintenanceRequestTest extends TestCase
         $record = MaintenanceRequest::create($this->baseData());
         $this->delete(route('maintenance.destroy', $record))->assertRedirect(route('maintenance.index'));
         $this->assertDatabaseMissing('maintenance_requests', ['id' => $record->id]);
+    }
+
+    // ── QUOTATION FILE ATTACHMENTS ───────────────────────────────────────────
+
+    public function test_store_uploads_quotation_file(): void
+    {
+        Storage::fake('public');
+        $file = UploadedFile::fake()->create('quote1.pdf', 100, 'application/pdf');
+
+        $this->post(route('maintenance.store'), $this->baseData(['quotation_1_file' => $file]));
+
+        $record = MaintenanceRequest::first();
+        $this->assertNotNull($record->quotation_1_file);
+        Storage::disk('public')->assertExists($record->quotation_1_file);
+    }
+
+    public function test_store_rejects_invalid_quotation_file_type(): void
+    {
+        Storage::fake('public');
+        $file = UploadedFile::fake()->create('malware.exe', 50, 'application/octet-stream');
+
+        $this->post(route('maintenance.store'), $this->baseData(['quotation_1_file' => $file]))
+             ->assertSessionHasErrors('quotation_1_file');
+    }
+
+    public function test_update_replaces_quotation_file(): void
+    {
+        Storage::fake('public');
+        $old = UploadedFile::fake()->create('old.pdf', 50, 'application/pdf');
+        $new = UploadedFile::fake()->create('new.pdf', 60, 'application/pdf');
+
+        $this->post(route('maintenance.store'), $this->baseData(['quotation_1_file' => $old]));
+        $record   = MaintenanceRequest::first();
+        $oldPath  = $record->quotation_1_file;
+
+        $this->put(route('maintenance.update', $record), $this->baseData(['quotation_1_file' => $new]));
+        $record->refresh();
+
+        $this->assertNotEquals($oldPath, $record->quotation_1_file);
+        Storage::disk('public')->assertMissing($oldPath);
+        Storage::disk('public')->assertExists($record->quotation_1_file);
+    }
+
+    public function test_update_remove_flag_deletes_quotation_file(): void
+    {
+        Storage::fake('public');
+        $file = UploadedFile::fake()->create('quote.pdf', 50, 'application/pdf');
+
+        $this->post(route('maintenance.store'), $this->baseData(['quotation_1_file' => $file]));
+        $record = MaintenanceRequest::first();
+        $path   = $record->quotation_1_file;
+
+        $this->put(route('maintenance.update', $record), $this->baseData(['remove_quotation_1_file' => '1']));
+        $record->refresh();
+
+        $this->assertNull($record->quotation_1_file);
+        Storage::disk('public')->assertMissing($path);
+    }
+
+    public function test_destroy_deletes_quotation_files(): void
+    {
+        Storage::fake('public');
+        $file = UploadedFile::fake()->create('quote.pdf', 50, 'application/pdf');
+
+        $this->post(route('maintenance.store'), $this->baseData(['quotation_1_file' => $file]));
+        $record = MaintenanceRequest::first();
+        $path   = $record->quotation_1_file;
+
+        $this->delete(route('maintenance.destroy', $record));
+        Storage::disk('public')->assertMissing($path);
     }
 
     // ── AUDIT LOG ────────────────────────────────────────────────────────────
