@@ -176,6 +176,34 @@
 }
 .modal-remove-line-btn:hover { background:#FEF2F2; }
 
+/* ── QUOTATION ATTACH IN MODAL ──────────────────────────── */
+.mquot-attach {
+    border:1.5px dashed var(--card-border);border-radius:var(--radius-sm);
+    padding:8px 10px;margin-top:6px;background:var(--page-bg);
+    transition:border-color .18s;
+}
+.mquot-attach:focus-within { border-color:var(--accent); }
+.mquot-file-row { display:flex;align-items:center;gap:7px; }
+.mquot-choose-btn {
+    display:inline-flex;align-items:center;gap:4px;
+    padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap;
+    background:var(--card-bg);border:1.5px solid var(--card-border);
+    border-radius:var(--radius-sm);color:var(--text-secondary);
+    cursor:pointer;transition:border-color .15s,color .15s;
+}
+.mquot-choose-btn:hover { border-color:var(--accent);color:var(--accent); }
+.mquot-file-name {
+    font-size:11.5px;color:var(--text-muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;
+}
+.mquot-file-name.has-file { color:var(--text-primary);font-weight:500; }
+.mquot-clear-btn {
+    background:none;border:none;color:var(--text-muted);cursor:pointer;
+    font-size:12px;padding:2px 4px;border-radius:4px;line-height:1;
+    transition:color .15s;flex-shrink:0;
+}
+.mquot-clear-btn:hover { color:#DC2626; }
+
 @media (max-width:600px) {
     .modal-box { max-height:100vh;border-radius:0;max-width:100%; }
     .modal-overlay { padding:0;align-items:flex-end; }
@@ -359,7 +387,7 @@
         </div>
 
         <div class="modal-body">
-            <form method="POST" action="{{ route('maintenance.store') }}" id="maintenanceForm" novalidate>
+            <form method="POST" action="{{ route('maintenance.store') }}" id="maintenanceForm" novalidate enctype="multipart/form-data">
             @csrf
             <input type="hidden" name="status" value="open">
 
@@ -522,27 +550,30 @@
                             placeholder="Assessment notes and findings…">{{ old('job_assessment') }}</textarea>
                         @error('job_assessment') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
-                    <div class="mfield-group">
-                        <label class="mfield-label">Quotation 1 (BHD)</label>
-                        <input type="number" name="quotation_1"
-                            class="mfield-input {{ $errors->has('quotation_1') ? 'is-invalid' : '' }}"
-                            value="{{ old('quotation_1') }}" step="0.001" min="0" placeholder="0.000">
-                        @error('quotation_1') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
+                    @foreach([1,2,3] as $n)
+                    <div class="mfield-group {{ $n === 3 ? 'span-full' : '' }}">
+                        <label class="mfield-label">Quotation {{ $n }} (BHD)</label>
+                        <input type="number" name="quotation_{{ $n }}"
+                            class="mfield-input {{ $errors->has('quotation_'.$n) ? 'is-invalid' : '' }}"
+                            value="{{ old('quotation_'.$n) }}" step="0.001" min="0" placeholder="0.000">
+                        @error('quotation_'.$n) <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
+                        <div class="mquot-attach">
+                            <div class="mquot-file-row">
+                                <label class="mquot-choose-btn" for="mquot_file_{{ $n }}">
+                                    <i class="fa-solid fa-paperclip" style="font-size:9px"></i> Attach
+                                </label>
+                                <input type="file" id="mquot_file_{{ $n }}" name="quotation_{{ $n }}_file"
+                                       accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                       class="mquot-file-input" data-index="{{ $n }}" style="display:none">
+                                <span class="mquot-file-name" id="mquot_fname_{{ $n }}">No file</span>
+                                <button type="button" class="mquot-clear-btn" id="mquot_clear_{{ $n }}" style="display:none">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+                        @error('quotation_'.$n.'_file') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
-                    <div class="mfield-group">
-                        <label class="mfield-label">Quotation 2 (BHD)</label>
-                        <input type="number" name="quotation_2"
-                            class="mfield-input {{ $errors->has('quotation_2') ? 'is-invalid' : '' }}"
-                            value="{{ old('quotation_2') }}" step="0.001" min="0" placeholder="0.000">
-                        @error('quotation_2') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
-                    </div>
-                    <div class="mfield-group span-full">
-                        <label class="mfield-label">Quotation 3 (BHD)</label>
-                        <input type="number" name="quotation_3"
-                            class="mfield-input {{ $errors->has('quotation_3') ? 'is-invalid' : '' }}"
-                            value="{{ old('quotation_3') }}" step="0.001" min="0" placeholder="0.000">
-                        @error('quotation_3') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
-                    </div>
+                    @endforeach
                     <div class="mfield-group span-full">
                         <label class="mfield-label">Maintenance Remarks</label>
                         <textarea name="maintenance_remarks" rows="3"
@@ -670,6 +701,32 @@ function addModalJobLine() {
     row.querySelector('input').focus();
 }
 
+// ── QUOTATION FILE INPUTS IN MODAL ──────────────────────────
+document.querySelectorAll('.mquot-file-input').forEach(input => {
+    const n     = input.dataset.index;
+    const label = document.getElementById('mquot_fname_' + n);
+    const clear = document.getElementById('mquot_clear_' + n);
+
+    input.addEventListener('change', () => {
+        if (input.files.length) {
+            const f    = input.files[0];
+            const size = f.size < 1024 * 1024
+                ? (f.size / 1024).toFixed(1) + ' KB'
+                : (f.size / 1024 / 1024).toFixed(1) + ' MB';
+            label.textContent = f.name + ' (' + size + ')';
+            label.classList.add('has-file');
+            clear.style.display = '';
+        }
+    });
+
+    clear.addEventListener('click', () => {
+        input.value = '';
+        label.textContent = 'No file';
+        label.classList.remove('has-file');
+        clear.style.display = 'none';
+    });
+});
+
 function removeModalJobLine(btn) {
     const row = btn.closest('tr');
     const tbody = document.getElementById('modalJobLinesBody');
@@ -692,7 +749,7 @@ function handleMMSubmit(btn) {
     $mmTabErrorMap = [
         'mm-details'     => ['date','job_order','request_date','apartment_status','property','tenant','flat','contact_no','available_datetime'],
         'mm-joblines'    => ['job_lines'],
-        'mm-maintenance' => ['supervisor_name','supervisor_datetime','job_assessment','quotation_1','quotation_2','quotation_3','maintenance_remarks'],
+        'mm-maintenance' => ['supervisor_name','supervisor_datetime','job_assessment','quotation_1','quotation_1_file','quotation_2','quotation_2_file','quotation_3','quotation_3_file','maintenance_remarks'],
         'mm-approval'    => ['approved_supervisor','approved_dept_head'],
     ];
     $mmFirstErrorTab = null;
