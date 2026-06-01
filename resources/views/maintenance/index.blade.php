@@ -176,33 +176,32 @@
 }
 .modal-remove-line-btn:hover { background:#FEF2F2; }
 
-/* ── QUOTATION ATTACH IN MODAL ──────────────────────────── */
-.mquot-attach {
-    border:1.5px dashed var(--card-border);border-radius:var(--radius-sm);
-    padding:8px 10px;margin-top:6px;background:var(--page-bg);
-    transition:border-color .18s;
+/* ── QUOTATION INLINE ATTACHMENT IN MODAL ───────────────── */
+.mquot-wrap { position:relative; }
+.mquot-wrap .mfield-input { padding-right:36px; }
+.mquot-clip-btn {
+    position:absolute;right:0;top:0;bottom:0;width:34px;
+    display:flex;align-items:center;justify-content:center;
+    background:none;border:none;border-left:1.5px solid var(--input-border);
+    border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    color:var(--text-muted);cursor:pointer;font-size:12px;
+    transition:color .15s,background .15s;
 }
-.mquot-attach:focus-within { border-color:var(--accent); }
-.mquot-file-row { display:flex;align-items:center;gap:7px; }
-.mquot-choose-btn {
-    display:inline-flex;align-items:center;gap:4px;
-    padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap;
-    background:var(--card-bg);border:1.5px solid var(--card-border);
-    border-radius:var(--radius-sm);color:var(--text-secondary);
-    cursor:pointer;transition:border-color .15s,color .15s;
+.mquot-clip-btn:hover { color:var(--accent);background:var(--accent-dim); }
+.mquot-clip-btn.has-file { color:var(--accent);background:var(--accent-dim); }
+.mquot-pill {
+    display:none;align-items:center;gap:5px;margin-top:5px;
+    padding:3px 8px 3px 6px;background:var(--accent-dim);
+    border-radius:20px;font-size:11px;font-weight:600;color:var(--accent);
+    max-width:100%;overflow:hidden;
 }
-.mquot-choose-btn:hover { border-color:var(--accent);color:var(--accent); }
-.mquot-file-name {
-    font-size:11.5px;color:var(--text-muted);
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;
+.mquot-pill.show { display:flex; }
+.mquot-pill span { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0; }
+.mquot-pill button {
+    background:none;border:none;color:var(--accent);cursor:pointer;
+    font-size:11px;padding:0;line-height:1;flex-shrink:0;opacity:.7;transition:opacity .15s;
 }
-.mquot-file-name.has-file { color:var(--text-primary);font-weight:500; }
-.mquot-clear-btn {
-    background:none;border:none;color:var(--text-muted);cursor:pointer;
-    font-size:12px;padding:2px 4px;border-radius:4px;line-height:1;
-    transition:color .15s;flex-shrink:0;
-}
-.mquot-clear-btn:hover { color:#DC2626; }
+.mquot-pill button:hover { opacity:1; }
 
 @media (max-width:600px) {
     .modal-box { max-height:100vh;border-radius:0;max-width:100%; }
@@ -553,24 +552,25 @@
                     @foreach([1,2,3] as $n)
                     <div class="mfield-group {{ $n === 3 ? 'span-full' : '' }}">
                         <label class="mfield-label">Quotation {{ $n }} (BHD)</label>
-                        <input type="number" name="quotation_{{ $n }}"
-                            class="mfield-input {{ $errors->has('quotation_'.$n) ? 'is-invalid' : '' }}"
-                            value="{{ old('quotation_'.$n) }}" step="0.001" min="0" placeholder="0.000">
-                        @error('quotation_'.$n) <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
-                        <div class="mquot-attach">
-                            <div class="mquot-file-row">
-                                <label class="mquot-choose-btn" for="mquot_file_{{ $n }}">
-                                    <i class="fa-solid fa-paperclip" style="font-size:9px"></i> Attach
-                                </label>
-                                <input type="file" id="mquot_file_{{ $n }}" name="quotation_{{ $n }}_file"
-                                       accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                                       class="mquot-file-input" data-index="{{ $n }}" style="display:none">
-                                <span class="mquot-file-name" id="mquot_fname_{{ $n }}">No file</span>
-                                <button type="button" class="mquot-clear-btn" id="mquot_clear_{{ $n }}" style="display:none">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
-                            </div>
+                        <div class="mquot-wrap">
+                            <input type="number" name="quotation_{{ $n }}"
+                                class="mfield-input {{ $errors->has('quotation_'.$n) ? 'is-invalid' : '' }}"
+                                value="{{ old('quotation_'.$n) }}" step="0.001" min="0" placeholder="0.000">
+                            <label for="mquot_file_{{ $n }}" class="mquot-clip-btn" title="Attach file">
+                                <i class="fa-solid fa-paperclip"></i>
+                            </label>
+                            <input type="file" id="mquot_file_{{ $n }}" name="quotation_{{ $n }}_file"
+                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                   class="mquot-file-input" data-index="{{ $n }}" style="display:none">
                         </div>
+                        <div class="mquot-pill" id="mquot_pill_{{ $n }}">
+                            <i class="fa-solid fa-paperclip" style="flex-shrink:0;font-size:10px"></i>
+                            <span id="mquot_fname_{{ $n }}"></span>
+                            <button type="button" class="mquot-pill-clear" data-index="{{ $n }}" title="Remove">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        @error('quotation_'.$n) <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                         @error('quotation_'.$n.'_file') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
                     @endforeach
@@ -701,11 +701,12 @@ function addModalJobLine() {
     row.querySelector('input').focus();
 }
 
-// ── QUOTATION FILE INPUTS IN MODAL ──────────────────────────
+// ── QUOTATION INLINE FILE INPUTS IN MODAL ───────────────────
 document.querySelectorAll('.mquot-file-input').forEach(input => {
-    const n     = input.dataset.index;
-    const label = document.getElementById('mquot_fname_' + n);
-    const clear = document.getElementById('mquot_clear_' + n);
+    const n    = input.dataset.index;
+    const clip = input.previousElementSibling;
+    const pill = document.getElementById('mquot_pill_' + n);
+    const name = document.getElementById('mquot_fname_' + n);
 
     input.addEventListener('change', () => {
         if (input.files.length) {
@@ -713,17 +714,22 @@ document.querySelectorAll('.mquot-file-input').forEach(input => {
             const size = f.size < 1024 * 1024
                 ? (f.size / 1024).toFixed(1) + ' KB'
                 : (f.size / 1024 / 1024).toFixed(1) + ' MB';
-            label.textContent = f.name + ' (' + size + ')';
-            label.classList.add('has-file');
-            clear.style.display = '';
+            name.textContent = f.name + ' (' + size + ')';
+            pill.classList.add('show');
+            clip.classList.add('has-file');
         }
     });
+});
 
-    clear.addEventListener('click', () => {
+document.querySelectorAll('.mquot-pill-clear').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const n     = btn.dataset.index;
+        const input = document.getElementById('mquot_file_' + n);
+        const pill  = document.getElementById('mquot_pill_' + n);
+        const clip  = input.previousElementSibling;
         input.value = '';
-        label.textContent = 'No file';
-        label.classList.remove('has-file');
-        clear.style.display = 'none';
+        pill.classList.remove('show');
+        clip.classList.remove('has-file');
     });
 });
 
