@@ -493,8 +493,11 @@
 
     <div class="sidebar-section">
         <div class="sidebar-section-label">Property Management</div>
-        <a href="{{ route('buildings.index') }}" class="nav-item {{ request()->is('buildings*') ? 'active' : '' }}">
+        <a href="{{ route('buildings.index') }}" class="nav-item {{ request()->is('buildings*') && !request()->is('floors') ? 'active' : '' }}">
             <i class="fa-solid fa-building nav-icon"></i> Buildings
+        </a>
+        <a href="{{ route('floors.global') }}" class="nav-item {{ request()->is('floors') ? 'active' : '' }}">
+            <i class="fa-solid fa-layer-group nav-icon"></i> Floors
         </a>
         <a href="{{ route('property-units.index') }}" class="nav-item {{ request()->is('property-units*') ? 'active' : '' }}">
             <i class="fa-solid fa-door-open nav-icon"></i> Units
@@ -503,15 +506,14 @@
 
     <div class="sidebar-section">
         <div class="sidebar-section-label">Management</div>
-        <a href="#" class="nav-item">
-            <i class="fa-solid fa-users nav-icon"></i> Tenant Management
+        <a href="{{ route('tenants.index') }}" class="nav-item {{ request()->is('tenants*') ? 'active' : '' }}">
+            <i class="fa-solid fa-users nav-icon"></i> Tenants
         </a>
-        <a href="#" class="nav-item">
-            <i class="fa-solid fa-handshake nav-icon"></i> Sales
+        <a href="{{ route('lease-contracts.index') }}" class="nav-item {{ request()->is('lease-contracts*') ? 'active' : '' }}">
+            <i class="fa-solid fa-file-contract nav-icon"></i> Lease Contracts
         </a>
-        <a href="#" class="nav-item">
-            <i class="fa-solid fa-file-contract nav-icon"></i> Documents
-            <span class="nav-badge">New</span>
+        <a href="{{ route('maintenance.index') }}" class="nav-item {{ request()->is('maintenance*') ? 'active' : '' }}">
+            <i class="fa-solid fa-wrench nav-icon"></i> Maintenance
         </a>
     </div>
 
@@ -524,18 +526,23 @@
 
     <div class="sidebar-section">
         <div class="sidebar-section-label">Form / Template Management</div>
-        <a href="#" class="nav-item">
-            <i class="fa-solid fa-layer-group nav-icon"></i> Template Management
-        </a>
-        <a href="#" class="nav-item">
+        <a href="{{ route('form-configs.index') }}?tab=forms"
+           class="nav-item {{ request()->is('form-configs*') && request('tab', 'forms') === 'forms' ? 'active' : '' }}">
             <i class="fa-solid fa-wpforms nav-icon"></i> Forms Management
+        </a>
+        <a href="{{ route('form-configs.index') }}?tab=templates"
+           class="nav-item {{ request()->is('form-configs*') && request('tab') === 'templates' ? 'active' : '' }}">
+            <i class="fa-solid fa-layer-group nav-icon"></i> Template Management
         </a>
     </div>
 
     <div class="sidebar-section">
-        <div class="sidebar-section-label">System</div>
-        <a href="#" class="nav-item">
-            <i class="fa-solid fa-shield-halved nav-icon"></i> Admin
+        <div class="sidebar-section-label">Admin</div>
+        <a href="{{ route('admin.audit-log') }}" class="nav-item {{ request()->is('admin/audit-log*') ? 'active' : '' }}">
+            <i class="fa-solid fa-clock-rotate-left nav-icon"></i> Audit Log
+        </a>
+        <a href="{{ route('admin.error-log') }}" class="nav-item {{ request()->is('admin/error-log*') ? 'active' : '' }}">
+            <i class="fa-solid fa-triangle-exclamation nav-icon"></i> Error Log
         </a>
     </div>
 
@@ -595,5 +602,11 @@
 </script>
 
 @stack('scripts')
+<script>
+document.addEventListener('click', function(e) {
+    const tr = e.target.closest('tr[data-href]');
+    if (tr) window.location = tr.dataset.href;
+});
+</script>
 </body>
 </html>

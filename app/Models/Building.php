@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Building extends Model
 {
+    use Auditable;
     use HasFactory;
 
     protected $table = 'buildings';
@@ -25,6 +27,7 @@ class Building extends Model
         'total_no_of_blocks',
         'total_no_of_floors',
         'total_no_of_units',
+        'custom_fields',
     ];
 
     protected $casts = [
@@ -33,7 +36,23 @@ class Building extends Model
         'total_no_of_blocks' => 'integer',
         'total_no_of_floors' => 'integer',
         'total_no_of_units'  => 'integer',
+        'custom_fields'      => 'array',
     ];
+
+    public function units()
+    {
+        return $this->hasMany(PropertyUnit::class);
+    }
+
+    public function floors()
+    {
+        return $this->hasMany(Floor::class);
+    }
+
+    public function images()
+    {
+        return $this->hasMany(BuildingImage::class)->orderBy('sort_order');
+    }
 
     public function scopeFilter($query, array $filters): void
     {

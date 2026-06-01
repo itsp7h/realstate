@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Building;
+use App\Models\CustomFieldDefinition;
+use App\Models\LeaseContract;
 use App\Http\Requests\StoreBuildingRequest;
 use App\Http\Requests\UpdateBuildingRequest;
+use App\Services\FormConfigService;
 use Illuminate\Http\Request;
 
 class BuildingController extends Controller
@@ -13,7 +16,9 @@ class BuildingController extends Controller
     {
         $filters = $request->only(['search', 'property_type', 'type_of_ownership']);
 
-        $buildings = Building::filter($filters)
+        $buildings = Building::withCount(['floors', 'units'])
+            ->with('images')
+            ->filter($filters)
             ->orderBy('property_code')
             ->paginate(20)
             ->withQueryString();
@@ -25,35 +30,59 @@ class BuildingController extends Controller
             'properties'  => Building::count(),
         ];
 
-        return view('buildings.index', compact('buildings', 'stats'));
+        $formFields      = app(FormConfigService::class)->getFormFields('building');
+        $customFieldDefs = CustomFieldDefinition::getForForm('building');
+
+        return view('buildings.index', compact('buildings', 'stats', 'formFields', 'customFieldDefs'));
     }
 
     public function create()
     {
-        $building = new Building();
-        return view('buildings.create', compact('building'));
+        $building        = new Building();
+        $formFields      = app(FormConfigService::class)->getFormFields('building');
+        $customFieldDefs = CustomFieldDefinition::getForForm('building');
+        return view('buildings.create', compact('building', 'formFields', 'customFieldDefs'));
     }
 
     public function store(StoreBuildingRequest $request)
     {
-        Building::create($request->validated());
+        $validated = $request->validated();
+        $validated['custom_fields'] = $request->input('custom_fields', []);
+        Building::create($validated);
         return redirect()->route('buildings.index')
             ->with('success', 'Building created successfully.');
     }
 
     public function show(Building $building)
     {
-        return view('buildings.show', compact('building'));
+        $building->load('images');
+        $floors = $building->floors()->orderBy('floor_name')->get();
+
+        $units = $building->units()->with('floor')->orderBy('unit_name')->get();
+
+        $contracts = LeaseContract::where('property_code', $building->property_code)
+            ->with('tenant')
+            ->orderByDesc('lease_start_date')
+            ->get();
+
+        // Unique tenants derived from contracts for this building
+        $tenants = $contracts->pluck('tenant')->filter()->unique('id')->values();
+
+        return view('buildings.show', compact('building', 'floors', 'units', 'contracts', 'tenants'));
     }
 
     public function edit(Building $building)
     {
-        return view('buildings.edit', compact('building'));
+        $formFields      = app(FormConfigService::class)->getFormFields('building');
+        $customFieldDefs = CustomFieldDefinition::getForForm('building');
+        return view('buildings.edit', compact('building', 'formFields', 'customFieldDefs'));
     }
 
     public function update(UpdateBuildingRequest $request, Building $building)
     {
-        $building->update($request->validated());
+        $validated = $request->validated();
+        $validated['custom_fields'] = $request->input('custom_fields', []);
+        $building->update($validated);
         return redirect()->route('buildings.index')
             ->with('success', 'Building updated successfully.');
     }

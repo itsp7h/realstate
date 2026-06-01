@@ -29,9 +29,10 @@
 </div>
 
 @include('buildings._form', [
-    'building' => $building,
-    'action'   => route('buildings.update', $building),
-    'method'   => 'PUT',
+    'building'   => $building,
+    'action'     => route('buildings.update', $building),
+    'method'     => 'PUT',
+    'formFields' => $formFields,
 ])
 
 @endsection

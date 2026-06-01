@@ -53,6 +53,21 @@ php artisan make:migration # Create migration
 - Validation error messages must be specific and field-level — never show a generic "something went wrong" message
 - Form Requests must return a `422` JSON response for API calls and redirect back with errors for Blade forms — do not swallow validation errors silently
 
+## Git Branching Rules
+- **ALWAYS** create a new git branch before starting any feature or task — never work directly on `main`
+- Branch names must be descriptive and kebab-case, e.g. `feature/tenant-crud`, `feature/lease-contracts-import`, `fix/floor-migration`
+- One branch per feature — do not mix unrelated changes on the same branch
+- When a feature is complete and tested, it is ready to be merged via PR into `main`
+
+## Form & Template Configuration Rules
+- **EVERY** CRUD module built must have a corresponding entry in the **Forms Management** tab at `/form-configs?tab=forms`
+  - This lets the user control which fields are visible in the add/edit form for that module
+  - Follow the exact same pattern as the existing Building Form and Unit Form config cards
+- **EVERY** module that supports import/export must have a corresponding entry in the **Template Management** tab at `/form-configs?tab=templates`
+  - This gives the user download buttons (XLSX + CSV) and an import modal for that module
+  - Follow the exact same pattern as the existing Building Template, Unit Template, and Lease Contracts Template cards
+- These entries must be added as part of the feature — never ship a CRUD module without its Form Config card
+
 ## Testing Rules
 - **ALWAYS** write test cases for every feature, controller, model, and service created
 - Tests must be written before marking any task as complete
@@ -60,6 +75,12 @@ php artisan make:migration # Create migration
 - Cover both happy path and edge cases
 - Use Laravel's built-in PHPUnit test suite (`tests/Feature` for HTTP/integration tests, `tests/Unit` for isolated logic)
 - Fix any failing tests before moving on to the next task
+
+## Index Page Row Click Rule
+- **EVERY** index/listing page must make each table row clickable — clicking anywhere on a row navigates to that record's show/view page
+- Implement this with a `data-href` attribute on the `<tr>` and a global JS handler (or inline `onclick`), styled with `cursor: pointer` on the row
+- The dedicated action buttons (edit, delete) in the Actions column must still work independently — use `e.stopPropagation()` on those cells/buttons so they do not trigger the row click
+- This applies to all CRUD modules: buildings, floors, units, tenants, lease contracts, maintenance requests, and any future modules
 
 ## Notes
 - App key is already generated

@@ -8,19 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('property_units', function (Blueprint $table) {
-            $table->renameColumn('landlord_name', 'land_lord_name');
-            $table->renameColumn('security_deposit', 'security_deposit_amount');
-            $table->renameColumn('electricity_account_no', 'electricity_ac_no');
-        });
+        // Columns were renamed before the create migration was finalized.
+        // The create migration already uses the correct final names, so this is a no-op.
     }
 
     public function down(): void
     {
-        Schema::table('property_units', function (Blueprint $table) {
-            $table->renameColumn('land_lord_name', 'landlord_name');
-            $table->renameColumn('security_deposit_amount', 'security_deposit');
-            $table->renameColumn('electricity_ac_no', 'electricity_account_no');
-        });
+        // Nothing to reverse.
     }
 };
