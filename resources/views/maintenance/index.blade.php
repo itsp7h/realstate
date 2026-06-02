@@ -707,8 +707,9 @@
                 </div>
                 <div class="mfield-grid">
                     <div class="mfield-group">
-                        <label class="mfield-label">Approved by Supervisor</label>
-                        <input type="text" name="approved_supervisor" class="mfield-input" placeholder="Supervisor name" maxlength="255">
+                        <label class="mfield-label">Supervisor</label>
+                        <input type="text" name="approved_supervisor" id="apr-supervisor-name" class="mfield-input"
+                               readonly style="background:var(--page-bg);color:var(--text-secondary);cursor:default">
                     </div>
                     <div class="mfield-group">
                         <label class="mfield-label">Approved by Dept. Head</label>
@@ -801,9 +802,8 @@ function openApproveModal(d) {
     document.getElementById('approveModalSub').textContent = d.jobOrder + ' · ' + d.property;
     document.getElementById('approveForm').action = d.approveUrl;
 
-    // pre-fill supervisor name
-    const supField = document.querySelector('#approveForm input[name="approved_supervisor"]');
-    if (supField) supField.value = d.supervisorName || '';
+    // pre-fill supervisor name (read-only)
+    document.getElementById('apr-supervisor-name').value = d.supervisorName || '—';
 
     // populate and show/hide quotation cards
     let visibleCount = 0;
