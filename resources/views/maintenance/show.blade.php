@@ -33,10 +33,12 @@
     display: inline-flex; align-items: center; gap: 5px;
     padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
 }
-.status-badge.open        { background: #EFF6FF; color: #2563EB; }
-.status-badge.in_progress { background: var(--accent-dim); color: var(--accent); }
-.status-badge.completed   { background: #ECFDF5; color: #059669; }
-.status-badge.cancelled   { background: #FEF2F2; color: #DC2626; }
+.status-badge.waiting_supervisor { background: #FFF7ED; color: #EA580C; }
+.status-badge.waiting_approval   { background: #F5F3FF; color: #7C3AED; }
+.status-badge.approved           { background: #ECFDF5; color: #059669; }
+.status-badge.in_progress        { background: #EFF6FF; color: #2563EB; }
+.status-badge.completed          { background: #F0FDFA; color: #0D9488; }
+.status-badge.cancelled          { background: #FEF2F2; color: #DC2626; }
 
 .job-lines-table { width: 100%; border-collapse: collapse; }
 .job-lines-table th {
@@ -204,18 +206,23 @@
         </div>
         @endif
         <div class="detail-grid" style="margin-bottom:{{ $record->maintenance_remarks ? '18px' : '0' }}">
+            @foreach([1,2,3] as $n)
+            @php $fileField = "quotation_{$n}_file"; @endphp
             <div class="detail-item">
-                <div class="detail-label">Quotation 1</div>
-                <div class="detail-value mono">{{ $record->quotation_1 ? 'BHD '.number_format($record->quotation_1, 3) : '—' }}</div>
+                <div class="detail-label">Quotation {{ $n }}</div>
+                <div class="detail-value mono">{{ $record->{"quotation_{$n}"} ? 'BHD '.number_format($record->{"quotation_{$n}"}, 3) : '—' }}</div>
+                @if($record->$fileField)
+                <div style="margin-top:6px">
+                    <a href="{{ Storage::url($record->$fileField) }}" target="_blank"
+                       style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;padding:4px 8px;border-radius:var(--radius-sm);background:var(--accent-dim);transition:opacity .15s"
+                       onmouseover="this.style.opacity='.75'" onmouseout="this.style.opacity='1'">
+                        <i class="fa-solid fa-paperclip" style="font-size:10px"></i>
+                        {{ basename($record->$fileField) }}
+                    </a>
+                </div>
+                @endif
             </div>
-            <div class="detail-item">
-                <div class="detail-label">Quotation 2</div>
-                <div class="detail-value mono">{{ $record->quotation_2 ? 'BHD '.number_format($record->quotation_2, 3) : '—' }}</div>
-            </div>
-            <div class="detail-item">
-                <div class="detail-label">Quotation 3</div>
-                <div class="detail-value mono">{{ $record->quotation_3 ? 'BHD '.number_format($record->quotation_3, 3) : '—' }}</div>
-            </div>
+            @endforeach
         </div>
         @if($record->maintenance_remarks)
         <div>
@@ -234,6 +241,17 @@
     </div>
     <div class="maint-section-body">
         <div class="detail-grid">
+            @if($record->selected_quotation)
+            <div class="detail-item">
+                <div class="detail-label">Approved Quotation</div>
+                <div class="detail-value">
+                    <span style="display:inline-flex;align-items:center;gap:6px;background:#F5F3FF;color:#7C3AED;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700">
+                        <i class="fa-solid fa-stamp" style="font-size:10px"></i>
+                        Q{{ $record->selected_quotation }} — {{ $record->selected_quotation_amount ?? '—' }}
+                    </span>
+                </div>
+            </div>
+            @endif
             <div class="detail-item">
                 <div class="detail-label">Approved by Supervisor</div>
                 <div class="detail-value">{{ $record->approved_supervisor ?? '—' }}</div>

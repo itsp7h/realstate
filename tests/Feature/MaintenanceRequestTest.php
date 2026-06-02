@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\MaintenanceRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class MaintenanceRequestTest extends TestCase
@@ -38,11 +40,11 @@ class MaintenanceRequestTest extends TestCase
 
     public function test_index_filters_by_status(): void
     {
-        MaintenanceRequest::create($this->baseData(['job_order' => 'JO-OPEN', 'status' => 'open']));
+        MaintenanceRequest::create($this->baseData(['job_order' => 'JO-PENDING', 'status' => 'waiting_supervisor']));
         MaintenanceRequest::create($this->baseData(['job_order' => 'JO-DONE', 'status' => 'completed']));
 
-        $this->get(route('maintenance.index', ['status' => 'open']))
-             ->assertSee('JO-OPEN')->assertDontSee('JO-DONE');
+        $this->get(route('maintenance.index', ['status' => 'waiting_supervisor']))
+             ->assertSee('JO-PENDING')->assertDontSee('JO-DONE');
     }
 
     public function test_index_filters_by_search(): void
@@ -83,10 +85,10 @@ class MaintenanceRequestTest extends TestCase
         $this->assertDatabaseHas('maintenance_requests', ['job_order' => 'JO-CUSTOM']);
     }
 
-    public function test_store_defaults_status_to_open(): void
+    public function test_store_defaults_status_to_waiting_supervisor(): void
     {
         $this->post(route('maintenance.store'), $this->baseData());
-        $this->assertEquals('open', MaintenanceRequest::first()->status);
+        $this->assertEquals('waiting_supervisor', MaintenanceRequest::first()->status);
     }
 
     public function test_store_saves_job_lines(): void
@@ -165,6 +167,125 @@ class MaintenanceRequestTest extends TestCase
         $record = MaintenanceRequest::create($this->baseData());
         $this->delete(route('maintenance.destroy', $record))->assertRedirect(route('maintenance.index'));
         $this->assertDatabaseMissing('maintenance_requests', ['id' => $record->id]);
+    }
+
+    // ── APPROVAL WORKFLOW ────────────────────────────────────────────────────
+
+    public function test_assess_transitions_to_waiting_approval(): void
+    {
+        $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_supervisor']));
+        $this->post(route('maintenance.assess', $record), [
+            'supervisor_name'     => 'Ahmed Supervisor',
+            'supervisor_datetime' => '2026-06-02 10:00:00',
+            'quotation_1'         => '150.000',
+        ]);
+        $record->refresh();
+        $this->assertEquals('waiting_approval', $record->status);
+        $this->assertEquals('Ahmed Supervisor', $record->supervisor_name);
+    }
+
+    public function test_assess_requires_supervisor_name_and_datetime(): void
+    {
+        $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_supervisor']));
+        $this->post(route('maintenance.assess', $record), [])
+             ->assertSessionHasErrors(['supervisor_name', 'supervisor_datetime']);
+    }
+
+    public function test_approve_transitions_to_approved(): void
+    {
+        $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_approval']));
+        $this->post(route('maintenance.approve', $record), [
+            'selected_quotation'  => 2,
+            'approved_dept_head'  => 'Abitsam',
+        ]);
+        $record->refresh();
+        $this->assertEquals('approved', $record->status);
+        $this->assertEquals(2, $record->selected_quotation);
+        $this->assertEquals('Abitsam', $record->approved_dept_head);
+    }
+
+    public function test_approve_requires_selected_quotation(): void
+    {
+        $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_approval']));
+        $this->post(route('maintenance.approve', $record), [])
+             ->assertSessionHasErrors('selected_quotation');
+    }
+
+    public function test_approve_rejects_invalid_quotation_number(): void
+    {
+        $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_approval']));
+        $this->post(route('maintenance.approve', $record), ['selected_quotation' => 5])
+             ->assertSessionHasErrors('selected_quotation');
+    }
+
+    // ── QUOTATION FILE ATTACHMENTS ───────────────────────────────────────────
+
+    public function test_store_uploads_quotation_file(): void
+    {
+        Storage::fake('public');
+        $file = UploadedFile::fake()->create('quote1.pdf', 100, 'application/pdf');
+
+        $this->post(route('maintenance.store'), $this->baseData(['quotation_1_file' => $file]));
+
+        $record = MaintenanceRequest::first();
+        $this->assertNotNull($record->quotation_1_file);
+        Storage::disk('public')->assertExists($record->quotation_1_file);
+    }
+
+    public function test_store_rejects_invalid_quotation_file_type(): void
+    {
+        Storage::fake('public');
+        $file = UploadedFile::fake()->create('malware.exe', 50, 'application/octet-stream');
+
+        $this->post(route('maintenance.store'), $this->baseData(['quotation_1_file' => $file]))
+             ->assertSessionHasErrors('quotation_1_file');
+    }
+
+    public function test_update_replaces_quotation_file(): void
+    {
+        Storage::fake('public');
+        $old = UploadedFile::fake()->create('old.pdf', 50, 'application/pdf');
+        $new = UploadedFile::fake()->create('new.pdf', 60, 'application/pdf');
+
+        $this->post(route('maintenance.store'), $this->baseData(['quotation_1_file' => $old]));
+        $record   = MaintenanceRequest::first();
+        $oldPath  = $record->quotation_1_file;
+
+        $this->put(route('maintenance.update', $record), $this->baseData(['quotation_1_file' => $new]));
+        $record->refresh();
+
+        $this->assertNotEquals($oldPath, $record->quotation_1_file);
+        Storage::disk('public')->assertMissing($oldPath);
+        Storage::disk('public')->assertExists($record->quotation_1_file);
+    }
+
+    public function test_update_remove_flag_deletes_quotation_file(): void
+    {
+        Storage::fake('public');
+        $file = UploadedFile::fake()->create('quote.pdf', 50, 'application/pdf');
+
+        $this->post(route('maintenance.store'), $this->baseData(['quotation_1_file' => $file]));
+        $record = MaintenanceRequest::first();
+        $path   = $record->quotation_1_file;
+
+        $this->put(route('maintenance.update', $record), $this->baseData(['remove_quotation_1_file' => '1']));
+        $record->refresh();
+
+        $this->assertNull($record->quotation_1_file);
+        Storage::disk('public')->assertMissing($path);
+    }
+
+    public function test_destroy_deletes_quotation_files(): void
+    {
+        Storage::fake('public');
+        $file = UploadedFile::fake()->create('quote.pdf', 50, 'application/pdf');
+
+        $this->post(route('maintenance.store'), $this->baseData(['quotation_1_file' => $file]));
+        $record = MaintenanceRequest::first();
+        $path   = $record->quotation_1_file;
+
+        $this->delete(route('maintenance.destroy', $record));
+        Storage::disk('public')->assertMissing($path);
     }
 
     // ── AUDIT LOG ────────────────────────────────────────────────────────────

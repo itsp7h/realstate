@@ -21,8 +21,11 @@
     display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
 }
 .maint-stat-icon.blue   { background: #EFF6FF; color: #2563EB; }
+.maint-stat-icon.orange { background: #FFF7ED; color: #EA580C; }
+.maint-stat-icon.purple { background: #F5F3FF; color: #7C3AED; }
 .maint-stat-icon.gold   { background: var(--accent-dim); color: var(--accent); }
 .maint-stat-icon.green  { background: #ECFDF5; color: #059669; }
+.maint-stat-icon.teal   { background: #F0FDFA; color: #0D9488; }
 .maint-stat-icon.gray   { background: #F1F5F9; color: #64748B; }
 .maint-stat-val { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1; }
 .maint-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
@@ -48,10 +51,12 @@
     display: inline-flex; align-items: center; gap: 5px;
     padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
 }
-.status-badge.open        { background: #EFF6FF; color: #2563EB; }
-.status-badge.in_progress { background: var(--accent-dim); color: var(--accent); }
-.status-badge.completed   { background: #ECFDF5; color: #059669; }
-.status-badge.cancelled   { background: #FEF2F2; color: #DC2626; }
+.status-badge.waiting_supervisor { background: #FFF7ED; color: #EA580C; }
+.status-badge.waiting_approval   { background: #F5F3FF; color: #7C3AED; }
+.status-badge.approved           { background: #ECFDF5; color: #059669; }
+.status-badge.in_progress        { background: #EFF6FF; color: #2563EB; }
+.status-badge.completed          { background: #F0FDFA; color: #0D9488; }
+.status-badge.cancelled          { background: #FEF2F2; color: #DC2626; }
 
 .table-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden; }
 .actions-cell { display: flex; gap: 6px; align-items: center; }
@@ -176,6 +181,51 @@
 }
 .modal-remove-line-btn:hover { background:#FEF2F2; }
 
+/* ── QUOTATION INLINE ATTACHMENT IN MODAL ───────────────── */
+.mquot-wrap { position:relative; }
+.mquot-wrap .mfield-input { padding-right:36px; }
+.mquot-clip-btn {
+    position:absolute;right:0;top:0;bottom:0;width:34px;
+    display:flex;align-items:center;justify-content:center;
+    background:none;border:none;border-left:1.5px solid var(--input-border);
+    border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    color:var(--text-muted);cursor:pointer;font-size:12px;
+    transition:color .15s,background .15s;
+}
+.mquot-clip-btn:hover { color:var(--accent);background:var(--accent-dim); }
+.mquot-clip-btn.has-file { color:var(--accent);background:var(--accent-dim); }
+.mquot-pill {
+    display:none;align-items:center;gap:5px;margin-top:5px;
+    padding:3px 8px 3px 6px;background:var(--accent-dim);
+    border-radius:20px;font-size:11px;font-weight:600;color:var(--accent);
+    max-width:100%;overflow:hidden;
+}
+.mquot-pill.show { display:flex; }
+.mquot-pill span { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0; }
+.mquot-pill button {
+    background:none;border:none;color:var(--accent);cursor:pointer;
+    font-size:11px;padding:0;line-height:1;flex-shrink:0;opacity:.7;transition:opacity .15s;
+}
+.mquot-pill button:hover { opacity:1; }
+
+/* ── QUOTATION RADIO CARDS ──────────────────────────────── */
+.quot-radio-card {
+    display:flex;align-items:center;gap:12px;
+    padding:12px 16px;border:2px solid var(--card-border);
+    border-radius:var(--radius-sm);cursor:pointer;
+    background:var(--card-bg);transition:border-color .15s,background .15s;
+}
+.quot-radio-card:hover { border-color:#7C3AED;background:var(--page-bg); }
+.quot-radio-card.selected { border-color:#7C3AED;background:#F5F3FF; }
+.quot-radio-card.selected .quot-radio-num { background:#7C3AED;border-color:#7C3AED;color:#fff; }
+.quot-radio-check {
+    width:22px;height:22px;border-radius:50%;
+    background:var(--page-bg);border:2px solid var(--card-border);
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;color:transparent;flex-shrink:0;transition:all .15s;
+}
+.quot-radio-card.selected .quot-radio-check { background:#7C3AED;border-color:#7C3AED;color:#fff; }
+
 @media (max-width:600px) {
     .modal-box { max-height:100vh;border-radius:0;max-width:100%; }
     .modal-overlay { padding:0;align-items:flex-end; }
@@ -213,21 +263,35 @@
         </div>
     </div>
     <div class="maint-stat">
-        <div class="maint-stat-icon blue"><i class="fa-solid fa-circle-dot"></i></div>
+        <div class="maint-stat-icon orange"><i class="fa-solid fa-user-clock"></i></div>
         <div>
-            <div class="maint-stat-val">{{ $stats['open'] }}</div>
-            <div class="maint-stat-lbl">Open</div>
+            <div class="maint-stat-val">{{ $stats['waiting_supervisor'] }}</div>
+            <div class="maint-stat-lbl">Pending Assessment</div>
         </div>
     </div>
     <div class="maint-stat">
-        <div class="maint-stat-icon gold"><i class="fa-solid fa-rotate"></i></div>
+        <div class="maint-stat-icon purple"><i class="fa-solid fa-stamp"></i></div>
+        <div>
+            <div class="maint-stat-val">{{ $stats['waiting_approval'] }}</div>
+            <div class="maint-stat-lbl">Pending Approval</div>
+        </div>
+    </div>
+    <div class="maint-stat">
+        <div class="maint-stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+        <div>
+            <div class="maint-stat-val">{{ $stats['approved'] }}</div>
+            <div class="maint-stat-lbl">Approved</div>
+        </div>
+    </div>
+    <div class="maint-stat">
+        <div class="maint-stat-icon blue"><i class="fa-solid fa-rotate"></i></div>
         <div>
             <div class="maint-stat-val">{{ $stats['in_progress'] }}</div>
             <div class="maint-stat-lbl">In Progress</div>
         </div>
     </div>
     <div class="maint-stat">
-        <div class="maint-stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="maint-stat-icon teal"><i class="fa-solid fa-flag-checkered"></i></div>
         <div>
             <div class="maint-stat-val">{{ $stats['completed'] }}</div>
             <div class="maint-stat-lbl">Completed</div>
@@ -240,8 +304,8 @@
     <input type="search" name="search" value="{{ request('search') }}" placeholder="Search job order, property, tenant…">
     <select name="status" onchange="this.form.submit()">
         <option value="">All Statuses</option>
-        @foreach(['open','in_progress','completed','cancelled'] as $s)
-        <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucwords(str_replace('_',' ',$s)) }}</option>
+        @foreach(['waiting_supervisor' => 'Pending Assessment','waiting_approval' => 'Pending Approval','approved' => 'Approved','in_progress' => 'In Progress','completed' => 'Completed','cancelled' => 'Cancelled'] as $val => $label)
+        <option value="{{ $val }}" {{ request('status') === $val ? 'selected' : '' }}>{{ $label }}</option>
         @endforeach
     </select>
     <input type="date" name="date_from" value="{{ request('date_from') }}" title="From date">
@@ -276,7 +340,26 @@
             </thead>
             <tbody>
                 @foreach($requests as $req)
-                <tr data-href="{{ route('maintenance.show', $req) }}" style="cursor:pointer">
+                <tr data-href="{{ route('maintenance.show', $req) }}"
+                    data-status="{{ $req->status }}"
+                    data-id="{{ $req->id }}"
+                    data-job-order="{{ $req->job_order }}"
+                    data-property="{{ $req->property }}"
+                    data-tenant="{{ $req->tenant }}"
+                    data-flat="{{ $req->flat }}"
+                    data-assess-url="{{ route('maintenance.assess', $req) }}"
+                    data-approve-url="{{ route('maintenance.approve', $req) }}"
+                    data-q1="{{ $req->quotation_1 }}"
+                    data-q2="{{ $req->quotation_2 }}"
+                    data-q3="{{ $req->quotation_3 }}"
+                    data-q1-file="{{ $req->quotation_1_file ? Storage::url($req->quotation_1_file) : '' }}"
+                    data-q2-file="{{ $req->quotation_2_file ? Storage::url($req->quotation_2_file) : '' }}"
+                    data-q3-file="{{ $req->quotation_3_file ? Storage::url($req->quotation_3_file) : '' }}"
+                    data-q1-fname="{{ $req->quotation_1_file ? basename($req->quotation_1_file) : '' }}"
+                    data-q2-fname="{{ $req->quotation_2_file ? basename($req->quotation_2_file) : '' }}"
+                    data-q3-fname="{{ $req->quotation_3_file ? basename($req->quotation_3_file) : '' }}"
+                    data-supervisor-name="{{ $req->supervisor_name }}"
+                    style="cursor:pointer">
                     <td style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--text-primary)">
                         {{ $req->job_order ?? '—' }}
                     </td>
@@ -347,21 +430,13 @@
                     <i class="fa-solid fa-list-check" style="color:#1D4ED8;font-size:11px;"></i> Job Lines
                     <span class="err-dot" id="dot-mm-joblines"></span>
                 </button>
-                <button type="button" class="mtab-btn" data-tab="mm-maintenance" onclick="switchMMTab('mm-maintenance')">
-                    <i class="fa-solid fa-screwdriver-wrench" style="color:#6D28D9;font-size:11px;"></i> Maintenance
-                    <span class="err-dot" id="dot-mm-maintenance"></span>
-                </button>
-                <button type="button" class="mtab-btn" data-tab="mm-approval" onclick="switchMMTab('mm-approval')">
-                    <i class="fa-solid fa-signature" style="color:#15803D;font-size:11px;"></i> Approval
-                    <span class="err-dot" id="dot-mm-approval"></span>
-                </button>
             </div>
         </div>
 
         <div class="modal-body">
-            <form method="POST" action="{{ route('maintenance.store') }}" id="maintenanceForm" novalidate>
+            <form method="POST" action="{{ route('maintenance.store') }}" id="maintenanceForm" novalidate enctype="multipart/form-data">
             @csrf
-            <input type="hidden" name="status" value="open">
+            <input type="hidden" name="status" value="waiting_supervisor">
 
             {{-- TAB 1: DETAILS ──────────────────────────────── --}}
             <div class="mtab-panel active" id="mm-details">
@@ -488,94 +563,6 @@
                 </div>
             </div>
 
-            {{-- TAB 3: MAINTENANCE ──────────────────────────── --}}
-            <div class="mtab-panel" id="mm-maintenance">
-
-                <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--card-border)">
-                    Supervisor
-                </div>
-                <div class="mfield-grid" style="margin-bottom:20px">
-                    <div class="mfield-group">
-                        <label class="mfield-label">Supervisor Name</label>
-                        <input type="text" name="supervisor_name"
-                            class="mfield-input {{ $errors->has('supervisor_name') ? 'is-invalid' : '' }}"
-                            value="{{ old('supervisor_name') }}" placeholder="Full name" maxlength="255">
-                        @error('supervisor_name') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
-                    </div>
-                    <div class="mfield-group">
-                        <label class="mfield-label">Supervisor Date &amp; Time</label>
-                        <input type="datetime-local" name="supervisor_datetime"
-                            class="mfield-input {{ $errors->has('supervisor_datetime') ? 'is-invalid' : '' }}"
-                            value="{{ old('supervisor_datetime') }}">
-                        @error('supervisor_datetime') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
-                    </div>
-                </div>
-
-                <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--card-border)">
-                    Maintenance Use Only
-                </div>
-                <div class="mfield-grid">
-                    <div class="mfield-group span-full">
-                        <label class="mfield-label">Job Assessment</label>
-                        <textarea name="job_assessment" rows="3"
-                            class="mfield-textarea {{ $errors->has('job_assessment') ? 'is-invalid' : '' }}"
-                            placeholder="Assessment notes and findings…">{{ old('job_assessment') }}</textarea>
-                        @error('job_assessment') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
-                    </div>
-                    <div class="mfield-group">
-                        <label class="mfield-label">Quotation 1 (BHD)</label>
-                        <input type="number" name="quotation_1"
-                            class="mfield-input {{ $errors->has('quotation_1') ? 'is-invalid' : '' }}"
-                            value="{{ old('quotation_1') }}" step="0.001" min="0" placeholder="0.000">
-                        @error('quotation_1') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
-                    </div>
-                    <div class="mfield-group">
-                        <label class="mfield-label">Quotation 2 (BHD)</label>
-                        <input type="number" name="quotation_2"
-                            class="mfield-input {{ $errors->has('quotation_2') ? 'is-invalid' : '' }}"
-                            value="{{ old('quotation_2') }}" step="0.001" min="0" placeholder="0.000">
-                        @error('quotation_2') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
-                    </div>
-                    <div class="mfield-group span-full">
-                        <label class="mfield-label">Quotation 3 (BHD)</label>
-                        <input type="number" name="quotation_3"
-                            class="mfield-input {{ $errors->has('quotation_3') ? 'is-invalid' : '' }}"
-                            value="{{ old('quotation_3') }}" step="0.001" min="0" placeholder="0.000">
-                        @error('quotation_3') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
-                    </div>
-                    <div class="mfield-group span-full">
-                        <label class="mfield-label">Maintenance Remarks</label>
-                        <textarea name="maintenance_remarks" rows="3"
-                            class="mfield-textarea {{ $errors->has('maintenance_remarks') ? 'is-invalid' : '' }}"
-                            placeholder="Additional remarks…">{{ old('maintenance_remarks') }}</textarea>
-                        @error('maintenance_remarks') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
-                    </div>
-                </div>
-
-            </div>
-
-            {{-- TAB 4: APPROVAL ─────────────────────────────── --}}
-            <div class="mtab-panel" id="mm-approval">
-                <div class="mfield-grid">
-                    <div class="mfield-group">
-                        <label class="mfield-label">Approved by Supervisor</label>
-                        <input type="text" name="approved_supervisor"
-                            class="mfield-input {{ $errors->has('approved_supervisor') ? 'is-invalid' : '' }}"
-                            value="{{ old('approved_supervisor') }}"
-                            placeholder="Supervisor name / signature" maxlength="255">
-                        @error('approved_supervisor') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
-                    </div>
-                    <div class="mfield-group">
-                        <label class="mfield-label">Approved by Dept. Head</label>
-                        <input type="text" name="approved_dept_head"
-                            class="mfield-input {{ $errors->has('approved_dept_head') ? 'is-invalid' : '' }}"
-                            value="{{ old('approved_dept_head') }}"
-                            placeholder="Dept. head name / signature" maxlength="255">
-                        @error('approved_dept_head') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
-                    </div>
-                </div>
-            </div>
-
             </form>
         </div>
 
@@ -591,11 +578,156 @@
             <div style="display:flex;gap:8px;">
                 <button type="button" class="btn btn-outline" onclick="closeMaintenanceModal()">Cancel</button>
                 <button type="submit" form="maintenanceForm" class="btn btn-primary" id="mmSubmitBtn" onclick="handleMMSubmit(this)">
-                    <i class="fa-solid fa-paper-plane"></i> Submit Request
+                    <i class="fa-solid fa-paper-plane"></i> Send to Supervisor
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ═══════════════════════════════════════════════════════
+     SUPERVISOR ASSESSMENT MODAL
+═══════════════════════════════════════════════════════ --}}
+<div class="modal-overlay" id="assessModal" role="dialog" aria-modal="true">
+    <div class="modal-box" style="max-width:680px">
+        <div class="modal-header">
+            <div class="modal-header-top">
+                <div class="modal-header-icon" style="background:#FFF7ED;color:#EA580C"><i class="fa-solid fa-user-clock"></i></div>
+                <div>
+                    <div class="modal-header-title">Supervisor Assessment</div>
+                    <div class="modal-header-sub" id="assessModalSub">Fill in the assessment and quotations</div>
+                </div>
+                <button type="button" class="modal-close-btn" onclick="closeAssessModal()" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
         </div>
 
+        <div class="modal-body">
+            {{-- read-only request summary --}}
+            <div id="assessSummary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 16px;background:var(--page-bg);border-radius:var(--radius-sm);border:1px solid var(--card-border);margin-bottom:18px;font-size:12px">
+                <div><div style="color:var(--text-muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Property</div><div id="as-property" style="font-weight:600;color:var(--text-primary)">—</div></div>
+                <div><div style="color:var(--text-muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Tenant</div><div id="as-tenant" style="font-weight:600;color:var(--text-primary)">—</div></div>
+                <div><div style="color:var(--text-muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Flat</div><div id="as-flat" style="font-weight:600;color:var(--text-primary)">—</div></div>
+            </div>
+
+            <form id="assessForm" method="POST" action="" enctype="multipart/form-data" novalidate>
+                @csrf
+                <div class="mfield-grid">
+                    <div class="mfield-group">
+                        <label class="mfield-label">Supervisor Name <span class="req">*</span></label>
+                        <input type="text" name="supervisor_name" id="af-supervisor-name" class="mfield-input" placeholder="Full name" maxlength="255" required>
+                    </div>
+                    <div class="mfield-group">
+                        <label class="mfield-label">Assessment Date &amp; Time <span class="req">*</span></label>
+                        <input type="datetime-local" name="supervisor_datetime" id="af-supervisor-datetime" class="mfield-input" required>
+                    </div>
+                    <div class="mfield-group span-full">
+                        <label class="mfield-label">Job Assessment</label>
+                        <textarea name="job_assessment" rows="3" class="mfield-textarea" placeholder="Assessment notes and findings…"></textarea>
+                    </div>
+                    @foreach([1,2,3] as $n)
+                    <div class="mfield-group {{ $n === 3 ? 'span-full' : '' }}">
+                        <label class="mfield-label">Quotation {{ $n }} (BHD)</label>
+                        <div class="mquot-wrap">
+                            <input type="number" name="quotation_{{ $n }}" class="mfield-input af-quot" step="0.001" min="0" placeholder="0.000">
+                            <label for="af_file_{{ $n }}" class="mquot-clip-btn" title="Attach file">
+                                <i class="fa-solid fa-paperclip"></i>
+                            </label>
+                            <input type="file" id="af_file_{{ $n }}" name="quotation_{{ $n }}_file"
+                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                   class="af-file-input" data-index="{{ $n }}" style="display:none">
+                        </div>
+                        <div class="mquot-pill" id="af_pill_{{ $n }}">
+                            <i class="fa-solid fa-paperclip" style="flex-shrink:0;font-size:10px"></i>
+                            <span id="af_fname_{{ $n }}"></span>
+                            <button type="button" class="af-pill-clear" data-index="{{ $n }}"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                    @endforeach
+                    <div class="mfield-group span-full">
+                        <label class="mfield-label">Maintenance Remarks</label>
+                        <textarea name="maintenance_remarks" rows="2" class="mfield-textarea" placeholder="Additional remarks…"></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="modal-footer">
+            <div></div>
+            <div style="display:flex;gap:8px">
+                <button type="button" class="btn btn-outline" onclick="closeAssessModal()">Cancel</button>
+                <button type="submit" form="assessForm" class="btn btn-primary" onclick="handleAssessSubmit(this)" style="background:#EA580C;border-color:#EA580C">
+                    <i class="fa-solid fa-arrow-right"></i> Submit Assessment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ═══════════════════════════════════════════════════════
+     DEPARTMENT HEAD APPROVAL MODAL
+═══════════════════════════════════════════════════════ --}}
+<div class="modal-overlay" id="approveModal" role="dialog" aria-modal="true">
+    <div class="modal-box" style="max-width:560px">
+        <div class="modal-header">
+            <div class="modal-header-top">
+                <div class="modal-header-icon" style="background:#F5F3FF;color:#7C3AED"><i class="fa-solid fa-stamp"></i></div>
+                <div>
+                    <div class="modal-header-title">Department Approval</div>
+                    <div class="modal-header-sub" id="approveModalSub">Select the approved quotation</div>
+                </div>
+                <button type="button" class="modal-close-btn" onclick="closeApproveModal()" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            <form id="approveForm" method="POST" action="" novalidate>
+                @csrf
+                {{-- Quotation comparison --}}
+                <div style="margin-bottom:18px">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:10px">Select Approved Quotation</div>
+                    <div style="display:flex;flex-direction:column;gap:8px" id="approveQuotCards">
+                        @foreach([1,2,3] as $n)
+                        <label class="quot-radio-card" id="apr-card-{{ $n }}">
+                            <input type="radio" name="selected_quotation" value="{{ $n }}" style="display:none" class="quot-radio-input">
+                            <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+                                <div style="width:28px;height:28px;border-radius:50%;background:var(--page-bg);border:2px solid var(--card-border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--text-muted);flex-shrink:0" class="quot-radio-num">{{ $n }}</div>
+                                <div style="flex:1;min-width:0">
+                                    <div style="font-size:15px;font-weight:800;font-family:'Outfit',sans-serif;color:var(--text-primary)" id="apr-amount-{{ $n }}">—</div>
+                                    <div id="apr-file-{{ $n }}" style="font-size:11px;margin-top:2px"></div>
+                                </div>
+                            </div>
+                            <div class="quot-radio-check"><i class="fa-solid fa-check"></i></div>
+                        </label>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="mfield-grid">
+                    <div class="mfield-group">
+                        <label class="mfield-label">Supervisor</label>
+                        <input type="text" name="approved_supervisor" id="apr-supervisor-name" class="mfield-input"
+                               readonly style="background:var(--page-bg);color:var(--text-secondary);cursor:default">
+                    </div>
+                    <div class="mfield-group">
+                        <label class="mfield-label">Approved by Dept. Head</label>
+                        <input type="text" name="approved_dept_head" id="apr-dept-head" class="mfield-input" placeholder="Dept. head name" maxlength="255">
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="modal-footer">
+            <div></div>
+            <div style="display:flex;gap:8px">
+                <button type="button" class="btn btn-outline" onclick="closeApproveModal()">Cancel</button>
+                <button type="submit" form="approveForm" class="btn btn-primary" onclick="handleApproveSubmit(this)" style="background:#7C3AED;border-color:#7C3AED">
+                    <i class="fa-solid fa-stamp"></i> Approve
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -625,8 +757,135 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
+// ── ROW CLICK — STATUS-AWARE ─────────────────────────────────
+document.addEventListener('click', function(e) {
+    const tr = e.target.closest('tr[data-status]');
+    if (!tr) return;
+    if (e.target.closest('[onclick]') || e.target.closest('form') || e.target.closest('a')) return;
+    e.stopImmediatePropagation();
+    const s = tr.dataset.status;
+    if (s === 'waiting_supervisor') openAssessModal(tr.dataset);
+    else if (s === 'waiting_approval') openApproveModal(tr.dataset);
+    else window.location.href = tr.dataset.href;
+}, true); // capture phase — fires before the global layout handler
+
+// ── ASSESS MODAL ─────────────────────────────────────────────
+function openAssessModal(d) {
+    document.getElementById('assessModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('assessModalSub').textContent = d.jobOrder + ' · ' + d.property;
+    document.getElementById('as-property').textContent = d.property;
+    document.getElementById('as-tenant').textContent = d.tenant;
+    document.getElementById('as-flat').textContent = d.flat;
+    document.getElementById('assessForm').action = d.assessUrl;
+    document.getElementById('af-supervisor-datetime').value = new Date().toISOString().slice(0,16);
+}
+function closeAssessModal() {
+    document.getElementById('assessModal').classList.remove('open');
+    document.body.style.overflow = '';
+    document.getElementById('assessForm').reset();
+    document.querySelectorAll('.af-pill-clear').forEach(b => b.click());
+}
+document.getElementById('assessModal').addEventListener('click', function(e) {
+    if (e.target === this) closeAssessModal();
+});
+function handleAssessSubmit(btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting…';
+    document.getElementById('assessForm').submit();
+}
+
+// ── APPROVE MODAL ─────────────────────────────────────────────
+function openApproveModal(d) {
+    document.getElementById('approveModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('approveModalSub').textContent = d.jobOrder + ' · ' + d.property;
+    document.getElementById('approveForm').action = d.approveUrl;
+
+    // pre-fill supervisor name (read-only)
+    document.getElementById('apr-supervisor-name').value = d.supervisorName || '—';
+
+    // populate and show/hide quotation cards
+    let visibleCount = 0;
+    [1,2,3].forEach(n => {
+        const amt   = d['q'+n];
+        const fname = d['q'+n+'Fname'];
+        const furl  = d['q'+n+'File'];
+        const card  = document.getElementById('apr-card-'+n);
+        const hasAmt = amt !== '' && amt !== null && amt !== undefined;
+
+        card.style.display = hasAmt ? '' : 'none';
+        card.classList.remove('selected');
+        document.querySelector(`#apr-card-${n} .quot-radio-input`).checked = false;
+
+        if (hasAmt) {
+            visibleCount++;
+            document.getElementById('apr-amount-'+n).textContent = 'BHD ' + parseFloat(amt).toFixed(3);
+            const fileEl = document.getElementById('apr-file-'+n);
+            if (fname && furl) {
+                fileEl.innerHTML = `<a href="${furl}" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:600"><i class="fa-solid fa-paperclip" style="font-size:9px"></i> ${fname}</a>`;
+            } else {
+                fileEl.textContent = '';
+            }
+        }
+    });
+}
+function closeApproveModal() {
+    document.getElementById('approveModal').classList.remove('open');
+    document.body.style.overflow = '';
+    document.getElementById('approveForm').reset();
+    document.querySelectorAll('.quot-radio-card').forEach(c => {
+        c.classList.remove('selected');
+        c.style.display = '';
+    });
+}
+document.getElementById('approveModal').addEventListener('click', function(e) {
+    if (e.target === this) closeApproveModal();
+});
+document.querySelectorAll('.quot-radio-input').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('.quot-radio-card').forEach(c => c.classList.remove('selected'));
+        this.closest('.quot-radio-card').classList.add('selected');
+    });
+});
+function handleApproveSubmit(btn) {
+    const selected = document.querySelector('.quot-radio-input:checked');
+    if (!selected) { alert('Please select a quotation to approve.'); return; }
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Approving…';
+    document.getElementById('approveForm').submit();
+}
+
+// ── ASSESS FORM FILE INPUTS ───────────────────────────────────
+document.querySelectorAll('.af-file-input').forEach(input => {
+    const n    = input.dataset.index;
+    const clip = input.previousElementSibling;
+    const pill = document.getElementById('af_pill_' + n);
+    const name = document.getElementById('af_fname_' + n);
+    input.addEventListener('change', () => {
+        if (input.files.length) {
+            const f = input.files[0];
+            const size = f.size < 1048576 ? (f.size/1024).toFixed(1)+' KB' : (f.size/1048576).toFixed(1)+' MB';
+            name.textContent = f.name + ' (' + size + ')';
+            pill.classList.add('show');
+            clip.classList.add('has-file');
+        }
+    });
+});
+document.querySelectorAll('.af-pill-clear').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const n = btn.dataset.index;
+        const input = document.getElementById('af_file_' + n);
+        const pill  = document.getElementById('af_pill_' + n);
+        const clip  = input.previousElementSibling;
+        input.value = '';
+        pill.classList.remove('show');
+        clip.classList.remove('has-file');
+    });
+});
+
 // ── TABS ─────────────────────────────────────────────────────
-const MM_TABS = ['mm-details','mm-joblines','mm-maintenance','mm-approval'];
+const MM_TABS = ['mm-details','mm-joblines'];
 let mmCurrentTab = 0;
 
 function switchMMTab(tabId) {
@@ -670,6 +929,7 @@ function addModalJobLine() {
     row.querySelector('input').focus();
 }
 
+
 function removeModalJobLine(btn) {
     const row = btn.closest('tr');
     const tbody = document.getElementById('modalJobLinesBody');
@@ -692,8 +952,6 @@ function handleMMSubmit(btn) {
     $mmTabErrorMap = [
         'mm-details'     => ['date','job_order','request_date','apartment_status','property','tenant','flat','contact_no','available_datetime'],
         'mm-joblines'    => ['job_lines'],
-        'mm-maintenance' => ['supervisor_name','supervisor_datetime','job_assessment','quotation_1','quotation_2','quotation_3','maintenance_remarks'],
-        'mm-approval'    => ['approved_supervisor','approved_dept_head'],
     ];
     $mmFirstErrorTab = null;
     foreach($mmTabErrorMap as $tab => $fields) {
