@@ -15,7 +15,7 @@ class MaintenanceRequest extends Model
         'available_datetime', 'apartment_status', 'request_date', 'status',
         'supervisor_name', 'supervisor_datetime',
         'job_assessment', 'quotation_1', 'quotation_1_file', 'quotation_2', 'quotation_2_file', 'quotation_3', 'quotation_3_file', 'maintenance_remarks',
-        'approved_supervisor', 'approved_dept_head',
+        'selected_quotation', 'approved_supervisor', 'approved_dept_head',
         'job_lines',
     ];
 
@@ -38,19 +38,30 @@ class MaintenanceRequest extends Model
     public function getStatusColorAttribute(): string
     {
         return match ($this->status) {
-            'open'        => 'blue',
-            'in_progress' => 'gold',
-            'completed'   => 'green',
-            'cancelled'   => 'red',
-            default       => 'gray',
+            'waiting_supervisor' => 'orange',
+            'waiting_approval'   => 'purple',
+            'approved'           => 'green',
+            'in_progress'        => 'blue',
+            'completed'          => 'teal',
+            'cancelled'          => 'red',
+            default              => 'gray',
         };
     }
 
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
-            'in_progress' => 'In Progress',
-            default       => ucfirst($this->status),
+            'waiting_supervisor' => 'Pending Assessment',
+            'waiting_approval'   => 'Pending Approval',
+            'in_progress'        => 'In Progress',
+            default              => ucfirst($this->status),
         };
+    }
+
+    public function getSelectedQuotationAmountAttribute(): ?string
+    {
+        if (!$this->selected_quotation) return null;
+        $amount = $this->{"quotation_{$this->selected_quotation}"};
+        return $amount ? 'BHD ' . number_format($amount, 3) : null;
     }
 }

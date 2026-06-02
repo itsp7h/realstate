@@ -48,6 +48,8 @@ Route::resource('tenants', TenantController::class);
 
 Route::resource('maintenance', MaintenanceRequestController::class)
     ->parameters(['maintenance' => 'maintenanceRequest']);
+Route::post('/maintenance/{maintenanceRequest}/assess',  [MaintenanceRequestController::class, 'assess'])->name('maintenance.assess');
+Route::post('/maintenance/{maintenanceRequest}/approve', [MaintenanceRequestController::class, 'approve'])->name('maintenance.approve');
 
 Route::resource('lease-contracts', LeaseContractController::class);
 

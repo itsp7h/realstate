@@ -40,11 +40,11 @@ class MaintenanceRequestTest extends TestCase
 
     public function test_index_filters_by_status(): void
     {
-        MaintenanceRequest::create($this->baseData(['job_order' => 'JO-OPEN', 'status' => 'open']));
+        MaintenanceRequest::create($this->baseData(['job_order' => 'JO-PENDING', 'status' => 'waiting_supervisor']));
         MaintenanceRequest::create($this->baseData(['job_order' => 'JO-DONE', 'status' => 'completed']));
 
-        $this->get(route('maintenance.index', ['status' => 'open']))
-             ->assertSee('JO-OPEN')->assertDontSee('JO-DONE');
+        $this->get(route('maintenance.index', ['status' => 'waiting_supervisor']))
+             ->assertSee('JO-PENDING')->assertDontSee('JO-DONE');
     }
 
     public function test_index_filters_by_search(): void
@@ -85,10 +85,10 @@ class MaintenanceRequestTest extends TestCase
         $this->assertDatabaseHas('maintenance_requests', ['job_order' => 'JO-CUSTOM']);
     }
 
-    public function test_store_defaults_status_to_open(): void
+    public function test_store_defaults_status_to_waiting_supervisor(): void
     {
         $this->post(route('maintenance.store'), $this->baseData());
-        $this->assertEquals('open', MaintenanceRequest::first()->status);
+        $this->assertEquals('waiting_supervisor', MaintenanceRequest::first()->status);
     }
 
     public function test_store_saves_job_lines(): void
@@ -167,6 +167,55 @@ class MaintenanceRequestTest extends TestCase
         $record = MaintenanceRequest::create($this->baseData());
         $this->delete(route('maintenance.destroy', $record))->assertRedirect(route('maintenance.index'));
         $this->assertDatabaseMissing('maintenance_requests', ['id' => $record->id]);
+    }
+
+    // ── APPROVAL WORKFLOW ────────────────────────────────────────────────────
+
+    public function test_assess_transitions_to_waiting_approval(): void
+    {
+        $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_supervisor']));
+        $this->post(route('maintenance.assess', $record), [
+            'supervisor_name'     => 'Ahmed Supervisor',
+            'supervisor_datetime' => '2026-06-02 10:00:00',
+            'quotation_1'         => '150.000',
+        ]);
+        $record->refresh();
+        $this->assertEquals('waiting_approval', $record->status);
+        $this->assertEquals('Ahmed Supervisor', $record->supervisor_name);
+    }
+
+    public function test_assess_requires_supervisor_name_and_datetime(): void
+    {
+        $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_supervisor']));
+        $this->post(route('maintenance.assess', $record), [])
+             ->assertSessionHasErrors(['supervisor_name', 'supervisor_datetime']);
+    }
+
+    public function test_approve_transitions_to_approved(): void
+    {
+        $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_approval']));
+        $this->post(route('maintenance.approve', $record), [
+            'selected_quotation'  => 2,
+            'approved_dept_head'  => 'Abitsam',
+        ]);
+        $record->refresh();
+        $this->assertEquals('approved', $record->status);
+        $this->assertEquals(2, $record->selected_quotation);
+        $this->assertEquals('Abitsam', $record->approved_dept_head);
+    }
+
+    public function test_approve_requires_selected_quotation(): void
+    {
+        $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_approval']));
+        $this->post(route('maintenance.approve', $record), [])
+             ->assertSessionHasErrors('selected_quotation');
+    }
+
+    public function test_approve_rejects_invalid_quotation_number(): void
+    {
+        $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_approval']));
+        $this->post(route('maintenance.approve', $record), ['selected_quotation' => 5])
+             ->assertSessionHasErrors('selected_quotation');
     }
 
     // ── QUOTATION FILE ATTACHMENTS ───────────────────────────────────────────

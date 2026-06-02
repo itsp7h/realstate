@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AssessMaintenanceRequest;
+use App\Http\Requests\ApproveMaintenanceRequest;
 use App\Http\Requests\StoreMaintenanceRequest;
 use App\Http\Requests\UpdateMaintenanceRequest;
 use App\Models\MaintenanceRequest;
@@ -40,10 +42,12 @@ class MaintenanceRequestController extends Controller
         $requests = $query->paginate(20)->withQueryString();
 
         $stats = [
-            'total'       => MaintenanceRequest::count(),
-            'open'        => MaintenanceRequest::where('status', 'open')->count(),
-            'in_progress' => MaintenanceRequest::where('status', 'in_progress')->count(),
-            'completed'   => MaintenanceRequest::where('status', 'completed')->count(),
+            'total'              => MaintenanceRequest::count(),
+            'waiting_supervisor' => MaintenanceRequest::where('status', 'waiting_supervisor')->count(),
+            'waiting_approval'   => MaintenanceRequest::where('status', 'waiting_approval')->count(),
+            'approved'           => MaintenanceRequest::where('status', 'approved')->count(),
+            'in_progress'        => MaintenanceRequest::where('status', 'in_progress')->count(),
+            'completed'          => MaintenanceRequest::where('status', 'completed')->count(),
         ];
 
         return view('maintenance.index', compact('requests', 'stats'));
@@ -62,7 +66,7 @@ class MaintenanceRequestController extends Controller
             $data['job_order'] = 'JO-' . strtoupper(substr(uniqid(), -6));
         }
 
-        $data['status']       = $data['status'] ?? 'open';
+        $data['status']       = 'waiting_supervisor';
         $data['request_date'] = $data['request_date'] ?? now()->toDateString();
 
         foreach (['quotation_1_file', 'quotation_2_file', 'quotation_3_file'] as $field) {
@@ -111,6 +115,36 @@ class MaintenanceRequestController extends Controller
 
         return redirect()->route('maintenance.show', $maintenanceRequest)
             ->with('success', "Maintenance request {$maintenanceRequest->job_order} updated.");
+    }
+
+    public function assess(AssessMaintenanceRequest $request, MaintenanceRequest $maintenanceRequest): RedirectResponse
+    {
+        $data = $request->validated();
+
+        foreach (['quotation_1_file', 'quotation_2_file', 'quotation_3_file'] as $field) {
+            if ($request->hasFile($field)) {
+                if ($maintenanceRequest->$field) {
+                    Storage::disk('public')->delete($maintenanceRequest->$field);
+                }
+                $data[$field] = $request->file($field)->store('maintenance/quotations', 'public');
+            } else {
+                unset($data[$field]);
+            }
+        }
+
+        $data['status'] = 'waiting_approval';
+        $maintenanceRequest->update($data);
+
+        return redirect()->route('maintenance.index')
+            ->with('success', "Assessment submitted for {$maintenanceRequest->job_order} — awaiting department approval.");
+    }
+
+    public function approve(ApproveMaintenanceRequest $request, MaintenanceRequest $maintenanceRequest): RedirectResponse
+    {
+        $maintenanceRequest->update(array_merge($request->validated(), ['status' => 'approved']));
+
+        return redirect()->route('maintenance.index')
+            ->with('success', "Request {$maintenanceRequest->job_order} has been approved.");
     }
 
     public function destroy(MaintenanceRequest $maintenanceRequest): RedirectResponse

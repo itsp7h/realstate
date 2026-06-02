@@ -20,7 +20,7 @@ class StoreMaintenanceRequest extends FormRequest
             'apartment_status'               => ['required', 'in:occupied,vacant,furnished,other'],
             'job_order'                      => ['nullable', 'string', 'max:100'],
             'request_date'                   => ['nullable', 'date'],
-            'status'                         => ['nullable', 'in:open,in_progress,completed,cancelled'],
+            'status'                         => ['nullable', 'in:waiting_supervisor,waiting_approval,approved,in_progress,completed,cancelled'],
             'job_lines'                      => ['nullable', 'array'],
             'job_lines.*.location'           => ['nullable', 'string', 'max:255'],
             'job_lines.*.description'        => ['nullable', 'string'],
