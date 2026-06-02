@@ -358,6 +358,7 @@
                     data-q1-fname="{{ $req->quotation_1_file ? basename($req->quotation_1_file) : '' }}"
                     data-q2-fname="{{ $req->quotation_2_file ? basename($req->quotation_2_file) : '' }}"
                     data-q3-fname="{{ $req->quotation_3_file ? basename($req->quotation_3_file) : '' }}"
+                    data-supervisor-name="{{ $req->supervisor_name }}"
                     style="cursor:pointer">
                     <td style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--text-primary)">
                         {{ $req->job_order ?? '—' }}
@@ -799,28 +800,44 @@ function openApproveModal(d) {
     document.body.style.overflow = 'hidden';
     document.getElementById('approveModalSub').textContent = d.jobOrder + ' · ' + d.property;
     document.getElementById('approveForm').action = d.approveUrl;
-    // populate quotation cards
+
+    // pre-fill supervisor name
+    const supField = document.querySelector('#approveForm input[name="approved_supervisor"]');
+    if (supField) supField.value = d.supervisorName || '';
+
+    // populate and show/hide quotation cards
+    let visibleCount = 0;
     [1,2,3].forEach(n => {
         const amt   = d['q'+n];
         const fname = d['q'+n+'Fname'];
         const furl  = d['q'+n+'File'];
-        document.getElementById('apr-amount-'+n).textContent = amt ? 'BHD ' + parseFloat(amt).toFixed(3) : '—';
-        const fileEl = document.getElementById('apr-file-'+n);
-        if (fname && furl) {
-            fileEl.innerHTML = `<a href="${furl}" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:600"><i class="fa-solid fa-paperclip" style="font-size:9px"></i> ${fname}</a>`;
-        } else {
-            fileEl.textContent = 'No attachment';
-            fileEl.style.color = 'var(--text-muted)';
-        }
-        document.getElementById('apr-card-'+n).classList.remove('selected');
+        const card  = document.getElementById('apr-card-'+n);
+        const hasAmt = amt !== '' && amt !== null && amt !== undefined;
+
+        card.style.display = hasAmt ? '' : 'none';
+        card.classList.remove('selected');
         document.querySelector(`#apr-card-${n} .quot-radio-input`).checked = false;
+
+        if (hasAmt) {
+            visibleCount++;
+            document.getElementById('apr-amount-'+n).textContent = 'BHD ' + parseFloat(amt).toFixed(3);
+            const fileEl = document.getElementById('apr-file-'+n);
+            if (fname && furl) {
+                fileEl.innerHTML = `<a href="${furl}" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:600"><i class="fa-solid fa-paperclip" style="font-size:9px"></i> ${fname}</a>`;
+            } else {
+                fileEl.textContent = '';
+            }
+        }
     });
 }
 function closeApproveModal() {
     document.getElementById('approveModal').classList.remove('open');
     document.body.style.overflow = '';
     document.getElementById('approveForm').reset();
-    document.querySelectorAll('.quot-radio-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.quot-radio-card').forEach(c => {
+        c.classList.remove('selected');
+        c.style.display = '';
+    });
 }
 document.getElementById('approveModal').addEventListener('click', function(e) {
     if (e.target === this) closeApproveModal();
