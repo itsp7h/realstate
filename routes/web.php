@@ -14,6 +14,7 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\LeaseContractController;
 use App\Http\Controllers\BuildingImageController;
+use App\Http\Controllers\ReportController;
 
 // Unified data import/export
 Route::get('/data',                      [DataController::class, 'index'])->name('data.index');
@@ -52,6 +53,15 @@ Route::post('/maintenance/{maintenanceRequest}/assess',  [MaintenanceRequestCont
 Route::post('/maintenance/{maintenanceRequest}/approve', [MaintenanceRequestController::class, 'approve'])->name('maintenance.approve');
 
 Route::resource('lease-contracts', LeaseContractController::class);
+
+// Reports
+Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+Route::get('/reports/tenant-statement',       [ReportController::class, 'tenantStatement'])->name('reports.tenant-statement');
+Route::get('/reports/tenant-statement/pdf',   [ReportController::class, 'tenantStatementPdf'])->name('reports.tenant-statement.pdf');
+Route::get('/reports/tenant-ageing',          [ReportController::class, 'tenantAgeing'])->name('reports.tenant-ageing');
+Route::get('/reports/tenant-ageing/pdf',      [ReportController::class, 'tenantAgeingPdf'])->name('reports.tenant-ageing.pdf');
+Route::get('/reports/group-ageing',           [ReportController::class, 'groupAgeing'])->name('reports.group-ageing');
+Route::get('/reports/group-ageing/pdf',       [ReportController::class, 'groupAgeingPdf'])->name('reports.group-ageing.pdf');
 
 Route::resource('buildings', BuildingController::class);
 Route::post('/buildings/{building}/images',                        [BuildingImageController::class, 'store'])->name('buildings.images.store');

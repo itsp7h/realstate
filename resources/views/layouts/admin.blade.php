@@ -519,7 +519,7 @@
 
     <div class="sidebar-section">
         <div class="sidebar-section-label">Analytics</div>
-        <a href="#" class="nav-item">
+        <a href="{{ route('reports.index') }}" class="nav-item {{ request()->is('reports*') ? 'active' : '' }}">
             <i class="fa-solid fa-chart-bar nav-icon"></i> Reports
         </a>
     </div>
