@@ -493,7 +493,7 @@
                         @error('lease_agreement_no') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
-                    <div class="mfield-group">
+                    <div class="mfield-group span-full">
                         <label class="mfield-label">Tenant <span class="req">*</span></label>
                         <select name="tenant_id" id="mc_tenant_id"
                             class="mfield-select {{ $errors->has('tenant_id') ? 'is-invalid' : '' }}" required>
