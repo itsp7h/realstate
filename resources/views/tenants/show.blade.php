@@ -52,6 +52,7 @@
     .tp-table td { padding: 9px 14px; border-bottom: 1px solid var(--card-border); }
     .tp-table tr:last-child td { border-bottom: none; }
     .tp-table tr[data-href] { cursor: pointer; }
+    .tp-table tr.total-row td { background: var(--page-bg); font-weight: 700; border-top: 1.5px solid var(--card-border); }
     .tp-money { font-family: 'Outfit', sans-serif; font-weight: 700; }
     .tp-link { color: var(--accent); text-decoration: none; font-weight: 700; }
     .tp-link:hover { text-decoration: underline; }
@@ -547,6 +548,14 @@
                 </td>
             </tr>
             @endforeach
+            <tr class="total-row">
+                <td style="padding:12px 14px">Total</td>
+                <td class="right tp-money" style="padding:12px 14px">{{ number_format($rentSchedule->sum('expected'), 3) }}</td>
+                <td class="right tp-money" style="padding:12px 14px">{{ number_format($rentSchedule->sum('invoiced'), 3) }}</td>
+                <td class="right tp-money" style="padding:12px 14px">{{ number_format($rentSchedule->sum('paid'), 3) }}</td>
+                <td class="right tp-money" style="padding:12px 14px;color:{{ $rentSchedule->sum('remaining') > 0.001 ? '#DC2626' : '#059669' }}">{{ number_format($rentSchedule->sum('remaining'), 3) }}</td>
+                <td></td>
+            </tr>
         </tbody>
     </table>
     @endif

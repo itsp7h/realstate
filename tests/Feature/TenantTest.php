@@ -304,6 +304,28 @@ class TenantTest extends TestCase
         $this->assertTrue($response->viewData('rentSchedule')->isNotEmpty());
     }
 
+    public function test_show_rent_ledger_totals_row_sums_expected_amount(): void
+    {
+        $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+        LeaseContract::create([
+            'date'               => '2026-01-01',
+            'lease_agreement_no' => 'LA-PROFILE-4',
+            'tenant_id'          => $tenant->id,
+            'tenant_name'        => $tenant->name,
+            'property_name'      => 'Profile Tower',
+            'lease_start_date'   => '2026-01-01',
+            'lease_end_date'     => '2026-12-31',
+            'rent_start_date'    => '2026-01-01',
+            'rent_end_date'      => '2026-12-31',
+            'rent_per_month'     => 500.000,
+        ]);
+
+        $response = $this->get(route('tenants.show', $tenant));
+        $rentSchedule = $response->viewData('rentSchedule');
+
+        $response->assertStatus(200)->assertSee(number_format($rentSchedule->sum('expected'), 3));
+    }
+
     // ── EDIT / UPDATE ────────────────────────────────────────────
 
     public function test_edit_renders_form_with_existing_values(): void
