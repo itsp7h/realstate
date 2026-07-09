@@ -163,6 +163,20 @@
     }
     .mfield-error { display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;color:var(--danger);font-weight:500; }
 
+    /* ── TENANT SEARCH DROPDOWN ─────────────────────────────── */
+    .tenant-combo { position:relative; }
+    .tenant-combo-dropdown {
+        position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:230px;overflow-y:auto;z-index:60;
+        background:#fff;border:1.5px solid var(--input-border);border-radius:var(--radius-sm);
+        box-shadow:0 12px 28px rgba(0,0,0,.14);display:none;
+    }
+    .tenant-combo-dropdown.open { display:block; }
+    .tenant-combo-item { padding:9px 14px;font-size:13px;color:var(--text-primary);cursor:pointer; }
+    .tenant-combo-item:hover, .tenant-combo-item.active { background:var(--accent-dim); }
+    .tenant-combo-item.hidden { display:none; }
+    .tenant-combo-empty { padding:14px;text-align:center;font-size:12px;color:var(--text-muted);display:none; }
+    .tenant-combo-empty.show { display:block; }
+
     /* ── SECTION DIVIDER ────────────────────────────────────── */
     .msection-label {
         font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;
@@ -495,13 +509,20 @@
 
                     <div class="mfield-group span-full">
                         <label class="mfield-label">Tenant <span class="req">*</span></label>
-                        <select name="tenant_id" id="mc_tenant_id"
-                            class="mfield-select {{ $errors->has('tenant_id') ? 'is-invalid' : '' }}" required>
-                            <option value="">— Select Tenant —</option>
-                            @foreach($tenants as $t)
-                                <option value="{{ $t->id }}" {{ old('tenant_id') == $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
-                            @endforeach
-                        </select>
+                        <div class="tenant-combo" id="mc_tenant_combo">
+                            <input type="text" id="mc_tenant_search" class="mfield-input {{ $errors->has('tenant_id') ? 'is-invalid' : '' }}"
+                                placeholder="Search tenant by name…" autocomplete="off"
+                                value="{{ old('tenant_id') ? $tenants->firstWhere('id', (int) old('tenant_id'))?->name : '' }}">
+                            <input type="hidden" name="tenant_id" id="mc_tenant_id" value="{{ old('tenant_id') }}">
+                            <div class="tenant-combo-dropdown" id="mc_tenant_dropdown">
+                                @foreach($tenants as $t)
+                                    <div class="tenant-combo-item" data-id="{{ $t->id }}" data-name="{{ $t->name }}">
+                                        {{ $t->name }}@if($t->tenant_code) <span style="color:var(--text-muted);font-size:11px">({{ $t->tenant_code }})</span>@endif
+                                    </div>
+                                @endforeach
+                                <div class="tenant-combo-empty" id="mc_tenant_empty">No tenants match your search</div>
+                            </div>
+                        </div>
                         @error('tenant_id') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
@@ -849,8 +870,58 @@ document.getElementById('mc_unit_id').addEventListener('change', function() {
     }
 });
 
+// ── TENANT SEARCH DROPDOWN ─────────────────────────────────────
+(function() {
+    const combo    = document.getElementById('mc_tenant_combo');
+    const search   = document.getElementById('mc_tenant_search');
+    const hidden   = document.getElementById('mc_tenant_id');
+    const dropdown = document.getElementById('mc_tenant_dropdown');
+    const empty    = document.getElementById('mc_tenant_empty');
+    const items    = Array.from(dropdown.querySelectorAll('.tenant-combo-item'));
+
+    function filter() {
+        const q = search.value.trim().toLowerCase();
+        let visible = 0;
+        items.forEach(item => {
+            const match = !q || item.dataset.name.toLowerCase().includes(q);
+            item.classList.toggle('hidden', !match);
+            if (match) visible++;
+        });
+        empty.classList.toggle('show', visible === 0);
+    }
+
+    search.addEventListener('focus', function() {
+        filter();
+        dropdown.classList.add('open');
+    });
+    search.addEventListener('input', function() {
+        hidden.value = '';
+        filter();
+        dropdown.classList.add('open');
+    });
+
+    items.forEach(item => {
+        item.addEventListener('click', function() {
+            hidden.value = item.dataset.id;
+            search.value = item.dataset.name;
+            dropdown.classList.remove('open');
+        });
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!combo.contains(e.target)) dropdown.classList.remove('open');
+    });
+})();
+
 // ── SUBMIT ───────────────────────────────────────────────────
 function handleContractSubmit(btn) {
+    const tenantId = document.getElementById('mc_tenant_id');
+    if (!tenantId.value) {
+        switchMTab('mc-info');
+        document.getElementById('mc_tenant_search').focus();
+        return;
+    }
+
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
     document.getElementById('contractForm').submit();
