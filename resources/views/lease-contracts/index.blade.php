@@ -494,24 +494,15 @@
                     </div>
 
                     <div class="mfield-group">
-                        <label class="mfield-label">Tenant</label>
+                        <label class="mfield-label">Tenant <span class="req">*</span></label>
                         <select name="tenant_id" id="mc_tenant_id"
-                            class="mfield-select {{ $errors->has('tenant_id') ? 'is-invalid' : '' }}">
+                            class="mfield-select {{ $errors->has('tenant_id') ? 'is-invalid' : '' }}" required>
                             <option value="">— Select Tenant —</option>
                             @foreach($tenants as $t)
                                 <option value="{{ $t->id }}" {{ old('tenant_id') == $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
                             @endforeach
                         </select>
                         @error('tenant_id') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
-                    </div>
-
-                    <div class="mfield-group">
-                        <label class="mfield-label">Tenant Name <span class="req">*</span></label>
-                        <input type="text" name="tenant_name" id="mc_tenant_name"
-                            class="mfield-input {{ $errors->has('tenant_name') ? 'is-invalid' : '' }}"
-                            value="{{ old('tenant_name') }}"
-                            placeholder="Name or free-text" maxlength="255" required>
-                        @error('tenant_name') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
                     <div class="mfield-group span-full">
@@ -851,13 +842,6 @@ function switchMTab(tabId) {
 function nextMTab() { if (currentTab < TABS.length - 1) switchMTab(TABS[currentTab + 1]); }
 function prevMTab() { if (currentTab > 0) switchMTab(TABS[currentTab - 1]); }
 
-// ── TENANT AUTO-FILL ─────────────────────────────────────────
-document.getElementById('mc_tenant_id').addEventListener('change', function() {
-    if (this.value) {
-        document.getElementById('mc_tenant_name').value = this.options[this.selectedIndex].text;
-    }
-});
-
 // ── UNIT AUTO-FILL ───────────────────────────────────────────
 document.getElementById('mc_unit_id').addEventListener('change', function() {
     if (this.value) {
@@ -875,7 +859,7 @@ function handleContractSubmit(btn) {
 // ── ERROR DOTS — show dot on tab that has an error ───────────
 @php
     $tabErrorMap = [
-        'mc-info'     => ['date','lease_agreement_no','tenant_id','tenant_name','description'],
+        'mc-info'     => ['date','lease_agreement_no','tenant_id','description'],
         'mc-location' => ['property_name','property_code','block_name','block_code','floor_name','floor_code','unit_id','unit'],
         'mc-lease'    => ['lease_start_date','lease_end_date','lease_break_date','notice_period'],
         'mc-rent'     => ['invoicing_frequency','currency','rent_start_date','rent_end_date','rent_per_month'],
