@@ -17,6 +17,7 @@ use App\Http\Controllers\BuildingImageController;
 use App\Http\Controllers\EwaBillController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\InvoiceNoteController;
 use App\Http\Controllers\ReportController;
 
 // Unified data import/export
@@ -75,6 +76,8 @@ Route::get('/ewa-bills/{ewaBill}/pdf',                 [EwaBillController::class
 Route::get('/ewa-bills/{ewaBill}/pdf/preview',         [EwaBillController::class, 'pdfPreview'])->name('ewa-bills.pdf.preview');
 Route::post('/invoices/{invoice}/payments',                   [PaymentController::class, 'store'])->name('invoices.payments.store');
 Route::delete('/invoices/{invoice}/payments/{payment}',       [PaymentController::class, 'destroy'])->name('invoices.payments.destroy');
+Route::post('/invoices/{invoice}/notes',                      [InvoiceNoteController::class, 'store'])->name('invoices.notes.store');
+Route::delete('/invoices/{invoice}/notes/{invoiceNote}',      [InvoiceNoteController::class, 'destroy'])->name('invoices.notes.destroy');
 
 // Reports
 Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');

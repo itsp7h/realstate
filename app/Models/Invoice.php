@@ -36,9 +36,24 @@ class Invoice extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function invoiceNotes(): HasMany
+    {
+        return $this->hasMany(InvoiceNote::class);
+    }
+
     public function getTotalPaidAttribute(): float
     {
         return (float) $this->payments()->sum('amount');
+    }
+
+    public function getTotalCreditNotesAttribute(): float
+    {
+        return (float) $this->invoiceNotes()->where('type', 'credit')->sum('amount');
+    }
+
+    public function getTotalDebitNotesAttribute(): float
+    {
+        return (float) $this->invoiceNotes()->where('type', 'debit')->sum('amount');
     }
 
     public function getTotalInclVatAttribute(): float
@@ -48,7 +63,7 @@ class Invoice extends Model
 
     public function getBalanceDueAttribute(): float
     {
-        return (float) $this->total_incl_vat - $this->total_paid;
+        return (float) $this->total_incl_vat - $this->total_paid - $this->total_credit_notes + $this->total_debit_notes;
     }
 
     public function getAmountInWordsAttribute(): string
@@ -165,9 +180,11 @@ class Invoice extends Model
         if (in_array($this->status, ['cancelled', 'overdue'], true)) return;
 
         $paid  = $this->total_paid;
-        $owing = $this->total_incl_vat;
+        $owing = $this->total_incl_vat - $this->total_credit_notes + $this->total_debit_notes;
 
-        if ($paid <= 0) {
+        if ($owing <= 0) {
+            $status = 'paid';
+        } elseif ($paid <= 0) {
             $status = 'issued';
         } elseif ($paid >= $owing) {
             $status = 'paid';
