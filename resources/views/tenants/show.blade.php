@@ -5,6 +5,88 @@
 
 @push('styles')
 <style>
+    .tab-bar {
+        display: flex;
+        gap: 4px;
+        border-bottom: 2px solid var(--card-border);
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+    .tab-btn {
+        padding: 11px 20px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted);
+        border: none;
+        background: none;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition: color 0.18s, border-color 0.18s;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+    .tab-btn:hover { color: var(--text-primary); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-btn .tab-badge {
+        background: var(--accent-dim);
+        color: var(--accent);
+        font-size: 10px;
+        font-weight: 700;
+        padding: 1px 6px;
+        border-radius: 20px;
+        min-width: 18px;
+        text-align: center;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .table-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden; overflow-x: auto; }
+    .tp-empty { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+    .tp-empty i { font-size: 32px; display: block; margin-bottom: 10px; opacity: 0.3; }
+    .tp-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
+    .tp-table th { text-align: left; padding: 10px 14px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); background: var(--page-bg); }
+    .tp-table th.right, .tp-table td.right { text-align: right; }
+    .tp-table td { padding: 9px 14px; border-bottom: 1px solid var(--card-border); }
+    .tp-table tr:last-child td { border-bottom: none; }
+    .tp-table tr[data-href] { cursor: pointer; }
+    .tp-money { font-family: 'Outfit', sans-serif; font-weight: 700; }
+    .tp-link { color: var(--accent); text-decoration: none; font-weight: 700; }
+    .tp-link:hover { text-decoration: underline; }
+
+    .status-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700;
+    }
+    .status-badge.draft          { background: #F1F5F9; color: #64748B; }
+    .status-badge.issued         { background: #EFF6FF; color: #2563EB; }
+    .status-badge.partially_paid { background: #FFFBEB; color: #D97706; }
+    .status-badge.paid           { background: #ECFDF5; color: #059669; }
+    .status-badge.overdue        { background: #FEF2F2; color: #DC2626; }
+    .status-badge.cancelled      { background: #F8FAFC; color: #94A3B8; }
+    .status-badge.expired        { background: #FEF2F2; color: #DC2626; }
+    .status-badge.upcoming       { background: #EFF6FF; color: #2563EB; }
+    .status-badge.expiring       { background: #FFFBEB; color: #D97706; }
+    .status-badge.active         { background: #ECFDF5; color: #059669; }
+
+    .type-badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 3px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 600;
+    }
+    .type-badge.rent      { background: #EFF6FF; color: #2563EB; }
+    .type-badge.utilities { background: #FFF7ED; color: #EA580C; }
+    .type-badge.other     { background: #F1F5F9; color: #64748B; }
+    .type-badge.credit    { background: #ECFDF5; color: #059669; }
+    .type-badge.debit     { background: #FFFBEB; color: #D97706; }
+
+    .rs-status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; }
+    .rs-status.paid          { background: #ECFDF5; color: #059669; }
+    .rs-status.partial       { background: #FFFBEB; color: #D97706; }
+    .rs-status.unpaid        { background: #FEF2F2; color: #DC2626; }
+    .rs-status.not_invoiced  { background: #F1F5F9; color: #64748B; }
+
     .profile-hero {
         background: var(--card-bg);
         border: 1px solid var(--card-border);
@@ -124,7 +206,39 @@
     </div>
 </div>
 
-{{-- DETAIL CARDS --}}
+{{-- TABS --}}
+<div class="tab-bar">
+    <button class="tab-btn" id="tab-overview" onclick="switchTab('overview')">
+        <i class="fa-solid fa-address-card"></i> Overview
+    </button>
+    <button class="tab-btn" id="tab-leases" onclick="switchTab('leases')">
+        <i class="fa-solid fa-file-contract"></i> Lease Contracts
+        <span class="tab-badge">{{ $tenant->leaseContracts->count() }}</span>
+    </button>
+    <button class="tab-btn" id="tab-invoices" onclick="switchTab('invoices')">
+        <i class="fa-solid fa-file-invoice"></i> Invoices
+        <span class="tab-badge">{{ $tenant->invoices->count() }}</span>
+    </button>
+    <button class="tab-btn" id="tab-payments" onclick="switchTab('payments')">
+        <i class="fa-solid fa-money-bill-transfer"></i> Payments &amp; Receipts
+        <span class="tab-badge">{{ $tenant->payments->count() }}</span>
+    </button>
+    <button class="tab-btn" id="tab-ewa" onclick="switchTab('ewa')">
+        <i class="fa-solid fa-bolt"></i> EWA Bills
+        <span class="tab-badge">{{ $tenant->ewaBills->count() }}</span>
+    </button>
+    <button class="tab-btn" id="tab-notes" onclick="switchTab('notes')">
+        <i class="fa-solid fa-file-invoice-dollar"></i> Credit &amp; Debit Notes
+        <span class="tab-badge">{{ $tenant->invoiceNotes->count() }}</span>
+    </button>
+    <button class="tab-btn" id="tab-ledger" onclick="switchTab('ledger')">
+        <i class="fa-solid fa-calendar-check"></i> Rent Ledger
+        <span class="tab-badge">{{ $rentSchedule->count() }}</span>
+    </button>
+</div>
+
+{{-- ===================== OVERVIEW TAB ===================== --}}
+<div class="tab-panel" id="panel-overview">
 <div class="detail-grid">
 
     <div class="detail-item">
@@ -202,5 +316,262 @@
     </div>
 
 </div>
+</div>
+
+{{-- ===================== LEASE CONTRACTS TAB ===================== --}}
+<div class="tab-panel" id="panel-leases">
+<div class="table-card">
+    @if($tenant->leaseContracts->isEmpty())
+    <div class="tp-empty"><i class="fa-solid fa-file-contract"></i>No lease contracts on file for this tenant.</div>
+    @else
+    <table class="tp-table">
+        <thead>
+            <tr>
+                <th>Agreement No.</th>
+                <th>Property / Unit</th>
+                <th>Lease Period</th>
+                <th class="right">Rent / Month (BHD)</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($tenant->leaseContracts as $contract)
+            <tr data-href="{{ route('lease-contracts.show', $contract) }}" onclick="window.location=this.dataset.href">
+                <td><span class="tp-link">{{ $contract->lease_agreement_no }}</span></td>
+                <td>{{ $contract->property_name }}{{ $contract->unit ? ' / '.$contract->unit : '' }}</td>
+                <td>{{ $contract->lease_start_date->format('d M Y') }} &rarr; {{ $contract->lease_end_date->format('d M Y') }}</td>
+                <td class="right tp-money">{{ $contract->rent_per_month !== null ? number_format($contract->rent_per_month, 3) : '—' }}</td>
+                <td><span class="status-badge {{ $contract->status }}">{{ ucfirst($contract->status) }}</span></td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+    @endif
+</div>
+</div>
+
+{{-- ===================== INVOICES TAB ===================== --}}
+<div class="tab-panel" id="panel-invoices">
+<div class="table-card">
+    @if($tenant->invoices->isEmpty())
+    <div class="tp-empty"><i class="fa-solid fa-file-invoice"></i>No invoices raised for this tenant yet.</div>
+    @else
+    <table class="tp-table">
+        <thead>
+            <tr>
+                <th>Invoice #</th>
+                <th>Type</th>
+                <th>Date</th>
+                <th class="right">Total (BHD)</th>
+                <th class="right">Paid (BHD)</th>
+                <th class="right">Balance (BHD)</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($tenant->invoices as $invoice)
+            <tr data-href="{{ route('invoices.show', $invoice) }}" onclick="window.location=this.dataset.href">
+                <td><span class="tp-link">{{ $invoice->invoice_number }}</span></td>
+                <td><span class="type-badge {{ $invoice->type }}">{{ $invoice->type_label }}</span></td>
+                <td>{{ $invoice->invoice_date->format('d M Y') }}</td>
+                <td class="right tp-money">{{ number_format($invoice->total_incl_vat, 3) }}</td>
+                <td class="right tp-money">{{ number_format($invoice->total_paid, 3) }}</td>
+                <td class="right tp-money" style="color:{{ $invoice->balance_due > 0.001 ? '#DC2626' : '#059669' }}">{{ number_format($invoice->balance_due, 3) }}</td>
+                <td><span class="status-badge {{ $invoice->status }}">{{ $invoice->status_label }}</span></td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+    @endif
+</div>
+</div>
+
+{{-- ===================== PAYMENTS & RECEIPTS TAB ===================== --}}
+<div class="tab-panel" id="panel-payments">
+<div class="table-card">
+    @if($tenant->payments->isEmpty())
+    <div class="tp-empty"><i class="fa-solid fa-money-bill-transfer"></i>No payments recorded for this tenant yet.</div>
+    @else
+    <table class="tp-table">
+        <thead>
+            <tr>
+                <th>Payment #</th>
+                <th>Date</th>
+                <th>Invoice #</th>
+                <th class="right">Amount (BHD)</th>
+                <th>Method</th>
+                <th>Receipt</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($tenant->payments as $payment)
+            <tr>
+                <td style="font-weight:700">{{ $payment->payment_number }}</td>
+                <td>{{ $payment->payment_date->format('d M Y') }}</td>
+                <td>
+                    @if($payment->invoice)
+                    <a href="{{ route('invoices.show', $payment->invoice) }}" class="tp-link">{{ $payment->invoice->invoice_number }}</a>
+                    @else
+                    —
+                    @endif
+                </td>
+                <td class="right tp-money" style="color:#059669">{{ number_format($payment->amount, 3) }}</td>
+                <td>{{ $payment->method_label }}</td>
+                <td>
+                    @if($payment->invoice)
+                    <a href="{{ route('invoices.payments.receipt', [$payment->invoice, $payment]) }}" class="btn btn-outline btn-sm" title="Download Receipt" target="_blank">
+                        <i class="fa-solid fa-file-arrow-down"></i>
+                    </a>
+                    @else
+                    —
+                    @endif
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+    @endif
+</div>
+</div>
+
+{{-- ===================== EWA BILLS TAB ===================== --}}
+<div class="tab-panel" id="panel-ewa">
+<div class="table-card">
+    @if($tenant->ewaBills->isEmpty())
+    <div class="tp-empty"><i class="fa-solid fa-bolt"></i>No EWA bills on file for this tenant.</div>
+    @else
+    <table class="tp-table">
+        <thead>
+            <tr>
+                <th>Bill #</th>
+                <th>Billing Period</th>
+                <th class="right">Total (BHD)</th>
+                <th class="right">Tenant Portion (BHD)</th>
+                <th class="right">Paid (BHD)</th>
+                <th class="right">Balance (BHD)</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($tenant->ewaBills as $bill)
+            <tr data-href="{{ route('ewa-bills.show', $bill) }}" onclick="window.location=this.dataset.href">
+                <td><span class="tp-link">{{ $bill->bill_number }}</span></td>
+                <td>{{ $bill->billing_period ?: '—' }}</td>
+                <td class="right tp-money">{{ number_format($bill->total_amount, 3) }}</td>
+                <td class="right tp-money">{{ number_format($bill->effective_tenant_portion, 3) }}</td>
+                <td class="right tp-money">{{ number_format($bill->total_paid, 3) }}</td>
+                <td class="right tp-money" style="color:{{ $bill->balance_due > 0.001 ? '#DC2626' : '#059669' }}">{{ number_format($bill->balance_due, 3) }}</td>
+                <td><span class="status-badge {{ $bill->status }}">{{ $bill->status_label }}</span></td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+    @endif
+</div>
+</div>
+
+{{-- ===================== CREDIT & DEBIT NOTES TAB ===================== --}}
+<div class="tab-panel" id="panel-notes">
+<div class="table-card">
+    @if($tenant->invoiceNotes->isEmpty())
+    <div class="tp-empty"><i class="fa-solid fa-file-invoice-dollar"></i>No credit or debit notes issued for this tenant.</div>
+    @else
+    <table class="tp-table">
+        <thead>
+            <tr>
+                <th>Note #</th>
+                <th>Type</th>
+                <th>Invoice #</th>
+                <th>Date</th>
+                <th class="right">Amount (BHD)</th>
+                <th>Reason</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($tenant->invoiceNotes as $note)
+            <tr>
+                <td style="font-weight:700">{{ $note->note_number }}</td>
+                <td><span class="type-badge {{ $note->type }}">{{ $note->type_label }}</span></td>
+                <td>
+                    @if($note->invoice)
+                    <a href="{{ route('invoices.show', $note->invoice) }}" class="tp-link">{{ $note->invoice->invoice_number }}</a>
+                    @else
+                    —
+                    @endif
+                </td>
+                <td>{{ $note->note_date->format('d M Y') }}</td>
+                <td class="right tp-money" style="color:{{ $note->type === 'credit' ? '#059669' : '#D97706' }}">{{ $note->type === 'credit' ? '−' : '+' }}{{ number_format($note->amount, 3) }}</td>
+                <td style="color:var(--text-muted)">{{ $note->reason }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+    @endif
+</div>
+</div>
+
+{{-- ===================== RENT LEDGER TAB ===================== --}}
+<div class="tab-panel" id="panel-ledger">
+<div class="table-card">
+    @if($rentSchedule->isEmpty())
+    <div class="tp-empty"><i class="fa-solid fa-calendar-check"></i>No rent-bearing lease contracts on file for this tenant.</div>
+    @else
+    <table class="tp-table">
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th class="right">Expected (BHD)</th>
+                <th class="right">Invoiced (BHD)</th>
+                <th class="right">Paid (BHD)</th>
+                <th class="right">Remaining (BHD)</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($rentSchedule as $row)
+            <tr>
+                <td style="font-weight:600">{{ $row['month']->format('F Y') }}</td>
+                <td class="right tp-money">{{ number_format($row['expected'], 3) }}</td>
+                <td class="right tp-money">{{ number_format($row['invoiced'], 3) }}</td>
+                <td class="right tp-money">{{ number_format($row['paid'], 3) }}</td>
+                <td class="right tp-money" style="color:{{ $row['remaining'] > 0.001 ? '#DC2626' : '#059669' }}">{{ number_format($row['remaining'], 3) }}</td>
+                <td>
+                    <span class="rs-status {{ $row['status'] }}">
+                        {{ match($row['status']) {
+                            'paid'         => 'Paid',
+                            'partial'      => 'Partially Paid',
+                            'unpaid'       => 'Unpaid',
+                            'not_invoiced' => 'Not Invoiced',
+                        } }}
+                    </span>
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+    @endif
+    <div style="padding:14px 18px;border-top:1px solid var(--card-border)">
+        <a href="{{ route('reports.rent-schedule', ['tenant_id' => $tenant->id]) }}" class="tp-link">
+            <i class="fa-solid fa-file-pdf"></i> View full report / download PDF
+        </a>
+    </div>
+</div>
+</div>
 
 @endsection
+
+@push('scripts')
+<script>
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+    history.replaceState(null, '', '?tab=' + tab);
+}
+
+const urlTab = new URLSearchParams(window.location.search).get('tab');
+const validTabs = ['overview', 'leases', 'invoices', 'payments', 'ewa', 'notes', 'ledger'];
+switchTab(validTabs.includes(urlTab) ? urlTab : 'overview');
+</script>
+@endpush

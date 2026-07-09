@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\Auditable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Tenant extends Model
 {
@@ -37,5 +39,30 @@ class Tenant extends Model
     public function auditName(): string
     {
         return $this->name;
+    }
+
+    public function leaseContracts(): HasMany
+    {
+        return $this->hasMany(LeaseContract::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function ewaBills(): HasManyThrough
+    {
+        return $this->hasManyThrough(EwaBill::class, LeaseContract::class);
+    }
+
+    public function payments(): HasManyThrough
+    {
+        return $this->hasManyThrough(Payment::class, Invoice::class);
+    }
+
+    public function invoiceNotes(): HasManyThrough
+    {
+        return $this->hasManyThrough(InvoiceNote::class, Invoice::class);
     }
 }

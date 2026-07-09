@@ -2,6 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\EwaBill;
+use App\Models\Invoice;
+use App\Models\InvoiceNote;
+use App\Models\LeaseContract;
+use App\Models\Payment;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -161,6 +166,142 @@ class TenantTest extends TestCase
     {
         $this->get(route('tenants.show', 999))
             ->assertStatus(404);
+    }
+
+    // ── FINANCIAL HISTORY TABS ────────────────────────────────────
+
+    public function test_show_displays_lease_contract(): void
+    {
+        $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+        LeaseContract::create([
+            'date'               => '2026-01-01',
+            'lease_agreement_no' => 'LA-PROFILE-1',
+            'tenant_id'          => $tenant->id,
+            'tenant_name'        => $tenant->name,
+            'property_name'      => 'Profile Tower',
+            'lease_start_date'   => '2026-01-01',
+            'lease_end_date'     => '2026-12-31',
+        ]);
+
+        $this->get(route('tenants.show', $tenant))
+            ->assertStatus(200)
+            ->assertSee('LA-PROFILE-1')
+            ->assertSee('Profile Tower');
+    }
+
+    public function test_show_displays_invoice_payment_and_receipt_link(): void
+    {
+        $tenant  = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+        $invoice = new Invoice([
+            'invoice_number' => 'INV-PROFILE-1',
+            'tenant_id'      => $tenant->id,
+            'tenant_name'    => $tenant->name,
+            'property_name'  => 'Profile Tower',
+            'type'           => 'rent',
+            'lines'          => [['property_name' => 'Profile Tower', 'amount' => 500.000]],
+            'vat_rate'       => 0,
+            'invoice_date'   => '2026-01-01',
+            'status'         => 'issued',
+        ]);
+        $invoice->recomputeTotals();
+        $invoice->save();
+        $payment = Payment::create([
+            'payment_number' => 'PAY-PROFILE-1',
+            'invoice_id'     => $invoice->id,
+            'amount'         => 500.000,
+            'payment_date'   => '2026-01-05',
+            'method'         => 'cash',
+        ]);
+
+        $response = $this->get(route('tenants.show', $tenant));
+        $response->assertStatus(200)
+            ->assertSee('INV-PROFILE-1')
+            ->assertSee('PAY-PROFILE-1')
+            ->assertSee(route('invoices.payments.receipt', [$invoice, $payment]), false);
+    }
+
+    public function test_show_displays_ewa_bill_via_lease_contract(): void
+    {
+        $tenant   = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+        $contract = LeaseContract::create([
+            'date'               => '2026-01-01',
+            'lease_agreement_no' => 'LA-PROFILE-2',
+            'tenant_id'          => $tenant->id,
+            'tenant_name'        => $tenant->name,
+            'property_name'      => 'Profile Tower',
+            'lease_start_date'   => '2026-01-01',
+            'lease_end_date'     => '2026-12-31',
+        ]);
+        EwaBill::create([
+            'bill_number'       => 'EWA-PROFILE-1',
+            'lease_contract_id' => $contract->id,
+            'tenant_name'       => $tenant->name,
+            'billing_period'    => 'January 2026',
+            'reading_type'      => 'actual',
+            'reading_date'      => '2026-01-05',
+            'elec_charges'      => 20.000,
+            'water_charges'     => 5.000,
+            'total_amount'      => 25.000,
+            'tenant_portion'    => 25.000,
+            'due_date'          => '2026-01-20',
+            'status'            => 'issued',
+        ]);
+
+        $this->get(route('tenants.show', $tenant))
+            ->assertStatus(200)
+            ->assertSee('EWA-PROFILE-1');
+    }
+
+    public function test_show_displays_credit_note_via_invoice(): void
+    {
+        $tenant  = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+        $invoice = new Invoice([
+            'invoice_number' => 'INV-PROFILE-2',
+            'tenant_id'      => $tenant->id,
+            'tenant_name'    => $tenant->name,
+            'property_name'  => 'Profile Tower',
+            'type'           => 'rent',
+            'lines'          => [['property_name' => 'Profile Tower', 'amount' => 1000.000]],
+            'vat_rate'       => 0,
+            'invoice_date'   => '2026-01-01',
+            'status'         => 'issued',
+        ]);
+        $invoice->recomputeTotals();
+        $invoice->save();
+        InvoiceNote::create([
+            'note_number' => 'CN-PROFILE-1',
+            'invoice_id'  => $invoice->id,
+            'type'        => 'credit',
+            'amount'      => 100.000,
+            'note_date'   => '2026-01-10',
+            'reason'      => 'Overcharged tenant',
+        ]);
+
+        $this->get(route('tenants.show', $tenant))
+            ->assertStatus(200)
+            ->assertSee('CN-PROFILE-1')
+            ->assertSee('Overcharged tenant');
+    }
+
+    public function test_show_displays_rent_ledger_tab_badge_count(): void
+    {
+        $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+        LeaseContract::create([
+            'date'               => '2026-01-01',
+            'lease_agreement_no' => 'LA-PROFILE-3',
+            'tenant_id'          => $tenant->id,
+            'tenant_name'        => $tenant->name,
+            'property_name'      => 'Profile Tower',
+            'lease_start_date'   => '2026-01-01',
+            'lease_end_date'     => '2026-12-31',
+            'rent_start_date'    => '2026-01-01',
+            'rent_end_date'      => '2026-12-31',
+            'rent_per_month'     => 500.000,
+        ]);
+
+        $response = $this->get(route('tenants.show', $tenant));
+        $response->assertStatus(200);
+        $this->assertTrue($response->viewData('rentSchedule')->isNotEmpty());
     }
 
     // ── EDIT / UPDATE ────────────────────────────────────────────

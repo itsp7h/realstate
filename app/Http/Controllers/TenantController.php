@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreTenantRequest;
 use App\Http\Requests\UpdateTenantRequest;
 use App\Models\Tenant;
+use App\Services\RentScheduleService;
 use Illuminate\Http\Request;
 
 class TenantController extends Controller
 {
+    public function __construct(private RentScheduleService $rentSchedule) {}
+
     public function index(Request $request)
     {
         $query = Tenant::query();
@@ -57,7 +60,17 @@ class TenantController extends Controller
 
     public function show(Tenant $tenant)
     {
-        return view('tenants.show', compact('tenant'));
+        $tenant->load([
+            'leaseContracts' => fn ($q) => $q->orderByDesc('lease_start_date'),
+            'invoices'       => fn ($q) => $q->orderByDesc('invoice_date'),
+            'ewaBills'       => fn ($q) => $q->orderByDesc('reading_date'),
+            'payments.invoice',
+            'invoiceNotes.invoice',
+        ]);
+
+        $rentSchedule = $this->rentSchedule->build($tenant);
+
+        return view('tenants.show', compact('tenant', 'rentSchedule'));
     }
 
     public function edit(Tenant $tenant)
