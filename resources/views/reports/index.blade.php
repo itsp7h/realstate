@@ -31,7 +31,7 @@
 <div class="page-header">
     <div>
         <h1 class="page-header-title">Reports</h1>
-        <p class="page-header-sub">Tenant statements and accounts-receivable ageing</p>
+        <p class="page-header-sub">Tenant statements, accounts-receivable ageing, and profit &amp; loss</p>
     </div>
 </div>
 
@@ -52,6 +52,12 @@
         <div class="report-card-icon"><i class="fa-solid fa-table-list"></i></div>
         <div class="report-card-title">Group Outstanding (Ageing)</div>
         <div class="report-card-desc">One row per tenant with an outstanding balance, in the same ageing buckets, with a grand total across everyone.</div>
+    </a>
+
+    <a href="{{ route('reports.profit-loss') }}" class="report-card">
+        <div class="report-card-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+        <div class="report-card-title">Profit &amp; Loss</div>
+        <div class="report-card-desc">Rent, utilities and EWA cash collected against maintenance costs and unrecovered EWA charges — per building, per tenant, or across everything.</div>
     </a>
 </div>
 

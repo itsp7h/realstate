@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Building;
 use App\Models\MaintenanceRequest;
+use App\Models\PropertyUnit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -292,6 +294,52 @@ class MaintenanceRequestTest extends TestCase
 
         $this->delete(route('maintenance.destroy', $record));
         Storage::disk('public')->assertMissing($path);
+    }
+
+    // ── BUILDING / UNIT RESOLUTION ─────────────────────────────────────────────
+
+    public function test_store_resolves_building_and_unit_id_from_matching_names(): void
+    {
+        $building = Building::create(['property_name' => 'Tower A', 'property_code' => 'TA1']);
+        $unit = PropertyUnit::create([
+            'building_id'   => $building->id,
+            'property_name' => 'Tower A',
+            'property_code' => 'TA1',
+            'unit_name'     => '3B',
+        ]);
+
+        $this->post(route('maintenance.store'), $this->baseData(['property' => 'tower a', 'flat' => '3b']));
+
+        $record = MaintenanceRequest::first();
+        $this->assertEquals($building->id, $record->building_id);
+        $this->assertEquals($unit->id, $record->unit_id);
+    }
+
+    public function test_store_leaves_building_and_unit_id_null_when_no_match(): void
+    {
+        $this->post(route('maintenance.store'), $this->baseData(['property' => 'Nonexistent Tower', 'flat' => '9Z']));
+
+        $record = MaintenanceRequest::first();
+        $this->assertNull($record->building_id);
+        $this->assertNull($record->unit_id);
+    }
+
+    public function test_update_re_resolves_building_and_unit_id(): void
+    {
+        $record = MaintenanceRequest::create($this->baseData(['property' => 'Nonexistent Tower']));
+        $building = Building::create(['property_name' => 'Tower A', 'property_code' => 'TA1']);
+        $unit = PropertyUnit::create([
+            'building_id'   => $building->id,
+            'property_name' => 'Tower A',
+            'property_code' => 'TA1',
+            'unit_name'     => '3B',
+        ]);
+
+        $this->put(route('maintenance.update', $record), $this->baseData(['property' => 'Tower A', 'flat' => '3B']));
+
+        $record->refresh();
+        $this->assertEquals($building->id, $record->building_id);
+        $this->assertEquals($unit->id, $record->unit_id);
     }
 
     // ── AUDIT LOG ────────────────────────────────────────────────────────────

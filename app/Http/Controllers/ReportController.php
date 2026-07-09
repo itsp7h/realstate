@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Building;
 use App\Models\Tenant;
+use App\Services\ProfitLossService;
 use App\Services\TenantLedgerService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
@@ -12,7 +14,10 @@ use Illuminate\Support\Carbon;
 
 class ReportController extends Controller
 {
-    public function __construct(private TenantLedgerService $ledger) {}
+    public function __construct(
+        private TenantLedgerService $ledger,
+        private ProfitLossService $profitLoss,
+    ) {}
 
     public function index(): View
     {
@@ -125,6 +130,60 @@ class ReportController extends Controller
         ])->setPaper('a4', 'landscape');
 
         return $pdf->stream('group-outstanding-ageing.pdf');
+    }
+
+    // ── PROFIT & LOSS ────────────────────────────────────────────────
+
+    public function profitLoss(Request $request): View
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $buildingId = $request->input('building_id') ? (int) $request->input('building_id') : null;
+        $tenantId   = $request->input('tenant_id') ? (int) $request->input('tenant_id') : null;
+
+        $statement = $this->profitLoss->build($from, $to, $buildingId, $tenantId);
+
+        $breakdown = collect();
+        if (! $buildingId && ! $tenantId) {
+            $breakdown = $this->profitLoss->byBuilding($from, $to);
+        }
+
+        return view('reports.profit-loss', [
+            'buildings'  => Building::orderBy('property_name')->get(['id', 'property_name']),
+            'tenants'    => Tenant::orderBy('name')->get(['id', 'name']),
+            'buildingId' => $buildingId,
+            'tenantId'   => $tenantId,
+            'statement'  => $statement,
+            'breakdown'  => $breakdown,
+            'from'       => $from,
+            'to'         => $to,
+        ]);
+    }
+
+    public function profitLossPdf(Request $request): Response
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $buildingId = $request->input('building_id') ? (int) $request->input('building_id') : null;
+        $tenantId   = $request->input('tenant_id') ? (int) $request->input('tenant_id') : null;
+
+        $statement = $this->profitLoss->build($from, $to, $buildingId, $tenantId);
+        $building  = $buildingId ? Building::find($buildingId) : null;
+        $tenant    = $tenantId ? Tenant::find($tenantId) : null;
+
+        $breakdown = collect();
+        if (! $buildingId && ! $tenantId) {
+            $breakdown = $this->profitLoss->byBuilding($from, $to);
+        }
+
+        $pdf = Pdf::loadView('reports.profit-loss-pdf', [
+            'building'  => $building,
+            'tenant'    => $tenant,
+            'statement' => $statement,
+            'breakdown' => $breakdown,
+            'from'      => $from,
+            'to'        => $to,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream('profit-and-loss.pdf');
     }
 
     private function resolveDateRange(Request $request): array

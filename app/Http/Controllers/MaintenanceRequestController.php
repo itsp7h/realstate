@@ -80,6 +80,7 @@ class MaintenanceRequestController extends Controller
 
         $data['status']       = 'waiting_supervisor';
         $data['request_date'] = $data['request_date'] ?? now()->toDateString();
+        $data                 = array_merge($data, $this->resolveBuildingAndUnit($data['property'] ?? null, $data['flat'] ?? null));
 
         foreach (['quotation_1_file', 'quotation_2_file', 'quotation_3_file'] as $field) {
             if ($request->hasFile($field)) {
@@ -106,6 +107,7 @@ class MaintenanceRequestController extends Controller
     public function update(UpdateMaintenanceRequest $request, MaintenanceRequest $maintenanceRequest): RedirectResponse
     {
         $data = $request->validated();
+        $data = array_merge($data, $this->resolveBuildingAndUnit($data['property'] ?? null, $data['flat'] ?? null));
 
         foreach (['quotation_1_file', 'quotation_2_file', 'quotation_3_file'] as $field) {
             if ($request->hasFile($field)) {
@@ -158,5 +160,24 @@ class MaintenanceRequestController extends Controller
 
         return redirect()->route('maintenance.index')
             ->with('success', 'Maintenance request deleted.');
+    }
+
+    /**
+     * Resolve building_id/unit_id from the free-text property/flat fields by
+     * case-insensitive name match, same approach as ImportController's lease
+     * import. Returns nulls when no matching Building/PropertyUnit is found.
+     */
+    private function resolveBuildingAndUnit(?string $property, ?string $flat): array
+    {
+        $buildingId = Building::whereRaw('LOWER(TRIM(property_name)) = ?', [strtolower(trim($property ?? ''))])
+            ->value('id');
+
+        $unitId = $buildingId
+            ? PropertyUnit::where('building_id', $buildingId)
+                ->whereRaw('LOWER(TRIM(unit_name)) = ?', [strtolower(trim($flat ?? ''))])
+                ->value('id')
+            : null;
+
+        return ['building_id' => $buildingId, 'unit_id' => $unitId];
     }
 }
