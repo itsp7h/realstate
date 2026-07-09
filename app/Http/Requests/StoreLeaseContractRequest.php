@@ -13,7 +13,7 @@ class StoreLeaseContractRequest extends FormRequest
         return [
             // Contract identity
             'date'                     => ['required', 'date'],
-            'lease_agreement_no'       => ['required', 'string', 'max:100', 'unique:lease_contracts,lease_agreement_no'],
+            'lease_agreement_no'       => ['nullable', 'string', 'max:100', 'unique:lease_contracts,lease_agreement_no'],
 
             // Tenant
             'tenant_id'                => ['required', 'integer', 'exists:tenants,id'],

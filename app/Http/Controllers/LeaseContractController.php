@@ -85,6 +85,10 @@ class LeaseContractController extends Controller
         $data = $request->validated();
         $this->syncTenantName($data);
 
+        if (empty($data['lease_agreement_no'])) {
+            $data['lease_agreement_no'] = LeaseContract::generateNumber();
+        }
+
         LeaseContract::create($data);
 
         return redirect()->route('lease-contracts.index')

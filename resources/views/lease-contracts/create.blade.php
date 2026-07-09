@@ -67,11 +67,11 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Lease Agreement No. <span class="required">*</span></label>
+                    <label>Lease Agreement No.</label>
                     <input type="text" name="lease_agreement_no"
                         class="{{ $errors->has('lease_agreement_no') ? 'error' : '' }}"
                         value="{{ old('lease_agreement_no') }}"
-                        placeholder="e.g. LA-2024-001" maxlength="100" required>
+                        placeholder="Leave blank to auto-generate (e.g. LA-2026-001)" maxlength="100">
                     @error('lease_agreement_no') <span class="field-error">{{ $message }}</span> @enderror
                 </div>
 

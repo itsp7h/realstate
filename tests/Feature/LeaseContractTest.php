@@ -166,7 +166,43 @@ class LeaseContractTest extends TestCase
     public function test_store_fails_without_required_fields(): void
     {
         $this->post(route('lease-contracts.store'), [])
-            ->assertSessionHasErrors(['date', 'lease_agreement_no', 'tenant_id', 'lease_start_date', 'lease_end_date']);
+            ->assertSessionHasErrors(['date', 'tenant_id', 'lease_start_date', 'lease_end_date']);
+    }
+
+    public function test_store_auto_generates_agreement_no_when_blank(): void
+    {
+        $data = $this->minimalData();
+        unset($data['lease_agreement_no']);
+
+        $this->post(route('lease-contracts.store'), $data)
+            ->assertRedirect(route('lease-contracts.index'));
+
+        $contract = LeaseContract::latest('id')->first();
+        $this->assertNotNull($contract->lease_agreement_no);
+        $this->assertStringStartsWith('LA-' . now()->year . '-', $contract->lease_agreement_no);
+    }
+
+    public function test_store_uses_provided_agreement_no_when_given(): void
+    {
+        $this->post(route('lease-contracts.store'), $this->minimalData(['lease_agreement_no' => 'LA-CUSTOM-001']));
+
+        $this->assertDatabaseHas('lease_contracts', ['lease_agreement_no' => 'LA-CUSTOM-001']);
+    }
+
+    public function test_store_auto_generated_agreement_numbers_increment(): void
+    {
+        $first  = $this->minimalData();
+        $second = $this->minimalData(['lease_agreement_no' => null]);
+        unset($first['lease_agreement_no']);
+        unset($second['lease_agreement_no']);
+        $second['lease_start_date'] = '2024-02-01';
+        $second['lease_end_date']   = '2025-02-01';
+
+        $this->post(route('lease-contracts.store'), $first);
+        $this->post(route('lease-contracts.store'), $second);
+
+        $numbers = LeaseContract::orderBy('id')->pluck('lease_agreement_no');
+        $this->assertCount(2, $numbers->unique());
     }
 
     public function test_store_fails_with_duplicate_agreement_no(): void

@@ -485,11 +485,11 @@
                     </div>
 
                     <div class="mfield-group">
-                        <label class="mfield-label">Agreement No. <span class="req">*</span></label>
+                        <label class="mfield-label">Agreement No.</label>
                         <input type="text" name="lease_agreement_no"
                             class="mfield-input {{ $errors->has('lease_agreement_no') ? 'is-invalid' : '' }}"
                             value="{{ old('lease_agreement_no') }}"
-                            placeholder="e.g. LA-2024-001" maxlength="100" required>
+                            placeholder="Leave blank to auto-generate (e.g. LA-2026-001)" maxlength="100">
                         @error('lease_agreement_no') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 

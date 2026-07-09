@@ -84,4 +84,13 @@ class LeaseContract extends Model
     {
         return $this->belongsTo(PropertyUnit::class, 'unit_id');
     }
+
+    public static function generateNumber(): string
+    {
+        $prefix = 'LA-' . now()->year . '-';
+        $last   = static::where('lease_agreement_no', 'like', $prefix . '%')
+                        ->orderByDesc('lease_agreement_no')->value('lease_agreement_no');
+        $seq    = $last ? (int) substr($last, -3) + 1 : 1;
+        return $prefix . str_pad((string) $seq, 3, '0', STR_PAD_LEFT);
+    }
 }
