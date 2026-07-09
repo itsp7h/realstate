@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreLeaseContractRequest;
 use App\Http\Requests\UpdateLeaseContractRequest;
+use App\Models\Building;
+use App\Models\Floor;
 use App\Models\LeaseContract;
 use App\Models\Tenant;
 use App\Models\PropertyUnit;
@@ -64,12 +66,14 @@ class LeaseContractController extends Controller
             ->orderBy('property_code')
             ->pluck('property_code');
 
-        $tenants = Tenant::orderBy('name')->get(['id', 'name', 'tenant_type']);
-        $units   = PropertyUnit::orderBy('unit_name')->get(['id', 'unit_name']);
+        $tenants  = Tenant::orderBy('name')->get(['id', 'name', 'tenant_type']);
+        $units    = PropertyUnit::orderBy('unit_name')->get(['id', 'unit_name', 'building_id', 'floor_id']);
+        $buildings = Building::orderBy('property_name')->get(['id', 'property_name', 'property_code']);
+        $floors    = Floor::orderBy('floor_name')->get(['id', 'building_id', 'floor_name', 'floor_code', 'block_name', 'block_code']);
 
         $asOfValue = $request->input('as_of', '');
 
-        return view('lease-contracts.index', compact('contracts', 'stats', 'propertyCodes', 'tenants', 'units', 'asOfValue'));
+        return view('lease-contracts.index', compact('contracts', 'stats', 'propertyCodes', 'tenants', 'units', 'buildings', 'floors', 'asOfValue'));
     }
 
     public function create()
