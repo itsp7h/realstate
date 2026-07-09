@@ -76,9 +76,9 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Tenant</label>
+                    <label>Tenant <span class="required">*</span></label>
                     <select name="tenant_id" id="tenant_id_select"
-                        class="{{ $errors->has('tenant_id') ? 'error' : '' }}">
+                        class="{{ $errors->has('tenant_id') ? 'error' : '' }}" required>
                         <option value="">— Select Tenant —</option>
                         @foreach($tenants as $t)
                             <option value="{{ $t->id }}" {{ old('tenant_id') == $t->id ? 'selected' : '' }}>
@@ -87,15 +87,6 @@
                         @endforeach
                     </select>
                     @error('tenant_id') <span class="field-error">{{ $message }}</span> @enderror
-                </div>
-
-                <div class="form-group" id="tenant_name_group">
-                    <label>Tenant Name (if not in system) <span class="required">*</span></label>
-                    <input type="text" name="tenant_name" id="tenant_name_input"
-                        class="{{ $errors->has('tenant_name') ? 'error' : '' }}"
-                        value="{{ old('tenant_name') }}"
-                        placeholder="Free-text tenant name" maxlength="255">
-                    @error('tenant_name') <span class="field-error">{{ $message }}</span> @enderror
                 </div>
 
                 <div class="form-group col-span-2">
@@ -454,18 +445,6 @@
 
 @push('scripts')
 <script>
-// Auto-fill tenant_name from selected tenant
-const tenantSelect = document.getElementById('tenant_id_select');
-const tenantNameInput = document.getElementById('tenant_name_input');
-const tenantNameGroup = document.getElementById('tenant_name_group');
-
-tenantSelect.addEventListener('change', function() {
-    if (this.value) {
-        const text = this.options[this.selectedIndex].text;
-        tenantNameInput.value = text;
-    }
-});
-
 // Auto-fill unit fallback
 const unitSelect = document.getElementById('unit_id_select');
 const unitFallback = document.getElementById('unit_fallback_group').querySelector('input');

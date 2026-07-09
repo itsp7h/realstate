@@ -214,11 +214,6 @@ class LeaseContractController extends Controller
 
     private function syncTenantName(array &$data): void
     {
-        if (!empty($data['tenant_id'])) {
-            $tenant = Tenant::find($data['tenant_id']);
-            if ($tenant) {
-                $data['tenant_name'] = $tenant->name;
-            }
-        }
+        $data['tenant_name'] = Tenant::findOrFail($data['tenant_id'])->name;
     }
 }

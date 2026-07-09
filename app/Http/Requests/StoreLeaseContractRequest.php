@@ -16,8 +16,7 @@ class StoreLeaseContractRequest extends FormRequest
             'lease_agreement_no'       => ['required', 'string', 'max:100', 'unique:lease_contracts,lease_agreement_no'],
 
             // Tenant
-            'tenant_id'                => ['nullable', 'integer', 'exists:tenants,id'],
-            'tenant_name'              => ['required', 'string', 'max:255'],
+            'tenant_id'                => ['required', 'integer', 'exists:tenants,id'],
 
             // Property location
             'property_name'            => ['nullable', 'string', 'max:255'],

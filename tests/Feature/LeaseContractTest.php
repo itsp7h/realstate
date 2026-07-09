@@ -14,9 +14,12 @@ class LeaseContractTest extends TestCase
 
     private function minimalData(array $overrides = []): array
     {
+        $tenant = Tenant::create(['name' => 'Test Tenant', 'tenant_type' => 'individual']);
+
         return array_merge([
             'date'               => '2024-01-01',
             'lease_agreement_no' => 'LA-TEST-001',
+            'tenant_id'          => $tenant->id,
             'tenant_name'        => 'Test Tenant',
             'lease_start_date'   => '2024-01-01',
             'lease_end_date'     => '2025-01-01',
@@ -163,7 +166,7 @@ class LeaseContractTest extends TestCase
     public function test_store_fails_without_required_fields(): void
     {
         $this->post(route('lease-contracts.store'), [])
-            ->assertSessionHasErrors(['date', 'lease_agreement_no', 'tenant_name', 'lease_start_date', 'lease_end_date']);
+            ->assertSessionHasErrors(['date', 'lease_agreement_no', 'tenant_id', 'lease_start_date', 'lease_end_date']);
     }
 
     public function test_store_fails_with_duplicate_agreement_no(): void
@@ -246,10 +249,12 @@ class LeaseContractTest extends TestCase
 
     public function test_update_modifies_contract(): void
     {
-        $contract = LeaseContract::create($this->minimalData());
+        $contract  = LeaseContract::create($this->minimalData());
+        $newTenant = Tenant::create(['name' => 'Updated Tenant', 'tenant_type' => 'individual']);
 
         $this->put(route('lease-contracts.update', $contract), $this->minimalData([
-            'tenant_name' => 'Updated Tenant',
+            'lease_agreement_no' => $contract->lease_agreement_no,
+            'tenant_id'          => $newTenant->id,
         ]))->assertRedirect(route('lease-contracts.index'));
 
         $this->assertEquals('Updated Tenant', $contract->fresh()->tenant_name);
@@ -260,8 +265,19 @@ class LeaseContractTest extends TestCase
         $contract = LeaseContract::create($this->minimalData());
 
         $this->put(route('lease-contracts.update', $contract), $this->minimalData([
-            'tenant_name' => 'Same Agreement No Update',
+            'lease_agreement_no' => $contract->lease_agreement_no,
         ]))->assertSessionHasNoErrors();
+    }
+
+    public function test_update_fails_without_tenant(): void
+    {
+        $contract = LeaseContract::create($this->minimalData());
+
+        $data = $this->minimalData(['lease_agreement_no' => $contract->lease_agreement_no]);
+        unset($data['tenant_id']);
+
+        $this->put(route('lease-contracts.update', $contract), $data)
+            ->assertSessionHasErrors(['tenant_id']);
     }
 
     public function test_update_fails_with_another_contracts_agreement_no(): void

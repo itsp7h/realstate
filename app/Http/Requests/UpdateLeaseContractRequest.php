@@ -15,8 +15,7 @@ class UpdateLeaseContractRequest extends FormRequest
         return [
             'date'                     => ['required', 'date'],
             'lease_agreement_no'       => ['required', 'string', 'max:100', "unique:lease_contracts,lease_agreement_no,{$id}"],
-            'tenant_id'                => ['nullable', 'integer', 'exists:tenants,id'],
-            'tenant_name'              => ['required', 'string', 'max:255'],
+            'tenant_id'                => ['required', 'integer', 'exists:tenants,id'],
             'property_name'            => ['nullable', 'string', 'max:255'],
             'property_code'            => ['nullable', 'string', 'max:50'],
             'block_name'               => ['nullable', 'string', 'max:100'],
