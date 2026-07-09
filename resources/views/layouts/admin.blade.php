@@ -518,8 +518,21 @@
     </div>
 
     <div class="sidebar-section">
+        <div class="sidebar-section-label">Accounting</div>
+        <a href="{{ route('invoices.index') }}" class="nav-item {{ request()->is('invoices*') ? 'active' : '' }}">
+            <i class="fa-solid fa-file-invoice-dollar nav-icon"></i> Invoices
+        </a>
+        <a href="{{ route('payments.index') }}" class="nav-item {{ request()->is('payments*') ? 'active' : '' }}">
+            <i class="fa-solid fa-money-bill-transfer nav-icon"></i> Payments
+        </a>
+        <a href="{{ route('ewa-bills.index') }}" class="nav-item {{ request()->is('ewa-bills*') ? 'active' : '' }}">
+            <i class="fa-solid fa-droplet nav-icon"></i> EWA Bills
+        </a>
+    </div>
+
+    <div class="sidebar-section">
         <div class="sidebar-section-label">Analytics</div>
-        <a href="#" class="nav-item">
+        <a href="{{ route('reports.index') }}" class="nav-item {{ request()->is('reports*') ? 'active' : '' }}">
             <i class="fa-solid fa-chart-bar nav-icon"></i> Reports
         </a>
     </div>

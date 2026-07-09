@@ -257,8 +257,12 @@
                     <option value="expired"  {{ request('status') === 'expired'  ? 'selected' : '' }}>Expired</option>
                 </select>
             </div>
+            <div class="filter-group">
+                <label>As of Date <span style="font-size:10px;color:var(--text-muted);text-transform:none;font-weight:400">(default: today)</span></label>
+                <input type="date" name="as_of" value="{{ $asOfValue }}" onchange="this.form.submit()">
+            </div>
             <div class="filter-actions">
-                @if(request()->hasAny(['search','property_code','status']))
+                @if(request()->hasAny(['search','property_code','status','as_of']))
                     <a href="{{ route('lease-contracts.index') }}" class="btn btn-outline btn-sm">
                         <i class="fa-solid fa-xmark"></i> Clear
                     </a>
@@ -751,6 +755,18 @@
                             class="mfield-input {{ $errors->has('security_deposit') ? 'is-invalid' : '' }}"
                             value="{{ old('security_deposit') }}" placeholder="0.000" min="0" step="0.001">
                         @error('security_deposit') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="mfield-group span-full">
+                        <label class="mfield-label">EWA Cap <span style="font-size:11px;color:var(--text-muted);font-weight:400;text-transform:none">(BHD/bill — landlord covers up to this amount per EWA bill)</span></label>
+                        <div style="position:relative;max-width:320px;">
+                            <input type="number" name="ewa_cap"
+                                class="mfield-input {{ $errors->has('ewa_cap') ? 'is-invalid' : '' }}"
+                                value="{{ old('ewa_cap') }}" placeholder="0.000 — leave blank if tenant pays full bill"
+                                min="0" step="0.001" style="padding-right:52px;">
+                            <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--text-muted);pointer-events:none;">BHD</span>
+                        </div>
+                        @error('ewa_cap') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
                 </div>

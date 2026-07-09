@@ -657,9 +657,18 @@
                         @else <span style="color:var(--text-muted);">—</span> @endif
                     </td>
                     <td>
-                        @php $unitCount = $building->total_no_of_units ?? $building->units_count; @endphp
+                        @php
+                            $unitCount    = $building->total_no_of_units ?? $building->units_count ?? 0;
+                            $occupiedCount = $building->occupied_units_count ?? 0;
+                        @endphp
                         @if($unitCount)
                             <div style="font-family:'Outfit',sans-serif;font-weight:700;">{{ $unitCount }}</div>
+                            <div style="font-size:11px;margin-top:2px;">
+                                <span style="color:#059669;font-weight:600;">{{ $occupiedCount }} occupied</span>
+                                @if($unitCount > 0)
+                                <span style="color:var(--text-muted);">/ {{ $unitCount - $occupiedCount }} vacant</span>
+                                @endif
+                            </div>
                         @else <span style="color:var(--text-muted);">—</span> @endif
                     </td>
                     <td onclick="event.stopPropagation()">
@@ -721,9 +730,10 @@
                     'Retail'       => '#EC4899',
                 ];
                 $accentColor = $typeColors[$building->property_type ?? ''] ?? 'var(--accent)';
-                $floorCount  = $building->total_no_of_floors ?? $building->floors_count ?? 0;
-                $unitCount   = $building->total_no_of_units  ?? $building->units_count  ?? 0;
-                $images      = $building->images ?? collect();
+                $floorCount    = $building->total_no_of_floors ?? $building->floors_count  ?? 0;
+                $unitCount     = $building->total_no_of_units  ?? $building->units_count  ?? 0;
+                $occupiedCount = $building->occupied_units_count ?? 0;
+                $images        = $building->images ?? collect();
                 $cardId      = 'card-'.$building->id;
             @endphp
             <div class="bldg-card" onclick="window.location='{{ route('buildings.show', $building) }}'">
@@ -811,6 +821,12 @@
                         <div class="bldg-stat-pill">
                             <div class="bldg-stat-pill-val">{{ $unitCount ?: '—' }}</div>
                             <div class="bldg-stat-pill-lbl">Units</div>
+                            @if($unitCount > 0)
+                            <div style="font-size:10px;margin-top:3px;line-height:1.3;">
+                                <span style="color:#059669;font-weight:600;">{{ $occupiedCount }} occ</span>
+                                <span style="color:var(--text-muted);"> / {{ $unitCount - $occupiedCount }} vac</span>
+                            </div>
+                            @endif
                         </div>
                     </div>
                 </div>

@@ -99,6 +99,9 @@
             @else
                 <span class="badge badge-blue"><i class="fa-solid fa-building-user"></i> Company</span>
             @endif
+            @if($tenant->tenant_code)
+                <span class="badge badge-gold"><i class="fa-solid fa-hashtag"></i> {{ $tenant->tenant_code }}</span>
+            @endif
             @if($tenant->nationality_country)
                 <span class="badge badge-gray"><i class="fa-solid fa-earth-americas"></i> {{ $tenant->nationality_country }}</span>
             @endif
@@ -168,6 +171,16 @@
             <div class="detail-label">Nationality / Country</div>
             <div class="detail-value {{ $tenant->nationality_country ? '' : 'empty' }}">
                 {{ $tenant->nationality_country ?? 'Not provided' }}
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-item">
+        <div class="detail-icon" style="background:#FFF7ED;color:#EA580C;"><i class="fa-solid fa-location-dot"></i></div>
+        <div>
+            <div class="detail-label">Address</div>
+            <div class="detail-value {{ $tenant->address ? '' : 'empty' }}">
+                {{ $tenant->address ?? 'Not provided' }}
             </div>
         </div>
     </div>

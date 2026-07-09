@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Building;
 use App\Models\LeaseContract;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,6 +20,7 @@ class LeaseContractTest extends TestCase
             'tenant_name'        => 'Test Tenant',
             'lease_start_date'   => '2024-01-01',
             'lease_end_date'     => '2025-01-01',
+            'vat_enabled'        => false,
         ], $overrides);
     }
 
@@ -297,5 +299,161 @@ class LeaseContractTest extends TestCase
     {
         $this->delete(route('lease-contracts.destroy', 999))
             ->assertStatus(404);
+    }
+
+    // ── ACTIVE LEASES FOR TENANT (invoicing) ──────────────────────
+
+    public function test_active_for_tenant_returns_only_currently_active_leases(): void
+    {
+        $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+
+        LeaseContract::create($this->minimalData([
+            'tenant_id'        => $tenant->id,
+            'property_name'    => 'Active Property',
+            'lease_start_date' => now()->subMonth()->format('Y-m-d'),
+            'lease_end_date'   => now()->addMonth()->format('Y-m-d'),
+        ]));
+
+        LeaseContract::create($this->minimalData([
+            'tenant_id'        => $tenant->id,
+            'property_name'    => 'Expired Property',
+            'lease_agreement_no' => 'LA-TEST-002',
+            'lease_start_date' => now()->subYear()->format('Y-m-d'),
+            'lease_end_date'   => now()->subMonth()->format('Y-m-d'),
+        ]));
+
+        $response = $this->getJson(route('lease-contracts.active-for-tenant', $tenant));
+        $response->assertStatus(200);
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment(['property_name' => 'Active Property']);
+    }
+
+    // ── SEARCH FOR TENANT (per-line picker) ───────────────────────
+
+    public function test_search_for_tenant_returns_all_of_that_tenants_contracts_regardless_of_date(): void
+    {
+        $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+        $other  = Tenant::create(['name' => 'Zahra Investments', 'tenant_type' => 'company']);
+
+        LeaseContract::create($this->minimalData([
+            'tenant_id'        => $tenant->id,
+            'property_name'    => 'Expired Property',
+            'lease_start_date' => now()->subYear()->format('Y-m-d'),
+            'lease_end_date'   => now()->subMonth()->format('Y-m-d'),
+        ]));
+        LeaseContract::create($this->minimalData([
+            'tenant_id'          => $other->id,
+            'property_name'      => 'Other Tenant Property',
+            'lease_agreement_no' => 'LA-TEST-003',
+        ]));
+
+        $response = $this->getJson(route('lease-contracts.search-for-tenant', $tenant));
+        $response->assertStatus(200);
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment(['property_name' => 'Expired Property']);
+    }
+
+    public function test_search_for_tenant_filters_by_query(): void
+    {
+        $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+
+        LeaseContract::create($this->minimalData([
+            'tenant_id'          => $tenant->id,
+            'property_name'      => 'Miknas Plaza 2',
+            'lease_agreement_no' => 'LA-TEST-004',
+        ]));
+        LeaseContract::create($this->minimalData([
+            'tenant_id'          => $tenant->id,
+            'property_name'      => 'Seef Tower',
+            'lease_agreement_no' => 'LA-TEST-005',
+        ]));
+
+        $response = $this->getJson(route('lease-contracts.search-for-tenant', $tenant) . '?q=Miknas');
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment(['property_name' => 'Miknas Plaza 2']);
+    }
+
+    // ── VAT RATE ON LEASE LOOKUPS (for invoice auto-fill) ──────────
+
+    public function test_search_for_tenant_includes_contracts_vat_rate(): void
+    {
+        $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+        Building::create([
+            'property_name' => 'Miknas Plaza 2',
+            'property_code' => 'MP2',
+            'vat_enabled'   => true,
+            'vat_rate'      => 15,
+        ]);
+        LeaseContract::create($this->minimalData([
+            'tenant_id'     => $tenant->id,
+            'property_name' => 'Miknas Plaza 2',
+            'property_code' => 'MP2',
+            'vat_enabled'   => true,
+            'vat_rate'      => 10,
+        ]));
+
+        $response = $this->getJson(route('lease-contracts.search-for-tenant', $tenant));
+        $response->assertJsonFragment(['vat_rate' => 10]);
+    }
+
+    public function test_search_for_tenant_vat_rate_is_zero_when_contract_vat_disabled(): void
+    {
+        $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+        LeaseContract::create($this->minimalData([
+            'tenant_id'     => $tenant->id,
+            'property_name' => 'Seef Tower',
+            'property_code' => 'ST1',
+            'vat_enabled'   => false,
+            'vat_rate'      => 10,
+        ]));
+
+        $response = $this->getJson(route('lease-contracts.search-for-tenant', $tenant));
+        $response->assertJsonFragment(['vat_rate' => 0]);
+    }
+
+    public function test_active_for_tenant_includes_contracts_vat_rate(): void
+    {
+        $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+        LeaseContract::create($this->minimalData([
+            'tenant_id'        => $tenant->id,
+            'property_name'    => 'Miknas Plaza 2',
+            'property_code'    => 'MP2',
+            'lease_start_date' => now()->subMonth()->format('Y-m-d'),
+            'lease_end_date'   => now()->addMonth()->format('Y-m-d'),
+            'vat_enabled'      => true,
+            'vat_rate'         => 5,
+        ]));
+
+        $response = $this->getJson(route('lease-contracts.active-for-tenant', $tenant));
+        $response->assertJsonFragment(['vat_rate' => 5]);
+    }
+
+    public function test_different_tenants_on_same_flat_can_have_different_vat_treatment(): void
+    {
+        $vatTenant    = Tenant::create(['name' => 'Bahrain Telecom', 'tenant_type' => 'company']);
+        $noVatTenant  = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+
+        LeaseContract::create($this->minimalData([
+            'lease_agreement_no' => 'LA-VAT-001',
+            'tenant_id'          => $vatTenant->id,
+            'property_name'      => 'Miknas Plaza 2',
+            'unit'               => 'MP2-101',
+            'vat_enabled'        => true,
+            'vat_rate'           => 10,
+        ]));
+
+        LeaseContract::create($this->minimalData([
+            'lease_agreement_no' => 'LA-VAT-002',
+            'tenant_id'          => $noVatTenant->id,
+            'property_name'      => 'Miknas Plaza 2',
+            'unit'               => 'MP2-101',
+            'vat_enabled'        => false,
+        ]));
+
+        $withVat    = LeaseContract::where('lease_agreement_no', 'LA-VAT-001')->first();
+        $withoutVat = LeaseContract::where('lease_agreement_no', 'LA-VAT-002')->first();
+
+        $this->assertEquals(10.0, $withVat->effective_vat_rate);
+        $this->assertEquals(0.0, $withoutVat->effective_vat_rate);
     }
 }

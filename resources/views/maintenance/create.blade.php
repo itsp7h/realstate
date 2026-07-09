@@ -159,7 +159,7 @@
             @if($record)
             <div style="margin-left:auto">
                 <select name="status" style="padding:6px 12px;font-size:12px;border:1.5px solid var(--input-border);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--text-primary);outline:none;cursor:pointer">
-                    @foreach(['open','in_progress','completed','cancelled'] as $s)
+                    @foreach(['waiting_supervisor','waiting_approval','approved','in_progress','completed','cancelled'] as $s)
                     <option value="{{ $s }}" {{ old('status', $record->status) === $s ? 'selected' : '' }}>
                         {{ ucwords(str_replace('_',' ',$s)) }}
                     </option>
@@ -167,7 +167,7 @@
                 </select>
             </div>
             @else
-            <input type="hidden" name="status" value="open">
+            <input type="hidden" name="status" value="waiting_supervisor">
             @endif
         </div>
         <div class="maint-section-body">

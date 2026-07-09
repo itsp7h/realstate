@@ -44,6 +44,9 @@ class StoreLeaseContractRequest extends FormRequest
             'rental_income_ledger'     => ['nullable', 'string', 'max:50'],
             'currency'                 => ['nullable', 'in:BHD,USD,EUR,GBP,SAR,AED'],
             'security_deposit'         => ['nullable', 'decimal:0,3', 'min:0'],
+            'ewa_cap'                  => ['nullable', 'decimal:0,3', 'min:0'],
+            'vat_enabled'              => ['required', 'boolean'],
+            'vat_rate'                 => ['nullable', 'numeric', 'min:0', 'max:100'],
 
             // Rent component
             'invoicing_frequency'      => ['nullable', 'in:Monthly,Quarterly,Semi-Annually,Annually'],
@@ -56,6 +59,14 @@ class StoreLeaseContractRequest extends FormRequest
             'service_start_date'       => ['nullable', 'date'],
             'service_end_date'         => ['nullable', 'date', 'after_or_equal:service_start_date'],
             'service_amount_bd_excl_vat' => ['nullable', 'decimal:0,3', 'min:0'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'vat_rate.max' => 'VAT rate cannot exceed 100%.',
+            'vat_rate.min' => 'VAT rate cannot be negative.',
         ];
     }
 }

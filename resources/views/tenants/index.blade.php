@@ -534,6 +534,21 @@
                         @enderror
                     </div>
 
+                    {{-- ADDRESS --}}
+                    <div class="mfield-group span-full">
+                        <label class="mfield-label">Address</label>
+                        <div class="mfield-wrap has-micon">
+                            <i class="fa-solid fa-location-dot mfield-icon"></i>
+                            <input type="text" name="address"
+                                class="mfield-input {{ $errors->has('address') ? 'is-invalid' : '' }}"
+                                value="{{ old('address') }}"
+                                placeholder="e.g. MP 2, Bldg# 233, Road# 3332, Block# 333, Bahrain" maxlength="500">
+                        </div>
+                        @error('address')
+                            <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div>
+                        @enderror
+                    </div>
+
                 </div>
             </form>
         </div>

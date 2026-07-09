@@ -380,7 +380,7 @@
             <div class="card-header-icon" style="background:var(--accent-dim);color:#92400E;"><i class="fa-solid fa-landmark"></i></div>
             <div>
                 <h3>Financial <span class="section-badge badge-financial">Optional</span></h3>
-                <p>Ledger reference and security deposit</p>
+                <p>Ledger reference, security deposit, and EWA cap</p>
             </div>
         </div>
         <div class="card-body">
@@ -402,6 +402,37 @@
                         value="{{ old('security_deposit') }}"
                         placeholder="0.000" min="0" step="0.001">
                     @error('security_deposit') <span class="field-error">{{ $message }}</span> @enderror
+                </div>
+
+                <div class="form-group col-span-full">
+                    <label>EWA Cap <span style="font-size:11px;color:var(--text-muted);font-weight:400;text-transform:none">(BHD/bill — landlord covers up to this amount per EWA bill)</span></label>
+                    <div style="position:relative;max-width:320px;">
+                        <input type="number" name="ewa_cap"
+                            class="{{ $errors->has('ewa_cap') ? 'error' : '' }}"
+                            value="{{ old('ewa_cap') }}"
+                            placeholder="0.000 — leave blank if tenant pays full bill" min="0" step="0.001"
+                            style="padding-right:52px;">
+                        <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--text-muted);pointer-events:none;">BHD</span>
+                    </div>
+                    @error('ewa_cap') <span class="field-error">{{ $message }}</span> @enderror
+                </div>
+
+                <div class="form-group col-span-full">
+                    <label style="display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" id="vatEnabledInput" name="vat_enabled" value="1"
+                            {{ old('vat_enabled') ? 'checked' : '' }} style="width:16px;height:16px;">
+                        Charge VAT on this contract
+                    </label>
+                    <input type="hidden" name="vat_enabled" value="0" id="vatEnabledFallback"
+                        {{ old('vat_enabled') ? 'disabled' : '' }}>
+                    <div id="vatRateWrap" style="max-width:200px;margin-top:10px; {{ old('vat_enabled') ? '' : 'display:none;' }}">
+                        <input type="number" name="vat_rate" id="vatRateInput"
+                            class="{{ $errors->has('vat_rate') ? 'error' : '' }}"
+                            value="{{ old('vat_rate', 0) }}"
+                            placeholder="0.00" min="0" max="100" step="0.01">
+                        <span style="font-size:11px;color:var(--text-muted);">% VAT rate for this tenant's invoices</span>
+                    </div>
+                    @error('vat_rate') <span class="field-error">{{ $message }}</span> @enderror
                 </div>
 
             </div>
@@ -443,6 +474,15 @@ unitSelect.addEventListener('change', function() {
         const text = this.options[this.selectedIndex].text;
         unitFallback.value = text;
     }
+});
+
+// VAT toggle
+const vatEnabledInput = document.getElementById('vatEnabledInput');
+const vatEnabledFallback = document.getElementById('vatEnabledFallback');
+const vatRateWrap = document.getElementById('vatRateWrap');
+vatEnabledInput.addEventListener('change', function() {
+    vatRateWrap.style.display = this.checked ? '' : 'none';
+    vatEnabledFallback.disabled = this.checked;
 });
 </script>
 @endpush

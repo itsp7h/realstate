@@ -244,4 +244,70 @@ class TenantTest extends TestCase
         $this->delete(route('tenants.destroy', 999))
             ->assertStatus(404);
     }
+
+    // ── TENANT CODE / ADDRESS ───────────────────────────────────────
+
+    public function test_tenant_code_is_auto_generated_on_creation(): void
+    {
+        $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+
+        $this->assertNotEmpty($tenant->tenant_code);
+        $this->assertStringStartsWith('Tenant-', $tenant->tenant_code);
+    }
+
+    public function test_tenant_codes_are_sequential_and_unique(): void
+    {
+        $first  = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+        $second = Tenant::create(['name' => 'Zahra Investments', 'tenant_type' => 'company']);
+
+        $this->assertNotEquals($first->tenant_code, $second->tenant_code);
+    }
+
+    public function test_store_saves_address(): void
+    {
+        $this->post(route('tenants.store'), [
+            'name'        => 'Bahrain Telecommunication Co.',
+            'tenant_type' => 'company',
+            'address'     => 'MP 2, Bldg# 233, Road# 3332, Block# 333, Bahrain',
+        ]);
+
+        $this->assertDatabaseHas('tenants', [
+            'name'    => 'Bahrain Telecommunication Co.',
+            'address' => 'MP 2, Bldg# 233, Road# 3332, Block# 333, Bahrain',
+        ]);
+    }
+
+    public function test_update_saves_address(): void
+    {
+        $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+
+        $this->put(route('tenants.update', $tenant), [
+            'name'        => 'Ahmed Al-Khalifa',
+            'tenant_type' => 'individual',
+            'address'     => 'Road 1531, Muharraq',
+        ]);
+
+        $this->assertDatabaseHas('tenants', ['id' => $tenant->id, 'address' => 'Road 1531, Muharraq']);
+    }
+
+    // ── SEARCH ───────────────────────────────────────────────────────
+
+    public function test_search_returns_matching_tenants(): void
+    {
+        Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+        Tenant::create(['name' => 'Zahra Investments', 'tenant_type' => 'company']);
+
+        $response = $this->getJson(route('tenants.search', ['q' => 'Ahmed']));
+        $response->assertStatus(200);
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment(['name' => 'Ahmed Al-Khalifa']);
+    }
+
+    public function test_search_matches_by_tenant_code(): void
+    {
+        $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+
+        $response = $this->getJson(route('tenants.search', ['q' => $tenant->tenant_code]));
+        $response->assertJsonFragment(['id' => $tenant->id]);
+    }
 }

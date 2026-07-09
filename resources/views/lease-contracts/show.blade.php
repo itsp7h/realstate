@@ -416,6 +416,29 @@
                 </div>
             </div>
 
+            <div class="detail-item">
+                <div class="detail-label">EWA Cap</div>
+                <div class="detail-value" style="font-family:'Outfit',sans-serif;font-size:18px;font-weight:800;">
+                    @if($leaseContract->ewa_cap)
+                        {{ number_format($leaseContract->ewa_cap, 3) }}
+                        <span style="font-size:13px;font-weight:600;color:var(--text-muted);margin-left:4px;">BHD / bill</span>
+                    @else
+                        <span class="empty" style="font-size:14px;">Not set</span>
+                    @endif
+                </div>
+            </div>
+
+            <div class="detail-item">
+                <div class="detail-label">VAT</div>
+                <div class="detail-value" style="font-family:'Outfit',sans-serif;font-size:18px;font-weight:800;">
+                    @if($leaseContract->vat_enabled)
+                        {{ number_format($leaseContract->vat_rate, 2) }}<span style="font-size:13px;font-weight:600;color:var(--text-muted);margin-left:4px;">%</span>
+                    @else
+                        <span class="empty" style="font-size:14px;">Not charged</span>
+                    @endif
+                </div>
+            </div>
+
         </div>
     </div>
 </div>

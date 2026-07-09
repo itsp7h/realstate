@@ -32,6 +32,7 @@ class LeaseContract extends Model
         'rental_income_ledger',
         'currency',
         'security_deposit',
+        'ewa_cap',
         'invoicing_frequency',
         'rent_start_date',
         'rent_end_date',
@@ -40,6 +41,8 @@ class LeaseContract extends Model
         'service_start_date',
         'service_end_date',
         'service_amount_bd_excl_vat',
+        'vat_enabled',
+        'vat_rate',
     ];
 
     protected $casts = [
@@ -51,7 +54,15 @@ class LeaseContract extends Model
         'rent_end_date'      => 'date',
         'service_start_date' => 'date',
         'service_end_date'   => 'date',
+        'ewa_cap'            => 'decimal:3',
+        'vat_enabled'        => 'boolean',
+        'vat_rate'           => 'decimal:2',
     ];
+
+    public function getEffectiveVatRateAttribute(): float
+    {
+        return $this->vat_enabled ? (float) $this->vat_rate : 0.0;
+    }
 
     protected function status(): Attribute
     {

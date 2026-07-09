@@ -207,6 +207,16 @@
         <div><div class="stat-val">{{ $stats['fitted'] ?? 0 }}</div><div class="stat-lbl">Fitted</div></div>
     </div>
     <div class="stat-card">
+        <div class="stat-icon" style="background:#ECFDF5;color:#059669;"><i class="fa-solid fa-key"></i></div>
+        <div>
+            <div class="stat-val" style="color:#059669;">{{ $stats['occupied'] ?? 0 }}</div>
+            <div class="stat-lbl">Occupied</div>
+            @if(($stats['total'] ?? 0) > 0)
+            <div style="font-size:11px;color:var(--text-muted);margin-top:1px;">{{ $stats['total'] - ($stats['occupied'] ?? 0) }} vacant</div>
+            @endif
+        </div>
+    </div>
+    <div class="stat-card">
         <div class="stat-icon purple"><i class="fa-solid fa-building"></i></div>
         <div><div class="stat-val">{{ $stats['properties'] ?? 0 }}</div><div class="stat-lbl">Properties</div></div>
     </div>
@@ -248,8 +258,16 @@
                     @endforeach
                 </select>
             </div>
+            <div class="filter-group">
+                <label>Occupancy</label>
+                <select name="occupancy" onchange="this.form.submit()">
+                    <option value="">All Units</option>
+                    <option value="occupied" {{ request('occupancy') === 'occupied' ? 'selected' : '' }}>Occupied</option>
+                    <option value="vacant"   {{ request('occupancy') === 'vacant'   ? 'selected' : '' }}>Vacant</option>
+                </select>
+            </div>
             <div class="filter-actions">
-                @if(request()->hasAny(['search','property_code','unit_type','unit_condition']))
+                @if(request()->hasAny(['search','property_code','unit_type','unit_condition','occupancy']))
                     <a href="{{ route('property-units.index') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Clear</a>
                 @endif
             </div>
@@ -270,6 +288,7 @@
                     <th>Rent/Month</th>
                     <th>Deposit</th>
                     <th>Elec. A/c</th>
+                    <th>Occupancy</th>
                     <th>View</th>
                     <th style="text-align:right;">Actions</th>
                 </tr>
@@ -323,6 +342,18 @@
                         @else <span style="color:var(--text-muted);">—</span> @endif
                     </td>
                     <td>
+                        @if($unit->activeContract)
+                            <span class="badge badge-green" style="white-space:nowrap;">
+                                <i class="fa-solid fa-circle" style="font-size:7px;vertical-align:middle;margin-right:4px;"></i>Occupied
+                            </span>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">{{ $unit->activeContract->tenant_name }}</div>
+                        @else
+                            <span class="badge badge-gray">
+                                <i class="fa-regular fa-circle" style="font-size:7px;vertical-align:middle;margin-right:4px;"></i>Vacant
+                            </span>
+                        @endif
+                    </td>
+                    <td>
                         @if($unit->view) <span class="badge badge-gray">{{ $unit->view }}</span>
                         @else <span style="color:var(--text-muted);">—</span> @endif
                     </td>
@@ -338,7 +369,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="12">
+                <tr><td colspan="13">
                     <div class="empty-state">
                         <div class="empty-icon"><i class="fa-solid fa-door-open"></i></div>
                         <h4>No units found</h4>

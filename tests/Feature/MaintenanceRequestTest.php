@@ -175,47 +175,53 @@ class MaintenanceRequestTest extends TestCase
     {
         $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_supervisor']));
         $this->post(route('maintenance.assess', $record), [
-            'supervisor_name'     => 'Ahmed Supervisor',
-            'supervisor_datetime' => '2026-06-02 10:00:00',
-            'quotation_1'         => '150.000',
+            'supervisor_name'      => 'Ahmed Supervisor',
+            'supervisor_datetime'  => '2026-06-02 10:00:00',
+            'quotation_1'          => '150.000',
+            'selected_quotation'   => 1,
+            'supervisor_signature' => 'data:image/png;base64,abc123',
         ]);
         $record->refresh();
         $this->assertEquals('waiting_approval', $record->status);
         $this->assertEquals('Ahmed Supervisor', $record->supervisor_name);
+        $this->assertEquals(1, $record->selected_quotation);
     }
 
     public function test_assess_requires_supervisor_name_and_datetime(): void
     {
         $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_supervisor']));
         $this->post(route('maintenance.assess', $record), [])
-             ->assertSessionHasErrors(['supervisor_name', 'supervisor_datetime']);
+             ->assertSessionHasErrors(['supervisor_name', 'supervisor_datetime', 'selected_quotation', 'supervisor_signature']);
+    }
+
+    public function test_assess_rejects_invalid_quotation_number(): void
+    {
+        $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_supervisor']));
+        $this->post(route('maintenance.assess', $record), [
+            'supervisor_name'      => 'Ahmed Supervisor',
+            'supervisor_datetime'  => '2026-06-02 10:00:00',
+            'selected_quotation'   => 5,
+            'supervisor_signature' => 'data:image/png;base64,abc123',
+        ])->assertSessionHasErrors('selected_quotation');
     }
 
     public function test_approve_transitions_to_approved(): void
     {
         $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_approval']));
         $this->post(route('maintenance.approve', $record), [
-            'selected_quotation'  => 2,
             'approved_dept_head'  => 'Abitsam',
+            'dept_head_signature' => 'data:image/png;base64,abc123',
         ]);
         $record->refresh();
         $this->assertEquals('approved', $record->status);
-        $this->assertEquals(2, $record->selected_quotation);
         $this->assertEquals('Abitsam', $record->approved_dept_head);
     }
 
-    public function test_approve_requires_selected_quotation(): void
+    public function test_approve_requires_dept_head_signature(): void
     {
         $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_approval']));
         $this->post(route('maintenance.approve', $record), [])
-             ->assertSessionHasErrors('selected_quotation');
-    }
-
-    public function test_approve_rejects_invalid_quotation_number(): void
-    {
-        $record = MaintenanceRequest::create($this->baseData(['status' => 'waiting_approval']));
-        $this->post(route('maintenance.approve', $record), ['selected_quotation' => 5])
-             ->assertSessionHasErrors('selected_quotation');
+             ->assertSessionHasErrors('dept_head_signature');
     }
 
     // ── QUOTATION FILE ATTACHMENTS ───────────────────────────────────────────

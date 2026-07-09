@@ -226,6 +226,65 @@
 }
 .quot-radio-card.selected .quot-radio-check { background:#7C3AED;border-color:#7C3AED;color:#fff; }
 
+/* ── SIGNATURE PAD ──────────────────────────────────────── */
+.sig-pad-wrap {
+    position: relative; border: 1.5px solid var(--input-border);
+    border-radius: var(--radius-sm); background: #fff;
+    overflow: hidden; cursor: crosshair; touch-action: none;
+    transition: border-color 0.18s;
+}
+.sig-pad-wrap:focus-within,
+.sig-pad-wrap.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.sig-pad-canvas { display: block; width: 100%; height: 120px; }
+.sig-pad-hint {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: #CBD5E1; pointer-events: none; user-select: none;
+    font-style: italic; transition: opacity 0.2s;
+}
+.sig-pad-hint.hidden { opacity: 0; }
+
+/* ── PROPERTY SEARCHABLE DROPDOWN ───────────────────────── */
+.prop-dropdown { position:relative; }
+.prop-dropdown-trigger {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 12px; font-size:13px; border:1.5px solid var(--input-border);
+    border-radius:var(--radius-sm); background:var(--card-bg); color:var(--text-primary);
+    cursor:pointer; transition:border-color 0.18s, box-shadow 0.18s; user-select:none;
+    font-family:'Plus Jakarta Sans',sans-serif; min-height:38px;
+}
+.prop-dropdown.open .prop-dropdown-trigger,
+.prop-dropdown-trigger:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); outline:none; }
+.prop-dropdown.is-invalid .prop-dropdown-trigger { border-color:var(--danger); background:#FFF8F8; }
+.prop-dropdown-arrow { font-size:10px; color:var(--text-muted); transition:transform 0.2s; flex-shrink:0; margin-left:8px; }
+.prop-dropdown.open .prop-dropdown-arrow { transform:rotate(180deg); }
+.prop-dropdown-panel {
+    display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:200;
+    background:var(--card-bg); border:1.5px solid var(--accent); border-radius:var(--radius-sm);
+    box-shadow:0 8px 24px rgba(0,0,0,0.12); overflow:hidden;
+}
+.prop-dropdown.open .prop-dropdown-panel { display:block; }
+.prop-dropdown-search-wrap { position:relative; padding:8px; border-bottom:1px solid var(--card-border); }
+.prop-dropdown-search {
+    width:100%; padding:7px 10px 7px 28px; font-size:12px; border:1.5px solid var(--input-border);
+    border-radius:var(--radius-sm); background:var(--page-bg); color:var(--text-primary);
+    font-family:'Plus Jakarta Sans',sans-serif; outline:none;
+    transition:border-color 0.15s;
+}
+.prop-dropdown-search:focus { border-color:var(--accent); }
+.prop-dropdown-options { max-height:200px; overflow-y:auto; }
+.prop-dropdown-options::-webkit-scrollbar { width:4px; }
+.prop-dropdown-options::-webkit-scrollbar-thumb { background:#CBD5E1; border-radius:10px; }
+.prop-option {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 12px; cursor:pointer; transition:background 0.12s; gap:8px;
+}
+.prop-option:hover { background:var(--accent-dim); }
+.prop-option.selected { background:var(--accent-dim); }
+.prop-option-name { font-size:13px; font-weight:600; color:var(--text-primary); }
+.prop-option-code { font-size:11px; font-weight:700; color:var(--text-muted); font-family:'Outfit',sans-serif; flex-shrink:0; }
+.prop-option.hidden { display:none; }
+.prop-no-results { padding:12px; font-size:12px; color:var(--text-muted); text-align:center; display:none; }
+
 @media (max-width:600px) {
     .modal-box { max-height:100vh;border-radius:0;max-width:100%; }
     .modal-overlay { padding:0;align-items:flex-end; }
@@ -359,6 +418,8 @@
                     data-q2-fname="{{ $req->quotation_2_file ? basename($req->quotation_2_file) : '' }}"
                     data-q3-fname="{{ $req->quotation_3_file ? basename($req->quotation_3_file) : '' }}"
                     data-supervisor-name="{{ $req->supervisor_name }}"
+                    data-supervisor-signature="{{ $req->supervisor_signature }}"
+                    data-selected-quotation="{{ $req->selected_quotation }}"
                     style="cursor:pointer">
                     <td style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--text-primary)">
                         {{ $req->job_order ?? '—' }}
@@ -430,6 +491,10 @@
                     <i class="fa-solid fa-list-check" style="color:#1D4ED8;font-size:11px;"></i> Job Lines
                     <span class="err-dot" id="dot-mm-joblines"></span>
                 </button>
+                <button type="button" class="mtab-btn" data-tab="mm-quotations" onclick="switchMMTab('mm-quotations')">
+                    <i class="fa-solid fa-file-invoice-dollar" style="color:#059669;font-size:11px;"></i> Quotations
+                    <span class="err-dot" id="dot-mm-quotations"></span>
+                </button>
             </div>
         </div>
 
@@ -481,28 +546,97 @@
 
                     <div class="mfield-group span-full">
                         <label class="mfield-label">Property <span class="req">*</span></label>
-                        <input type="text" name="property"
-                            class="mfield-input {{ $errors->has('property') ? 'is-invalid' : '' }}"
-                            value="{{ old('property') }}"
-                            placeholder="Property name or address" maxlength="255" required>
+                        <input type="hidden" name="property" id="mm-property-val" value="{{ old('property') }}">
+                        <div class="prop-dropdown {{ $errors->has('property') ? 'is-invalid' : '' }}" id="mm-prop-dropdown">
+                            <div class="prop-dropdown-trigger" id="mm-prop-trigger" onclick="togglePropDropdown()">
+                                <span id="mm-prop-label" style="color:{{ old('property') ? 'var(--text-primary)' : 'var(--text-muted)' }}">
+                                    {{ old('property') ?: 'Search or select a property…' }}
+                                </span>
+                                <i class="fa-solid fa-chevron-down prop-dropdown-arrow" id="mm-prop-arrow"></i>
+                            </div>
+                            <div class="prop-dropdown-panel" id="mm-prop-panel">
+                                <div class="prop-dropdown-search-wrap">
+                                    <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text-muted);pointer-events:none"></i>
+                                    <input type="text" class="prop-dropdown-search" id="mm-prop-search"
+                                           placeholder="Type to search…" oninput="filterPropOptions(this.value)" autocomplete="off">
+                                </div>
+                                <div class="prop-dropdown-options" id="mm-prop-options">
+                                    @foreach($properties as $prop)
+                                    <div class="prop-option {{ old('property') === $prop->property_name ? 'selected' : '' }}"
+                                         data-value="{{ $prop->property_name }}"
+                                         onclick="selectProp('{{ addslashes($prop->property_name) }}', '{{ $prop->property_code }}')">
+                                        <span class="prop-option-name">{{ $prop->property_name }}</span>
+                                        <span class="prop-option-code">{{ $prop->property_code }}</span>
+                                    </div>
+                                    @endforeach
+                                    <div id="mm-prop-no-results" class="prop-no-results">No properties found</div>
+                                </div>
+                            </div>
+                        </div>
                         @error('property') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
                     <div class="mfield-group">
                         <label class="mfield-label">Tenant <span class="req">*</span></label>
-                        <input type="text" name="tenant"
-                            class="mfield-input {{ $errors->has('tenant') ? 'is-invalid' : '' }}"
-                            value="{{ old('tenant') }}"
-                            placeholder="Tenant full name" maxlength="255" required>
+                        <input type="hidden" name="tenant" id="mm-tenant-val" value="{{ old('tenant') }}">
+                        <div class="prop-dropdown {{ $errors->has('tenant') ? 'is-invalid' : '' }}" id="mm-tenant-dropdown">
+                            <div class="prop-dropdown-trigger" onclick="toggleDropdown('mm-tenant-dropdown', 'mm-tenant-search')">
+                                <span id="mm-tenant-label" style="color:{{ old('tenant') ? 'var(--text-primary)' : 'var(--text-muted)' }}">
+                                    {{ old('tenant') ?: 'Search tenant…' }}
+                                </span>
+                                <i class="fa-solid fa-chevron-down prop-dropdown-arrow"></i>
+                            </div>
+                            <div class="prop-dropdown-panel">
+                                <div class="prop-dropdown-search-wrap">
+                                    <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text-muted);pointer-events:none"></i>
+                                    <input type="text" class="prop-dropdown-search" id="mm-tenant-search"
+                                           placeholder="Type to search…" oninput="filterOptions('mm-tenant-options', 'mm-tenant-no-results', this.value)" autocomplete="off">
+                                </div>
+                                <div class="prop-dropdown-options" id="mm-tenant-options">
+                                    @foreach($tenants as $tenant)
+                                    <div class="prop-option {{ old('tenant') === $tenant->name ? 'selected' : '' }}"
+                                         data-value="{{ $tenant->name }}"
+                                         onclick="selectOption('mm-tenant-dropdown', 'mm-tenant-val', 'mm-tenant-label', '{{ addslashes($tenant->name) }}')">
+                                        <span class="prop-option-name">{{ $tenant->name }}</span>
+                                    </div>
+                                    @endforeach
+                                    <div id="mm-tenant-no-results" class="prop-no-results">No tenants found</div>
+                                </div>
+                            </div>
+                        </div>
                         @error('tenant') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
                     <div class="mfield-group">
                         <label class="mfield-label">Flat / Unit <span class="req">*</span></label>
-                        <input type="text" name="flat"
-                            class="mfield-input {{ $errors->has('flat') ? 'is-invalid' : '' }}"
-                            value="{{ old('flat') }}"
-                            placeholder="e.g. 3B" maxlength="50" required>
+                        <input type="hidden" name="flat" id="mm-flat-val" value="{{ old('flat') }}">
+                        <div class="prop-dropdown {{ $errors->has('flat') ? 'is-invalid' : '' }}" id="mm-flat-dropdown">
+                            <div class="prop-dropdown-trigger" onclick="toggleDropdown('mm-flat-dropdown', 'mm-flat-search')">
+                                <span id="mm-flat-label" style="color:{{ old('flat') ? 'var(--text-primary)' : 'var(--text-muted)' }}">
+                                    {{ old('flat') ?: 'Select a unit…' }}
+                                </span>
+                                <i class="fa-solid fa-chevron-down prop-dropdown-arrow"></i>
+                            </div>
+                            <div class="prop-dropdown-panel">
+                                <div class="prop-dropdown-search-wrap">
+                                    <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text-muted);pointer-events:none"></i>
+                                    <input type="text" class="prop-dropdown-search" id="mm-flat-search"
+                                           placeholder="Type to search…" oninput="filterOptions('mm-flat-options', 'mm-flat-no-results', this.value)" autocomplete="off">
+                                </div>
+                                <div class="prop-dropdown-options" id="mm-flat-options">
+                                    @foreach($units as $unit)
+                                    <div class="prop-option {{ old('flat') === $unit->unit_name ? 'selected' : '' }}"
+                                         data-value="{{ $unit->unit_name }}"
+                                         data-property="{{ $unit->property_code }}"
+                                         onclick="selectOption('mm-flat-dropdown', 'mm-flat-val', 'mm-flat-label', '{{ addslashes($unit->unit_name) }}')">
+                                        <span class="prop-option-name">{{ $unit->unit_name }}</span>
+                                        <span class="prop-option-code">{{ $unit->property_code }}</span>
+                                    </div>
+                                    @endforeach
+                                    <div id="mm-flat-no-results" class="prop-no-results">No units found</div>
+                                </div>
+                            </div>
+                        </div>
                         @error('flat') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
@@ -563,6 +697,33 @@
                 </div>
             </div>
 
+            {{-- TAB 3: QUOTATIONS ────────────────────────────── --}}
+            <div class="mtab-panel" id="mm-quotations">
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Attach quotations from contractors. The supervisor will select one during assessment.</div>
+                <div class="mfield-grid">
+                    @foreach([1,2,3] as $n)
+                    <div class="mfield-group {{ $n === 3 ? 'span-full' : '' }}">
+                        <label class="mfield-label">Quotation {{ $n }} (BHD)</label>
+                        <div class="mquot-wrap">
+                            <input type="number" name="quotation_{{ $n }}" class="mfield-input mm-quot" step="0.001" min="0" placeholder="0.000" value="{{ old('quotation_'.$n) }}">
+                            <label for="mm_file_{{ $n }}" class="mquot-clip-btn" title="Attach file">
+                                <i class="fa-solid fa-paperclip"></i>
+                            </label>
+                            <input type="file" id="mm_file_{{ $n }}" name="quotation_{{ $n }}_file"
+                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                   class="mm-file-input" data-index="{{ $n }}" style="display:none">
+                        </div>
+                        <div class="mquot-pill" id="mm_pill_{{ $n }}">
+                            <i class="fa-solid fa-paperclip" style="flex-shrink:0;font-size:10px"></i>
+                            <span id="mm_fname_{{ $n }}"></span>
+                            <button type="button" class="mm-pill-clear" data-index="{{ $n }}"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        @error('quotation_'.$n) <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+
             </form>
         </div>
 
@@ -611,7 +772,7 @@
                 <div><div style="color:var(--text-muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Flat</div><div id="as-flat" style="font-weight:600;color:var(--text-primary)">—</div></div>
             </div>
 
-            <form id="assessForm" method="POST" action="" enctype="multipart/form-data" novalidate>
+            <form id="assessForm" method="POST" action="" novalidate>
                 @csrf
                 <div class="mfield-grid">
                     <div class="mfield-group">
@@ -626,25 +787,41 @@
                         <label class="mfield-label">Job Assessment</label>
                         <textarea name="job_assessment" rows="3" class="mfield-textarea" placeholder="Assessment notes and findings…"></textarea>
                     </div>
-                    @foreach([1,2,3] as $n)
-                    <div class="mfield-group {{ $n === 3 ? 'span-full' : '' }}">
-                        <label class="mfield-label">Quotation {{ $n }} (BHD)</label>
-                        <div class="mquot-wrap">
-                            <input type="number" name="quotation_{{ $n }}" class="mfield-input af-quot" step="0.001" min="0" placeholder="0.000">
-                            <label for="af_file_{{ $n }}" class="mquot-clip-btn" title="Attach file">
-                                <i class="fa-solid fa-paperclip"></i>
+                    {{-- Quotations submitted by requestor — supervisor selects one --}}
+                    <div class="mfield-group span-full">
+                        <label class="mfield-label">Select Quotation <span class="req">*</span></label>
+                        <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px" id="assessQuotCards">
+                            @foreach([1,2,3] as $n)
+                            <label class="quot-radio-card" id="aq-card-{{ $n }}" style="display:none">
+                                <input type="radio" name="selected_quotation" value="{{ $n }}" style="display:none" class="aq-radio-input">
+                                <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+                                    <div style="width:28px;height:28px;border-radius:50%;background:var(--page-bg);border:2px solid var(--card-border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--text-muted);flex-shrink:0" class="quot-radio-num">{{ $n }}</div>
+                                    <div style="flex:1;min-width:0">
+                                        <div style="font-size:15px;font-weight:800;font-family:'Outfit',sans-serif;color:var(--text-primary)" id="aq-amount-{{ $n }}">—</div>
+                                        <div id="aq-file-{{ $n }}" style="font-size:11px;margin-top:2px"></div>
+                                    </div>
+                                </div>
+                                <div class="quot-radio-check"><i class="fa-solid fa-check"></i></div>
                             </label>
-                            <input type="file" id="af_file_{{ $n }}" name="quotation_{{ $n }}_file"
-                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                                   class="af-file-input" data-index="{{ $n }}" style="display:none">
-                        </div>
-                        <div class="mquot-pill" id="af_pill_{{ $n }}">
-                            <i class="fa-solid fa-paperclip" style="flex-shrink:0;font-size:10px"></i>
-                            <span id="af_fname_{{ $n }}"></span>
-                            <button type="button" class="af-pill-clear" data-index="{{ $n }}"><i class="fa-solid fa-xmark"></i></button>
+                            @endforeach
+                            <div id="aq-no-quotations" style="display:none;font-size:12px;color:var(--text-muted);padding:12px 14px;background:var(--page-bg);border-radius:var(--radius-sm);border:1px dashed var(--card-border);text-align:center">
+                                No quotations were attached to this request.
+                            </div>
                         </div>
                     </div>
-                    @endforeach
+                    <div class="mfield-group span-full">
+                        <label class="mfield-label">Supervisor Signature <span class="req">*</span></label>
+                        <input type="hidden" name="supervisor_signature" id="af-signature-data">
+                        <div class="sig-pad-wrap" id="af-sig-wrap">
+                            <canvas id="af-sig-canvas" class="sig-pad-canvas"></canvas>
+                            <div class="sig-pad-hint" id="af-sig-hint">Sign here with mouse or touch</div>
+                        </div>
+                        <div style="display:flex;justify-content:flex-end;margin-top:6px;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="clearSignature()">
+                                <i class="fa-solid fa-rotate-left"></i> Clear
+                            </button>
+                        </div>
+                    </div>
                     <div class="mfield-group span-full">
                         <label class="mfield-label">Maintenance Remarks</label>
                         <textarea name="maintenance_remarks" rows="2" class="mfield-textarea" placeholder="Additional remarks…"></textarea>
@@ -675,7 +852,7 @@
                 <div class="modal-header-icon" style="background:#F5F3FF;color:#7C3AED"><i class="fa-solid fa-stamp"></i></div>
                 <div>
                     <div class="modal-header-title">Department Approval</div>
-                    <div class="modal-header-sub" id="approveModalSub">Select the approved quotation</div>
+                    <div class="modal-header-sub" id="approveModalSub">Review and approve the supervisor's selection</div>
                 </div>
                 <button type="button" class="modal-close-btn" onclick="closeApproveModal()" aria-label="Close">
                     <i class="fa-solid fa-xmark"></i>
@@ -686,13 +863,12 @@
         <div class="modal-body">
             <form id="approveForm" method="POST" action="" novalidate>
                 @csrf
-                {{-- Quotation comparison --}}
+                {{-- All quotations, with the supervisor's selection highlighted --}}
                 <div style="margin-bottom:18px">
-                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:10px">Select Approved Quotation</div>
-                    <div style="display:flex;flex-direction:column;gap:8px" id="approveQuotCards">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:10px">Quotations <span style="text-transform:none;font-weight:600;color:var(--text-muted)">— supervisor's pick is highlighted</span></div>
+                    <div style="display:flex;flex-direction:column;gap:8px" id="aprQuotCards">
                         @foreach([1,2,3] as $n)
-                        <label class="quot-radio-card" id="apr-card-{{ $n }}">
-                            <input type="radio" name="selected_quotation" value="{{ $n }}" style="display:none" class="quot-radio-input">
+                        <div class="quot-radio-card" id="apr-card-{{ $n }}" style="display:none;cursor:default">
                             <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
                                 <div style="width:28px;height:28px;border-radius:50%;background:var(--page-bg);border:2px solid var(--card-border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--text-muted);flex-shrink:0" class="quot-radio-num">{{ $n }}</div>
                                 <div style="flex:1;min-width:0">
@@ -700,9 +876,13 @@
                                     <div id="apr-file-{{ $n }}" style="font-size:11px;margin-top:2px"></div>
                                 </div>
                             </div>
+                            <div id="apr-badge-{{ $n }}" style="font-size:10px;font-weight:700;color:#7C3AED;text-transform:uppercase;letter-spacing:.04em;display:none">Selected</div>
                             <div class="quot-radio-check"><i class="fa-solid fa-check"></i></div>
-                        </label>
+                        </div>
                         @endforeach
+                        <div id="apr-no-quotations" style="display:none;font-size:12px;color:var(--text-muted);padding:12px 14px;background:var(--page-bg);border-radius:var(--radius-sm);border:1px dashed var(--card-border);text-align:center">
+                            No quotations were attached to this request.
+                        </div>
                     </div>
                 </div>
                 <div class="mfield-grid">
@@ -711,9 +891,29 @@
                         <input type="text" name="approved_supervisor" id="apr-supervisor-name" class="mfield-input"
                                readonly style="background:var(--page-bg);color:var(--text-secondary);cursor:default">
                     </div>
+                    <div class="mfield-group span-full">
+                        <label class="mfield-label">Supervisor's Signature</label>
+                        <div id="apr-super-sig-wrap" style="border:1.5px solid var(--input-border);border-radius:var(--radius-sm);background:#fff;padding:8px;display:none">
+                            <img id="apr-super-sig-img" src="" alt="Supervisor Signature" style="max-height:80px;display:block">
+                        </div>
+                        <div id="apr-super-sig-none" style="font-size:12px;color:var(--text-muted);padding:10px 12px;background:var(--page-bg);border-radius:var(--radius-sm);border:1px dashed var(--card-border)">No supervisor signature on file.</div>
+                    </div>
                     <div class="mfield-group">
                         <label class="mfield-label">Approved by Dept. Head</label>
                         <input type="text" name="approved_dept_head" id="apr-dept-head" class="mfield-input" placeholder="Dept. head name" maxlength="255">
+                    </div>
+                    <div class="mfield-group span-full">
+                        <label class="mfield-label">Dept. Head Signature <span class="req">*</span></label>
+                        <input type="hidden" name="dept_head_signature" id="apr-signature-data">
+                        <div class="sig-pad-wrap" id="apr-sig-wrap">
+                            <canvas id="apr-sig-canvas" class="sig-pad-canvas"></canvas>
+                            <div class="sig-pad-hint" id="apr-sig-hint">Sign here with mouse or touch</div>
+                        </div>
+                        <div style="display:flex;justify-content:flex-end;margin-top:6px;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="clearAprSignature()">
+                                <i class="fa-solid fa-rotate-left"></i> Clear
+                            </button>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -747,6 +947,12 @@ function openMaintenanceModal() {
 function closeMaintenanceModal() {
     document.getElementById('maintenanceModal').classList.remove('open');
     document.body.style.overflow = '';
+    document.querySelectorAll('.mm-pill-clear').forEach(b => b.click());
+    resetDropdown('mm-prop-dropdown',    'mm-property-val', 'mm-prop-label',   'Search or select a property…');
+    resetDropdown('mm-tenant-dropdown',  'mm-tenant-val',   'mm-tenant-label', 'Search tenant…');
+    resetDropdown('mm-flat-dropdown',    'mm-flat-val',     'mm-flat-label',   'Select a unit…');
+    // un-hide all flat options (were filtered by property)
+    document.querySelectorAll('#mm-flat-options .prop-option').forEach(o => o.classList.remove('hidden'));
 }
 document.getElementById('maintenanceModal').addEventListener('click', function(e) {
     if (e.target === this) closeMaintenanceModal();
@@ -779,21 +985,141 @@ function openAssessModal(d) {
     document.getElementById('as-flat').textContent = d.flat;
     document.getElementById('assessForm').action = d.assessUrl;
     document.getElementById('af-supervisor-datetime').value = new Date().toISOString().slice(0,16);
+
+    // populate read-only quotation cards
+    let visibleCount = 0;
+    [1,2,3].forEach(n => {
+        const amt   = d['q'+n];
+        const fname = d['q'+n+'Fname'];
+        const furl  = d['q'+n+'File'];
+        const card  = document.getElementById('aq-card-'+n);
+        const hasAmt = amt !== '' && amt !== null && amt !== undefined;
+        card.style.display = hasAmt ? '' : 'none';
+        card.classList.remove('selected');
+        card.querySelector('.aq-radio-input').checked = false;
+        if (hasAmt) {
+            visibleCount++;
+            document.getElementById('aq-amount-'+n).textContent = 'BHD ' + parseFloat(amt).toFixed(3);
+            const fileEl = document.getElementById('aq-file-'+n);
+            if (fname && furl) {
+                fileEl.innerHTML = `<a href="${furl}" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:600"><i class="fa-solid fa-paperclip" style="font-size:9px"></i> ${fname}</a>`;
+            } else { fileEl.textContent = ''; }
+        }
+    });
+    document.getElementById('aq-no-quotations').style.display = visibleCount === 0 ? '' : 'none';
 }
 function closeAssessModal() {
     document.getElementById('assessModal').classList.remove('open');
     document.body.style.overflow = '';
     document.getElementById('assessForm').reset();
-    document.querySelectorAll('.af-pill-clear').forEach(b => b.click());
+    document.querySelectorAll('.aq-radio-input').forEach(r => r.checked = false);
+    document.querySelectorAll('#assessQuotCards .quot-radio-card').forEach(c => c.classList.remove('selected'));
+    if (window.clearSignature) clearSignature();
 }
 document.getElementById('assessModal').addEventListener('click', function(e) {
     if (e.target === this) closeAssessModal();
 });
+document.querySelectorAll('.aq-radio-input').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('#assessQuotCards .quot-radio-card').forEach(c => c.classList.remove('selected'));
+        this.closest('.quot-radio-card').classList.add('selected');
+    });
+});
 function handleAssessSubmit(btn) {
+    const selected = document.querySelector('.aq-radio-input:checked');
+    if (!selected) { alert('Please select one of the quotations.'); return; }
+    if (!sigHasContent()) { alert('Please provide your signature before submitting.'); return; }
+    document.getElementById('af-signature-data').value = document.getElementById('af-sig-canvas').toDataURL('image/png');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting…';
     document.getElementById('assessForm').submit();
 }
+
+// ── SIGNATURE PAD ─────────────────────────────────────────────
+(function() {
+    const canvas  = document.getElementById('af-sig-canvas');
+    const hint    = document.getElementById('af-sig-hint');
+    const wrap    = document.getElementById('af-sig-wrap');
+    const ctx     = canvas.getContext('2d');
+    let drawing   = false;
+    let hasMark   = false;
+
+    function resize() {
+        const dpr  = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        const w    = rect.width  || wrap.offsetWidth;
+        const h    = rect.height || 120;
+        // save existing drawing
+        const tmp  = canvas.toDataURL();
+        canvas.width  = w * dpr;
+        canvas.height = h * dpr;
+        ctx.scale(dpr, dpr);
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth   = 2;
+        ctx.lineCap     = 'round';
+        ctx.lineJoin    = 'round';
+        if (hasMark) {
+            const img = new Image();
+            img.onload = () => ctx.drawImage(img, 0, 0, w, h);
+            img.src = tmp;
+        }
+    }
+
+    function pos(e) {
+        const r = canvas.getBoundingClientRect();
+        if (e.touches) {
+            return { x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top };
+        }
+        return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+
+    function start(e) {
+        e.preventDefault();
+        drawing = true;
+        wrap.classList.add('active');
+        ctx.beginPath();
+        const p = pos(e);
+        ctx.moveTo(p.x, p.y);
+    }
+
+    function move(e) {
+        if (!drawing) return;
+        e.preventDefault();
+        const p = pos(e);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        if (!hasMark) {
+            hasMark = true;
+            hint.classList.add('hidden');
+        }
+    }
+
+    function stop(e) {
+        drawing = false;
+        wrap.classList.remove('active');
+    }
+
+    canvas.addEventListener('mousedown',  start);
+    canvas.addEventListener('mousemove',  move);
+    canvas.addEventListener('mouseup',    stop);
+    canvas.addEventListener('mouseleave', stop);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove',  move,  { passive: false });
+    canvas.addEventListener('touchend',   stop);
+
+    window.sigHasContent = () => hasMark;
+    window.clearSignature = function() {
+        const dpr  = window.devicePixelRatio || 1;
+        ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+        hasMark = false;
+        hint.classList.remove('hidden');
+        document.getElementById('af-signature-data').value = '';
+    };
+
+    // init after modal first opens so canvas has layout dimensions
+    setTimeout(resize, 50);
+    window.addEventListener('resize', resize);
+})();
 
 // ── APPROVE MODAL ─────────────────────────────────────────────
 function openApproveModal(d) {
@@ -801,11 +1127,10 @@ function openApproveModal(d) {
     document.body.style.overflow = 'hidden';
     document.getElementById('approveModalSub').textContent = d.jobOrder + ' · ' + d.property;
     document.getElementById('approveForm').action = d.approveUrl;
-
-    // pre-fill supervisor name (read-only)
     document.getElementById('apr-supervisor-name').value = d.supervisorName || '—';
 
-    // populate and show/hide quotation cards
+    // show all attached quotations, highlighting the supervisor's selection
+    const selected = d.selectedQuotation;
     let visibleCount = 0;
     [1,2,3].forEach(n => {
         const amt   = d['q'+n];
@@ -813,55 +1138,58 @@ function openApproveModal(d) {
         const furl  = d['q'+n+'File'];
         const card  = document.getElementById('apr-card-'+n);
         const hasAmt = amt !== '' && amt !== null && amt !== undefined;
-
         card.style.display = hasAmt ? '' : 'none';
-        card.classList.remove('selected');
-        document.querySelector(`#apr-card-${n} .quot-radio-input`).checked = false;
-
+        const isSelected = hasAmt && selected && String(selected) === String(n);
+        card.classList.toggle('selected', isSelected);
+        document.getElementById('apr-badge-'+n).style.display = isSelected ? '' : 'none';
         if (hasAmt) {
             visibleCount++;
             document.getElementById('apr-amount-'+n).textContent = 'BHD ' + parseFloat(amt).toFixed(3);
             const fileEl = document.getElementById('apr-file-'+n);
             if (fname && furl) {
                 fileEl.innerHTML = `<a href="${furl}" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:600"><i class="fa-solid fa-paperclip" style="font-size:9px"></i> ${fname}</a>`;
-            } else {
-                fileEl.textContent = '';
-            }
+            } else { fileEl.textContent = ''; }
         }
     });
+    document.getElementById('apr-no-quotations').style.display = visibleCount === 0 ? '' : 'none';
+
+    // show supervisor's signature
+    const sig = d.supervisorSignature;
+    if (sig) {
+        document.getElementById('apr-super-sig-img').src = sig;
+        document.getElementById('apr-super-sig-wrap').style.display = '';
+        document.getElementById('apr-super-sig-none').style.display = 'none';
+    } else {
+        document.getElementById('apr-super-sig-wrap').style.display = 'none';
+        document.getElementById('apr-super-sig-none').style.display = '';
+    }
 }
 function closeApproveModal() {
     document.getElementById('approveModal').classList.remove('open');
     document.body.style.overflow = '';
     document.getElementById('approveForm').reset();
-    document.querySelectorAll('.quot-radio-card').forEach(c => {
-        c.classList.remove('selected');
-        c.style.display = '';
-    });
+    if (window.clearAprSignature) clearAprSignature();
 }
 document.getElementById('approveModal').addEventListener('click', function(e) {
     if (e.target === this) closeApproveModal();
 });
-document.querySelectorAll('.quot-radio-input').forEach(radio => {
-    radio.addEventListener('change', function() {
-        document.querySelectorAll('.quot-radio-card').forEach(c => c.classList.remove('selected'));
-        this.closest('.quot-radio-card').classList.add('selected');
-    });
-});
 function handleApproveSubmit(btn) {
-    const selected = document.querySelector('.quot-radio-input:checked');
-    if (!selected) { alert('Please select a quotation to approve.'); return; }
+    if (!window.aprSigHasContent || !window.aprSigHasContent()) {
+        alert('Please provide your signature before approving.');
+        return;
+    }
+    document.getElementById('apr-signature-data').value = document.getElementById('apr-sig-canvas').toDataURL('image/png');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Approving…';
     document.getElementById('approveForm').submit();
 }
 
-// ── ASSESS FORM FILE INPUTS ───────────────────────────────────
-document.querySelectorAll('.af-file-input').forEach(input => {
+// ── NEW REQUEST FORM FILE INPUTS ──────────────────────────────
+document.querySelectorAll('.mm-file-input').forEach(input => {
     const n    = input.dataset.index;
     const clip = input.previousElementSibling;
-    const pill = document.getElementById('af_pill_' + n);
-    const name = document.getElementById('af_fname_' + n);
+    const pill = document.getElementById('mm_pill_' + n);
+    const name = document.getElementById('mm_fname_' + n);
     input.addEventListener('change', () => {
         if (input.files.length) {
             const f = input.files[0];
@@ -872,11 +1200,11 @@ document.querySelectorAll('.af-file-input').forEach(input => {
         }
     });
 });
-document.querySelectorAll('.af-pill-clear').forEach(btn => {
+document.querySelectorAll('.mm-pill-clear').forEach(btn => {
     btn.addEventListener('click', () => {
         const n = btn.dataset.index;
-        const input = document.getElementById('af_file_' + n);
-        const pill  = document.getElementById('af_pill_' + n);
+        const input = document.getElementById('mm_file_' + n);
+        const pill  = document.getElementById('mm_pill_' + n);
         const clip  = input.previousElementSibling;
         input.value = '';
         pill.classList.remove('show');
@@ -884,8 +1212,122 @@ document.querySelectorAll('.af-pill-clear').forEach(btn => {
     });
 });
 
+// ── DEPT HEAD SIGNATURE PAD ───────────────────────────────────
+(function() {
+    const canvas = document.getElementById('apr-sig-canvas');
+    const hint   = document.getElementById('apr-sig-hint');
+    const wrap   = document.getElementById('apr-sig-wrap');
+    const ctx    = canvas.getContext('2d');
+    let drawing  = false;
+    let hasMark  = false;
+
+    function resize() {
+        const dpr  = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        const w    = rect.width  || wrap.offsetWidth;
+        const h    = rect.height || 120;
+        const tmp  = canvas.toDataURL();
+        canvas.width  = w * dpr;
+        canvas.height = h * dpr;
+        ctx.scale(dpr, dpr);
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth   = 2;
+        ctx.lineCap     = 'round';
+        ctx.lineJoin    = 'round';
+        if (hasMark) {
+            const img = new Image();
+            img.onload = () => ctx.drawImage(img, 0, 0, w, h);
+            img.src = tmp;
+        }
+    }
+
+    function pos(e) {
+        const r = canvas.getBoundingClientRect();
+        if (e.touches) return { x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top };
+        return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+
+    canvas.addEventListener('mousedown',  e => { e.preventDefault(); drawing = true; wrap.classList.add('active'); ctx.beginPath(); const p = pos(e); ctx.moveTo(p.x, p.y); });
+    canvas.addEventListener('mousemove',  e => { if (!drawing) return; e.preventDefault(); const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); if (!hasMark) { hasMark = true; hint.classList.add('hidden'); } });
+    canvas.addEventListener('mouseup',    () => { drawing = false; wrap.classList.remove('active'); });
+    canvas.addEventListener('mouseleave', () => { drawing = false; wrap.classList.remove('active'); });
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; wrap.classList.add('active'); ctx.beginPath(); const p = pos(e); ctx.moveTo(p.x, p.y); }, { passive: false });
+    canvas.addEventListener('touchmove',  e => { if (!drawing) return; e.preventDefault(); const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); if (!hasMark) { hasMark = true; hint.classList.add('hidden'); } }, { passive: false });
+    canvas.addEventListener('touchend',   () => { drawing = false; wrap.classList.remove('active'); });
+
+    window.aprSigHasContent = () => hasMark;
+    window.clearAprSignature = function() {
+        const dpr = window.devicePixelRatio || 1;
+        ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+        hasMark = false;
+        hint.classList.remove('hidden');
+        document.getElementById('apr-signature-data').value = '';
+    };
+
+    setTimeout(resize, 50);
+    window.addEventListener('resize', resize);
+})();
+
+// ── SHARED DROPDOWN HELPERS ───────────────────────────────────
+function toggleDropdown(ddId, searchId) {
+    const dd = document.getElementById(ddId);
+    const isOpen = dd.classList.toggle('open');
+    if (isOpen) setTimeout(() => document.getElementById(searchId).focus(), 50);
+}
+function selectOption(ddId, hiddenId, labelId, value) {
+    document.getElementById(hiddenId).value = value;
+    const label = document.getElementById(labelId);
+    label.textContent = value;
+    label.style.color = 'var(--text-primary)';
+    document.querySelectorAll('#' + ddId + ' .prop-option').forEach(o => o.classList.toggle('selected', o.dataset.value === value));
+    document.getElementById(ddId).classList.remove('open');
+}
+function filterOptions(optionsId, noResId, query) {
+    const q = query.toLowerCase();
+    let visible = 0;
+    document.querySelectorAll('#' + optionsId + ' .prop-option').forEach(opt => {
+        const match = opt.textContent.toLowerCase().includes(q);
+        opt.classList.toggle('hidden', !match);
+        if (match) visible++;
+    });
+    const noRes = document.getElementById(noResId);
+    if (noRes) noRes.style.display = visible === 0 ? '' : 'none';
+}
+function resetDropdown(ddId, hiddenId, labelId, placeholder) {
+    document.getElementById(hiddenId).value = '';
+    const label = document.getElementById(labelId);
+    label.textContent = placeholder;
+    label.style.color = 'var(--text-muted)';
+    document.querySelectorAll('#' + ddId + ' .prop-option').forEach(o => o.classList.remove('selected', 'hidden'));
+    const searchInput = document.querySelector('#' + ddId + ' .prop-dropdown-search');
+    if (searchInput) searchInput.value = '';
+    document.getElementById(ddId).classList.remove('open');
+}
+// Close dropdowns on outside click
+document.addEventListener('click', function(e) {
+    ['mm-prop-dropdown','mm-tenant-dropdown','mm-flat-dropdown'].forEach(id => {
+        const dd = document.getElementById(id);
+        if (dd && !dd.contains(e.target)) dd.classList.remove('open');
+    });
+});
+
+// ── PROPERTY DROPDOWN ─────────────────────────────────────────
+function togglePropDropdown() { toggleDropdown('mm-prop-dropdown', 'mm-prop-search'); }
+function selectProp(name, code) {
+    selectOption('mm-prop-dropdown', 'mm-property-val', 'mm-prop-label', name);
+    // filter units to this property, reset flat selection
+    resetDropdown('mm-flat-dropdown', 'mm-flat-val', 'mm-flat-label', 'Select a unit…');
+    document.querySelectorAll('#mm-flat-options .prop-option').forEach(opt => {
+        opt.classList.toggle('hidden', opt.dataset.property !== code);
+    });
+    const noRes = document.getElementById('mm-flat-no-results');
+    const visible = document.querySelectorAll('#mm-flat-options .prop-option:not(.hidden)').length;
+    if (noRes) noRes.style.display = visible === 0 ? '' : 'none';
+}
+function filterPropOptions(v) { filterOptions('mm-prop-options', 'mm-prop-no-results', v); }
+
 // ── TABS ─────────────────────────────────────────────────────
-const MM_TABS = ['mm-details','mm-joblines'];
+const MM_TABS = ['mm-details','mm-joblines','mm-quotations'];
 let mmCurrentTab = 0;
 
 function switchMMTab(tabId) {
@@ -952,6 +1394,7 @@ function handleMMSubmit(btn) {
     $mmTabErrorMap = [
         'mm-details'     => ['date','job_order','request_date','apartment_status','property','tenant','flat','contact_no','available_datetime'],
         'mm-joblines'    => ['job_lines'],
+        'mm-quotations'  => ['quotation_1','quotation_2','quotation_3','quotation_1_file','quotation_2_file','quotation_3_file'],
     ];
     $mmFirstErrorTab = null;
     foreach($mmTabErrorMap as $tab => $fields) {

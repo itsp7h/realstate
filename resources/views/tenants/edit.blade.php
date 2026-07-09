@@ -142,6 +142,15 @@
                         @error('email') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
 
+                    <div class="form-group col-span-2">
+                        <label>Address</label>
+                        <input type="text" name="address"
+                            class="{{ $errors->has('address') ? 'error' : '' }}"
+                            value="{{ old('address', $tenant->address) }}"
+                            placeholder="e.g. MP 2, Bldg# 233, Road# 3332, Block# 333, Bahrain" maxlength="500">
+                        @error('address') <span class="field-error">{{ $message }}</span> @enderror
+                    </div>
+
                 </div>
             </div>
         </div>

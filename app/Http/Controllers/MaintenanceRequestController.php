@@ -6,7 +6,10 @@ use App\Http\Requests\AssessMaintenanceRequest;
 use App\Http\Requests\ApproveMaintenanceRequest;
 use App\Http\Requests\StoreMaintenanceRequest;
 use App\Http\Requests\UpdateMaintenanceRequest;
+use App\Models\Building;
 use App\Models\MaintenanceRequest;
+use App\Models\PropertyUnit;
+use App\Models\Tenant;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -50,7 +53,16 @@ class MaintenanceRequestController extends Controller
             'completed'          => MaintenanceRequest::where('status', 'completed')->count(),
         ];
 
-        return view('maintenance.index', compact('requests', 'stats'));
+        $properties = Building::orderBy('property_name')
+            ->get(['property_name', 'property_code']);
+
+        $units = PropertyUnit::orderBy('unit_name')
+            ->get(['unit_name', 'property_code', 'property_name']);
+
+        $tenants = Tenant::orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('maintenance.index', compact('requests', 'stats', 'properties', 'units', 'tenants'));
     }
 
     public function create(): View
@@ -119,20 +131,7 @@ class MaintenanceRequestController extends Controller
 
     public function assess(AssessMaintenanceRequest $request, MaintenanceRequest $maintenanceRequest): RedirectResponse
     {
-        $data = $request->validated();
-
-        foreach (['quotation_1_file', 'quotation_2_file', 'quotation_3_file'] as $field) {
-            if ($request->hasFile($field)) {
-                if ($maintenanceRequest->$field) {
-                    Storage::disk('public')->delete($maintenanceRequest->$field);
-                }
-                $data[$field] = $request->file($field)->store('maintenance/quotations', 'public');
-            } else {
-                unset($data[$field]);
-            }
-        }
-
-        $data['status'] = 'waiting_approval';
+        $data = array_merge($request->validated(), ['status' => 'waiting_approval']);
         $maintenanceRequest->update($data);
 
         return redirect()->route('maintenance.index')

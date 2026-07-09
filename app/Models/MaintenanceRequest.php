@@ -13,9 +13,9 @@ class MaintenanceRequest extends Model
     protected $fillable = [
         'date', 'job_order', 'property', 'tenant', 'flat', 'contact_no',
         'available_datetime', 'apartment_status', 'request_date', 'status',
-        'supervisor_name', 'supervisor_datetime',
+        'supervisor_name', 'supervisor_datetime', 'supervisor_signature',
         'job_assessment', 'quotation_1', 'quotation_1_file', 'quotation_2', 'quotation_2_file', 'quotation_3', 'quotation_3_file', 'maintenance_remarks',
-        'selected_quotation', 'approved_supervisor', 'approved_dept_head',
+        'selected_quotation', 'approved_supervisor', 'approved_dept_head', 'dept_head_signature',
         'job_lines',
     ];
 

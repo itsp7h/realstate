@@ -28,6 +28,8 @@ class Building extends Model
         'total_no_of_floors',
         'total_no_of_units',
         'custom_fields',
+        'vat_enabled',
+        'vat_rate',
     ];
 
     protected $casts = [
@@ -37,11 +39,25 @@ class Building extends Model
         'total_no_of_floors' => 'integer',
         'total_no_of_units'  => 'integer',
         'custom_fields'      => 'array',
+        'vat_enabled'        => 'boolean',
+        'vat_rate'           => 'decimal:2',
     ];
 
     public function units()
     {
         return $this->hasMany(PropertyUnit::class);
+    }
+
+    public function occupiedUnits()
+    {
+        $today = \Carbon\Carbon::today()->toDateString();
+        return $this->hasMany(PropertyUnit::class)->whereExists(function ($q) use ($today) {
+            $q->selectRaw(1)
+              ->from('lease_contracts')
+              ->whereColumn('lease_contracts.unit_id', 'property_units.id')
+              ->whereDate('lease_start_date', '<=', $today)
+              ->whereDate('lease_end_date', '>=', $today);
+        });
     }
 
     public function floors()
@@ -52,6 +68,26 @@ class Building extends Model
     public function images()
     {
         return $this->hasMany(BuildingImage::class)->orderBy('sort_order');
+    }
+
+    public function getEffectiveVatRateAttribute(): float
+    {
+        return $this->vat_enabled ? (float) $this->vat_rate : 0.0;
+    }
+
+    public function getFullAddressAttribute(): ?string
+    {
+        $parts = [
+            $this->building_no ? 'Building ' . $this->building_no : null,
+            $this->road,
+            $this->block ? 'Block ' . $this->block : null,
+            $this->area,
+            $this->city,
+        ];
+
+        $address = implode(', ', array_filter($parts, fn ($p) => filled($p)));
+
+        return $address !== '' ? $address : null;
     }
 
     public function scopeFilter($query, array $filters): void
