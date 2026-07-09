@@ -59,6 +59,12 @@
         <div class="report-card-title">Profit &amp; Loss</div>
         <div class="report-card-desc">Rent, utilities and EWA cash collected against maintenance costs and unrecovered EWA charges — per building, per tenant, or across everything.</div>
     </a>
+
+    <a href="{{ route('reports.rent-schedule') }}" class="report-card">
+        <div class="report-card-icon"><i class="fa-solid fa-calendar-check"></i></div>
+        <div class="report-card-title">Rent Payment Schedule</div>
+        <div class="report-card-desc">Month-by-month for one tenant — which months were paid in full, which were only partly paid, and which were never invoiced at all.</div>
+    </a>
 </div>
 
 <div style="margin-top:20px;font-size:12px;color:var(--text-muted);max-width:640px">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Building;
 use App\Models\Tenant;
 use App\Services\ProfitLossService;
+use App\Services\RentScheduleService;
 use App\Services\TenantLedgerService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
@@ -17,6 +18,7 @@ class ReportController extends Controller
     public function __construct(
         private TenantLedgerService $ledger,
         private ProfitLossService $profitLoss,
+        private RentScheduleService $rentSchedule,
     ) {}
 
     public function index(): View
@@ -184,6 +186,51 @@ class ReportController extends Controller
         ])->setPaper('a4', 'portrait');
 
         return $pdf->stream('profit-and-loss.pdf');
+    }
+
+    // ── RENT PAYMENT SCHEDULE ────────────────────────────────────────
+
+    public function rentSchedule(Request $request): View
+    {
+        [$from, $to] = $this->resolveOptionalDateRange($request);
+        $tenants = Tenant::orderBy('name')->get(['id', 'name', 'tenant_code']);
+
+        $tenant = null;
+        $rows   = collect();
+        if ($tenantId = $request->input('tenant_id')) {
+            $tenant = Tenant::findOrFail($tenantId);
+            $rows   = $this->rentSchedule->build($tenant, $from, $to);
+        }
+
+        return view('reports.rent-schedule', [
+            'tenants' => $tenants,
+            'tenant'  => $tenant,
+            'rows'    => $rows,
+            'from'    => $request->input('date_from'),
+            'to'      => $request->input('date_to'),
+        ]);
+    }
+
+    public function rentSchedulePdf(Request $request): Response
+    {
+        [$from, $to] = $this->resolveOptionalDateRange($request);
+        $tenant = Tenant::findOrFail($request->input('tenant_id'));
+        $rows   = $this->rentSchedule->build($tenant, $from, $to);
+
+        $pdf = Pdf::loadView('reports.rent-schedule-pdf', [
+            'tenant' => $tenant,
+            'rows'   => $rows,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream("rent-schedule-{$tenant->tenant_code}.pdf");
+    }
+
+    private function resolveOptionalDateRange(Request $request): array
+    {
+        $from = $request->input('date_from') ? Carbon::parse($request->input('date_from'))->startOfDay() : null;
+        $to   = $request->input('date_to') ? Carbon::parse($request->input('date_to'))->startOfDay() : null;
+
+        return [$from, $to];
     }
 
     private function resolveDateRange(Request $request): array

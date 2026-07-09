@@ -89,6 +89,8 @@ Route::get('/reports/group-ageing',           [ReportController::class, 'groupAg
 Route::get('/reports/group-ageing/pdf',       [ReportController::class, 'groupAgeingPdf'])->name('reports.group-ageing.pdf');
 Route::get('/reports/profit-loss',            [ReportController::class, 'profitLoss'])->name('reports.profit-loss');
 Route::get('/reports/profit-loss/pdf',        [ReportController::class, 'profitLossPdf'])->name('reports.profit-loss.pdf');
+Route::get('/reports/rent-schedule',          [ReportController::class, 'rentSchedule'])->name('reports.rent-schedule');
+Route::get('/reports/rent-schedule/pdf',      [ReportController::class, 'rentSchedulePdf'])->name('reports.rent-schedule.pdf');
 Route::get('/invoices/{invoice}/payments/{payment}/receipt',  [PaymentController::class, 'receipt'])->name('invoices.payments.receipt');
 
 Route::resource('buildings', BuildingController::class);
