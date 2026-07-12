@@ -45,7 +45,11 @@ jobs:
           npm ci
           npm run build
 
-      # TODO: replace with the container's actual PHP-FPM service name
-      # (e.g. php8.2-fpm, php-fpm) once confirmed.
-      # - name: Reload PHP-FPM
-      #   run: sudo systemctl reload php8.2-fpm
+      - name: Fix storage/cache permissions for php-fpm
+        # Checkout resets file modes, and php-fpm runs as www-data (a
+        # secondary group of the runner user) — group-write keeps both able
+        # to read/write these dirs after every deploy.
+        run: chmod -R ug+rwX storage bootstrap/cache
+
+      - name: Reload PHP-FPM
+        run: sudo systemctl reload php8.3-fpm
