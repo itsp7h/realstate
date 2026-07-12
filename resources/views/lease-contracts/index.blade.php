@@ -536,6 +536,9 @@
                             </div>
                         </div>
                         @error('tenant_id') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
+                        <div class="mfield-error" id="mc_tenant_client_error" style="display:none">
+                            <i class="fa-solid fa-circle-exclamation"></i> Please pick a tenant from the dropdown list — typing a name alone isn't enough.
+                        </div>
                     </div>
 
                     <div class="mfield-group span-full">
@@ -1018,6 +1021,11 @@ function prevMTab() { if (currentTab > 0) switchMTab(TABS[currentTab - 1]); }
         empty.classList.toggle('show', visible === 0);
     }
 
+    function clearError() {
+        search.classList.remove('is-invalid');
+        document.getElementById('mc_tenant_client_error').style.display = 'none';
+    }
+
     search.addEventListener('focus', function() {
         filter();
         dropdown.classList.add('open');
@@ -1026,6 +1034,7 @@ function prevMTab() { if (currentTab > 0) switchMTab(TABS[currentTab - 1]); }
         hidden.value = '';
         filter();
         dropdown.classList.add('open');
+        clearError();
     });
 
     items.forEach(item => {
@@ -1033,6 +1042,7 @@ function prevMTab() { if (currentTab > 0) switchMTab(TABS[currentTab - 1]); }
             hidden.value = item.dataset.id;
             search.value = item.dataset.name;
             dropdown.classList.remove('open');
+            clearError();
         });
     });
 
@@ -1046,7 +1056,11 @@ function handleContractSubmit(btn) {
     const tenantId = document.getElementById('mc_tenant_id');
     if (!tenantId.value) {
         switchMTab('mc-info');
-        document.getElementById('mc_tenant_search').focus();
+        const search = document.getElementById('mc_tenant_search');
+        search.classList.add('is-invalid');
+        document.getElementById('mc_tenant_client_error').style.display = 'flex';
+        search.focus();
+        search.scrollIntoView({ block: 'center', behavior: 'smooth' });
         return;
     }
 
