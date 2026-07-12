@@ -202,7 +202,7 @@
         .type-toggle { grid-template-columns: 1fr; }
     }
 
-    /* ── TENANT PROFILE MODAL (iframe) ──────────────────── */
+    /* ── TENANT PROFILE MODAL ───────────────────────────── */
     .profile-modal-overlay {
         display: none; position: fixed; inset: 0; z-index: 1050;
         background: rgba(11,17,32,0.75); backdrop-filter: blur(4px);
@@ -210,7 +210,7 @@
     }
     .profile-modal-overlay.open { display: flex; }
     .profile-modal-box {
-        width: 100%; max-width: 1100px; height: 90vh;
+        width: 100%; max-width: 1100px; max-height: 90vh;
         background: var(--card-bg); border-radius: var(--radius);
         display: flex; flex-direction: column; overflow: hidden;
         box-shadow: 0 24px 60px rgba(0,0,0,0.5);
@@ -219,7 +219,10 @@
         padding: 10px 16px; background: var(--page-bg); border-bottom: 1px solid var(--card-border);
         display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0;
     }
-    .profile-modal-iframe { flex: 1; border: none; width: 100%; background: var(--page-bg); }
+    .profile-modal-body { flex: 1; overflow-y: auto; padding: 22px 24px; }
+    .profile-modal-body::-webkit-scrollbar { width: 4px; }
+    .profile-modal-body::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+    .profile-modal-loading { text-align: center; padding: 80px 20px; color: var(--text-muted); font-size: 24px; }
 </style>
 @endpush
 
@@ -594,7 +597,7 @@
                 <i class="fa-solid fa-xmark"></i> Close
             </button>
         </div>
-        <iframe id="tenantProfileFrame" class="profile-modal-iframe" src="about:blank"></iframe>
+        <div class="profile-modal-body" id="tenantProfileBody"></div>
     </div>
 </div>
 
@@ -657,15 +660,40 @@ document.querySelectorAll('tr[data-tenant-modal]').forEach(function (row) {
 });
 
 function openTenantProfileModal(url) {
-    document.getElementById('tenantProfileFrame').src = url;
+    const body = document.getElementById('tenantProfileBody');
+    body.innerHTML = '<div class="profile-modal-loading"><i class="fa-solid fa-spinner fa-spin"></i></div>';
     document.getElementById('tenantProfileModal').classList.add('open');
     document.body.style.overflow = 'hidden';
+
+    const sep = url.includes('?') ? '&' : '?';
+    fetch(url + sep + 'modal=1', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function (response) {
+            if (!response.ok) throw new Error('Request failed');
+            return response.text();
+        })
+        .then(function (html) {
+            body.innerHTML = html;
+            // <script> tags inserted via innerHTML don't execute — recreate
+            // them so the tab-switching / note-form JS actually runs.
+            body.querySelectorAll('script').forEach(function (oldScript) {
+                const newScript = document.createElement('script');
+                if (oldScript.src) {
+                    newScript.src = oldScript.src;
+                } else {
+                    newScript.textContent = oldScript.textContent;
+                }
+                oldScript.replaceWith(newScript);
+            });
+        })
+        .catch(function () {
+            body.innerHTML = '<div class="profile-modal-loading" style="color:var(--danger)">Failed to load tenant profile.</div>';
+        });
 }
 
 function closeTenantProfileModal(e) {
     if (e && e.target !== e.currentTarget) return;
     document.getElementById('tenantProfileModal').classList.remove('open');
-    document.getElementById('tenantProfileFrame').src = 'about:blank';
+    document.getElementById('tenantProfileBody').innerHTML = '';
     document.body.style.overflow = '';
 }
 
@@ -674,7 +702,5 @@ document.addEventListener('keydown', function (e) {
         closeTenantProfileModal();
     }
 });
-
-window.closeTenantModalFromChild = closeTenantProfileModal;
 </script>
 @endpush

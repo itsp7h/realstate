@@ -58,7 +58,7 @@ class TenantController extends Controller
             ->with('success', 'Tenant created successfully.');
     }
 
-    public function show(Tenant $tenant)
+    public function show(Request $request, Tenant $tenant)
     {
         $tenant->load([
             'leaseContracts' => fn ($q) => $q->orderByDesc('lease_start_date'),
@@ -69,6 +69,10 @@ class TenantController extends Controller
         ]);
 
         $rentSchedule = $this->rentSchedule->build($tenant);
+
+        if ($request->boolean('modal')) {
+            return view('tenants._profile', compact('tenant', 'rentSchedule'));
+        }
 
         return view('tenants.show', compact('tenant', 'rentSchedule'));
     }
