@@ -94,6 +94,18 @@
 .note-form-control.is-invalid { border-color: #DC2626; }
 .note-invalid-feedback { font-size: 11px; color: #DC2626; margin-top: 3px; }
 
+/* Payments */
+.payment-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--card-border); }
+.payment-row:last-child { border-bottom: none; }
+.payment-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); flex-shrink: 0; background: #ECFDF5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.payment-info { flex: 1; min-width: 0; }
+.payment-num { font-size: 13px; font-weight: 700; color: var(--text-primary); font-family: 'Outfit',sans-serif; }
+.payment-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.payment-amt { font-family: 'Outfit',sans-serif; font-size: 16px; font-weight: 800; color: #059669; white-space: nowrap; }
+.pay-amount-wrap { position: relative; }
+.pay-amount-wrap input { padding-right: 46px; }
+.pay-amount-wrap::after { content: 'BHD'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 700; color: var(--text-muted); pointer-events: none; }
+
 .pdf-modal-overlay {
     display: none; position: fixed; inset: 0; z-index: 1050;
     background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
@@ -254,6 +266,93 @@
         <div style="margin-top:14px">
             <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px">Internal Notes</div>
             <div class="notes-block" style="border-left:3px solid var(--accent-dim);padding-left:14px">{{ $invoice->notes }}</div>
+        </div>
+        @endif
+    </div>
+</div>
+
+<div class="detail-card">
+    <div class="detail-card-header">
+        <div class="detail-card-title">
+            <i class="fa-solid fa-money-bill-transfer" style="color:var(--accent)"></i>
+            Payments
+            <span style="font-size:12px;font-weight:600;color:var(--text-muted);background:var(--page-bg);padding:2px 8px;border-radius:20px">{{ $invoice->payments->count() }}</span>
+        </div>
+        @if($invoice->balance_due > 0.001 && $invoice->status !== 'cancelled')
+        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('payFormCard').classList.toggle('open')">
+            <i class="fa-solid fa-plus"></i> Record Payment
+        </button>
+        @endif
+    </div>
+    <div class="detail-card-body" style="padding-top:6px;padding-bottom:6px">
+        @forelse($invoice->payments as $pmt)
+        <div class="payment-row">
+            <div class="payment-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="payment-info">
+                <div class="payment-num">{{ $pmt->payment_number }}</div>
+                <div class="payment-sub">{{ $pmt->payment_date->format('d M Y') }} &bull; {{ $pmt->method_label }}@if($pmt->reference) &bull; {{ $pmt->reference }}@endif</div>
+            </div>
+            <div class="payment-amt">{{ number_format($pmt->amount, 3) }}</div>
+            <div style="display:flex;gap:6px" onclick="event.stopPropagation()">
+                <a href="{{ route('invoices.payments.receipt', [$invoice, $pmt]) }}" class="btn btn-outline btn-sm" title="Download Receipt" target="_blank">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                </a>
+                @if($invoice->status !== 'cancelled')
+                <form method="POST" action="{{ route('invoices.payments.destroy', [$invoice, $pmt]) }}"
+                      onsubmit="return confirm('Remove payment {{ $pmt->payment_number }}?')">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i></button>
+                </form>
+                @endif
+            </div>
+        </div>
+        @empty
+        <div style="text-align:center;padding:28px 20px;color:var(--text-muted);font-size:13px">
+            <i class="fa-solid fa-receipt" style="font-size:26px;display:block;margin-bottom:8px;opacity:0.3"></i>
+            No payments recorded for this invoice
+        </div>
+        @endforelse
+
+        @if($invoice->balance_due > 0.001 && $invoice->status !== 'cancelled')
+        <div class="note-form-card {{ $errors->any() ? 'open' : '' }}" id="payFormCard">
+            <form method="POST" action="{{ route('invoices.payments.store', $invoice) }}" novalidate>
+                @csrf
+                <div class="note-form-grid">
+                    <div class="form-group">
+                        <label class="note-form-label">Amount (BHD) <span style="color:#DC2626">*</span></label>
+                        <div class="pay-amount-wrap">
+                            <input type="number" name="amount" class="note-form-control {{ $errors->has('amount') ? 'is-invalid' : '' }}"
+                                   value="{{ old('amount', number_format($invoice->balance_due, 3)) }}" min="0.001" step="0.001" placeholder="0.000" required>
+                        </div>
+                        <div class="note-invalid-feedback">{{ $errors->first('amount') }}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="note-form-label">Payment Date <span style="color:#DC2626">*</span></label>
+                        <input type="date" name="payment_date" class="note-form-control {{ $errors->has('payment_date') ? 'is-invalid' : '' }}"
+                               value="{{ old('payment_date', now()->format('Y-m-d')) }}" required>
+                        <div class="note-invalid-feedback">{{ $errors->first('payment_date') }}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="note-form-label">Method <span style="color:#DC2626">*</span></label>
+                        <select name="method" class="note-form-control {{ $errors->has('method') ? 'is-invalid' : '' }}" required>
+                            <option value="">— Select —</option>
+                            @foreach(['cash'=>'Cash','bank_transfer'=>'Bank Transfer','cheque'=>'Cheque','online_card'=>'Online / Card'] as $v => $l)
+                            <option value="{{ $v }}" {{ old('method') === $v ? 'selected' : '' }}>{{ $l }}</option>
+                            @endforeach
+                        </select>
+                        <div class="note-invalid-feedback">{{ $errors->first('method') }}</div>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary" style="width:100%">
+                            <i class="fa-solid fa-circle-check"></i> Record Payment
+                        </button>
+                    </div>
+                    <div class="form-group reason-group">
+                        <label class="note-form-label">Reference</label>
+                        <input type="text" name="reference" class="note-form-control" value="{{ old('reference') }}" maxlength="255" placeholder="Transaction ID, cheque no…">
+                    </div>
+                </div>
+            </form>
         </div>
         @endif
     </div>

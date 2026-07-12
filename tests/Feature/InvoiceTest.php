@@ -269,6 +269,62 @@ class InvoiceTest extends TestCase
             ->assertSee($inv->invoice_number);
     }
 
+    public function test_show_renders_record_payment_form_when_balance_due(): void
+    {
+        $inv = $this->makeInvoice(['amount' => 100.000]);
+        $this->get(route('invoices.show', $inv))
+            ->assertStatus(200)
+            ->assertSee('Record Payment');
+    }
+
+    public function test_show_lists_existing_payments(): void
+    {
+        $inv = $this->makeInvoice(['amount' => 100.000]);
+        Payment::create([
+            'payment_number' => 'PAY-TEST-' . uniqid(),
+            'invoice_id'     => $inv->id,
+            'amount'         => 40.000,
+            'payment_date'   => '2024-03-05',
+            'method'         => 'cash',
+        ]);
+
+        $this->get(route('invoices.show', $inv))
+            ->assertStatus(200)
+            ->assertSee('PAY-TEST')
+            ->assertSee('40.000');
+    }
+
+    public function test_show_hides_record_payment_form_when_fully_paid(): void
+    {
+        $inv = $this->makeInvoice(['amount' => 100.000]);
+        Payment::create([
+            'payment_number' => 'PAY-TEST-' . uniqid(),
+            'invoice_id'     => $inv->id,
+            'amount'         => 100.000,
+            'payment_date'   => '2024-03-05',
+            'method'         => 'cash',
+        ]);
+
+        $this->get(route('invoices.show', $inv))
+            ->assertStatus(200)
+            ->assertDontSee('Record Payment');
+    }
+
+    public function test_can_record_payment_from_invoice_show_page(): void
+    {
+        $inv = $this->makeInvoice(['amount' => 100.000]);
+
+        $this->post(route('invoices.payments.store', $inv), [
+            'amount'       => '100.000',
+            'payment_date' => '2024-03-15',
+            'method'       => 'cash',
+        ])->assertRedirect(route('invoices.show', $inv));
+
+        $inv->refresh();
+        $this->assertEquals(0.0, $inv->balance_due);
+        $this->assertEquals('paid', $inv->status);
+    }
+
     // ── EDIT / UPDATE ─────────────────────────────────────────────
 
     public function test_edit_form_renders(): void
