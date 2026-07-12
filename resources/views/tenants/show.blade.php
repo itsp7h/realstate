@@ -521,9 +521,8 @@
         <thead>
             <tr>
                 <th>Month</th>
-                <th class="right">Expected (BHD)</th>
                 <th class="right">Invoiced (BHD)</th>
-                <th class="right">Paid (BHD)</th>
+                <th class="right">Received (BHD)</th>
                 <th class="right">Remaining (BHD)</th>
                 <th>Status</th>
             </tr>
@@ -532,7 +531,6 @@
             @foreach($rentSchedule as $row)
             <tr>
                 <td style="font-weight:600">{{ $row['month']->format('F Y') }}</td>
-                <td class="right tp-money">{{ number_format($row['expected'], 3) }}</td>
                 <td class="right tp-money">{{ number_format($row['invoiced'], 3) }}</td>
                 <td class="right tp-money">{{ number_format($row['paid'], 3) }}</td>
                 <td class="right tp-money" style="color:{{ $row['remaining'] > 0.001 ? '#DC2626' : '#059669' }}">{{ number_format($row['remaining'], 3) }}</td>
@@ -550,7 +548,6 @@
             @endforeach
             <tr class="total-row">
                 <td style="padding:12px 14px">Total</td>
-                <td class="right tp-money" style="padding:12px 14px">{{ number_format($rentSchedule->sum('expected'), 3) }}</td>
                 <td class="right tp-money" style="padding:12px 14px">{{ number_format($rentSchedule->sum('invoiced'), 3) }}</td>
                 <td class="right tp-money" style="padding:12px 14px">{{ number_format($rentSchedule->sum('paid'), 3) }}</td>
                 <td class="right tp-money" style="padding:12px 14px;color:{{ $rentSchedule->sum('remaining') > 0.001 ? '#DC2626' : '#059669' }}">{{ number_format($rentSchedule->sum('remaining'), 3) }}</td>

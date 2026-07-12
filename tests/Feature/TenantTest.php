@@ -304,7 +304,7 @@ class TenantTest extends TestCase
         $this->assertTrue($response->viewData('rentSchedule')->isNotEmpty());
     }
 
-    public function test_show_rent_ledger_totals_row_sums_expected_amount(): void
+    public function test_show_rent_ledger_totals_row_sums_received_amount(): void
     {
         $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
         LeaseContract::create([
@@ -319,11 +319,34 @@ class TenantTest extends TestCase
             'rent_end_date'      => '2026-12-31',
             'rent_per_month'     => 500.000,
         ]);
+        $invoice = new Invoice([
+            'invoice_number' => 'INV-LEDGER-1',
+            'tenant_id'      => $tenant->id,
+            'tenant_name'    => $tenant->name,
+            'property_name'  => 'Profile Tower',
+            'type'           => 'rent',
+            'lines'          => [['property_name' => 'Profile Tower', 'amount' => 500.000]],
+            'vat_rate'       => 0,
+            'invoice_date'   => '2026-01-01',
+            'status'         => 'issued',
+        ]);
+        $invoice->recomputeTotals();
+        $invoice->save();
+        Payment::create([
+            'payment_number' => 'PAY-LEDGER-1',
+            'invoice_id'     => $invoice->id,
+            'amount'         => 500.000,
+            'payment_date'   => '2026-01-05',
+            'method'         => 'cash',
+        ]);
 
         $response = $this->get(route('tenants.show', $tenant));
         $rentSchedule = $response->viewData('rentSchedule');
 
-        $response->assertStatus(200)->assertSee(number_format($rentSchedule->sum('expected'), 3));
+        $response->assertStatus(200)
+            ->assertDontSee('Expected (BHD)')
+            ->assertSee('Received (BHD)')
+            ->assertSee(number_format($rentSchedule->sum('paid'), 3));
     }
 
     // ── EDIT / UPDATE ────────────────────────────────────────────
