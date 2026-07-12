@@ -7,31 +7,33 @@ use App\Models\EwaBill;
 use App\Models\EwaPayment;
 use App\Models\MaintenanceRequest;
 use App\Models\Payment;
+use App\Models\PropertyUnit;
 use App\Models\Tenant;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
- * Builds a cash-basis profit & loss statement per building and/or tenant.
- * Revenue is recognised when cash is received (Payment / EwaPayment). The
- * expense side has no "paid to EWA authority" / "paid to contractor" event
- * anywhere in the schema, so those legs are recognised on accrual instead —
- * EWA landlord portion on the bill's reading_date, maintenance cost on the
- * request's date once department-head approved.
+ * Builds a cash-basis profit & loss statement per building, tenant, and/or
+ * unit. Revenue is recognised when cash is received (Payment / EwaPayment).
+ * The expense side has no "paid to EWA authority" / "paid to contractor"
+ * event anywhere in the schema, so those legs are recognised on accrual
+ * instead — EWA landlord portion on the bill's reading_date, maintenance
+ * cost on the request's date once department-head approved.
  */
 class ProfitLossService
 {
-    public function build(Carbon $from, Carbon $to, ?int $buildingId = null, ?int $tenantId = null): array
+    public function build(Carbon $from, Carbon $to, ?int $buildingId = null, ?int $tenantId = null, ?int $unitId = null): array
     {
         $buildingName = $buildingId ? Building::find($buildingId)?->property_name : null;
+        $unitName     = $unitId ? PropertyUnit::find($unitId)?->unit_name : null;
 
-        $rentCollected      = $this->paymentsByType('rent', $from, $to, $buildingName, $tenantId);
-        $utilitiesCollected = $this->paymentsByType('utilities', $from, $to, $buildingName, $tenantId);
-        $otherCollected     = $this->paymentsByType('other', $from, $to, $buildingName, $tenantId);
-        $ewaCollected       = $this->ewaPayments($from, $to, $buildingName, $tenantId);
+        $rentCollected      = $this->paymentsByType('rent', $from, $to, $buildingName, $tenantId, $unitName);
+        $utilitiesCollected = $this->paymentsByType('utilities', $from, $to, $buildingName, $tenantId, $unitName);
+        $otherCollected     = $this->paymentsByType('other', $from, $to, $buildingName, $tenantId, $unitName);
+        $ewaCollected       = $this->ewaPayments($from, $to, $buildingName, $tenantId, $unitName);
 
-        $ewaLandlordExpense  = $this->ewaLandlordExpense($from, $to, $buildingName, $tenantId);
-        $maintenanceExpense  = $this->maintenanceExpense($from, $to, $buildingId);
+        $ewaLandlordExpense  = $this->ewaLandlordExpense($from, $to, $buildingName, $tenantId, $unitName);
+        $maintenanceExpense  = $this->maintenanceExpense($from, $to, $buildingId, $unitId);
 
         $revenue = [
             'rent_collected'      => round($rentCollected, 3),
@@ -75,10 +77,10 @@ class ProfitLossService
             ));
     }
 
-    private function paymentsByType(string $type, Carbon $from, Carbon $to, ?string $buildingName, ?int $tenantId): float
+    private function paymentsByType(string $type, Carbon $from, Carbon $to, ?string $buildingName, ?int $tenantId, ?string $unitName = null): float
     {
         return (float) Payment::whereDate('payment_date', '>=', $from)->whereDate('payment_date', '<=', $to)
-            ->whereHas('invoice', function ($q) use ($type, $buildingName, $tenantId) {
+            ->whereHas('invoice', function ($q) use ($type, $buildingName, $tenantId, $unitName) {
                 $q->where('type', $type);
                 if ($buildingName !== null) {
                     $q->where('property_name', $buildingName);
@@ -86,25 +88,31 @@ class ProfitLossService
                 if ($tenantId !== null) {
                     $q->where('tenant_id', $tenantId);
                 }
+                if ($unitName !== null) {
+                    $q->where('unit', $unitName);
+                }
             })
             ->sum('amount');
     }
 
-    private function ewaPayments(Carbon $from, Carbon $to, ?string $buildingName, ?int $tenantId): float
+    private function ewaPayments(Carbon $from, Carbon $to, ?string $buildingName, ?int $tenantId, ?string $unitName = null): float
     {
         return (float) EwaPayment::whereDate('payment_date', '>=', $from)->whereDate('payment_date', '<=', $to)
-            ->whereHas('ewaBill', function ($q) use ($buildingName, $tenantId) {
+            ->whereHas('ewaBill', function ($q) use ($buildingName, $tenantId, $unitName) {
                 if ($buildingName !== null) {
                     $q->where('property_name', $buildingName);
                 }
                 if ($tenantId !== null) {
                     $q->whereHas('leaseContract', fn ($lq) => $lq->where('tenant_id', $tenantId));
                 }
+                if ($unitName !== null) {
+                    $q->where('unit', $unitName);
+                }
             })
             ->sum('amount');
     }
 
-    private function ewaLandlordExpense(Carbon $from, Carbon $to, ?string $buildingName, ?int $tenantId): float
+    private function ewaLandlordExpense(Carbon $from, Carbon $to, ?string $buildingName, ?int $tenantId, ?string $unitName = null): float
     {
         $query = EwaBill::whereDate('reading_date', '>=', $from)->whereDate('reading_date', '<=', $to);
 
@@ -114,11 +122,14 @@ class ProfitLossService
         if ($tenantId !== null) {
             $query->whereHas('leaseContract', fn ($lq) => $lq->where('tenant_id', $tenantId));
         }
+        if ($unitName !== null) {
+            $query->where('unit', $unitName);
+        }
 
         return (float) $query->get()->sum('landlord_portion');
     }
 
-    private function maintenanceExpense(Carbon $from, Carbon $to, ?int $buildingId): float
+    private function maintenanceExpense(Carbon $from, Carbon $to, ?int $buildingId, ?int $unitId = null): float
     {
         $query = MaintenanceRequest::whereNotNull('approved_dept_head')
             ->whereDate('date', '>=', $from)
@@ -126,6 +137,9 @@ class ProfitLossService
 
         if ($buildingId !== null) {
             $query->where('building_id', $buildingId);
+        }
+        if ($unitId !== null) {
+            $query->where('unit_id', $unitId);
         }
 
         return $query->get()->sum(fn (MaintenanceRequest $r) => $r->selected_quotation

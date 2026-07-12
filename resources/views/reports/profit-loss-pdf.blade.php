@@ -56,7 +56,10 @@ table.ledger tr.net-row td { border-top: 1.5px solid #111827; border-bottom: non
 
 <div class="report-title">PROFIT &amp; LOSS STATEMENT</div>
 <div class="report-scope">
-    @if($building) {{ $building->property_name }} @elseif($tenant) {{ $tenant->name }} @else All Buildings @endif
+    @if($unit) {{ $unit->unit_name }} &mdash; {{ $unit->building?->property_name ?? $unit->property_name }}
+    @elseif($building) {{ $building->property_name }}
+    @elseif($tenant) {{ $tenant->name }}
+    @else All Buildings @endif
 </div>
 <div class="report-sub">{{ $from->format('d-M-Y') }} to {{ $to->format('d-M-Y') }}</div>
 

@@ -274,4 +274,56 @@ class ProfitLossServiceTest extends TestCase
         $this->assertEquals(30.000, $result['total_expense']);
         $this->assertEquals(70.000, $result['net_profit']);
     }
+
+    public function test_unit_filter_isolates_revenue_to_that_flat(): void
+    {
+        $building = $this->makeBuilding();
+        $unitA    = PropertyUnit::create(['building_id' => $building->id, 'property_name' => 'Tower A', 'property_code' => 'TA1', 'unit_name' => 'Flat 1']);
+        $unitB    = PropertyUnit::create(['building_id' => $building->id, 'property_name' => 'Tower A', 'property_code' => 'TA1', 'unit_name' => 'Flat 2']);
+
+        $tenantA  = $this->makeTenant(['name' => 'Tenant A']);
+        $invoiceA = $this->makeInvoice($tenantA, ['unit' => 'Flat 1', 'lines' => [['property_name' => 'Tower A', 'unit' => 'Flat 1', 'amount' => 100.000]]]);
+        $this->payInvoice($invoiceA, 100.000);
+
+        $tenantB  = $this->makeTenant(['name' => 'Tenant B']);
+        $invoiceB = $this->makeInvoice($tenantB, ['unit' => 'Flat 2', 'lines' => [['property_name' => 'Tower A', 'unit' => 'Flat 2', 'amount' => 200.000]]]);
+        $this->payInvoice($invoiceB, 200.000);
+
+        [$from, $to] = $this->range();
+        $resultA = $this->service->build($from, $to, null, null, $unitA->id);
+        $resultB = $this->service->build($from, $to, null, null, $unitB->id);
+
+        $this->assertEquals(100.000, $resultA['total_revenue']);
+        $this->assertEquals(200.000, $resultB['total_revenue']);
+    }
+
+    public function test_unit_filter_isolates_maintenance_expense(): void
+    {
+        $building = $this->makeBuilding();
+        $unitA    = PropertyUnit::create(['building_id' => $building->id, 'property_name' => 'Tower A', 'property_code' => 'TA1', 'unit_name' => 'Flat 1']);
+        $unitB    = PropertyUnit::create(['building_id' => $building->id, 'property_name' => 'Tower A', 'property_code' => 'TA1', 'unit_name' => 'Flat 2']);
+
+        MaintenanceRequest::create([
+            'date'               => now()->subDays(2)->format('Y-m-d'),
+            'property'           => 'Tower A',
+            'tenant'             => 'Some Tenant',
+            'flat'               => 'Flat 1',
+            'building_id'        => $building->id,
+            'unit_id'            => $unitA->id,
+            'contact_no'         => '+973 1111 2222',
+            'available_datetime' => now(),
+            'apartment_status'   => 'occupied',
+            'status'             => 'approved',
+            'quotation_1'        => 45.000,
+            'selected_quotation' => 1,
+            'approved_dept_head' => 'Dept Head A',
+        ]);
+
+        [$from, $to] = $this->range();
+        $resultA = $this->service->build($from, $to, null, null, $unitA->id);
+        $resultB = $this->service->build($from, $to, null, null, $unitB->id);
+
+        $this->assertEquals(45.000, $resultA['expenses']['maintenance_expense']);
+        $this->assertEquals(0.0, $resultB['expenses']['maintenance_expense']);
+    }
 }

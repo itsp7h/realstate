@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Building;
+use App\Models\PropertyUnit;
 use App\Models\Tenant;
 use App\Services\ProfitLossService;
 use App\Services\RentScheduleService;
@@ -141,19 +142,26 @@ class ReportController extends Controller
         [$from, $to] = $this->resolveDateRange($request);
         $buildingId = $request->input('building_id') ? (int) $request->input('building_id') : null;
         $tenantId   = $request->input('tenant_id') ? (int) $request->input('tenant_id') : null;
+        $unitId     = $request->input('unit_id') ? (int) $request->input('unit_id') : null;
 
-        $statement = $this->profitLoss->build($from, $to, $buildingId, $tenantId);
+        $statement = $this->profitLoss->build($from, $to, $buildingId, $tenantId, $unitId);
 
         $breakdown = collect();
-        if (! $buildingId && ! $tenantId) {
+        if (! $buildingId && ! $tenantId && ! $unitId) {
             $breakdown = $this->profitLoss->byBuilding($from, $to);
         }
+
+        $units = PropertyUnit::orderBy('unit_name')
+            ->when($buildingId, fn ($q) => $q->where('building_id', $buildingId))
+            ->get(['id', 'unit_name']);
 
         return view('reports.profit-loss', [
             'buildings'  => Building::orderBy('property_name')->get(['id', 'property_name']),
             'tenants'    => Tenant::orderBy('name')->get(['id', 'name']),
+            'units'      => $units,
             'buildingId' => $buildingId,
             'tenantId'   => $tenantId,
+            'unitId'     => $unitId,
             'statement'  => $statement,
             'breakdown'  => $breakdown,
             'from'       => $from,
@@ -166,19 +174,22 @@ class ReportController extends Controller
         [$from, $to] = $this->resolveDateRange($request);
         $buildingId = $request->input('building_id') ? (int) $request->input('building_id') : null;
         $tenantId   = $request->input('tenant_id') ? (int) $request->input('tenant_id') : null;
+        $unitId     = $request->input('unit_id') ? (int) $request->input('unit_id') : null;
 
-        $statement = $this->profitLoss->build($from, $to, $buildingId, $tenantId);
+        $statement = $this->profitLoss->build($from, $to, $buildingId, $tenantId, $unitId);
         $building  = $buildingId ? Building::find($buildingId) : null;
         $tenant    = $tenantId ? Tenant::find($tenantId) : null;
+        $unit      = $unitId ? PropertyUnit::find($unitId) : null;
 
         $breakdown = collect();
-        if (! $buildingId && ! $tenantId) {
+        if (! $buildingId && ! $tenantId && ! $unitId) {
             $breakdown = $this->profitLoss->byBuilding($from, $to);
         }
 
         $pdf = Pdf::loadView('reports.profit-loss-pdf', [
             'building'  => $building,
             'tenant'    => $tenant,
+            'unit'      => $unit,
             'statement' => $statement,
             'breakdown' => $breakdown,
             'from'      => $from,

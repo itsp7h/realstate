@@ -72,11 +72,11 @@
 <div class="page-header">
     <div>
         <h1 class="page-header-title">Profit &amp; Loss Statement</h1>
-        <p class="page-header-sub">Cash collected against costs incurred, per building or per tenant</p>
+        <p class="page-header-sub">Cash collected against costs incurred, per building, tenant, or unit</p>
     </div>
     <div class="page-header-actions">
         <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
-        <a href="{{ route('reports.profit-loss.pdf', request()->only(['building_id','tenant_id','date_from','date_to'])) }}"
+        <a href="{{ route('reports.profit-loss.pdf', request()->only(['building_id','tenant_id','unit_id','date_from','date_to'])) }}"
            target="_blank" class="btn btn-primary"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
     </div>
 </div>
@@ -86,6 +86,12 @@
         <option value="">All buildings</option>
         @foreach($buildings as $b)
         <option value="{{ $b->id }}" {{ $buildingId === $b->id ? 'selected' : '' }}>{{ $b->property_name }}</option>
+        @endforeach
+    </select>
+    <select name="unit_id">
+        <option value="">All units</option>
+        @foreach($units as $u)
+        <option value="{{ $u->id }}" {{ $unitId === $u->id ? 'selected' : '' }}>{{ $u->unit_name }}</option>
         @endforeach
     </select>
     <select name="tenant_id">
