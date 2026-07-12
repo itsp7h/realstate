@@ -809,6 +809,23 @@
                         @error('ewa_cap') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
+                    <div class="mfield-group span-full">
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;">
+                            <input type="checkbox" id="mc_vatEnabledInput" name="vat_enabled" value="1"
+                                {{ old('vat_enabled') ? 'checked' : '' }} style="width:16px;height:16px;">
+                            Charge VAT on this contract
+                        </label>
+                        <input type="hidden" name="vat_enabled" value="0" id="mc_vatEnabledFallback"
+                            {{ old('vat_enabled') ? 'disabled' : '' }}>
+                        <div id="mc_vatRateWrap" style="max-width:200px;margin-top:10px; {{ old('vat_enabled') ? '' : 'display:none;' }}">
+                            <input type="number" name="vat_rate" id="mc_vatRateInput"
+                                class="mfield-input {{ $errors->has('vat_rate') ? 'is-invalid' : '' }}"
+                                value="{{ old('vat_rate', 0) }}" placeholder="0.00" min="0" max="100" step="0.01">
+                            <span style="font-size:11px;color:var(--text-muted);">% VAT rate for this tenant's invoices</span>
+                        </div>
+                        @error('vat_rate') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
+                    </div>
+
                 </div>
             </div>
 
@@ -846,11 +863,11 @@ function debounceSubmit() {
 }
 
 // ── MODAL OPEN/CLOSE ─────────────────────────────────────────
-function openContractModal() {
+function openContractModal(focusSelector) {
     document.getElementById('contractModal').classList.add('open');
     document.body.style.overflow = 'hidden';
     setTimeout(() => {
-        const first = document.querySelector('#mc-info input[name="lease_agreement_no"]');
+        const first = document.querySelector(focusSelector || '#mc-info input[name="lease_agreement_no"]');
         if (first) first.focus();
     }, 320);
 }
@@ -890,6 +907,15 @@ function switchMTab(tabId) {
 
 function nextMTab() { if (currentTab < TABS.length - 1) switchMTab(TABS[currentTab + 1]); }
 function prevMTab() { if (currentTab > 0) switchMTab(TABS[currentTab - 1]); }
+
+// ── VAT TOGGLE ─────────────────────────────────────────────────
+const mcVatEnabledInput    = document.getElementById('mc_vatEnabledInput');
+const mcVatEnabledFallback = document.getElementById('mc_vatEnabledFallback');
+const mcVatRateWrap        = document.getElementById('mc_vatRateWrap');
+mcVatEnabledInput.addEventListener('change', function() {
+    mcVatRateWrap.style.display = this.checked ? '' : 'none';
+    mcVatEnabledFallback.disabled = this.checked;
+});
 
 // ── LOCATION SEARCH DROPDOWNS (property / block / floor / unit) ─
 @php
@@ -1077,13 +1103,15 @@ function handleContractSubmit(btn) {
         'mc-lease'    => ['lease_start_date','lease_end_date','lease_break_date','notice_period'],
         'mc-rent'     => ['invoicing_frequency','currency','rent_start_date','rent_end_date','rent_per_month'],
         'mc-service'  => ['service_frequency','service_amount_bd_excl_vat','service_start_date','service_end_date'],
-        'mc-financial'=> ['rental_income_ledger','security_deposit'],
+        'mc-financial'=> ['rental_income_ledger','security_deposit','ewa_cap','vat_enabled','vat_rate'],
     ];
-    $firstErrorTab = null;
+    $firstErrorTab   = null;
+    $firstErrorField = null;
     foreach($tabErrorMap as $tab => $fields) {
         foreach($fields as $f) {
             if($errors->has($f)) {
                 if(!$firstErrorTab) $firstErrorTab = $tab;
+                if(!$firstErrorField) $firstErrorField = $f;
                 break;
             }
         }
@@ -1097,7 +1125,15 @@ function handleContractSubmit(btn) {
 @endforeach
 
 @if($errors->any())
-    openContractModal();
+    @php
+        // tenant_id / unit_id are hidden inputs driving a search combo — focus
+        // the visible search box instead, since focusing a hidden field is a no-op.
+        $focusSelectorMap = ['tenant_id' => '#mc_tenant_search', 'unit_id' => '#mc_unit_search'];
+        $focusSelector = $firstErrorField
+            ? ($focusSelectorMap[$firstErrorField] ?? '[name="' . $firstErrorField . '"]')
+            : null;
+    @endphp
+    openContractModal({{ $focusSelector ? "'".$focusSelector."'" : 'null' }});
     @if($firstErrorTab)
         switchMTab('{{ $firstErrorTab }}');
     @endif

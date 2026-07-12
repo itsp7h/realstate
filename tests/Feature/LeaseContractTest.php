@@ -36,6 +36,26 @@ class LeaseContractTest extends TestCase
             ->assertViewIs('lease-contracts.index');
     }
 
+    public function test_new_contract_modal_always_submits_vat_enabled(): void
+    {
+        // Regression: vat_enabled is required by StoreLeaseContractRequest, but
+        // the modal's checkbox alone submits nothing at all when unchecked —
+        // every submission silently failed validation until a hidden fallback
+        // input (name="vat_enabled" value="0", disabled when checked) was added.
+        $response = $this->get(route('lease-contracts.index'));
+        $response->assertStatus(200);
+        $response->assertSee('name="vat_enabled" value="0"', false);
+    }
+
+    public function test_store_fails_without_vat_enabled(): void
+    {
+        $data = $this->minimalData();
+        unset($data['vat_enabled']);
+
+        $this->post(route('lease-contracts.store'), $data)
+            ->assertSessionHasErrors(['vat_enabled']);
+    }
+
     public function test_index_shows_contracts(): void
     {
         LeaseContract::create($this->minimalData());
