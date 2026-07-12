@@ -1,0 +1,44 @@
+name: Deploy
+
+# Fires only after the CI workflow finishes running on main, and only
+# proceeds if that run passed — so a broken build on main can never deploy.
+on:
+  workflow_run:
+    workflows: ['CI']
+    branches: [main]
+    types: [completed]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+
+            git pull origin main
+
+            composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+
+            # Only needed if the server also builds frontend assets on deploy.
+            # Comment out if the server doesn't have Node installed.
+            npm ci
+            npm run build
+
+            # TODO: replace with your server's actual PHP-FPM service name
+            # (e.g. php8.2-fpm, php-fpm) once the box is provisioned.
+            # sudo systemctl reload php8.2-fpm
