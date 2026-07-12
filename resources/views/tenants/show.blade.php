@@ -537,8 +537,8 @@
                 <td>
                     <span class="rs-status {{ $row['status'] }}">
                         {{ match($row['status']) {
-                            'paid'         => 'Paid',
-                            'partial'      => 'Partially Paid',
+                            'paid'         => 'Received',
+                            'partial'      => 'Partially Received',
                             'unpaid'       => 'Unpaid',
                             'not_invoiced' => 'Not Invoiced',
                         } }}
