@@ -14,6 +14,12 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\LeaseContractController;
 use App\Http\Controllers\BuildingImageController;
+use App\Http\Controllers\EwaBillController;
+use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\InvoiceNoteController;
+use App\Http\Controllers\TenantNoteController;
+use App\Http\Controllers\ReportController;
 
 // Unified data import/export
 Route::get('/data',                      [DataController::class, 'index'])->name('data.index');
@@ -44,19 +50,57 @@ Route::get('/property-units/building/{building}/data', [PropertyUnitController::
 Route::get('/property-units/building/{building}/floors', [PropertyUnitController::class, 'floorsByBuilding'])->name('property-units.building-floors');
 Route::resource('property-units', PropertyUnitController::class);
 
+Route::get('/tenants/search', [TenantController::class, 'search'])->name('tenants.search');
 Route::resource('tenants', TenantController::class);
+Route::post('/tenants/{tenant}/notes',                 [TenantNoteController::class, 'store'])->name('tenants.notes.store');
+Route::delete('/tenants/{tenant}/notes/{invoiceNote}', [TenantNoteController::class, 'destroy'])->name('tenants.notes.destroy');
 
 Route::resource('maintenance', MaintenanceRequestController::class)
     ->parameters(['maintenance' => 'maintenanceRequest']);
 Route::post('/maintenance/{maintenanceRequest}/assess',  [MaintenanceRequestController::class, 'assess'])->name('maintenance.assess');
 Route::post('/maintenance/{maintenanceRequest}/approve', [MaintenanceRequestController::class, 'approve'])->name('maintenance.approve');
 
+Route::get('/lease-contracts/search', [LeaseContractController::class, 'search'])->name('lease-contracts.search');
+Route::get('/lease-contracts/tenant/{tenant}/active', [LeaseContractController::class, 'activeForTenant'])->name('lease-contracts.active-for-tenant');
+Route::get('/lease-contracts/tenant/{tenant}/search', [LeaseContractController::class, 'searchForTenant'])->name('lease-contracts.search-for-tenant');
 Route::resource('lease-contracts', LeaseContractController::class);
+
+// Accounting
+Route::post('/invoices/generate-monthly', [InvoiceController::class, 'generateMonthly'])->name('invoices.generate-monthly');
+Route::resource('invoices', InvoiceController::class);
+Route::get('/invoices/{invoice}/pdf',         [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+Route::get('/invoices/{invoice}/pdf/preview', [InvoiceController::class, 'pdfPreview'])->name('invoices.pdf.preview');
+Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+Route::post('/ewa-bills/parse-import',             [EwaBillController::class, 'parseImport'])->name('ewa-bills.parse-import');
+Route::resource('ewa-bills', EwaBillController::class);
+Route::post('/ewa-bills/{ewaBill}/payments',           [EwaBillController::class, 'storePayment'])->name('ewa-bills.payments.store');
+Route::delete('/ewa-bills/{ewaBill}/payments/{ewaPayment}', [EwaBillController::class, 'destroyPayment'])->name('ewa-bills.payments.destroy');
+Route::get('/ewa-bills/{ewaBill}/pdf',                 [EwaBillController::class, 'pdf'])->name('ewa-bills.pdf');
+Route::get('/ewa-bills/{ewaBill}/pdf/preview',         [EwaBillController::class, 'pdfPreview'])->name('ewa-bills.pdf.preview');
+Route::post('/invoices/{invoice}/payments',                   [PaymentController::class, 'store'])->name('invoices.payments.store');
+Route::delete('/invoices/{invoice}/payments/{payment}',       [PaymentController::class, 'destroy'])->name('invoices.payments.destroy');
+Route::post('/invoices/{invoice}/notes',                      [InvoiceNoteController::class, 'store'])->name('invoices.notes.store');
+Route::delete('/invoices/{invoice}/notes/{invoiceNote}',      [InvoiceNoteController::class, 'destroy'])->name('invoices.notes.destroy');
+
+// Reports
+Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+Route::get('/reports/tenant-statement',       [ReportController::class, 'tenantStatement'])->name('reports.tenant-statement');
+Route::get('/reports/tenant-statement/pdf',   [ReportController::class, 'tenantStatementPdf'])->name('reports.tenant-statement.pdf');
+Route::get('/reports/tenant-ageing',          [ReportController::class, 'tenantAgeing'])->name('reports.tenant-ageing');
+Route::get('/reports/tenant-ageing/pdf',      [ReportController::class, 'tenantAgeingPdf'])->name('reports.tenant-ageing.pdf');
+Route::get('/reports/group-ageing',           [ReportController::class, 'groupAgeing'])->name('reports.group-ageing');
+Route::get('/reports/group-ageing/pdf',       [ReportController::class, 'groupAgeingPdf'])->name('reports.group-ageing.pdf');
+Route::get('/reports/profit-loss',            [ReportController::class, 'profitLoss'])->name('reports.profit-loss');
+Route::get('/reports/profit-loss/pdf',        [ReportController::class, 'profitLossPdf'])->name('reports.profit-loss.pdf');
+Route::get('/reports/rent-schedule',          [ReportController::class, 'rentSchedule'])->name('reports.rent-schedule');
+Route::get('/reports/rent-schedule/pdf',      [ReportController::class, 'rentSchedulePdf'])->name('reports.rent-schedule.pdf');
+Route::get('/invoices/{invoice}/payments/{payment}/receipt',  [PaymentController::class, 'receipt'])->name('invoices.payments.receipt');
 
 Route::resource('buildings', BuildingController::class);
 Route::post('/buildings/{building}/images',                        [BuildingImageController::class, 'store'])->name('buildings.images.store');
 Route::delete('/buildings/{building}/images/{image}',              [BuildingImageController::class, 'destroy'])->name('buildings.images.destroy');
 Route::post('/buildings/{building}/images/reorder',                [BuildingImageController::class, 'reorder'])->name('buildings.images.reorder');
+Route::put('/buildings/{building}/settings', [BuildingController::class, 'updateSettings'])->name('buildings.settings.update');
 Route::get('/floors', [FloorController::class, 'globalIndex'])->name('floors.global');
 Route::resource('buildings.floors', FloorController::class)->shallow()->except(['show']);
 

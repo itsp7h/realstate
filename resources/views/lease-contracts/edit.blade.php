@@ -79,9 +79,9 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Tenant</label>
+                    <label>Tenant <span class="required">*</span></label>
                     <select name="tenant_id" id="tenant_id_select"
-                        class="{{ $errors->has('tenant_id') ? 'error' : '' }}">
+                        class="{{ $errors->has('tenant_id') ? 'error' : '' }}" required>
                         <option value="">— Select Tenant —</option>
                         @foreach($tenants as $t)
                             <option value="{{ $t->id }}" {{ old('tenant_id', $leaseContract->tenant_id) == $t->id ? 'selected' : '' }}>
@@ -90,15 +90,6 @@
                         @endforeach
                     </select>
                     @error('tenant_id') <span class="field-error">{{ $message }}</span> @enderror
-                </div>
-
-                <div class="form-group" id="tenant_name_group">
-                    <label>Tenant Name (if not in system) <span class="required">*</span></label>
-                    <input type="text" name="tenant_name" id="tenant_name_input"
-                        class="{{ $errors->has('tenant_name') ? 'error' : '' }}"
-                        value="{{ old('tenant_name', $leaseContract->tenant_name) }}"
-                        maxlength="255">
-                    @error('tenant_name') <span class="field-error">{{ $message }}</span> @enderror
                 </div>
 
                 <div class="form-group col-span-2">
@@ -383,7 +374,7 @@
             <div class="card-header-icon" style="background:var(--accent-dim);color:#92400E;"><i class="fa-solid fa-landmark"></i></div>
             <div>
                 <h3>Financial <span class="section-badge badge-financial">Optional</span></h3>
-                <p>Ledger reference and security deposit</p>
+                <p>Ledger reference, security deposit, and EWA cap</p>
             </div>
         </div>
         <div class="card-body">
@@ -407,6 +398,37 @@
                     @error('security_deposit') <span class="field-error">{{ $message }}</span> @enderror
                 </div>
 
+                <div class="form-group col-span-full">
+                    <label>EWA Cap <span style="font-size:11px;color:var(--text-muted);font-weight:400;text-transform:none">(BHD/bill — landlord covers up to this amount per EWA bill)</span></label>
+                    <div style="position:relative;max-width:320px;">
+                        <input type="number" name="ewa_cap"
+                            class="{{ $errors->has('ewa_cap') ? 'error' : '' }}"
+                            value="{{ old('ewa_cap', $leaseContract->ewa_cap) }}"
+                            placeholder="0.000 — leave blank if tenant pays full bill" min="0" step="0.001"
+                            style="padding-right:52px;">
+                        <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--text-muted);pointer-events:none;">BHD</span>
+                    </div>
+                    @error('ewa_cap') <span class="field-error">{{ $message }}</span> @enderror
+                </div>
+
+                <div class="form-group col-span-full">
+                    <label style="display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" id="vatEnabledInput" name="vat_enabled" value="1"
+                            {{ old('vat_enabled', $leaseContract->vat_enabled) ? 'checked' : '' }} style="width:16px;height:16px;">
+                        Charge VAT on this contract
+                    </label>
+                    <input type="hidden" name="vat_enabled" value="0" id="vatEnabledFallback"
+                        {{ old('vat_enabled', $leaseContract->vat_enabled) ? 'disabled' : '' }}>
+                    <div id="vatRateWrap" style="max-width:200px;margin-top:10px; {{ old('vat_enabled', $leaseContract->vat_enabled) ? '' : 'display:none;' }}">
+                        <input type="number" name="vat_rate" id="vatRateInput"
+                            class="{{ $errors->has('vat_rate') ? 'error' : '' }}"
+                            value="{{ old('vat_rate', $leaseContract->vat_rate ?: 0) }}"
+                            placeholder="0.00" min="0" max="100" step="0.01">
+                        <span style="font-size:11px;color:var(--text-muted);">% VAT rate for this tenant's invoices</span>
+                    </div>
+                    @error('vat_rate') <span class="field-error">{{ $message }}</span> @enderror
+                </div>
+
             </div>
         </div>
     </div>
@@ -426,20 +448,21 @@
 
 @push('scripts')
 <script>
-const tenantSelect = document.getElementById('tenant_id_select');
-const tenantNameInput = document.getElementById('tenant_name_input');
-tenantSelect.addEventListener('change', function() {
-    if (this.value) {
-        tenantNameInput.value = this.options[this.selectedIndex].text;
-    }
-});
-
 const unitSelect = document.getElementById('unit_id_select');
 const unitFallback = document.getElementById('unit_fallback_group').querySelector('input');
 unitSelect.addEventListener('change', function() {
     if (this.value) {
         unitFallback.value = this.options[this.selectedIndex].text;
     }
+});
+
+// VAT toggle
+const vatEnabledInput = document.getElementById('vatEnabledInput');
+const vatEnabledFallback = document.getElementById('vatEnabledFallback');
+const vatRateWrap = document.getElementById('vatRateWrap');
+vatEnabledInput.addEventListener('change', function() {
+    vatRateWrap.style.display = this.checked ? '' : 'none';
+    vatEnabledFallback.disabled = this.checked;
 });
 </script>
 @endpush

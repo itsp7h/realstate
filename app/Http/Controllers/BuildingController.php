@@ -7,6 +7,7 @@ use App\Models\CustomFieldDefinition;
 use App\Models\LeaseContract;
 use App\Http\Requests\StoreBuildingRequest;
 use App\Http\Requests\UpdateBuildingRequest;
+use App\Http\Requests\UpdateBuildingSettingsRequest;
 use App\Services\FormConfigService;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,7 @@ class BuildingController extends Controller
     {
         $filters = $request->only(['search', 'property_type', 'type_of_ownership']);
 
-        $buildings = Building::withCount(['floors', 'units'])
+        $buildings = Building::withCount(['floors', 'units', 'occupiedUnits'])
             ->with('images')
             ->filter($filters)
             ->orderBy('property_code')
@@ -58,7 +59,7 @@ class BuildingController extends Controller
         $building->load('images');
         $floors = $building->floors()->orderBy('floor_name')->get();
 
-        $units = $building->units()->with('floor')->orderBy('unit_name')->get();
+        $units = $building->units()->with(['floor', 'activeContract'])->orderBy('unit_name')->get();
 
         $contracts = LeaseContract::where('property_code', $building->property_code)
             ->with('tenant')
@@ -92,5 +93,16 @@ class BuildingController extends Controller
         $building->delete();
         return redirect()->route('buildings.index')
             ->with('success', 'Building deleted.');
+    }
+
+    public function updateSettings(UpdateBuildingSettingsRequest $request, Building $building)
+    {
+        $data = $request->validated();
+        $data['vat_rate'] = $data['vat_enabled'] ? ($data['vat_rate'] ?? 0) : 0;
+
+        $building->update($data);
+
+        return redirect()->route('buildings.show', ['building' => $building, 'tab' => 'settings'])
+            ->with('success', 'Building settings updated.');
     }
 }

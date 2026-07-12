@@ -42,6 +42,36 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
+    /* Settings tab */
+    .settings-row {
+        display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;
+        padding: 18px 0; border-bottom: 1px solid var(--card-border);
+    }
+    .settings-row:last-of-type { border-bottom: none; }
+    .settings-row-label { font-size: 13.5px; font-weight: 700; color: var(--text-primary); }
+    .settings-row-desc { font-size: 12px; color: var(--text-muted); margin-top: 3px; max-width: 460px; line-height: 1.5; }
+    .switch { position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch-track {
+        position: absolute; cursor: pointer; inset: 0; background: var(--card-border);
+        border-radius: 24px; transition: background-color 0.18s;
+    }
+    .switch-track::before {
+        content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px;
+        background: #fff; border-radius: 50%; transition: transform 0.18s; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+    .switch input:checked + .switch-track { background: var(--accent); }
+    .switch input:checked + .switch-track::before { transform: translateX(18px); }
+    .switch input:focus-visible + .switch-track { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .vat-rate-field { display: flex; align-items: center; gap: 10px; margin-top: 14px; transition: opacity 0.18s; }
+    .vat-rate-field.disabled { opacity: 0.45; }
+    .vat-rate-field input {
+        width: 110px; padding: 8px 12px; font-size: 13px; font-family: 'Outfit', sans-serif; font-weight: 700;
+        border: 1.5px solid var(--input-border); border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text-primary);
+    }
+    .vat-rate-field input:focus { border-color: var(--accent); outline: none; }
+    .vat-rate-field input:disabled { cursor: not-allowed; }
+
     /* Detail grid */
     .detail-label {
         font-size: 11px;
@@ -318,6 +348,10 @@
         Photos
         <span class="tab-badge">{{ $building->images->count() }}</span>
     </button>
+    <button class="tab-btn" id="tab-settings" onclick="switchTab('settings')">
+        <i class="fa-solid fa-gear"></i>
+        Settings
+    </button>
 </div>
 
 {{-- ===================== DETAILS TAB ===================== --}}
@@ -504,6 +538,7 @@
                         <th>Floor</th>
                         <th>Type</th>
                         <th>Condition</th>
+                        <th>Occupancy</th>
                         <th>Description</th>
                         <th>Rent / Month</th>
                     </tr>
@@ -524,6 +559,18 @@
                             @if($unit->unit_condition)
                                 <span class="badge badge-gray">{{ $unit->unit_condition }}</span>
                             @else <span style="color:var(--text-muted);">—</span> @endif
+                        </td>
+                        <td>
+                            @if($unit->activeContract)
+                                <span class="badge badge-green" style="white-space:nowrap;">
+                                    <i class="fa-solid fa-circle" style="font-size:7px;vertical-align:middle;margin-right:4px;"></i>Occupied
+                                </span>
+                                <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">{{ $unit->activeContract->tenant_name }}</div>
+                            @else
+                                <span class="badge badge-gray">
+                                    <i class="fa-regular fa-circle" style="font-size:7px;vertical-align:middle;margin-right:4px;"></i>Vacant
+                                </span>
+                            @endif
                         </td>
                         <td style="font-size:12px;color:var(--text-muted);">{{ $unit->description ?? '—' }}</td>
                         <td>
@@ -849,6 +896,53 @@
     </div>
 </div>
 
+{{-- ===================== SETTINGS TAB ===================== --}}
+<div class="tab-panel" id="panel-settings">
+    <div class="card">
+        <div class="card-body" style="padding: 24px;">
+
+            <div class="section-heading"><i class="fa-solid fa-receipt" style="margin-right:6px;color:var(--accent);"></i>Tax (VAT)</div>
+
+            <form method="POST" action="{{ route('buildings.settings.update', $building) }}" id="vatSettingsForm">
+                @csrf
+                @method('PUT')
+
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-row-label">Charge VAT on this building</div>
+                        <div class="settings-row-desc">
+                            When on, invoices for units in {{ $building->property_name }} default to the VAT rate below.
+                            When off, invoices for this building are VAT-exempt (0%).
+                        </div>
+
+                        <div class="vat-rate-field {{ $building->vat_enabled ? '' : 'disabled' }}" id="vatRateField">
+                            <input type="number" name="vat_rate" id="vatRateInput" step="0.01" min="0" max="100"
+                                   value="{{ old('vat_rate', $building->vat_rate ?: 0) }}"
+                                   {{ $building->vat_enabled ? '' : 'disabled' }}>
+                            <span style="font-size:13px;color:var(--text-muted);font-weight:600">%</span>
+                        </div>
+                        @error('vat_rate')<div style="font-size:11px;color:#DC2626;margin-top:6px">{{ $message }}</div>@enderror
+                    </div>
+
+                    <label class="switch">
+                        <input type="hidden" name="vat_enabled" value="0" id="vatEnabledFallback" {{ $building->vat_enabled ? 'disabled' : '' }}>
+                        <input type="checkbox" id="vatEnabledInput" name="vat_enabled" value="1"
+                               {{ $building->vat_enabled ? 'checked' : '' }}>
+                        <span class="switch-track"></span>
+                    </label>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;margin-top:18px">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Settings
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
 {{-- Lightbox --}}
 <div id="photoLightbox" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.88);backdrop-filter:blur(6px);align-items:center;justify-content:center;cursor:zoom-out;" onclick="closeLightbox()">
     <img id="lightboxImg" src="" alt="" style="max-width:92vw;max-height:88vh;border-radius:8px;box-shadow:0 24px 64px rgba(0,0,0,0.5);object-fit:contain;">
@@ -866,12 +960,23 @@
         history.replaceState(null, '', '?tab=' + tab);
     }
 
+    // ── VAT settings toggle ─────────────────────────────────────
+    const vatEnabledInput  = document.getElementById('vatEnabledInput');
+    const vatEnabledFallback = document.getElementById('vatEnabledFallback');
+    const vatRateField     = document.getElementById('vatRateField');
+    const vatRateInput     = document.getElementById('vatRateInput');
+    vatEnabledInput?.addEventListener('change', function () {
+        vatRateField.classList.toggle('disabled', !this.checked);
+        vatRateInput.disabled = !this.checked;
+        vatEnabledFallback.disabled = this.checked;
+    });
+
     // Re-open modal on validation error
     const hasModalError = {{ ($errors->any() && old('_modal') === 'add_floor') ? 'true' : 'false' }};
 
     // Activate tab from URL, default to details
     const urlTab = new URLSearchParams(window.location.search).get('tab');
-    const validTabs = ['details', 'floors', 'units', 'tenants', 'agreements', 'photos'];
+    const validTabs = ['details', 'floors', 'units', 'tenants', 'agreements', 'photos', 'settings'];
     switchTab(validTabs.includes(urlTab) ? urlTab : 'details');
 
     if (hasModalError) {

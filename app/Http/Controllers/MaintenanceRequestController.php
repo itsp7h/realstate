@@ -6,7 +6,10 @@ use App\Http\Requests\AssessMaintenanceRequest;
 use App\Http\Requests\ApproveMaintenanceRequest;
 use App\Http\Requests\StoreMaintenanceRequest;
 use App\Http\Requests\UpdateMaintenanceRequest;
+use App\Models\Building;
 use App\Models\MaintenanceRequest;
+use App\Models\PropertyUnit;
+use App\Models\Tenant;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -50,7 +53,16 @@ class MaintenanceRequestController extends Controller
             'completed'          => MaintenanceRequest::where('status', 'completed')->count(),
         ];
 
-        return view('maintenance.index', compact('requests', 'stats'));
+        $properties = Building::orderBy('property_name')
+            ->get(['property_name', 'property_code']);
+
+        $units = PropertyUnit::orderBy('unit_name')
+            ->get(['unit_name', 'property_code', 'property_name']);
+
+        $tenants = Tenant::orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('maintenance.index', compact('requests', 'stats', 'properties', 'units', 'tenants'));
     }
 
     public function create(): View
@@ -68,6 +80,7 @@ class MaintenanceRequestController extends Controller
 
         $data['status']       = 'waiting_supervisor';
         $data['request_date'] = $data['request_date'] ?? now()->toDateString();
+        $data                 = array_merge($data, $this->resolveBuildingAndUnit($data['property'] ?? null, $data['flat'] ?? null));
 
         foreach (['quotation_1_file', 'quotation_2_file', 'quotation_3_file'] as $field) {
             if ($request->hasFile($field)) {
@@ -94,6 +107,7 @@ class MaintenanceRequestController extends Controller
     public function update(UpdateMaintenanceRequest $request, MaintenanceRequest $maintenanceRequest): RedirectResponse
     {
         $data = $request->validated();
+        $data = array_merge($data, $this->resolveBuildingAndUnit($data['property'] ?? null, $data['flat'] ?? null));
 
         foreach (['quotation_1_file', 'quotation_2_file', 'quotation_3_file'] as $field) {
             if ($request->hasFile($field)) {
@@ -119,20 +133,7 @@ class MaintenanceRequestController extends Controller
 
     public function assess(AssessMaintenanceRequest $request, MaintenanceRequest $maintenanceRequest): RedirectResponse
     {
-        $data = $request->validated();
-
-        foreach (['quotation_1_file', 'quotation_2_file', 'quotation_3_file'] as $field) {
-            if ($request->hasFile($field)) {
-                if ($maintenanceRequest->$field) {
-                    Storage::disk('public')->delete($maintenanceRequest->$field);
-                }
-                $data[$field] = $request->file($field)->store('maintenance/quotations', 'public');
-            } else {
-                unset($data[$field]);
-            }
-        }
-
-        $data['status'] = 'waiting_approval';
+        $data = array_merge($request->validated(), ['status' => 'waiting_approval']);
         $maintenanceRequest->update($data);
 
         return redirect()->route('maintenance.index')
@@ -159,5 +160,24 @@ class MaintenanceRequestController extends Controller
 
         return redirect()->route('maintenance.index')
             ->with('success', 'Maintenance request deleted.');
+    }
+
+    /**
+     * Resolve building_id/unit_id from the free-text property/flat fields by
+     * case-insensitive name match, same approach as ImportController's lease
+     * import. Returns nulls when no matching Building/PropertyUnit is found.
+     */
+    private function resolveBuildingAndUnit(?string $property, ?string $flat): array
+    {
+        $buildingId = Building::whereRaw('LOWER(TRIM(property_name)) = ?', [strtolower(trim($property ?? ''))])
+            ->value('id');
+
+        $unitId = $buildingId
+            ? PropertyUnit::where('building_id', $buildingId)
+                ->whereRaw('LOWER(TRIM(unit_name)) = ?', [strtolower(trim($flat ?? ''))])
+                ->value('id')
+            : null;
+
+        return ['building_id' => $buildingId, 'unit_id' => $unitId];
     }
 }

@@ -16,14 +16,41 @@ class PropertyUnitController extends Controller
     {
         $filters = $request->only(['search', 'property_code', 'unit_type', 'unit_condition']);
 
-        $units = PropertyUnit::filter($filters)
-            ->orderBy('property_code')
+        $today = \Carbon\Carbon::today()->toDateString();
+
+        $query = PropertyUnit::with(['floor', 'activeContract'])
+            ->filter($filters);
+
+        if ($occupancy = $request->input('occupancy')) {
+            if ($occupancy === 'occupied') {
+                $query->whereExists(function ($q) use ($today) {
+                    $q->selectRaw(1)->from('lease_contracts')
+                      ->whereColumn('lease_contracts.unit_id', 'property_units.id')
+                      ->whereDate('lease_start_date', '<=', $today)
+                      ->whereDate('lease_end_date', '>=', $today);
+                });
+            } elseif ($occupancy === 'vacant') {
+                $query->whereNotExists(function ($q) use ($today) {
+                    $q->selectRaw(1)->from('lease_contracts')
+                      ->whereColumn('lease_contracts.unit_id', 'property_units.id')
+                      ->whereDate('lease_start_date', '<=', $today)
+                      ->whereDate('lease_end_date', '>=', $today);
+                });
+            }
+        }
+
+        $units = $query->orderBy('property_code')
             ->orderBy('unit_name')
             ->paginate(20)
             ->withQueryString();
-
         $stats = [
             'total'      => PropertyUnit::count(),
+            'occupied'   => PropertyUnit::whereExists(function ($q) use ($today) {
+                $q->selectRaw(1)->from('lease_contracts')
+                  ->whereColumn('lease_contracts.unit_id', 'property_units.id')
+                  ->whereDate('lease_start_date', '<=', $today)
+                  ->whereDate('lease_end_date', '>=', $today);
+            })->count(),
             'furnished'  => PropertyUnit::where('unit_condition', 'Furnished')->count(),
             'fitted'     => PropertyUnit::where('unit_condition', 'Fitted')->count(),
             'properties' => PropertyUnit::distinct('property_code')->count('property_code'),

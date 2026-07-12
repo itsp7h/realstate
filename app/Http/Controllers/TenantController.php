@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreTenantRequest;
 use App\Http\Requests\UpdateTenantRequest;
 use App\Models\Tenant;
+use App\Services\RentScheduleService;
 use Illuminate\Http\Request;
 
 class TenantController extends Controller
 {
+    public function __construct(private RentScheduleService $rentSchedule) {}
+
     public function index(Request $request)
     {
         $query = Tenant::query();
@@ -55,9 +58,23 @@ class TenantController extends Controller
             ->with('success', 'Tenant created successfully.');
     }
 
-    public function show(Tenant $tenant)
+    public function show(Request $request, Tenant $tenant)
     {
-        return view('tenants.show', compact('tenant'));
+        $tenant->load([
+            'leaseContracts' => fn ($q) => $q->orderByDesc('lease_start_date'),
+            'invoices'       => fn ($q) => $q->orderByDesc('invoice_date'),
+            'ewaBills'       => fn ($q) => $q->orderByDesc('reading_date'),
+            'payments.invoice',
+            'invoiceNotes.invoice',
+        ]);
+
+        $rentSchedule = $this->rentSchedule->build($tenant);
+
+        if ($request->boolean('modal')) {
+            return view('tenants._profile', compact('tenant', 'rentSchedule'));
+        }
+
+        return view('tenants.show', compact('tenant', 'rentSchedule'));
     }
 
     public function edit(Tenant $tenant)
@@ -79,5 +96,30 @@ class TenantController extends Controller
 
         return redirect()->route('tenants.index')
             ->with('success', 'Tenant deleted successfully.');
+    }
+
+    public function search(Request $request)
+    {
+        $q = trim($request->input('q', ''));
+
+        $tenants = Tenant::query()
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('name', 'like', "%{$q}%")
+                        ->orWhere('tenant_code', 'like', "%{$q}%")
+                        ->orWhere('id_cr_number', 'like', "%{$q}%");
+                });
+            })
+            ->orderBy('name')
+            ->limit(15)
+            ->get(['id', 'name', 'tenant_code', 'tenant_type', 'address']);
+
+        return response()->json($tenants->map(fn ($t) => [
+            'id'          => $t->id,
+            'name'        => $t->name,
+            'tenant_code' => $t->tenant_code ?? '',
+            'tenant_type' => $t->tenant_type,
+            'address'     => $t->address ?? '',
+        ]));
     }
 }

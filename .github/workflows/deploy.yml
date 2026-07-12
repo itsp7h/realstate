@@ -1,0 +1,55 @@
+name: Deploy
+
+# Fires only after the CI workflow finishes running on main, and only
+# proceeds if that run passed — so a broken build on main can never deploy.
+#
+# Runs on a self-hosted runner living on the same private network as the
+# app's Proxmox LXC container (192.168.1.220), since GitHub's own cloud
+# runners have no route to that LAN. The runner's checkout directory
+# (_work/realstate/realstate under wherever the runner was installed) is
+# what the web server should serve from — point its document root there.
+on:
+  workflow_run:
+    workflows: ['CI']
+    branches: [main]
+    types: [completed]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          # IMPORTANT: clean defaults to true on actions/checkout, which runs
+          # `git clean -ffdx` and would wipe .env, storage/app uploads, and
+          # anything else not committed to git on every single deploy.
+          # Must stay false so those survive across deploys.
+          clean: false
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+
+      - name: Migrate & cache
+        run: |
+          php artisan migrate --force
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+
+      - name: Build frontend assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Fix storage/cache permissions for php-fpm
+        # Checkout resets file modes, and php-fpm runs as www-data (a
+        # secondary group of the runner user) — group-write keeps both able
+        # to read/write these dirs after every deploy.
+        run: chmod -R ug+rwX storage bootstrap/cache
+
+      - name: Reload PHP-FPM
+        run: sudo systemctl reload php8.3-fpm

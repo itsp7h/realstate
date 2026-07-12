@@ -82,6 +82,12 @@ php artisan make:migration # Create migration
 - The dedicated action buttons (edit, delete) in the Actions column must still work independently — use `e.stopPropagation()` on those cells/buttons so they do not trigger the row click
 - This applies to all CRUD modules: buildings, floors, units, tenants, lease contracts, maintenance requests, and any future modules
 
+## Server Console / Remote Terminal Rules
+- The Proxmox LXC container's console (used for deploy/server setup) hard-wraps long pasted lines into real newlines — this breaks heredocs (`<<'EOF'`, since the closing `EOF` gets indented/mangled) and any long single-line command (gets split mid-command)
+- When writing multi-line file content to the server through this console, **always** use a sequence of short, single-line commands instead: `sudo touch <file>` followed by one `echo '<line>' | sudo tee -a <file>` per line
+- Never use heredocs or long one-liner commands (e.g. long `printf '...\n...\n...'`) for this console — they have repeatedly failed and corrupted files/left the shell stuck
+- Keep each individual command well under the console's wrap width so nothing gets split mid-command
+
 ## Notes
 - App key is already generated
 - Default database is SQLite at `database/database.sqlite`

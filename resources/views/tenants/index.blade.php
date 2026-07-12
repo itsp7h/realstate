@@ -201,6 +201,28 @@
         .mfield-grid .span-full { grid-column: span 1; }
         .type-toggle { grid-template-columns: 1fr; }
     }
+
+    /* ── TENANT PROFILE MODAL ───────────────────────────── */
+    .profile-modal-overlay {
+        display: none; position: fixed; inset: 0; z-index: 1050;
+        background: rgba(11,17,32,0.75); backdrop-filter: blur(4px);
+        align-items: center; justify-content: center; padding: 24px;
+    }
+    .profile-modal-overlay.open { display: flex; }
+    .profile-modal-box {
+        width: 100%; max-width: 1100px; max-height: 90vh;
+        background: var(--card-bg); border-radius: var(--radius);
+        display: flex; flex-direction: column; overflow: hidden;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    }
+    .profile-modal-header {
+        padding: 10px 16px; background: var(--page-bg); border-bottom: 1px solid var(--card-border);
+        display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0;
+    }
+    .profile-modal-body { flex: 1; overflow-y: auto; padding: 22px 24px; }
+    .profile-modal-body::-webkit-scrollbar { width: 4px; }
+    .profile-modal-body::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+    .profile-modal-loading { text-align: center; padding: 80px 20px; color: var(--text-muted); font-size: 24px; }
 </style>
 @endpush
 
@@ -296,7 +318,7 @@
             </thead>
             <tbody>
                 @forelse($tenants as $tenant)
-                <tr data-href="{{ route('tenants.show', $tenant) }}" style="cursor:pointer">
+                <tr data-tenant-modal="{{ route('tenants.show', $tenant) }}" style="cursor:pointer">
                     <td>
                         <div style="display:flex;align-items:center;gap:10px;">
                             <div class="tenant-avatar {{ $tenant->tenant_type }}">
@@ -345,9 +367,9 @@
                     </td>
                     <td onclick="event.stopPropagation()">
                         <div class="action-btns" style="justify-content:flex-end;">
-                            <a href="{{ route('tenants.show', $tenant) }}" class="btn btn-outline btn-sm" title="View">
+                            <button type="button" class="btn btn-outline btn-sm" title="View" onclick="openTenantProfileModal('{{ route('tenants.show', $tenant) }}')">
                                 <i class="fa-regular fa-eye"></i>
-                            </a>
+                            </button>
                             <a href="{{ route('tenants.edit', $tenant) }}" class="btn btn-outline btn-sm" title="Edit">
                                 <i class="fa-regular fa-pen-to-square"></i>
                             </a>
@@ -534,6 +556,21 @@
                         @enderror
                     </div>
 
+                    {{-- ADDRESS --}}
+                    <div class="mfield-group span-full">
+                        <label class="mfield-label">Address</label>
+                        <div class="mfield-wrap has-micon">
+                            <i class="fa-solid fa-location-dot mfield-icon"></i>
+                            <input type="text" name="address"
+                                class="mfield-input {{ $errors->has('address') ? 'is-invalid' : '' }}"
+                                value="{{ old('address') }}"
+                                placeholder="e.g. MP 2, Bldg# 233, Road# 3332, Block# 333, Bahrain" maxlength="500">
+                        </div>
+                        @error('address')
+                            <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div>
+                        @enderror
+                    </div>
+
                 </div>
             </form>
         </div>
@@ -547,6 +584,20 @@
             </button>
         </div>
 
+    </div>
+</div>
+
+{{-- ═══════════════════════════════════════════════════════
+     TENANT PROFILE MODAL
+═══════════════════════════════════════════════════════ --}}
+<div class="profile-modal-overlay" id="tenantProfileModal" onclick="closeTenantProfileModal(event)">
+    <div class="profile-modal-box" onclick="event.stopPropagation()">
+        <div class="profile-modal-header">
+            <button type="button" class="btn btn-outline btn-sm" onclick="closeTenantProfileModal()">
+                <i class="fa-solid fa-xmark"></i> Close
+            </button>
+        </div>
+        <div class="profile-modal-body" id="tenantProfileBody"></div>
     </div>
 </div>
 
@@ -600,5 +651,56 @@ function handleSubmit(btn) {
 @if($errors->any())
 openTenantModal();
 @endif
+
+// ── TENANT PROFILE MODAL ──────────────────────────────────────
+document.querySelectorAll('tr[data-tenant-modal]').forEach(function (row) {
+    row.addEventListener('click', function () {
+        openTenantProfileModal(row.dataset.tenantModal);
+    });
+});
+
+function openTenantProfileModal(url) {
+    const body = document.getElementById('tenantProfileBody');
+    body.innerHTML = '<div class="profile-modal-loading"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+    document.getElementById('tenantProfileModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    const sep = url.includes('?') ? '&' : '?';
+    fetch(url + sep + 'modal=1', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function (response) {
+            if (!response.ok) throw new Error('Request failed');
+            return response.text();
+        })
+        .then(function (html) {
+            body.innerHTML = html;
+            // <script> tags inserted via innerHTML don't execute — recreate
+            // them so the tab-switching / note-form JS actually runs.
+            body.querySelectorAll('script').forEach(function (oldScript) {
+                const newScript = document.createElement('script');
+                if (oldScript.src) {
+                    newScript.src = oldScript.src;
+                } else {
+                    newScript.textContent = oldScript.textContent;
+                }
+                oldScript.replaceWith(newScript);
+            });
+        })
+        .catch(function () {
+            body.innerHTML = '<div class="profile-modal-loading" style="color:var(--danger)">Failed to load tenant profile.</div>';
+        });
+}
+
+function closeTenantProfileModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('tenantProfileModal').classList.remove('open');
+    document.getElementById('tenantProfileBody').innerHTML = '';
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && document.getElementById('tenantProfileModal').classList.contains('open')) {
+        closeTenantProfileModal();
+    }
+});
 </script>
 @endpush

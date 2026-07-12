@@ -24,7 +24,7 @@
 .maint-section-body  { padding: 20px; }
 
 .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-.detail-item {}
+.detail-item { min-width: 0; }
 .detail-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
 .detail-value { font-size: 14px; color: var(--text-primary); font-weight: 500; }
 .detail-value.mono { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 15px; }
@@ -188,6 +188,15 @@
                 <div class="detail-label">Supervisor Date &amp; Time</div>
                 <div class="detail-value">{{ $record->supervisor_datetime?->format('d M Y, H:i') ?? '—' }}</div>
             </div>
+            @if($record->supervisor_signature)
+            <div class="detail-item" style="grid-column:1/-1">
+                <div class="detail-label">Supervisor Signature</div>
+                <div style="margin-top:6px;padding:12px;background:#fff;border:1.5px solid var(--card-border);border-radius:var(--radius-sm);display:inline-block;">
+                    <img src="{{ $record->supervisor_signature }}" alt="Supervisor Signature"
+                         style="max-height:80px;max-width:300px;display:block;">
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 </div>
@@ -212,12 +221,12 @@
                 <div class="detail-label">Quotation {{ $n }}</div>
                 <div class="detail-value mono">{{ $record->{"quotation_{$n}"} ? 'BHD '.number_format($record->{"quotation_{$n}"}, 3) : '—' }}</div>
                 @if($record->$fileField)
-                <div style="margin-top:6px">
-                    <a href="{{ Storage::url($record->$fileField) }}" target="_blank"
-                       style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;padding:4px 8px;border-radius:var(--radius-sm);background:var(--accent-dim);transition:opacity .15s"
+                <div style="margin-top:6px;max-width:100%">
+                    <a href="{{ Storage::url($record->$fileField) }}" target="_blank" title="{{ basename($record->$fileField) }}"
+                       style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;padding:4px 8px;border-radius:var(--radius-sm);background:var(--accent-dim);transition:opacity .15s;max-width:100%;overflow:hidden"
                        onmouseover="this.style.opacity='.75'" onmouseout="this.style.opacity='1'">
-                        <i class="fa-solid fa-paperclip" style="font-size:10px"></i>
-                        {{ basename($record->$fileField) }}
+                        <i class="fa-solid fa-paperclip" style="font-size:10px;flex-shrink:0"></i>
+                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ basename($record->$fileField) }}</span>
                     </a>
                 </div>
                 @endif
@@ -260,6 +269,15 @@
                 <div class="detail-label">Approved by Dept. Head</div>
                 <div class="detail-value">{{ $record->approved_dept_head ?? '—' }}</div>
             </div>
+            @if($record->dept_head_signature)
+            <div class="detail-item" style="grid-column:1/-1">
+                <div class="detail-label">Dept. Head Signature</div>
+                <div style="margin-top:6px;padding:12px;background:#fff;border:1.5px solid var(--card-border);border-radius:var(--radius-sm);display:inline-block;">
+                    <img src="{{ $record->dept_head_signature }}" alt="Dept. Head Signature"
+                         style="max-height:80px;max-width:300px;display:block;">
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 </div>

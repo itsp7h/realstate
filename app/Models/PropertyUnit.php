@@ -79,6 +79,14 @@ class PropertyUnit extends Model
         return $this->belongsTo(Floor::class);
     }
 
+    public function activeContract()
+    {
+        $today = \Carbon\Carbon::today()->toDateString();
+        return $this->hasOne(LeaseContract::class, 'unit_id')
+            ->whereDate('lease_start_date', '<=', $today)
+            ->whereDate('lease_end_date', '>=', $today);
+    }
+
     public function scopeFilter($query, array $filters): void
     {
         $query->when($filters['search'] ?? null, function ($q, $search) {

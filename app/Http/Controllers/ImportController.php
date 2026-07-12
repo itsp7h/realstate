@@ -843,31 +843,43 @@ class ImportController extends Controller
                 ];
             })(),
 
-            'units' => [
-                [],
-                function (array $r, int $row): array {
-                    // Accept 'unit' (from combined label map) as alias for 'unit_name'
-                    if (empty($r['unit_name']) && !empty($r['unit'])) {
-                        $r['unit_name'] = $r['unit'];
-                    }
-                    if (empty($r['unit_name'])) {
-                        return ['error' => "Row {$row}: 'unit_name' is required — skipped."];
-                    }
-                    $bCode    = strtoupper(trim($r['property_code'] ?? ''));
-                    $building = $bCode ? Building::where('property_code', $bCode)->first() : null;
-                    $data = $this->onlyFillable($r, self::UNIT_COLUMNS, exclude: ['property_code', 'floor_code']);
-                    if ($building) {
-                        $data['building_id']       = $building->id;
-                        $data['property_code']     = $building->property_code;
-                        $data['property_name']     ??= $building->property_name;
-                        $data['type_of_ownership'] ??= $building->type_of_ownership;
-                        $data['property_type']     ??= $building->property_type;
-                        $data['land_lord_name']    ??= $building->land_lord_name;
-                    }
-                    return ['data' => $data];
-                },
-                fn($d) => PropertyUnit::create($d),
-            ],
+            'units' => (function () {
+                $floorMap = [];
+                Floor::whereNotNull('floor_code')->get(['id', 'building_id', 'floor_code'])->each(function ($f) use (&$floorMap) {
+                    $floorMap[$f->building_id][strtoupper($f->floor_code)] = $f->id;
+                });
+
+                return [
+                    [],
+                    function (array $r, int $row) use ($floorMap): array {
+                        // Accept 'unit' (from combined label map) as alias for 'unit_name'
+                        if (empty($r['unit_name']) && !empty($r['unit'])) {
+                            $r['unit_name'] = $r['unit'];
+                        }
+                        if (empty($r['unit_name'])) {
+                            return ['error' => "Row {$row}: 'unit_name' is required — skipped."];
+                        }
+                        $bCode    = strtoupper(trim($r['property_code'] ?? ''));
+                        $building = $bCode ? Building::where('property_code', $bCode)->first() : null;
+                        $data = $this->onlyFillable($r, self::UNIT_COLUMNS, exclude: ['property_code', 'floor_code']);
+                        if ($building) {
+                            $data['building_id']       = $building->id;
+                            $data['property_code']     = $building->property_code;
+                            $data['property_name']     ??= $building->property_name;
+                            $data['type_of_ownership'] ??= $building->type_of_ownership;
+                            $data['property_type']     ??= $building->property_type;
+                            $data['land_lord_name']    ??= $building->land_lord_name;
+
+                            $fCode = strtoupper(trim($r['floor_code'] ?? ''));
+                            if ($fCode && isset($floorMap[$building->id][$fCode])) {
+                                $data['floor_id'] = $floorMap[$building->id][$fCode];
+                            }
+                        }
+                        return ['data' => $data];
+                    },
+                    fn($d) => PropertyUnit::create($d),
+                ];
+            })(),
 
             'tenants' => [
                 [],

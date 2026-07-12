@@ -163,6 +163,32 @@
     }
     .mfield-error { display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;color:var(--danger);font-weight:500; }
 
+    /* ── TENANT SEARCH DROPDOWN ─────────────────────────────── */
+    .tenant-combo { position:relative; }
+    .tenant-combo-dropdown {
+        position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:230px;overflow-y:auto;z-index:60;
+        background:#fff;border:1.5px solid var(--input-border);border-radius:var(--radius-sm);
+        box-shadow:0 12px 28px rgba(0,0,0,.14);display:none;
+    }
+    .tenant-combo-dropdown.open { display:block; }
+    .tenant-combo-item { padding:9px 14px;font-size:13px;color:var(--text-primary);cursor:pointer; }
+    .tenant-combo-item:hover, .tenant-combo-item.active { background:var(--accent-dim); }
+    .tenant-combo-item.hidden { display:none; }
+    .tenant-combo-empty { padding:14px;text-align:center;font-size:12px;color:var(--text-muted);display:none; }
+    .tenant-combo-empty.show { display:block; }
+
+    /* ── LOCATION SEARCH DROPDOWNS (property / block / floor / unit) ── */
+    .search-combo { position:relative; }
+    .search-combo-dropdown {
+        position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:230px;overflow-y:auto;z-index:60;
+        background:#fff;border:1.5px solid var(--input-border);border-radius:var(--radius-sm);
+        box-shadow:0 12px 28px rgba(0,0,0,.14);display:none;
+    }
+    .search-combo-dropdown.open { display:block; }
+    .search-combo-item { padding:9px 14px;font-size:13px;color:var(--text-primary);cursor:pointer; }
+    .search-combo-item:hover { background:var(--accent-dim); }
+    .search-combo-empty { padding:14px;text-align:center;font-size:12px;color:var(--text-muted); }
+
     /* ── SECTION DIVIDER ────────────────────────────────────── */
     .msection-label {
         font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;
@@ -257,8 +283,12 @@
                     <option value="expired"  {{ request('status') === 'expired'  ? 'selected' : '' }}>Expired</option>
                 </select>
             </div>
+            <div class="filter-group">
+                <label>As of Date <span style="font-size:10px;color:var(--text-muted);text-transform:none;font-weight:400">(default: today)</span></label>
+                <input type="date" name="as_of" value="{{ $asOfValue }}" onchange="this.form.submit()">
+            </div>
             <div class="filter-actions">
-                @if(request()->hasAny(['search','property_code','status']))
+                @if(request()->hasAny(['search','property_code','status','as_of']))
                     <a href="{{ route('lease-contracts.index') }}" class="btn btn-outline btn-sm">
                         <i class="fa-solid fa-xmark"></i> Clear
                     </a>
@@ -481,33 +511,34 @@
                     </div>
 
                     <div class="mfield-group">
-                        <label class="mfield-label">Agreement No. <span class="req">*</span></label>
+                        <label class="mfield-label">Agreement No.</label>
                         <input type="text" name="lease_agreement_no"
                             class="mfield-input {{ $errors->has('lease_agreement_no') ? 'is-invalid' : '' }}"
                             value="{{ old('lease_agreement_no') }}"
-                            placeholder="e.g. LA-2024-001" maxlength="100" required>
+                            placeholder="Leave blank to auto-generate (e.g. LA-2026-001)" maxlength="100">
                         @error('lease_agreement_no') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
-                    <div class="mfield-group">
-                        <label class="mfield-label">Tenant</label>
-                        <select name="tenant_id" id="mc_tenant_id"
-                            class="mfield-select {{ $errors->has('tenant_id') ? 'is-invalid' : '' }}">
-                            <option value="">— Select Tenant —</option>
-                            @foreach($tenants as $t)
-                                <option value="{{ $t->id }}" {{ old('tenant_id') == $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
-                            @endforeach
-                        </select>
+                    <div class="mfield-group span-full">
+                        <label class="mfield-label">Tenant <span class="req">*</span></label>
+                        <div class="tenant-combo" id="mc_tenant_combo">
+                            <input type="text" id="mc_tenant_search" class="mfield-input {{ $errors->has('tenant_id') ? 'is-invalid' : '' }}"
+                                placeholder="Search tenant by name…" autocomplete="off"
+                                value="{{ old('tenant_id') ? $tenants->firstWhere('id', (int) old('tenant_id'))?->name : '' }}">
+                            <input type="hidden" name="tenant_id" id="mc_tenant_id" value="{{ old('tenant_id') }}">
+                            <div class="tenant-combo-dropdown" id="mc_tenant_dropdown">
+                                @foreach($tenants as $t)
+                                    <div class="tenant-combo-item" data-id="{{ $t->id }}" data-name="{{ $t->name }}">
+                                        {{ $t->name }}@if($t->tenant_code) <span style="color:var(--text-muted);font-size:11px">({{ $t->tenant_code }})</span>@endif
+                                    </div>
+                                @endforeach
+                                <div class="tenant-combo-empty" id="mc_tenant_empty">No tenants match your search</div>
+                            </div>
+                        </div>
                         @error('tenant_id') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
-                    </div>
-
-                    <div class="mfield-group">
-                        <label class="mfield-label">Tenant Name <span class="req">*</span></label>
-                        <input type="text" name="tenant_name" id="mc_tenant_name"
-                            class="mfield-input {{ $errors->has('tenant_name') ? 'is-invalid' : '' }}"
-                            value="{{ old('tenant_name') }}"
-                            placeholder="Name or free-text" maxlength="255" required>
-                        @error('tenant_name') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
+                        <div class="mfield-error" id="mc_tenant_client_error" style="display:none">
+                            <i class="fa-solid fa-circle-exclamation"></i> Please pick a tenant from the dropdown list — typing a name alone isn't enough.
+                        </div>
                     </div>
 
                     <div class="mfield-group span-full">
@@ -530,61 +561,74 @@
 
                     <div class="mfield-group">
                         <label class="mfield-label">Property Name</label>
-                        <input type="text" name="property_name"
-                            class="mfield-input {{ $errors->has('property_name') ? 'is-invalid' : '' }}"
-                            value="{{ old('property_name') }}" placeholder="e.g. Al Reef Tower" maxlength="255">
+                        <div class="search-combo" id="mc_property_name_combo">
+                            <input type="text" name="property_name" id="mc_property_name"
+                                class="mfield-input {{ $errors->has('property_name') ? 'is-invalid' : '' }}"
+                                value="{{ old('property_name') }}" placeholder="Search property name…" maxlength="255" autocomplete="off">
+                            <div class="search-combo-dropdown"></div>
+                        </div>
                         @error('property_name') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
                     <div class="mfield-group">
                         <label class="mfield-label">Property Code</label>
-                        <input type="text" name="property_code"
-                            class="mfield-input {{ $errors->has('property_code') ? 'is-invalid' : '' }}"
-                            value="{{ old('property_code') }}" placeholder="e.g. P001" maxlength="50">
+                        <div class="search-combo" id="mc_property_code_combo">
+                            <input type="text" name="property_code" id="mc_property_code"
+                                class="mfield-input {{ $errors->has('property_code') ? 'is-invalid' : '' }}"
+                                value="{{ old('property_code') }}" placeholder="Search property code…" maxlength="50" autocomplete="off">
+                            <div class="search-combo-dropdown"></div>
+                        </div>
                         @error('property_code') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
                     <div class="mfield-group">
                         <label class="mfield-label">Block Name</label>
-                        <input type="text" name="block_name"
-                            class="mfield-input {{ $errors->has('block_name') ? 'is-invalid' : '' }}"
-                            value="{{ old('block_name') }}" placeholder="e.g. Block A" maxlength="100">
+                        <div class="search-combo" id="mc_block_name_combo">
+                            <input type="text" name="block_name" id="mc_block_name"
+                                class="mfield-input {{ $errors->has('block_name') ? 'is-invalid' : '' }}"
+                                value="{{ old('block_name') }}" placeholder="Search block…" maxlength="100" autocomplete="off">
+                            <div class="search-combo-dropdown"></div>
+                        </div>
                         @error('block_name') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
                     <div class="mfield-group">
                         <label class="mfield-label">Block Code</label>
-                        <input type="text" name="block_code"
+                        <input type="text" name="block_code" id="mc_block_code"
                             class="mfield-input {{ $errors->has('block_code') ? 'is-invalid' : '' }}"
-                            value="{{ old('block_code') }}" placeholder="e.g. BLK-A" maxlength="50">
+                            value="{{ old('block_code') }}" placeholder="Auto-filled from block" maxlength="50">
                         @error('block_code') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
                     <div class="mfield-group">
                         <label class="mfield-label">Floor Name</label>
-                        <input type="text" name="floor_name"
-                            class="mfield-input {{ $errors->has('floor_name') ? 'is-invalid' : '' }}"
-                            value="{{ old('floor_name') }}" placeholder="e.g. Ground Floor" maxlength="100">
+                        <div class="search-combo" id="mc_floor_name_combo">
+                            <input type="text" name="floor_name" id="mc_floor_name"
+                                class="mfield-input {{ $errors->has('floor_name') ? 'is-invalid' : '' }}"
+                                value="{{ old('floor_name') }}" placeholder="Search floor…" maxlength="100" autocomplete="off">
+                            <div class="search-combo-dropdown"></div>
+                        </div>
                         @error('floor_name') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
                     <div class="mfield-group">
                         <label class="mfield-label">Floor Code</label>
-                        <input type="text" name="floor_code"
+                        <input type="text" name="floor_code" id="mc_floor_code"
                             class="mfield-input {{ $errors->has('floor_code') ? 'is-invalid' : '' }}"
-                            value="{{ old('floor_code') }}" placeholder="e.g. GF" maxlength="50">
+                            value="{{ old('floor_code') }}" placeholder="Auto-filled from floor" maxlength="50">
                         @error('floor_code') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
                     <div class="mfield-group">
                         <label class="mfield-label">Unit (System)</label>
-                        <select name="unit_id" id="mc_unit_id"
-                            class="mfield-select {{ $errors->has('unit_id') ? 'is-invalid' : '' }}">
-                            <option value="">— Select Unit —</option>
-                            @foreach($units as $u)
-                                <option value="{{ $u->id }}" {{ old('unit_id') == $u->id ? 'selected' : '' }}>{{ $u->unit_name }}</option>
-                            @endforeach
-                        </select>
+                        <div class="search-combo" id="mc_unit_combo">
+                            <input type="text" id="mc_unit_search"
+                                class="mfield-input {{ $errors->has('unit_id') ? 'is-invalid' : '' }}"
+                                value="{{ old('unit_id') ? $units->firstWhere('id', (int) old('unit_id'))?->unit_name : '' }}"
+                                placeholder="Search unit…" autocomplete="off">
+                            <input type="hidden" name="unit_id" id="mc_unit_id" value="{{ old('unit_id') }}">
+                            <div class="search-combo-dropdown"></div>
+                        </div>
                         @error('unit_id') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
@@ -753,6 +797,35 @@
                         @error('security_deposit') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
 
+                    <div class="mfield-group span-full">
+                        <label class="mfield-label">EWA Cap <span style="font-size:11px;color:var(--text-muted);font-weight:400;text-transform:none">(BHD/bill — landlord covers up to this amount per EWA bill)</span></label>
+                        <div style="position:relative;max-width:320px;">
+                            <input type="number" name="ewa_cap"
+                                class="mfield-input {{ $errors->has('ewa_cap') ? 'is-invalid' : '' }}"
+                                value="{{ old('ewa_cap') }}" placeholder="0.000 — leave blank if tenant pays full bill"
+                                min="0" step="0.001" style="padding-right:52px;">
+                            <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--text-muted);pointer-events:none;">BHD</span>
+                        </div>
+                        @error('ewa_cap') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="mfield-group span-full">
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;">
+                            <input type="checkbox" id="mc_vatEnabledInput" name="vat_enabled" value="1"
+                                {{ old('vat_enabled') ? 'checked' : '' }} style="width:16px;height:16px;">
+                            Charge VAT on this contract
+                        </label>
+                        <input type="hidden" name="vat_enabled" value="0" id="mc_vatEnabledFallback"
+                            {{ old('vat_enabled') ? 'disabled' : '' }}>
+                        <div id="mc_vatRateWrap" style="max-width:200px;margin-top:10px; {{ old('vat_enabled') ? '' : 'display:none;' }}">
+                            <input type="number" name="vat_rate" id="mc_vatRateInput"
+                                class="mfield-input {{ $errors->has('vat_rate') ? 'is-invalid' : '' }}"
+                                value="{{ old('vat_rate', 0) }}" placeholder="0.00" min="0" max="100" step="0.01">
+                            <span style="font-size:11px;color:var(--text-muted);">% VAT rate for this tenant's invoices</span>
+                        </div>
+                        @error('vat_rate') <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
+                    </div>
+
                 </div>
             </div>
 
@@ -790,11 +863,11 @@ function debounceSubmit() {
 }
 
 // ── MODAL OPEN/CLOSE ─────────────────────────────────────────
-function openContractModal() {
+function openContractModal(focusSelector) {
     document.getElementById('contractModal').classList.add('open');
     document.body.style.overflow = 'hidden';
     setTimeout(() => {
-        const first = document.querySelector('#mc-info input[name="lease_agreement_no"]');
+        const first = document.querySelector(focusSelector || '#mc-info input[name="lease_agreement_no"]');
         if (first) first.focus();
     }, 320);
 }
@@ -835,22 +908,188 @@ function switchMTab(tabId) {
 function nextMTab() { if (currentTab < TABS.length - 1) switchMTab(TABS[currentTab + 1]); }
 function prevMTab() { if (currentTab > 0) switchMTab(TABS[currentTab - 1]); }
 
-// ── TENANT AUTO-FILL ─────────────────────────────────────────
-document.getElementById('mc_tenant_id').addEventListener('change', function() {
-    if (this.value) {
-        document.getElementById('mc_tenant_name').value = this.options[this.selectedIndex].text;
-    }
+// ── VAT TOGGLE ─────────────────────────────────────────────────
+const mcVatEnabledInput    = document.getElementById('mc_vatEnabledInput');
+const mcVatEnabledFallback = document.getElementById('mc_vatEnabledFallback');
+const mcVatRateWrap        = document.getElementById('mc_vatRateWrap');
+mcVatEnabledInput.addEventListener('change', function() {
+    mcVatRateWrap.style.display = this.checked ? '' : 'none';
+    mcVatEnabledFallback.disabled = this.checked;
 });
 
-// ── UNIT AUTO-FILL ───────────────────────────────────────────
-document.getElementById('mc_unit_id').addEventListener('change', function() {
-    if (this.value) {
-        document.getElementById('mc_unit_text').value = this.options[this.selectedIndex].text;
+// ── LOCATION SEARCH DROPDOWNS (property / block / floor / unit) ─
+@php
+    $mcBuildingsJson = $buildings->map(fn ($b) => ['id' => $b->id, 'name' => $b->property_name, 'code' => $b->property_code]);
+    $mcFloorsJson    = $floors->map(fn ($f) => ['id' => $f->id, 'building_id' => $f->building_id, 'name' => $f->floor_name, 'code' => $f->floor_code, 'block_name' => $f->block_name, 'block_code' => $f->block_code]);
+    $mcUnitsJson     = $units->map(fn ($u) => ['id' => $u->id, 'name' => $u->unit_name, 'building_id' => $u->building_id, 'floor_id' => $u->floor_id]);
+@endphp
+(function() {
+    const BUILDINGS = @json($mcBuildingsJson);
+    const FLOORS     = @json($mcFloorsJson);
+    const UNITS      = @json($mcUnitsJson);
+
+    const scope = { buildingId: null, floorId: null };
+
+    function esc(s) {
+        return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
-});
+
+    function wireCombo(comboId, { items, matchText, render, onPick }) {
+        const root     = document.getElementById(comboId);
+        const input    = root.querySelector('input[type="text"]');
+        const dropdown = root.querySelector('.search-combo-dropdown');
+
+        function show(list) {
+            if (!list.length) {
+                dropdown.innerHTML = '<div class="search-combo-empty">No matches</div>';
+            } else {
+                dropdown.innerHTML = list.map((item, i) => `<div class="search-combo-item" data-i="${i}">${render(item)}</div>`).join('');
+                dropdown.querySelectorAll('.search-combo-item').forEach(el => {
+                    el.addEventListener('click', function() {
+                        onPick(list[+this.dataset.i]);
+                        dropdown.classList.remove('open');
+                    });
+                });
+            }
+            dropdown.classList.add('open');
+        }
+
+        function open() {
+            const q = input.value.trim().toLowerCase();
+            show(items().filter(item => !q || matchText(item).toLowerCase().includes(q)));
+        }
+
+        input.addEventListener('focus', open);
+        input.addEventListener('input', open);
+        document.addEventListener('click', e => { if (!root.contains(e.target)) dropdown.classList.remove('open'); });
+    }
+
+    function fillProperty(b) {
+        document.getElementById('mc_property_name').value = b.name;
+        document.getElementById('mc_property_code').value = b.code;
+        scope.buildingId = b.id;
+    }
+
+    wireCombo('mc_property_name_combo', {
+        items: () => BUILDINGS,
+        matchText: b => b.name,
+        render: b => `${esc(b.name)} <span style="color:var(--text-muted);font-size:11px">(${esc(b.code)})</span>`,
+        onPick: fillProperty,
+    });
+
+    wireCombo('mc_property_code_combo', {
+        items: () => BUILDINGS,
+        matchText: b => b.code,
+        render: b => `${esc(b.code)} <span style="color:var(--text-muted);font-size:11px">— ${esc(b.name)}</span>`,
+        onPick: fillProperty,
+    });
+
+    wireCombo('mc_block_name_combo', {
+        items: () => {
+            const seen = new Set(), list = [];
+            FLOORS.filter(f => f.block_name && (!scope.buildingId || f.building_id === scope.buildingId))
+                .forEach(f => { if (!seen.has(f.block_name)) { seen.add(f.block_name); list.push(f); } });
+            return list;
+        },
+        matchText: f => f.block_name,
+        render: f => f.block_code ? `${esc(f.block_name)} <span style="color:var(--text-muted);font-size:11px">(${esc(f.block_code)})</span>` : esc(f.block_name),
+        onPick: f => {
+            document.getElementById('mc_block_name').value = f.block_name || '';
+            document.getElementById('mc_block_code').value = f.block_code || '';
+        },
+    });
+
+    wireCombo('mc_floor_name_combo', {
+        items: () => FLOORS.filter(f => !scope.buildingId || f.building_id === scope.buildingId),
+        matchText: f => f.name,
+        render: f => f.block_name ? `${esc(f.name)} <span style="color:var(--text-muted);font-size:11px">— ${esc(f.block_name)}</span>` : esc(f.name),
+        onPick: f => {
+            document.getElementById('mc_floor_name').value = f.name;
+            document.getElementById('mc_floor_code').value = f.code || '';
+            if (f.block_name) document.getElementById('mc_block_name').value = f.block_name;
+            if (f.block_code) document.getElementById('mc_block_code').value = f.block_code;
+            scope.floorId = f.id;
+        },
+    });
+
+    wireCombo('mc_unit_combo', {
+        items: () => UNITS.filter(u => (!scope.buildingId || u.building_id === scope.buildingId) && (!scope.floorId || u.floor_id === scope.floorId)),
+        matchText: u => u.name,
+        render: u => esc(u.name),
+        onPick: u => {
+            document.getElementById('mc_unit_id').value = u.id;
+            document.getElementById('mc_unit_search').value = u.name;
+            document.getElementById('mc_unit_text').value = u.name;
+        },
+    });
+    document.getElementById('mc_unit_search').addEventListener('input', function() {
+        document.getElementById('mc_unit_id').value = '';
+    });
+})();
+
+// ── TENANT SEARCH DROPDOWN ─────────────────────────────────────
+(function() {
+    const combo    = document.getElementById('mc_tenant_combo');
+    const search   = document.getElementById('mc_tenant_search');
+    const hidden   = document.getElementById('mc_tenant_id');
+    const dropdown = document.getElementById('mc_tenant_dropdown');
+    const empty    = document.getElementById('mc_tenant_empty');
+    const items    = Array.from(dropdown.querySelectorAll('.tenant-combo-item'));
+
+    function filter() {
+        const q = search.value.trim().toLowerCase();
+        let visible = 0;
+        items.forEach(item => {
+            const match = !q || item.dataset.name.toLowerCase().includes(q);
+            item.classList.toggle('hidden', !match);
+            if (match) visible++;
+        });
+        empty.classList.toggle('show', visible === 0);
+    }
+
+    function clearError() {
+        search.classList.remove('is-invalid');
+        document.getElementById('mc_tenant_client_error').style.display = 'none';
+    }
+
+    search.addEventListener('focus', function() {
+        filter();
+        dropdown.classList.add('open');
+    });
+    search.addEventListener('input', function() {
+        hidden.value = '';
+        filter();
+        dropdown.classList.add('open');
+        clearError();
+    });
+
+    items.forEach(item => {
+        item.addEventListener('click', function() {
+            hidden.value = item.dataset.id;
+            search.value = item.dataset.name;
+            dropdown.classList.remove('open');
+            clearError();
+        });
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!combo.contains(e.target)) dropdown.classList.remove('open');
+    });
+})();
 
 // ── SUBMIT ───────────────────────────────────────────────────
 function handleContractSubmit(btn) {
+    const tenantId = document.getElementById('mc_tenant_id');
+    if (!tenantId.value) {
+        switchMTab('mc-info');
+        const search = document.getElementById('mc_tenant_search');
+        search.classList.add('is-invalid');
+        document.getElementById('mc_tenant_client_error').style.display = 'flex';
+        search.focus();
+        search.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        return;
+    }
+
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
     document.getElementById('contractForm').submit();
@@ -859,18 +1098,20 @@ function handleContractSubmit(btn) {
 // ── ERROR DOTS — show dot on tab that has an error ───────────
 @php
     $tabErrorMap = [
-        'mc-info'     => ['date','lease_agreement_no','tenant_id','tenant_name','description'],
+        'mc-info'     => ['date','lease_agreement_no','tenant_id','description'],
         'mc-location' => ['property_name','property_code','block_name','block_code','floor_name','floor_code','unit_id','unit'],
         'mc-lease'    => ['lease_start_date','lease_end_date','lease_break_date','notice_period'],
         'mc-rent'     => ['invoicing_frequency','currency','rent_start_date','rent_end_date','rent_per_month'],
         'mc-service'  => ['service_frequency','service_amount_bd_excl_vat','service_start_date','service_end_date'],
-        'mc-financial'=> ['rental_income_ledger','security_deposit'],
+        'mc-financial'=> ['rental_income_ledger','security_deposit','ewa_cap','vat_enabled','vat_rate'],
     ];
-    $firstErrorTab = null;
+    $firstErrorTab   = null;
+    $firstErrorField = null;
     foreach($tabErrorMap as $tab => $fields) {
         foreach($fields as $f) {
             if($errors->has($f)) {
                 if(!$firstErrorTab) $firstErrorTab = $tab;
+                if(!$firstErrorField) $firstErrorField = $f;
                 break;
             }
         }
@@ -884,7 +1125,15 @@ function handleContractSubmit(btn) {
 @endforeach
 
 @if($errors->any())
-    openContractModal();
+    @php
+        // tenant_id / unit_id are hidden inputs driving a search combo — focus
+        // the visible search box instead, since focusing a hidden field is a no-op.
+        $focusSelectorMap = ['tenant_id' => '#mc_tenant_search', 'unit_id' => '#mc_unit_search'];
+        $focusSelector = $firstErrorField
+            ? ($focusSelectorMap[$firstErrorField] ?? '[name="' . $firstErrorField . '"]')
+            : null;
+    @endphp
+    openContractModal({{ $focusSelector ? "'".$focusSelector."'" : 'null' }});
     @if($firstErrorTab)
         switchMTab('{{ $firstErrorTab }}');
     @endif

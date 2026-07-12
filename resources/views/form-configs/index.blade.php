@@ -111,7 +111,7 @@
     <button class="tab-btn" id="tab-forms" onclick="switchTab('forms')">
         <i class="fa-solid fa-wpforms"></i>
         Forms Management
-        <span class="tab-count">3</span>
+        <span class="tab-count">4</span>
     </button>
     <button class="tab-btn" id="tab-templates" onclick="switchTab('templates')">
         <i class="fa-solid fa-file-export"></i>
@@ -222,6 +222,36 @@
                     <i class="fa-solid fa-plus"></i> New Contract
                 </a>
                 <a href="{{ route('lease-contracts.index') }}" class="btn btn-outline btn-sm" style="margin-left:6px;">
+                    <i class="fa-solid fa-list"></i> View All
+                </a>
+            </div>
+        </div>
+
+        {{-- Invoice Form --}}
+        <div class="fc-card">
+            <div class="fc-card-header">
+                <div class="fc-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                <div>
+                    <div class="fc-title">Invoice Form</div>
+                    <div class="fc-desc">Lease contract, type (rent/utilities/other), amount, dates, description, notes</div>
+                </div>
+            </div>
+            <div class="fc-card-body">
+                <div class="fc-meta">
+                    <i class="fa-solid fa-circle-dot"></i>
+                    <span>Status:</span>
+                    <span class="badge badge-green"><i class="fa-solid fa-check"></i> Available</span>
+                </div>
+                <div class="fc-meta">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>7 fields — Contract, Type, Amount, Issue Date, Due Date, Description, Notes</span>
+                </div>
+            </div>
+            <div class="fc-card-footer">
+                <a href="{{ route('invoices.create') }}" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-plus"></i> New Invoice
+                </a>
+                <a href="{{ route('invoices.index') }}" class="btn btn-outline btn-sm" style="margin-left:6px;">
                     <i class="fa-solid fa-list"></i> View All
                 </a>
             </div>

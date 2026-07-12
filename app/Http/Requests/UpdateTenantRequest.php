@@ -20,6 +20,7 @@ class UpdateTenantRequest extends FormRequest
             'phone'               => ['nullable', 'string', 'max:50'],
             'email'               => ['nullable', 'email', 'max:255'],
             'nationality_country' => ['nullable', 'string', 'max:100'],
+            'address'             => ['nullable', 'string', 'max:500'],
         ];
     }
 }
