@@ -164,7 +164,7 @@
 
 <div class="page-header">
     <div>
-        <div class="breadcrumb">
+        <div class="breadcrumb" id="tenantBreadcrumb">
             <a href="{{ url('/dashboard') }}">Home</a>
             <i class="fa-solid fa-chevron-right"></i>
             <a href="{{ route('tenants.index') }}">Tenants</a>
@@ -175,9 +175,12 @@
         <p class="page-header-sub">Full details for this tenant record</p>
     </div>
     <div class="page-header-actions">
-        <a href="{{ route('tenants.index') }}" class="btn btn-outline">
+        <a href="{{ route('tenants.index') }}" class="btn btn-outline" id="tenantBackBtn">
             <i class="fa-solid fa-arrow-left"></i> Back
         </a>
+        <button type="button" class="btn btn-outline" id="tenantCloseBtn" style="display:none" onclick="window.parent.closeTenantModalFromChild && window.parent.closeTenantModalFromChild()">
+            <i class="fa-solid fa-xmark"></i> Close
+        </button>
     </div>
 </div>
 
@@ -660,5 +663,15 @@ function switchTab(tab) {
 const urlTab = new URLSearchParams(window.location.search).get('tab');
 const validTabs = ['overview', 'leases', 'invoices', 'payments', 'ewa', 'notes', 'ledger'];
 switchTab(validTabs.includes(urlTab) ? urlTab : 'overview');
+
+// ── Embedded-in-modal detection ───────────────────────────────
+// When this page loads inside the tenants-index profile modal (an
+// iframe), "Back"/the breadcrumb would navigate the iframe itself, not
+// the outer page — swap them for a Close button that closes the modal.
+if (window.self !== window.top) {
+    document.getElementById('tenantBreadcrumb').style.display = 'none';
+    document.getElementById('tenantBackBtn').style.display = 'none';
+    document.getElementById('tenantCloseBtn').style.display = '';
+}
 </script>
 @endpush

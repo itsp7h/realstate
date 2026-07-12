@@ -201,6 +201,25 @@
         .mfield-grid .span-full { grid-column: span 1; }
         .type-toggle { grid-template-columns: 1fr; }
     }
+
+    /* ── TENANT PROFILE MODAL (iframe) ──────────────────── */
+    .profile-modal-overlay {
+        display: none; position: fixed; inset: 0; z-index: 1050;
+        background: rgba(11,17,32,0.75); backdrop-filter: blur(4px);
+        align-items: center; justify-content: center; padding: 24px;
+    }
+    .profile-modal-overlay.open { display: flex; }
+    .profile-modal-box {
+        width: 100%; max-width: 1100px; height: 90vh;
+        background: var(--card-bg); border-radius: var(--radius);
+        display: flex; flex-direction: column; overflow: hidden;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    }
+    .profile-modal-header {
+        padding: 10px 16px; background: var(--page-bg); border-bottom: 1px solid var(--card-border);
+        display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0;
+    }
+    .profile-modal-iframe { flex: 1; border: none; width: 100%; background: var(--page-bg); }
 </style>
 @endpush
 
@@ -296,7 +315,7 @@
             </thead>
             <tbody>
                 @forelse($tenants as $tenant)
-                <tr data-href="{{ route('tenants.show', $tenant) }}" style="cursor:pointer">
+                <tr data-tenant-modal="{{ route('tenants.show', $tenant) }}" style="cursor:pointer">
                     <td>
                         <div style="display:flex;align-items:center;gap:10px;">
                             <div class="tenant-avatar {{ $tenant->tenant_type }}">
@@ -345,9 +364,9 @@
                     </td>
                     <td onclick="event.stopPropagation()">
                         <div class="action-btns" style="justify-content:flex-end;">
-                            <a href="{{ route('tenants.show', $tenant) }}" class="btn btn-outline btn-sm" title="View">
+                            <button type="button" class="btn btn-outline btn-sm" title="View" onclick="openTenantProfileModal('{{ route('tenants.show', $tenant) }}')">
                                 <i class="fa-regular fa-eye"></i>
-                            </a>
+                            </button>
                             <a href="{{ route('tenants.edit', $tenant) }}" class="btn btn-outline btn-sm" title="Edit">
                                 <i class="fa-regular fa-pen-to-square"></i>
                             </a>
@@ -565,6 +584,20 @@
     </div>
 </div>
 
+{{-- ═══════════════════════════════════════════════════════
+     TENANT PROFILE MODAL
+═══════════════════════════════════════════════════════ --}}
+<div class="profile-modal-overlay" id="tenantProfileModal" onclick="closeTenantProfileModal(event)">
+    <div class="profile-modal-box" onclick="event.stopPropagation()">
+        <div class="profile-modal-header">
+            <button type="button" class="btn btn-outline btn-sm" onclick="closeTenantProfileModal()">
+                <i class="fa-solid fa-xmark"></i> Close
+            </button>
+        </div>
+        <iframe id="tenantProfileFrame" class="profile-modal-iframe" src="about:blank"></iframe>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -615,5 +648,33 @@ function handleSubmit(btn) {
 @if($errors->any())
 openTenantModal();
 @endif
+
+// ── TENANT PROFILE MODAL ──────────────────────────────────────
+document.querySelectorAll('tr[data-tenant-modal]').forEach(function (row) {
+    row.addEventListener('click', function () {
+        openTenantProfileModal(row.dataset.tenantModal);
+    });
+});
+
+function openTenantProfileModal(url) {
+    document.getElementById('tenantProfileFrame').src = url;
+    document.getElementById('tenantProfileModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeTenantProfileModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('tenantProfileModal').classList.remove('open');
+    document.getElementById('tenantProfileFrame').src = 'about:blank';
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && document.getElementById('tenantProfileModal').classList.contains('open')) {
+        closeTenantProfileModal();
+    }
+});
+
+window.closeTenantModalFromChild = closeTenantProfileModal;
 </script>
 @endpush
