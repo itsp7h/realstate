@@ -61,8 +61,8 @@ class Tenant extends Model
         return $this->hasManyThrough(Payment::class, Invoice::class);
     }
 
-    public function invoiceNotes(): HasManyThrough
+    public function invoiceNotes(): HasMany
     {
-        return $this->hasManyThrough(InvoiceNote::class, Invoice::class);
+        return $this->hasMany(InvoiceNote::class);
     }
 }

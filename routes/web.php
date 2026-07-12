@@ -18,6 +18,7 @@ use App\Http\Controllers\EwaBillController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\InvoiceNoteController;
+use App\Http\Controllers\TenantNoteController;
 use App\Http\Controllers\ReportController;
 
 // Unified data import/export
@@ -51,6 +52,8 @@ Route::resource('property-units', PropertyUnitController::class);
 
 Route::get('/tenants/search', [TenantController::class, 'search'])->name('tenants.search');
 Route::resource('tenants', TenantController::class);
+Route::post('/tenants/{tenant}/notes',                 [TenantNoteController::class, 'store'])->name('tenants.notes.store');
+Route::delete('/tenants/{tenant}/notes/{invoiceNote}', [TenantNoteController::class, 'destroy'])->name('tenants.notes.destroy');
 
 Route::resource('maintenance', MaintenanceRequestController::class)
     ->parameters(['maintenance' => 'maintenanceRequest']);

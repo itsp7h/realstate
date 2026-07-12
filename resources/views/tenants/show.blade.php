@@ -88,6 +88,24 @@
     .rs-status.unpaid        { background: #FEF2F2; color: #DC2626; }
     .rs-status.not_invoiced  { background: #F1F5F9; color: #64748B; }
 
+    /* Credit/Debit note mini-stats + issue form */
+    .note-mini-stat { font-size: 11px; color: var(--text-muted); }
+    .note-mini-stat strong { font-family: 'Outfit',sans-serif; font-weight: 700; }
+    .note-form-card { background: var(--page-bg); border-top: 1px solid var(--card-border); padding: 16px 18px; display: none; }
+    .note-form-card.open { display: block; }
+    .note-form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: end; }
+    @media (max-width: 820px) { .note-form-grid { grid-template-columns: 1fr; } }
+    .note-form-grid .form-group { display: flex; flex-direction: column; gap: 5px; grid-column: span 1; }
+    .note-form-grid .reason-group { grid-column: 1 / -1; }
+    .note-form-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .note-form-control {
+        padding: 8px 12px; font-size: 13px; border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
+        background: var(--input-bg); color: var(--text-primary); outline: none; width: 100%; box-sizing: border-box;
+    }
+    .note-form-control:focus { border-color: var(--accent); }
+    .note-form-control.is-invalid { border-color: #DC2626; }
+    .note-invalid-feedback { font-size: 11px; color: #DC2626; margin-top: 3px; }
+
     .profile-hero {
         background: var(--card-bg);
         border: 1px solid var(--card-border);
@@ -473,7 +491,20 @@
 
 {{-- ===================== CREDIT & DEBIT NOTES TAB ===================== --}}
 <div class="tab-panel" id="panel-notes">
+@php
+    $totalCredited = $tenant->invoiceNotes->where('type', 'credit')->sum('amount');
+    $totalDebited  = $tenant->invoiceNotes->where('type', 'debit')->sum('amount');
+@endphp
 <div class="table-card">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;align-items:center;gap:16px">
+            <div class="note-mini-stat">Total Credited <strong style="color:#059669">{{ number_format($totalCredited, 3) }}</strong></div>
+            <div class="note-mini-stat">Total Debited <strong style="color:#D97706">{{ number_format($totalDebited, 3) }}</strong></div>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('tenantNoteFormCard').classList.toggle('open')">
+            <i class="fa-solid fa-plus"></i> Issue Note
+        </button>
+    </div>
     @if($tenant->invoiceNotes->isEmpty())
     <div class="tp-empty"><i class="fa-solid fa-file-invoice-dollar"></i>No credit or debit notes issued for this tenant.</div>
     @else
@@ -486,6 +517,7 @@
                 <th>Date</th>
                 <th class="right">Amount (BHD)</th>
                 <th>Reason</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -497,17 +529,66 @@
                     @if($note->invoice)
                     <a href="{{ route('invoices.show', $note->invoice) }}" class="tp-link">{{ $note->invoice->invoice_number }}</a>
                     @else
-                    —
+                    <span style="color:var(--text-muted)">General adjustment</span>
                     @endif
                 </td>
                 <td>{{ $note->note_date->format('d M Y') }}</td>
                 <td class="right tp-money" style="color:{{ $note->type === 'credit' ? '#059669' : '#D97706' }}">{{ $note->type === 'credit' ? '−' : '+' }}{{ number_format($note->amount, 3) }}</td>
                 <td style="color:var(--text-muted)">{{ $note->reason }}</td>
+                <td>
+                    @if(!$note->invoice)
+                    <form method="POST" action="{{ route('tenants.notes.destroy', [$tenant, $note]) }}"
+                          onsubmit="return confirm('Remove {{ $note->type_label }} {{ $note->note_number }}?')">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i></button>
+                    </form>
+                    @endif
+                </td>
             </tr>
             @endforeach
         </tbody>
     </table>
     @endif
+
+    <div class="note-form-card {{ $errors->any() ? 'open' : '' }}" id="tenantNoteFormCard">
+        <form method="POST" action="{{ route('tenants.notes.store', $tenant) }}" novalidate>
+            @csrf
+            <div class="note-form-grid">
+                <div class="form-group">
+                    <label class="note-form-label">Type <span style="color:#DC2626">*</span></label>
+                    <select name="type" class="note-form-control {{ $errors->has('type') ? 'is-invalid' : '' }}" required>
+                        <option value="">— Select —</option>
+                        <option value="credit" {{ old('type') === 'credit' ? 'selected' : '' }}>Credit Note (reduces balance)</option>
+                        <option value="debit" {{ old('type') === 'debit' ? 'selected' : '' }}>Debit Note (increases balance)</option>
+                    </select>
+                    <div class="note-invalid-feedback">{{ $errors->first('type') }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="note-form-label">Amount (BHD) <span style="color:#DC2626">*</span></label>
+                    <input type="number" name="amount" class="note-form-control {{ $errors->has('amount') ? 'is-invalid' : '' }}"
+                           value="{{ old('amount') }}" min="0.001" step="0.001" placeholder="0.000" required>
+                    <div class="note-invalid-feedback">{{ $errors->first('amount') }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="note-form-label">Date <span style="color:#DC2626">*</span></label>
+                    <input type="date" name="note_date" class="note-form-control {{ $errors->has('note_date') ? 'is-invalid' : '' }}"
+                           value="{{ old('note_date', now()->format('Y-m-d')) }}" max="{{ now()->format('Y-m-d') }}" required>
+                    <div class="note-invalid-feedback">{{ $errors->first('note_date') }}</div>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary" style="width:100%">
+                        <i class="fa-solid fa-circle-check"></i> Issue Note
+                    </button>
+                </div>
+                <div class="form-group reason-group">
+                    <label class="note-form-label">Reason <span style="color:#DC2626">*</span></label>
+                    <input type="text" name="reason" class="note-form-control {{ $errors->has('reason') ? 'is-invalid' : '' }}"
+                           value="{{ old('reason') }}" maxlength="500" placeholder="Why is this being issued?" required>
+                    <div class="note-invalid-feedback">{{ $errors->first('reason') }}</div>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 </div>
 

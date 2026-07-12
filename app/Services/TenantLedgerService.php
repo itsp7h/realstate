@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\EwaBill;
 use App\Models\Invoice;
+use App\Models\InvoiceNote;
 use App\Models\Tenant;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -15,8 +16,9 @@ use Illuminate\Support\Collection;
 class TenantLedgerService
 {
     /**
-     * Every outstanding (unpaid / partially paid) rent invoice and EWA bill
-     * for a tenant within a date range, normalised to one shape and sorted
+     * Every outstanding (unpaid / partially paid) rent invoice and EWA bill,
+     * plus any general credit/debit notes issued directly against the
+     * tenant, within a date range — normalised to one shape and sorted
      * chronologically, with a running balance.
      */
     public function buildLedger(Tenant $tenant, Carbon $from, Carbon $to): Collection
@@ -47,8 +49,25 @@ class TenantLedgerService
                 'due_on'         => $bill->due_date,
             ]);
 
-        return $invoiceRows->concat($ewaRows)
-            ->filter(fn ($row) => $row['pending_amount'] > 0.001)
+        // General notes issued directly against the tenant (not tied to any
+        // invoice) — a permanent adjustment to their balance, so pending
+        // equals the note's own signed amount: credit reduces (negative),
+        // debit increases (positive).
+        $noteRows = InvoiceNote::where('tenant_id', $tenant->id)
+            ->whereNull('invoice_id')
+            ->whereBetween('note_date', [$from, $to])
+            ->get()
+            ->map(fn (InvoiceNote $note) => [
+                'date'           => $note->note_date,
+                'bill_ref'       => $note->note_number,
+                'description'    => "{$note->type_label} — {$note->reason}",
+                'opening_amount' => $note->type === 'credit' ? -(float) $note->amount : (float) $note->amount,
+                'pending_amount' => $note->type === 'credit' ? -(float) $note->amount : (float) $note->amount,
+                'due_on'         => $note->note_date,
+            ]);
+
+        return $invoiceRows->concat($ewaRows)->concat($noteRows)
+            ->filter(fn ($row) => abs($row['pending_amount']) > 0.001)
             ->sortBy('date')
             ->values()
             ->map(function ($row) use ($to) {

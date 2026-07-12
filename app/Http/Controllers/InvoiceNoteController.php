@@ -14,6 +14,7 @@ class InvoiceNoteController extends Controller
         $data = $request->validated();
         $data['note_number'] = InvoiceNote::generateNumber($data['type']);
         $data['invoice_id']  = $invoice->id;
+        $data['tenant_id']   = $invoice->tenant_id;
 
         $note = InvoiceNote::create($data);
         $invoice->syncStatus();

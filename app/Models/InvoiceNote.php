@@ -11,7 +11,7 @@ class InvoiceNote extends Model
     use Auditable;
 
     protected $fillable = [
-        'note_number', 'invoice_id', 'type', 'amount', 'note_date', 'reason',
+        'note_number', 'invoice_id', 'tenant_id', 'type', 'amount', 'note_date', 'reason',
     ];
 
     protected $casts = [
@@ -22,6 +22,11 @@ class InvoiceNote extends Model
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
     }
 
     public function getTypeLabelAttribute(): string

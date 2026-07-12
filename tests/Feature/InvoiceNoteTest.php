@@ -59,6 +59,17 @@ class InvoiceNoteTest extends TestCase
         $this->assertDatabaseHas('invoice_notes', ['invoice_id' => $invoice->id, 'type' => 'credit', 'amount' => 100.000]);
     }
 
+    public function test_invoice_scoped_note_also_gets_tenant_id(): void
+    {
+        $invoice = $this->makeInvoice(['amount' => 1000.000]);
+
+        $this->post(route('invoices.notes.store', $invoice), [
+            'type' => 'credit', 'amount' => '50.000', 'note_date' => '2024-03-10', 'reason' => 'Test',
+        ]);
+
+        $this->assertDatabaseHas('invoice_notes', ['invoice_id' => $invoice->id, 'tenant_id' => $invoice->tenant_id]);
+    }
+
     public function test_debit_note_increases_balance_due(): void
     {
         $invoice = $this->makeInvoice(['amount' => 800.000]);

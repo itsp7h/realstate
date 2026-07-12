@@ -271,6 +271,7 @@ class TenantTest extends TestCase
         InvoiceNote::create([
             'note_number' => 'CN-PROFILE-1',
             'invoice_id'  => $invoice->id,
+            'tenant_id'   => $tenant->id,
             'type'        => 'credit',
             'amount'      => 100.000,
             'note_date'   => '2026-01-10',
