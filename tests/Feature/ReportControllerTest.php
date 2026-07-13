@@ -143,6 +143,62 @@ class ReportControllerTest extends TestCase
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
     }
 
+    // ── TENANT LEDGER (full history, running balance) ────────────
+
+    public function test_tenant_ledger_renders_without_a_tenant_selected(): void
+    {
+        $this->get(route('reports.tenant-ledger'))->assertStatus(200);
+    }
+
+    public function test_tenant_ledger_shows_running_balance_after_each_transaction(): void
+    {
+        $tenant  = $this->makeTenant();
+        $invoice = $this->makeInvoice($tenant);
+        \App\Models\Payment::create([
+            'payment_number' => 'PAY-TEST-' . uniqid(),
+            'invoice_id'     => $invoice->id,
+            'amount'         => 40.000,
+            'payment_date'   => now()->format('Y-m-d'),
+            'method'         => 'cash',
+        ]);
+
+        $response = $this->get(route('reports.tenant-ledger', ['tenant_id' => $tenant->id]));
+
+        $response->assertStatus(200)
+            ->assertSee($invoice->invoice_number)
+            ->assertSee('100.000') // invoice debit
+            ->assertSee('40.000')  // payment credit
+            ->assertSee('60.000 Dr'); // running balance after both
+    }
+
+    public function test_tenant_ledger_includes_fully_settled_invoices(): void
+    {
+        $tenant  = $this->makeTenant();
+        $invoice = $this->makeInvoice($tenant);
+        \App\Models\Payment::create([
+            'payment_number' => 'PAY-TEST-' . uniqid(),
+            'invoice_id'     => $invoice->id,
+            'amount'         => 100.000,
+            'payment_date'   => now()->format('Y-m-d'),
+            'method'         => 'cash',
+        ]);
+
+        // Unlike the Tenant Statement, the ledger is a full history and
+        // must still show a bill even once it's fully paid off.
+        $response = $this->get(route('reports.tenant-ledger', ['tenant_id' => $tenant->id]));
+        $response->assertStatus(200)->assertSee($invoice->invoice_number);
+    }
+
+    public function test_tenant_ledger_pdf_downloads(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeInvoice($tenant);
+
+        $response = $this->get(route('reports.tenant-ledger.pdf', ['tenant_id' => $tenant->id]));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
+    }
+
     // ── TENANT AGEING ────────────────────────────────────────────
 
     public function test_tenant_ageing_buckets_a_recent_invoice_under_60_days(): void

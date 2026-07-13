@@ -13,7 +13,8 @@ use Illuminate\Support\Collection;
 
 /**
  * Builds the outstanding-bill ledger used by the Tenant Statement and
- * Ageing reports. Draft implementation — see known gaps noted where relevant.
+ * Ageing reports, plus the full-history running-balance ledger used by the
+ * Tenant Ledger report. Draft implementation — see known gaps noted where relevant.
  */
 class TenantLedgerService
 {
@@ -129,6 +130,91 @@ class TenantLedgerService
     public function runningBalance(Collection $rows): float
     {
         return round($rows->sum('pending_amount'), 3);
+    }
+
+    /**
+     * Full transaction history for a tenant — every rent invoice, EWA bill,
+     * payment, and credit/debit note in the date range, in chronological
+     * order, each with a running balance after it. Unlike buildLedger(),
+     * this never hides fully-settled bills: it's a real ledger (complete
+     * history), not an outstanding-bill statement.
+     */
+    public function buildTransactionLedger(Tenant $tenant, Carbon $from, Carbon $to): Collection
+    {
+        $invoiceIds = Invoice::where('tenant_id', $tenant->id)->pluck('id', 'id');
+        $ewaBillIds = EwaBill::whereHas('leaseContract', fn ($q) => $q->where('tenant_id', $tenant->id))->pluck('id', 'id');
+
+        $invoiceRows = Invoice::where('tenant_id', $tenant->id)
+            ->whereBetween('invoice_date', [$from, $to])
+            ->get()
+            ->map(fn (Invoice $invoice) => [
+                'date'        => $invoice->invoice_date,
+                'bill_ref'    => $invoice->invoice_number,
+                'description' => $this->invoicePeriodLabel($invoice),
+                'debit'       => (float) $invoice->total_incl_vat,
+                'credit'      => 0.0,
+            ]);
+
+        $ewaRows = EwaBill::whereHas('leaseContract', fn ($q) => $q->where('tenant_id', $tenant->id))
+            ->whereBetween('reading_date', [$from, $to])
+            ->get()
+            ->map(fn (EwaBill $bill) => [
+                'date'        => $bill->reading_date ?? $bill->created_at,
+                'bill_ref'    => $bill->bill_number,
+                'description' => 'EWA — ' . ($bill->billing_period ?: '—'),
+                'debit'       => (float) $bill->effective_tenant_portion,
+                'credit'      => 0.0,
+            ]);
+
+        $paymentRows = Payment::whereIn('invoice_id', $invoiceIds)
+            ->whereBetween('payment_date', [$from, $to])
+            ->with('invoice:id,invoice_number')
+            ->get()
+            ->map(fn (Payment $payment) => [
+                'date'        => $payment->payment_date,
+                'bill_ref'    => $payment->payment_number,
+                'description' => "Payment — {$payment->method_label}" . ($payment->invoice ? " (Inv {$payment->invoice->invoice_number})" : ''),
+                'debit'       => 0.0,
+                'credit'      => (float) $payment->amount,
+            ]);
+
+        $ewaPaymentRows = EwaPayment::whereIn('ewa_bill_id', $ewaBillIds)
+            ->whereBetween('payment_date', [$from, $to])
+            ->with('ewaBill:id,bill_number')
+            ->get()
+            ->map(fn (EwaPayment $payment) => [
+                'date'        => $payment->payment_date,
+                'bill_ref'    => $payment->payment_number,
+                'description' => "Payment — {$payment->method_label}" . ($payment->ewaBill ? " (EWA {$payment->ewaBill->bill_number})" : ''),
+                'debit'       => 0.0,
+                'credit'      => (float) $payment->amount,
+            ]);
+
+        $noteRows = InvoiceNote::where('tenant_id', $tenant->id)
+            ->whereBetween('note_date', [$from, $to])
+            ->with('invoice:id,invoice_number')
+            ->get()
+            ->map(fn (InvoiceNote $note) => [
+                'date'        => $note->note_date,
+                'bill_ref'    => $note->note_number,
+                'description' => $note->invoice
+                    ? "{$note->type_label} — {$note->reason} (Inv {$note->invoice->invoice_number})"
+                    : "{$note->type_label} — {$note->reason}",
+                'debit'       => $note->type === 'debit' ? (float) $note->amount : 0.0,
+                'credit'      => $note->type === 'credit' ? (float) $note->amount : 0.0,
+            ]);
+
+        $balance = 0.0;
+
+        return $invoiceRows->concat($ewaRows)->concat($paymentRows)->concat($ewaPaymentRows)->concat($noteRows)
+            ->sortBy('date')
+            ->values()
+            ->map(function ($row) use (&$balance) {
+                $balance += $row['debit'] - $row['credit'];
+                $row['balance'] = round($balance, 3);
+
+                return $row;
+            });
     }
 
     /**

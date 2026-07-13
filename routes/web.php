@@ -86,6 +86,8 @@ Route::delete('/invoices/{invoice}/notes/{invoiceNote}',      [InvoiceNoteContro
 Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 Route::get('/reports/tenant-statement',       [ReportController::class, 'tenantStatement'])->name('reports.tenant-statement');
 Route::get('/reports/tenant-statement/pdf',   [ReportController::class, 'tenantStatementPdf'])->name('reports.tenant-statement.pdf');
+Route::get('/reports/tenant-ledger',          [ReportController::class, 'tenantLedger'])->name('reports.tenant-ledger');
+Route::get('/reports/tenant-ledger/pdf',      [ReportController::class, 'tenantLedgerPdf'])->name('reports.tenant-ledger.pdf');
 Route::get('/reports/tenant-ageing',          [ReportController::class, 'tenantAgeing'])->name('reports.tenant-ageing');
 Route::get('/reports/tenant-ageing/pdf',      [ReportController::class, 'tenantAgeingPdf'])->name('reports.tenant-ageing.pdf');
 Route::get('/reports/group-ageing',           [ReportController::class, 'groupAgeing'])->name('reports.group-ageing');
