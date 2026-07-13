@@ -28,8 +28,12 @@ table.rv th {
 }
 table.rv th.amt-head { text-align: right; }
 table.rv td { padding: 3px 4px; vertical-align: top; }
-table.rv td.amt { text-align: right; white-space: nowrap; border-left: 1px solid #111827; }
-table.rv .particulars-col { width: 78%; }
+table.rv td.amt { text-align: right; white-space: nowrap; }
+table.rv .particulars-col { width: 77%; }
+/* A solid-fill spacer column instead of a per-row border-left — DomPDF's
+   border-collapse support leaves visible white seams between stacked
+   <td> borders, but a background-painted column has no seams. */
+table.rv td.divider, table.rv th.divider { width: 1px; padding: 0; background: #111827; }
 
 .p-account { font-weight: 700; }
 .p-tenant { padding-left: 18px; }
@@ -38,9 +42,9 @@ table.rv .particulars-col { width: 78%; }
 .p-unit-line .cr { display: inline-block; width: 30px; text-align: right; }
 .p-unit-line .amt-inline { display: inline-block; width: 90px; text-align: right; }
 
-.rv-spacer td { padding: 0; height: 90px; border-left: 1px solid #111827; }
+.rv-spacer td { padding: 0; height: 90px; }
 
-.rv-meta-row td { padding-top: 14px; border-left: 1px solid #111827; }
+.rv-meta-row td { padding-top: 14px; }
 .rv-meta-lbl { font-weight: 700; }
 .rv-meta-val { padding-left: 18px; }
 
@@ -80,20 +84,24 @@ table.rv .particulars-col { width: 78%; }
     <thead>
         <tr>
             <th class="particulars-col">Particulars</th>
+            <th class="divider"></th>
             <th class="amt-head">Amount</th>
         </tr>
     </thead>
     <tbody>
         <tr>
             <td class="p-account">Account :</td>
+            <td class="divider"></td>
             <td class="amt"></td>
         </tr>
         <tr>
             <td class="p-tenant">{{ $invoice->tenant_name }}</td>
+            <td class="divider"></td>
             <td class="amt">{{ number_format($payment->amount, 3) }}</td>
         </tr>
         <tr>
             <td class="p-category">Primary Cost Category</td>
+            <td class="divider"></td>
             <td class="amt"></td>
         </tr>
         <tr>
@@ -102,14 +110,16 @@ table.rv .particulars-col { width: 78%; }
                 <span class="amt-inline">{{ number_format($payment->amount, 3) }}</span>
                 <span class="cr">Cr</span>
             </td>
+            <td class="divider"></td>
             <td class="amt"></td>
         </tr>
-        <tr class="rv-spacer"><td></td><td></td></tr>
+        <tr class="rv-spacer"><td></td><td class="divider"></td><td></td></tr>
         <tr class="rv-meta-row">
             <td>
                 <div class="rv-meta-lbl">Through :</div>
                 <div class="rv-meta-val">{{ $payment->reference ?: $payment->method_label }}</div>
             </td>
+            <td class="divider"></td>
             <td class="amt"></td>
         </tr>
         <tr>
@@ -117,6 +127,7 @@ table.rv .particulars-col { width: 78%; }
                 <div class="rv-meta-lbl">On Account of :</div>
                 <div class="rv-meta-val">{{ $payment->notes ?: 'Being the payment against ' . $invoice->type_label . ' (Inv ' . $invoice->invoice_number . ')' }}</div>
             </td>
+            <td class="divider"></td>
             <td class="amt"></td>
         </tr>
         <tr>
@@ -124,10 +135,12 @@ table.rv .particulars-col { width: 78%; }
                 <div class="rv-meta-lbl">Amount (in words) :</div>
                 <div class="rv-meta-val">{{ \App\Support\NumberToWords::bahrainiDinars($payment->amount) }}</div>
             </td>
-            <td class="amt" style="border-left:1px solid #111827"></td>
+            <td class="divider"></td>
+            <td class="amt"></td>
         </tr>
         <tr class="rv-total-row">
             <td></td>
+            <td class="divider"></td>
             <td class="amt">{{ number_format($payment->amount, 3) }}</td>
         </tr>
     </tbody>
