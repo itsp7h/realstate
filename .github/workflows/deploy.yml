@@ -45,11 +45,17 @@ jobs:
           npm ci
           npm run build
 
-      - name: Fix storage/cache permissions for php-fpm
+      - name: Fix storage/cache/database permissions for php-fpm
         # Checkout resets file modes, and php-fpm runs as www-data (a
         # secondary group of the runner user) — group-write keeps both able
-        # to read/write these dirs after every deploy.
-        run: chmod -R ug+rwX storage bootstrap/cache
+        # to read/write these paths after every deploy. database/ and the
+        # sqlite file itself need this too: php-fpm writes to the sessions
+        # table (DB_CONNECTION=sqlite) on every request, and sqlite also
+        # needs to create -journal/-wal files alongside the .db file.
+        run: |
+          chmod -R ug+rwX storage bootstrap/cache
+          chmod g+w database
+          chmod g+w database/database.sqlite
 
       - name: Reload PHP-FPM
         run: sudo systemctl reload php8.3-fpm
