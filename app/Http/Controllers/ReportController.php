@@ -68,6 +68,45 @@ class ReportController extends Controller
         return $pdf->stream("statement-{$tenant->tenant_code}.pdf");
     }
 
+    // ── TENANT LEDGER (full history, running balance) ───────────────
+
+    public function tenantLedger(Request $request): View
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $tenants = Tenant::orderBy('name')->get(['id', 'name', 'tenant_code']);
+
+        $tenant = null;
+        $rows   = collect();
+        if ($tenantId = $request->input('tenant_id')) {
+            $tenant = Tenant::findOrFail($tenantId);
+            $rows   = $this->ledger->buildTransactionLedger($tenant, $from, $to);
+        }
+
+        return view('reports.tenant-ledger', [
+            'tenants' => $tenants,
+            'tenant'  => $tenant,
+            'rows'    => $rows,
+            'from'    => $from,
+            'to'      => $to,
+        ]);
+    }
+
+    public function tenantLedgerPdf(Request $request): Response
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $tenant = Tenant::findOrFail($request->input('tenant_id'));
+        $rows   = $this->ledger->buildTransactionLedger($tenant, $from, $to);
+
+        $pdf = Pdf::loadView('reports.tenant-ledger-pdf', [
+            'tenant' => $tenant,
+            'rows'   => $rows,
+            'from'   => $from,
+            'to'     => $to,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream("ledger-{$tenant->tenant_code}.pdf");
+    }
+
     // ── TENANT AGEING ──────────────────────────────────────────────
 
     public function tenantAgeing(Request $request): View

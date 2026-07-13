@@ -42,6 +42,12 @@
         <div class="report-card-desc">A running bill-wise statement for one tenant — every outstanding rent invoice and EWA bill, in date order, with a balance due.</div>
     </a>
 
+    <a href="{{ route('reports.tenant-ledger') }}" class="report-card">
+        <div class="report-card-icon"><i class="fa-solid fa-book"></i></div>
+        <div class="report-card-title">Tenant Ledger</div>
+        <div class="report-card-desc">Complete transaction history for one tenant — every bill, payment, and note in date order, with a running balance after each one.</div>
+    </a>
+
     <a href="{{ route('reports.tenant-ageing') }}" class="report-card">
         <div class="report-card-icon"><i class="fa-solid fa-hourglass-half"></i></div>
         <div class="report-card-title">Tenant Ageing</div>
