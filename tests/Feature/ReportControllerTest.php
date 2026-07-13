@@ -108,6 +108,31 @@ class ReportControllerTest extends TestCase
         $response->assertSee('60.000 Dr');
     }
 
+    public function test_tenant_statement_shows_partial_payment_as_its_own_line(): void
+    {
+        $tenant  = $this->makeTenant();
+        $invoice = $this->makeInvoice($tenant);
+        \App\Models\Payment::create([
+            'payment_number' => 'PAY-TEST-' . uniqid(),
+            'invoice_id'     => $invoice->id,
+            'amount'         => 40.000,
+            'payment_date'   => now()->format('Y-m-d'),
+            'method'         => 'cash',
+        ]);
+
+        $response = $this->get(route('reports.tenant-statement', ['tenant_id' => $tenant->id]));
+
+        // Invoice still shows its full gross amount, the payment appears as
+        // its own separate line (rather than being silently netted in), and
+        // the running balance still nets out correctly: 100 - 40 = 60.
+        $response->assertStatus(200)
+            ->assertSee($invoice->invoice_number)
+            ->assertSee('100.000 Dr')
+            ->assertSee('Payment — Cash (Inv ' . $invoice->invoice_number . ')')
+            ->assertSee('40.000 Cr')
+            ->assertSee('60.000 Dr');
+    }
+
     public function test_tenant_statement_pdf_downloads(): void
     {
         $tenant = $this->makeTenant();

@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\EwaBill;
+use App\Models\EwaPayment;
 use App\Models\Invoice;
 use App\Models\InvoiceNote;
+use App\Models\Payment;
 use App\Models\Tenant;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -23,42 +25,79 @@ class TenantLedgerService
      */
     public function buildLedger(Tenant $tenant, Carbon $from, Carbon $to): Collection
     {
-        // Notes are shown as their own line below, so the invoice's own row
-        // must exclude their effect here — otherwise a note tied to an
-        // invoice would be counted twice (once inside balance_due, once as
-        // its own row).
-        $invoiceRows = Invoice::where('tenant_id', $tenant->id)
+        // Fully settled bills (balance_due ~ 0, factoring in every payment
+        // and note against them) are left out entirely — this is an
+        // outstanding-bill statement, not a full transaction history. Bills
+        // that still owe something are broken into their component lines
+        // (bill, payments, notes) instead of one collapsed number, so it's
+        // clear what actually reduced the balance.
+        $activeInvoices = Invoice::where('tenant_id', $tenant->id)
             ->whereBetween('invoice_date', [$from, $to])
             ->get()
-            ->map(fn (Invoice $invoice) => [
-                'date'           => $invoice->invoice_date,
-                'bill_ref'       => $invoice->invoice_number,
-                'description'    => $this->invoicePeriodLabel($invoice),
-                'opening_amount' => (float) $invoice->total_incl_vat,
-                'pending_amount' => (float) $invoice->total_incl_vat - $invoice->total_paid,
-                'due_on'         => $invoice->invoice_date,
-            ]);
+            ->filter(fn (Invoice $invoice) => abs($invoice->balance_due) > 0.001);
+
+        $invoiceRows = $activeInvoices->map(fn (Invoice $invoice) => [
+            'date'           => $invoice->invoice_date,
+            'bill_ref'       => $invoice->invoice_number,
+            'description'    => $this->invoicePeriodLabel($invoice),
+            'opening_amount' => (float) $invoice->total_incl_vat,
+            'pending_amount' => (float) $invoice->total_incl_vat,
+            'due_on'         => $invoice->invoice_date,
+        ]);
 
         // EwaBill has no direct tenant_id column yet (only via leaseContract),
         // so bills whose lease contract link is missing won't show up here.
-        $ewaRows = EwaBill::whereHas('leaseContract', fn ($q) => $q->where('tenant_id', $tenant->id))
+        $activeEwaBills = EwaBill::whereHas('leaseContract', fn ($q) => $q->where('tenant_id', $tenant->id))
             ->whereBetween('reading_date', [$from, $to])
             ->get()
-            ->map(fn (EwaBill $bill) => [
-                'date'           => $bill->reading_date ?? $bill->created_at,
-                'bill_ref'       => $bill->bill_number,
-                'description'    => 'EWA — ' . ($bill->billing_period ?: '—'),
-                'opening_amount' => (float) $bill->effective_tenant_portion,
-                'pending_amount' => (float) $bill->balance_due,
-                'due_on'         => $bill->due_date,
+            ->filter(fn (EwaBill $bill) => abs($bill->balance_due) > 0.001);
+
+        $ewaRows = $activeEwaBills->map(fn (EwaBill $bill) => [
+            'date'           => $bill->reading_date ?? $bill->created_at,
+            'bill_ref'       => $bill->bill_number,
+            'description'    => 'EWA — ' . ($bill->billing_period ?: '—'),
+            'opening_amount' => (float) $bill->effective_tenant_portion,
+            'pending_amount' => (float) $bill->effective_tenant_portion,
+            'due_on'         => $bill->due_date,
+        ]);
+
+        // Every payment against a still-outstanding invoice/EWA bill gets
+        // its own visible line, reducing the running balance. Payments
+        // belonging to an already-fully-settled bill are skipped along
+        // with that bill, to avoid a lone payment line with no bill above it.
+        $paymentRows = Payment::whereIn('invoice_id', $activeInvoices->pluck('id'))
+            ->whereBetween('payment_date', [$from, $to])
+            ->with('invoice:id,invoice_number')
+            ->get()
+            ->map(fn (Payment $payment) => [
+                'date'           => $payment->payment_date,
+                'bill_ref'       => $payment->payment_number,
+                'description'    => "Payment — {$payment->method_label}" . ($payment->invoice ? " (Inv {$payment->invoice->invoice_number})" : ''),
+                'opening_amount' => -(float) $payment->amount,
+                'pending_amount' => -(float) $payment->amount,
+                'due_on'         => $payment->payment_date,
+            ]);
+
+        $ewaPaymentRows = EwaPayment::whereIn('ewa_bill_id', $activeEwaBills->pluck('id'))
+            ->whereBetween('payment_date', [$from, $to])
+            ->with('ewaBill:id,bill_number')
+            ->get()
+            ->map(fn (EwaPayment $payment) => [
+                'date'           => $payment->payment_date,
+                'bill_ref'       => $payment->payment_number,
+                'description'    => "Payment — {$payment->method_label}" . ($payment->ewaBill ? " (EWA {$payment->ewaBill->bill_number})" : ''),
+                'opening_amount' => -(float) $payment->amount,
+                'pending_amount' => -(float) $payment->amount,
+                'due_on'         => $payment->payment_date,
             ]);
 
         // Every credit/debit note against this tenant gets its own visible
-        // line — whether issued generally or against a specific invoice
-        // (the invoice row above no longer nets these in, to avoid double
-        // counting). Credit reduces the balance (negative), debit increases
-        // it (positive).
+        // line — general notes always show, while invoice-scoped notes only
+        // show if their invoice is still outstanding (same reasoning as
+        // payments above). Credit reduces the balance (negative), debit
+        // increases it (positive).
         $noteRows = InvoiceNote::where('tenant_id', $tenant->id)
+            ->where(fn ($q) => $q->whereNull('invoice_id')->orWhereIn('invoice_id', $activeInvoices->pluck('id')))
             ->whereBetween('note_date', [$from, $to])
             ->with('invoice:id,invoice_number')
             ->get()
@@ -73,8 +112,7 @@ class TenantLedgerService
                 'due_on'         => $note->note_date,
             ]);
 
-        return $invoiceRows->concat($ewaRows)->concat($noteRows)
-            ->filter(fn ($row) => abs($row['pending_amount']) > 0.001)
+        return $invoiceRows->concat($ewaRows)->concat($paymentRows)->concat($ewaPaymentRows)->concat($noteRows)
             ->sortBy('date')
             ->values()
             ->map(function ($row) use ($to) {
