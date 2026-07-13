@@ -79,6 +79,35 @@ class ReportControllerTest extends TestCase
         $response->assertStatus(200)->assertDontSee($invoice->invoice_number);
     }
 
+    public function test_tenant_statement_shows_invoice_scoped_credit_note_as_its_own_line(): void
+    {
+        $tenant  = $this->makeTenant();
+        $invoice = $this->makeInvoice($tenant);
+        \App\Models\InvoiceNote::create([
+            'note_number' => 'CN-TEST-' . uniqid(),
+            'invoice_id'  => $invoice->id,
+            'tenant_id'   => $tenant->id,
+            'type'        => 'credit',
+            'amount'      => 40.000,
+            'note_date'   => now()->format('Y-m-d'),
+            'reason'      => 'Goodwill discount',
+        ]);
+
+        $response = $this->get(route('reports.tenant-statement', ['tenant_id' => $tenant->id]));
+
+        // The invoice's own row now shows its balance before the note (100
+        // less nothing paid), and the note appears as its own separate line
+        // referencing the invoice, instead of being silently netted in.
+        $response->assertStatus(200)
+            ->assertSee($invoice->invoice_number)
+            ->assertSee('100.000 Dr')
+            ->assertSee('Credit Note — Goodwill discount (Inv ' . $invoice->invoice_number . ')')
+            ->assertSee('40.000 Cr');
+
+        // Running total still nets out correctly: 100 invoice - 40 credit = 60 outstanding.
+        $response->assertSee('60.000 Dr');
+    }
+
     public function test_tenant_statement_pdf_downloads(): void
     {
         $tenant = $this->makeTenant();

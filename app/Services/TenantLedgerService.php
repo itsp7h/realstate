@@ -23,6 +23,10 @@ class TenantLedgerService
      */
     public function buildLedger(Tenant $tenant, Carbon $from, Carbon $to): Collection
     {
+        // Notes are shown as their own line below, so the invoice's own row
+        // must exclude their effect here — otherwise a note tied to an
+        // invoice would be counted twice (once inside balance_due, once as
+        // its own row).
         $invoiceRows = Invoice::where('tenant_id', $tenant->id)
             ->whereBetween('invoice_date', [$from, $to])
             ->get()
@@ -31,7 +35,7 @@ class TenantLedgerService
                 'bill_ref'       => $invoice->invoice_number,
                 'description'    => $this->invoicePeriodLabel($invoice),
                 'opening_amount' => (float) $invoice->total_incl_vat,
-                'pending_amount' => (float) $invoice->balance_due,
+                'pending_amount' => (float) $invoice->total_incl_vat - $invoice->total_paid,
                 'due_on'         => $invoice->invoice_date,
             ]);
 
@@ -49,18 +53,21 @@ class TenantLedgerService
                 'due_on'         => $bill->due_date,
             ]);
 
-        // General notes issued directly against the tenant (not tied to any
-        // invoice) — a permanent adjustment to their balance, so pending
-        // equals the note's own signed amount: credit reduces (negative),
-        // debit increases (positive).
+        // Every credit/debit note against this tenant gets its own visible
+        // line — whether issued generally or against a specific invoice
+        // (the invoice row above no longer nets these in, to avoid double
+        // counting). Credit reduces the balance (negative), debit increases
+        // it (positive).
         $noteRows = InvoiceNote::where('tenant_id', $tenant->id)
-            ->whereNull('invoice_id')
             ->whereBetween('note_date', [$from, $to])
+            ->with('invoice:id,invoice_number')
             ->get()
             ->map(fn (InvoiceNote $note) => [
                 'date'           => $note->note_date,
                 'bill_ref'       => $note->note_number,
-                'description'    => "{$note->type_label} — {$note->reason}",
+                'description'    => $note->invoice
+                    ? "{$note->type_label} — {$note->reason} (Inv {$note->invoice->invoice_number})"
+                    : "{$note->type_label} — {$note->reason}",
                 'opening_amount' => $note->type === 'credit' ? -(float) $note->amount : (float) $note->amount,
                 'pending_amount' => $note->type === 'credit' ? -(float) $note->amount : (float) $note->amount,
                 'due_on'         => $note->note_date,
