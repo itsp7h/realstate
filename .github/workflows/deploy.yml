@@ -4,15 +4,23 @@ name: Deploy
 # proceeds if that run passed — so a broken build on main can never deploy.
 #
 # Runs on a self-hosted runner living on the same private network as the
-# app's Proxmox LXC container (192.168.1.220), since GitHub's own cloud
-# runners have no route to that LAN. The runner's checkout directory
-# (_work/realstate/realstate under wherever the runner was installed) is
-# what the web server should serve from — point its document root there.
+# app's Proxmox LXC container (192.168.0.48), since GitHub's own cloud
+# runners have no route to that LAN.
+#
+# The runner's own checkout dir (_work/realstate/realstate) is only used as
+# a disposable build area — composer/npm run there, then the built tree is
+# rsynced into a dedicated deploy path (/var/www/realstate) that nginx
+# actually serves from. This keeps "where the app lives" independent of the
+# runner's internal workspace lifecycle. .env, the sqlite database, and
+# storage/ live only at the deploy path and are never touched by the sync.
 on:
   workflow_run:
     workflows: ['CI']
     branches: [main]
     types: [completed]
+
+env:
+  DEPLOY_PATH: /var/www/realstate
 
 jobs:
   deploy:
@@ -24,34 +32,43 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
-          # IMPORTANT: clean defaults to true on actions/checkout, which runs
-          # `git clean -ffdx` and would wipe .env, storage/app uploads, and
-          # anything else not committed to git on every single deploy.
-          # Must stay false so those survive across deploys.
-          clean: false
 
       - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
-
-      - name: Migrate & cache
-        run: |
-          php artisan migrate --force
-          php artisan config:cache
-          php artisan route:cache
-          php artisan view:cache
 
       - name: Build frontend assets
         run: |
           npm ci
           npm run build
 
+      - name: Sync build to deploy path
+        # --delete keeps the deploy path in sync with what's actually in
+        # main (removes files deleted from the repo), but every excluded
+        # path is protected from deletion too, so persistent state never
+        # gets touched by a deploy.
+        run: |
+          rsync -a --delete \
+            --exclude='.env' \
+            --exclude='database/database.sqlite' \
+            --exclude='storage/' \
+            ./ "$DEPLOY_PATH/"
+
+      - name: Migrate & cache
+        working-directory: ${{ env.DEPLOY_PATH }}
+        run: |
+          php artisan migrate --force
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+
       - name: Fix storage/cache/database permissions for php-fpm
-        # Checkout resets file modes, and php-fpm runs as www-data (a
-        # secondary group of the runner user) — group-write keeps both able
-        # to read/write these paths after every deploy. database/ and the
-        # sqlite file itself need this too: php-fpm writes to the sessions
-        # table (DB_CONNECTION=sqlite) on every request, and sqlite also
-        # needs to create -journal/-wal files alongside the .db file.
+        # php-fpm runs as www-data (a secondary group of the runner user) —
+        # group-write keeps both able to read/write these paths. database/
+        # and the sqlite file itself need this too: php-fpm writes to the
+        # sessions table (DB_CONNECTION=sqlite) on every request, and
+        # sqlite also needs to create -journal/-wal files alongside the
+        # .db file.
+        working-directory: ${{ env.DEPLOY_PATH }}
         run: |
           chmod -R ug+rwX storage bootstrap/cache
           chmod g+w database
