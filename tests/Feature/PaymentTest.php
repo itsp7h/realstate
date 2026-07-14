@@ -181,6 +181,18 @@ class PaymentTest extends TestCase
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
     }
 
+    public function test_receipt_stylesheet_does_not_zero_out_page_margin(): void
+    {
+        // DomPDF silently cancels an @page margin if the stylesheet also
+        // has a bare `* { margin: 0 }` reset — this bit us once (the
+        // receipt looked print-ready but rendered with 0mm margins). Guard
+        // against reintroducing exactly that combination.
+        $source = file_get_contents(resource_path('views/payments/receipt.blade.php'));
+
+        $this->assertMatchesRegularExpression('/@page\s*\{[^}]*margin-left\s*:\s*\d/', $source);
+        $this->assertDoesNotMatchRegularExpression('/\*\s*\{[^}]*\bmargin\s*:\s*0/', $source);
+    }
+
     // ── PAYMENT METHODS ───────────────────────────────────────────
 
     public function test_all_payment_methods_accepted(): void

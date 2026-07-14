@@ -3,11 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* padding/box-sizing reset only — DomPDF cancels the @page margin below
+   if the universal selector also zeroes out margin here, a quirk of this
+   DomPDF version confirmed by direct measurement of rendered output. */
+* { padding: 0; box-sizing: border-box; }
 /* Extra left margin (binding edge) so a printed/filed copy still has
    clear text once hole-punched for a binder. */
-@page { margin: 20mm 18mm 20mm 32mm; }
-body { font-family: 'DejaVu Sans', sans-serif; font-size: 10.5px; color: #111827; }
+@page {
+    margin-top: 20mm;
+    margin-right: 18mm;
+    margin-bottom: 20mm;
+    margin-left: 32mm;
+}
+body { margin: 0; font-family: 'DejaVu Sans', sans-serif; font-size: 10.5px; color: #111827; }
 
 /* ── LETTERHEAD ──────────────────────────────────────────── */
 .letterhead { display: table; width: 100%; }
