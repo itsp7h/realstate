@@ -2,17 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\VatReturnExport;
 use App\Models\Building;
 use App\Models\PropertyUnit;
 use App\Models\Tenant;
 use App\Services\ProfitLossService;
 use App\Services\RentScheduleService;
 use App\Services\TenantLedgerService;
+use App\Services\VatReturnService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
@@ -20,6 +24,7 @@ class ReportController extends Controller
         private TenantLedgerService $ledger,
         private ProfitLossService $profitLoss,
         private RentScheduleService $rentSchedule,
+        private VatReturnService $vatReturn,
     ) {}
 
     public function index(): View
@@ -273,6 +278,40 @@ class ReportController extends Controller
         ])->setPaper('a4', 'portrait');
 
         return $pdf->stream("rent-schedule-{$tenant->tenant_code}.pdf");
+    }
+
+    // ── VAT RETURN ───────────────────────────────────────────────────
+
+    public function vatReturn(Request $request): View
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $buildingId = $request->input('building_id') ? (int) $request->input('building_id') : null;
+
+        $rows = $this->vatReturn->build($from, $to, $buildingId);
+
+        return view('reports.vat-return', [
+            'buildings'  => Building::orderBy('property_name')->get(['id', 'property_name']),
+            'buildingId' => $buildingId,
+            'building'   => $buildingId ? Building::find($buildingId) : null,
+            'rows'       => $rows,
+            'totals'     => $this->vatReturn->totals($rows),
+            'from'       => $from,
+            'to'         => $to,
+        ]);
+    }
+
+    public function vatReturnExport(Request $request)
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $buildingId = $request->input('building_id') ? (int) $request->input('building_id') : null;
+        $building   = $buildingId ? Building::find($buildingId) : null;
+
+        $rows  = $this->vatReturn->build($from, $to, $buildingId);
+        $title = $building ? $building->property_name : 'All Properties';
+
+        $filename = 'vat-return-' . ($building ? Str::slug($title) : 'all') . '-' . now()->format('Y-m-d') . '.xlsx';
+
+        return Excel::download(new VatReturnExport($rows, $title), $filename);
     }
 
     private function resolveOptionalDateRange(Request $request): array

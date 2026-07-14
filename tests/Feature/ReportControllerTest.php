@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Building;
 use App\Models\EwaBill;
 use App\Models\Invoice;
 use App\Models\LeaseContract;
@@ -18,6 +19,14 @@ class ReportControllerTest extends TestCase
         return Tenant::create(array_merge([
             'name'        => 'Test Tenant',
             'tenant_type' => 'individual',
+        ], $overrides));
+    }
+
+    private function makeBuilding(array $overrides = []): Building
+    {
+        return Building::create(array_merge([
+            'property_name' => 'Test Property',
+            'property_code' => 'TP-' . uniqid(),
         ], $overrides));
     }
 
@@ -310,5 +319,101 @@ class ReportControllerTest extends TestCase
 
         $response = $this->get(route('reports.tenant-statement', ['tenant_id' => $tenant->id]));
         $response->assertStatus(200)->assertSee($bill->bill_number);
+    }
+
+    // ── VAT RETURN ───────────────────────────────────────────────
+
+    public function test_vat_return_renders_without_a_building_selected(): void
+    {
+        $this->get(route('reports.vat-return'))->assertStatus(200);
+    }
+
+    public function test_vat_return_shows_exempt_rent_invoice(): void
+    {
+        $tenant  = $this->makeTenant();
+        $invoice = $this->makeInvoice($tenant, ['vat_rate' => 0]);
+
+        $response = $this->get(route('reports.vat-return'));
+        $response->assertStatus(200)
+            ->assertSee($invoice->invoice_number)
+            ->assertSee('EXM-S')
+            ->assertSee('100.000');
+    }
+
+    public function test_vat_return_shows_standard_rated_invoice_with_s_tax_code(): void
+    {
+        $tenant  = $this->makeTenant();
+        $invoice = $this->makeInvoice($tenant, ['vat_rate' => 10]);
+
+        $response = $this->get(route('reports.vat-return'));
+        $response->assertStatus(200)
+            ->assertSee($invoice->invoice_number)
+            ->assertSee('>S<', false);
+    }
+
+    public function test_vat_return_filters_by_building(): void
+    {
+        $buildingA = $this->makeBuilding(['property_name' => 'Building A']);
+        $buildingB = $this->makeBuilding(['property_name' => 'Building B']);
+        $tenant    = $this->makeTenant();
+
+        $inA = $this->makeInvoice($tenant, ['property_name' => 'Building A']);
+        $inB = $this->makeInvoice($tenant, ['property_name' => 'Building B']);
+
+        $response = $this->get(route('reports.vat-return', ['building_id' => $buildingA->id]));
+        $response->assertStatus(200)
+            ->assertSee($inA->invoice_number)
+            ->assertDontSee($inB->invoice_number);
+    }
+
+    public function test_vat_return_includes_ewa_bills_as_exempt(): void
+    {
+        $tenant   = $this->makeTenant();
+        $contract = LeaseContract::create([
+            'date'               => now()->format('Y-m-d'),
+            'lease_agreement_no' => 'LA-' . uniqid(),
+            'tenant_id'          => $tenant->id,
+            'tenant_name'        => $tenant->name,
+            'property_name'      => 'Test Property',
+            'lease_start_date'   => now()->subYear()->format('Y-m-d'),
+            'lease_end_date'     => now()->addYear()->format('Y-m-d'),
+        ]);
+        $bill = EwaBill::create([
+            'bill_number'       => 'EWA-TEST-' . uniqid(),
+            'lease_contract_id' => $contract->id,
+            'tenant_name'       => $tenant->name,
+            'billing_period'    => 'July 2026',
+            'reading_type'      => 'actual',
+            'reading_date'      => now()->subDays(5)->format('Y-m-d'),
+            'elec_charges'      => 20.000,
+            'water_charges'     => 5.000,
+            'total_amount'      => 25.000,
+            'tenant_portion'    => 25.000,
+            'due_date'          => now()->subDays(5)->format('Y-m-d'),
+            'status'            => 'issued',
+        ]);
+
+        $response = $this->get(route('reports.vat-return'));
+        $response->assertStatus(200)->assertSee($bill->bill_number)->assertSee('EXM-S');
+    }
+
+    public function test_vat_return_shows_totals_row(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeInvoice($tenant, ['lines' => [['property_name' => 'Test Property', 'amount' => 100.000]], 'vat_rate' => 0]);
+        $this->makeInvoice($tenant, ['lines' => [['property_name' => 'Test Property', 'amount' => 50.000]], 'vat_rate' => 0]);
+
+        $response = $this->get(route('reports.vat-return'));
+        $response->assertStatus(200)->assertSee('150.000');
+    }
+
+    public function test_vat_return_export_returns_xlsx(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeInvoice($tenant);
+
+        $response = $this->get(route('reports.vat-return.export'));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('vat-return-', $response->headers->get('Content-Disposition'));
     }
 }

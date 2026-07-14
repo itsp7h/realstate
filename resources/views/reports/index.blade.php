@@ -71,6 +71,12 @@
         <div class="report-card-title">Rent Payment Schedule</div>
         <div class="report-card-desc">Month-by-month for one tenant — which months were paid in full, which were only partly paid, and which were never invoiced at all.</div>
     </a>
+
+    <a href="{{ route('reports.vat-return') }}" class="report-card">
+        <div class="report-card-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+        <div class="report-card-title">VAT Return</div>
+        <div class="report-card-desc">Every rent invoice and EWA bill for a property and date range, in the exact column format the quarterly VAT filing needs — export straight to XLSX.</div>
+    </a>
 </div>
 
 <div style="margin-top:20px;font-size:12px;color:var(--text-muted);max-width:640px">
