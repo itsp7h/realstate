@@ -67,14 +67,16 @@ jobs:
           php artisan view:cache
 
       - name: Fix storage/cache/database permissions for php-fpm
-        # php-fpm runs as www-data (a secondary group of the runner user) —
-        # group-write keeps both able to read/write these paths. database/
-        # and the sqlite file itself need this too: php-fpm writes to the
-        # sessions table (DB_CONNECTION=sqlite) on every request, and
-        # sqlite also needs to create -journal/-wal files alongside the
-        # .db file.
+        # php-fpm runs as www-data and writes into storage/ (logs, cache,
+        # sessions if file-based) and database/database.sqlite on every
+        # request between deploys — those writes land owned by www-data,
+        # and chmod on a file you don't own fails even with group-write
+        # access. Reclaiming ownership back to the runner user first (a
+        # narrowly-scoped NOPASSWD sudo rule, see CLAUDE.md) makes this
+        # step idempotent regardless of what www-data wrote in between.
         working-directory: ${{ env.DEPLOY_PATH }}
         run: |
+          sudo chown -R actionsrunner:actionsrunner storage bootstrap/cache database
           chmod -R ug+rwX storage bootstrap/cache
           chmod g+w database
           chmod g+w database/database.sqlite
