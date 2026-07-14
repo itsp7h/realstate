@@ -27,10 +27,11 @@ php artisan make:migration # Create migration
 - The Evohus HTML/CSS/JS structure should be used as the base and adapted into Laravel Blade templates
 
 ## Frontend Design Rules
-- **ALWAYS** use the `frontend-design` skill when creating or modifying any UI component, page, layout, or view
-- This applies to all Blade templates, partials, and any frontend assets
+- **ALWAYS** use the `frontend-design` skill when creating or modifying any UI component, page, layout, or view — **no exceptions, including PDF templates, receipts, invoices, and other print/export documents**
+- This applies to all Blade templates, partials, PDF views (DomPDF), and any frontend assets
 - The skill must be invoked before writing any HTML/CSS to ensure production-grade, distinctive design quality
 - Do not write generic or plain UI — every interface element must go through the `frontend-design` skill
+- Invoking the skill is not enough on its own — actually follow its process (brainstorm → critique → build → critique again) and produce genuinely polished output (correct spacing/rhythm, considered typography, clean alignment), not just a quick pass that technically checks the box. If a deliverable still looks rough or unfinished, redo it properly rather than defending the first attempt.
 
 ## Validation & Filtering Rules
 - **ALWAYS** implement validation on both frontend (immediate user feedback) and backend (Laravel Form Requests) for every CRUD operation
