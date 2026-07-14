@@ -96,6 +96,8 @@ Route::get('/reports/profit-loss',            [ReportController::class, 'profitL
 Route::get('/reports/profit-loss/pdf',        [ReportController::class, 'profitLossPdf'])->name('reports.profit-loss.pdf');
 Route::get('/reports/rent-schedule',          [ReportController::class, 'rentSchedule'])->name('reports.rent-schedule');
 Route::get('/reports/rent-schedule/pdf',      [ReportController::class, 'rentSchedulePdf'])->name('reports.rent-schedule.pdf');
+Route::get('/reports/vat-return',             [ReportController::class, 'vatReturn'])->name('reports.vat-return');
+Route::get('/reports/vat-return/export',      [ReportController::class, 'vatReturnExport'])->name('reports.vat-return.export');
 Route::get('/invoices/{invoice}/payments/{payment}/receipt',  [PaymentController::class, 'receipt'])->name('invoices.payments.receipt');
 
 Route::resource('buildings', BuildingController::class);
