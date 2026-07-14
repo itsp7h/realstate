@@ -2,6 +2,7 @@
 
 ## Core Rule
 - **ALWAYS** read this `CLAUDE.md` file in full before performing any task in this project
+- **ALWAYS verify state before reporting it** — check git log/CI status/live server state directly rather than assuming or restating what the user said back to them. Don't say "confirmed merged" or "that's fixed" without actually running the check first.
 
 ## Project Overview
 Laravel 12 real estate application.
