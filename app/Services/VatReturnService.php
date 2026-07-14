@@ -29,6 +29,7 @@ class VatReturnService
             ->orderBy('invoice_date')
             ->get()
             ->map(fn (Invoice $invoice) => [
+                'building_name'   => $invoice->property_name,
                 'invoice_date'    => $invoice->invoice_date,
                 'date_of_supply'  => $invoice->invoice_date,
                 'reference'       => $invoice->invoice_number,
@@ -46,6 +47,7 @@ class VatReturnService
             ->orderBy('reading_date')
             ->get()
             ->map(fn (EwaBill $bill) => [
+                'building_name'   => $bill->property_name,
                 'invoice_date'    => $bill->reading_date,
                 'date_of_supply'  => $bill->reading_date,
                 'reference'       => $bill->bill_number,
@@ -61,6 +63,19 @@ class VatReturnService
         return $invoiceRows->concat($ewaRows)
             ->sortBy('invoice_date')
             ->values();
+    }
+
+    /**
+     * Groups rows by building name for the multi-tab XLSX export — one
+     * group per property present in the result set, sorted alphabetically,
+     * with rows lacking a recognisable property name bucketed under
+     * "Unassigned" rather than dropped.
+     */
+    public function groupByBuilding(Collection $rows): Collection
+    {
+        return $rows
+            ->groupBy(fn ($row) => $row['building_name'] ?: 'Unassigned')
+            ->sortKeys();
     }
 
     public function totals(Collection $rows): array

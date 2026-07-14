@@ -306,12 +306,12 @@ class ReportController extends Controller
         $buildingId = $request->input('building_id') ? (int) $request->input('building_id') : null;
         $building   = $buildingId ? Building::find($buildingId) : null;
 
-        $rows  = $this->vatReturn->build($from, $to, $buildingId);
-        $title = $building ? $building->property_name : 'All Properties';
+        $rows        = $this->vatReturn->build($from, $to, $buildingId);
+        $groupedRows = $this->vatReturn->groupByBuilding($rows);
 
-        $filename = 'vat-return-' . ($building ? Str::slug($title) : 'all') . '-' . now()->format('Y-m-d') . '.xlsx';
+        $filename = 'vat-return-' . ($building ? Str::slug($building->property_name) : 'all') . '-' . now()->format('Y-m-d') . '.xlsx';
 
-        return Excel::download(new VatReturnExport($rows, $title), $filename);
+        return Excel::download(new VatReturnExport($groupedRows), $filename);
     }
 
     private function resolveOptionalDateRange(Request $request): array

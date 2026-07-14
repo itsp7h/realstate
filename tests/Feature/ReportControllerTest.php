@@ -416,4 +416,24 @@ class ReportControllerTest extends TestCase
         $response->assertStatus(200);
         $this->assertStringContainsString('vat-return-', $response->headers->get('Content-Disposition'));
     }
+
+    public function test_vat_return_export_has_one_tab_per_property(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeInvoice($tenant, ['property_name' => 'Building One']);
+        $this->makeInvoice($tenant, ['property_name' => 'Building Two']);
+
+        $response = $this->get(route('reports.vat-return.export'));
+        $response->assertStatus(200);
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'vat-export') . '.xlsx';
+        file_put_contents($tmpFile, $response->streamedContent());
+
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($tmpFile);
+        $sheetNames  = $spreadsheet->getSheetNames();
+        unlink($tmpFile);
+
+        $this->assertContains('Building One', $sheetNames);
+        $this->assertContains('Building Two', $sheetNames);
+    }
 }
