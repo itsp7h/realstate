@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
+/* Extra left margin (binding edge) so a printed/filed copy still has
+   clear text once hole-punched for a binder. */
+@page { margin: 20mm 18mm 20mm 32mm; }
 body { font-family: 'DejaVu Sans', sans-serif; font-size: 10.5px; color: #111827; }
 
 /* ── LETTERHEAD ──────────────────────────────────────────── */
