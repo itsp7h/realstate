@@ -4,58 +4,67 @@
 <meta charset="UTF-8">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'DejaVu Sans', sans-serif; font-size: 11px; color: #111827; }
+body { font-family: 'DejaVu Sans', sans-serif; font-size: 10.5px; color: #111827; }
 
-.letterhead { display: table; width: 100%; margin-bottom: 4px; }
-.letterhead-logo { display: table-cell; width: 60px; vertical-align: middle; }
-.logo-badge { width: 48px; height: 48px; }
+/* ── LETTERHEAD ──────────────────────────────────────────── */
+.letterhead { display: table; width: 100%; }
+.letterhead-logo { display: table-cell; width: 64px; vertical-align: middle; }
+.logo-badge { width: 52px; height: 52px; }
 .letterhead-co { display: table-cell; vertical-align: middle; text-align: center; }
-.co-name { font-size: 13px; font-weight: 700; }
-.co-line { font-size: 10px; margin-top: 2px; }
-.letterhead-spacer { display: table-cell; width: 60px; }
+.co-name { font-size: 14px; font-weight: 700; letter-spacing: 0.3px; color: #1E3A8A; }
+.co-line { font-size: 9px; color: #4B5563; margin-top: 3px; line-height: 1.5; }
+.letterhead-spacer { display: table-cell; width: 64px; }
 
-.doc-title { text-align: center; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; margin: 22px 0 18px; }
-
-.dated-row { display: table; width: 100%; margin-bottom: 6px; }
-.dated-row .fill { display: table-cell; }
-.dated-row .lbl { display: table-cell; text-align: right; white-space: nowrap; padding-right: 6px; }
-.dated-row .val { display: table-cell; text-align: right; white-space: nowrap; font-weight: 700; width: 110px; }
-
-table.rv { width: 100%; border-collapse: collapse; margin-top: 6px; }
-table.rv th {
-    text-align: left; padding: 6px 4px 8px; font-weight: 400; font-size: 11px;
-    border-bottom: 1px solid #111827;
+/* ── TITLE ───────────────────────────────────────────────── */
+.doc-title {
+    text-align: center; font-size: 16px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: #111827; margin: 28px 0 8px;
 }
-table.rv th.amt-head { text-align: right; }
-table.rv td { padding: 3px 4px; vertical-align: top; }
-table.rv td.amt { text-align: right; white-space: nowrap; }
-table.rv .particulars-col { width: 77%; }
+.title-rule { width: 64px; height: 2px; background: #1E3A8A; margin: 0 auto 24px; }
+
+/* ── DATED ROW ───────────────────────────────────────────── */
+.dated-row { display: table; width: 100%; margin-bottom: 16px; }
+.dated-row .fill { display: table-cell; }
+.dated-row .lbl { display: table-cell; text-align: right; white-space: nowrap; padding-right: 8px; font-size: 10px; color: #4B5563; }
+.dated-row .val { display: table-cell; text-align: right; white-space: nowrap; font-weight: 700; font-size: 10px; width: 110px; }
+
+/* ── PARTICULARS / AMOUNT TABLE ──────────────────────────── */
+table.rv { width: 100%; border-collapse: collapse; }
+table.rv th {
+    text-align: left; padding: 8px 6px; font-weight: 700; font-size: 9px; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #6B7280; background: #F9FAFB; border-bottom: 1.5px solid #111827;
+}
+table.rv th.amt-head { text-align: right; width: 110px; }
+table.rv td { padding: 8px 6px; vertical-align: top; }
+table.rv td.amt { text-align: right; white-space: nowrap; width: 110px; font-weight: 600; }
+table.rv .particulars-col { width: auto; }
 /* A solid-fill spacer column instead of a per-row border-left — DomPDF's
    border-collapse support leaves visible white seams between stacked
    <td> borders, but a background-painted column has no seams. */
 table.rv td.divider, table.rv th.divider { width: 1px; padding: 0; background: #111827; }
 
-.p-account { font-weight: 700; }
-.p-tenant { padding-left: 18px; }
-.p-category { padding-left: 18px; font-weight: 700; }
-.p-unit-line { padding-left: 36px; }
-.p-unit-line .cr { display: inline-block; width: 30px; text-align: right; }
-.p-unit-line .amt-inline { display: inline-block; width: 90px; text-align: right; }
+.p-account { font-weight: 700; padding-bottom: 4px; }
+.p-tenant { padding-left: 16px; padding-bottom: 4px; }
+.p-category { padding-left: 16px; font-weight: 700; padding-bottom: 4px; }
+.p-unit-line { padding-left: 32px; color: #374151; }
+.p-unit-line .cr { display: inline-block; width: 28px; text-align: right; font-weight: 600; }
+.p-unit-line .amt-inline { display: inline-block; width: 90px; text-align: right; font-weight: 600; }
 
-.rv-spacer td { padding: 0; height: 90px; }
+.rv-spacer td { padding: 0; height: 32px; }
 
-.rv-meta-row td { padding-top: 14px; }
-.rv-meta-lbl { font-weight: 700; }
-.rv-meta-val { padding-left: 18px; }
+.rv-meta-row td { padding-top: 16px; padding-bottom: 4px; }
+.rv-meta-lbl { font-weight: 700; margin-bottom: 4px; }
+.rv-meta-val { padding-left: 16px; color: #374151; }
 
-.rv-total-row td { border-top: 1px solid #111827; padding-top: 6px; }
-.rv-total-row td.amt { font-weight: 700; }
+.rv-total-row td { border-top: 1.5px solid #111827; padding-top: 10px; padding-bottom: 2px; }
+.rv-total-row td.amt { font-weight: 700; font-size: 12px; }
 
-.sign-block { display: table; width: 100%; margin-top: 60px; }
+/* ── SIGNATURE / FOOTER ──────────────────────────────────── */
+.sign-block { display: table; width: 100%; margin-top: 64px; }
 .sign-cell { display: table-cell; width: 50%; vertical-align: bottom; }
 .sign-cell.right { text-align: right; }
-.sign-line { border-top: 1px solid #111827; width: 200px; margin-left: auto; padding-top: 4px; font-size: 10px; }
-.prepared-by { margin-top: 40px; font-size: 11px; }
+.sign-line { border-top: 1px solid #111827; width: 190px; margin-left: auto; padding-top: 5px; font-size: 9.5px; color: #4B5563; }
+.prepared-by { margin-top: 32px; font-size: 10.5px; color: #4B5563; }
 </style>
 </head>
 <body>
@@ -72,7 +81,8 @@ table.rv td.divider, table.rv th.divider { width: 1px; padding: 0; background: #
     <div class="letterhead-spacer"></div>
 </div>
 
-<div class="doc-title">RECEIPT</div>
+<div class="doc-title">Receipt</div>
+<div class="title-rule"></div>
 
 <div class="dated-row">
     <div class="fill"></div>
@@ -85,7 +95,7 @@ table.rv td.divider, table.rv th.divider { width: 1px; padding: 0; background: #
         <tr>
             <th class="particulars-col">Particulars</th>
             <th class="divider"></th>
-            <th class="amt-head">Amount</th>
+            <th class="amt-head">Amount (BHD)</th>
         </tr>
     </thead>
     <tbody>
