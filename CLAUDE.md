@@ -89,6 +89,14 @@ php artisan make:migration # Create migration
 - Never use heredocs or long one-liner commands (e.g. long `printf '...\n...\n...'`) for this console — they have repeatedly failed and corrupted files/left the shell stuck
 - Keep each individual command well under the console's wrap width so nothing gets split mid-command
 
+## Production Server Setup (192.168.0.48)
+- App is deployed at `/var/www/realstate` (not the GitHub Actions runner's own `_work/` checkout dir — that's a disposable build area only)
+- Deploy user is `actionsrunner`; php-fpm runs as `www-data`, added to the `actionsrunner` group for shared read/write access
+- Required passwordless sudo rules for `actionsrunner` (each its own file under `/etc/sudoers.d/`, mode `0440`):
+  - `systemctl reload php8.3-fpm` — so Deploy can reload php-fpm without a password prompt
+  - `chown -R actionsrunner:actionsrunner /var/www/realstate/storage /var/www/realstate/bootstrap/cache /var/www/realstate/database` — reclaims ownership of paths php-fpm (www-data) writes into between deploys (logs, sqlite sessions), since `chmod` on a file you don't own fails even with group-write access
+- If a deploy ever fails at the permissions-fix step with `Operation not permitted`, it's this exact issue recurring — check the sudoers rule above is still in place before debugging further
+
 ## Notes
 - App key is already generated
 - Default database is SQLite at `database/database.sqlite`
