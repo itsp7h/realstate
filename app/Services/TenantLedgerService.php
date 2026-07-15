@@ -133,6 +133,48 @@ class TenantLedgerService
     }
 
     /**
+     * All-time consolidated financial snapshot for one tenant — rent and
+     * EWA invoiced/received/outstanding, plus the net effect of any
+     * tenant-level (not invoice-scoped) credit/debit notes. Invoice-scoped
+     * notes are already netted into each invoice's own balance_due, so
+     * they're not added again here — only general notes need their own line,
+     * same reasoning as buildAgeingLedger().
+     */
+    public function buildFinancialSummary(Tenant $tenant): array
+    {
+        $invoices = Invoice::where('tenant_id', $tenant->id)->get();
+        $ewaBills = EwaBill::whereHas('leaseContract', fn ($q) => $q->where('tenant_id', $tenant->id))->get();
+
+        $rentInvoiced    = (float) $invoices->sum('total_incl_vat');
+        $rentReceived    = (float) $invoices->sum('total_paid');
+        $rentOutstanding = (float) $invoices->sum('balance_due');
+
+        $ewaInvoiced    = (float) $ewaBills->sum('effective_tenant_portion');
+        $ewaReceived    = (float) $ewaBills->sum('total_paid');
+        $ewaOutstanding = (float) $ewaBills->sum('balance_due');
+
+        $generalNotes = InvoiceNote::where('tenant_id', $tenant->id)->whereNull('invoice_id')->get();
+        $creditNotesTotal = (float) $generalNotes->where('type', 'credit')->sum('amount');
+        $debitNotesTotal  = (float) $generalNotes->where('type', 'debit')->sum('amount');
+        $netNotesAdjustment = $debitNotesTotal - $creditNotesTotal;
+
+        return [
+            'rent_invoiced'        => round($rentInvoiced, 3),
+            'rent_received'        => round($rentReceived, 3),
+            'rent_outstanding'     => round($rentOutstanding, 3),
+            'ewa_invoiced'         => round($ewaInvoiced, 3),
+            'ewa_received'         => round($ewaReceived, 3),
+            'ewa_outstanding'      => round($ewaOutstanding, 3),
+            'credit_notes_total'   => round($creditNotesTotal, 3),
+            'debit_notes_total'    => round($debitNotesTotal, 3),
+            'net_notes_adjustment' => round($netNotesAdjustment, 3),
+            'total_outstanding'    => round($rentOutstanding + $ewaOutstanding + $netNotesAdjustment, 3),
+            'active_leases'        => $tenant->leaseContracts()->where('lease_end_date', '>=', now())->count(),
+            'last_payment_date'    => Payment::whereIn('invoice_id', $invoices->pluck('id'))->orderByDesc('payment_date')->value('payment_date'),
+        ];
+    }
+
+    /**
      * One row per outstanding bill (invoice/EWA), each already netted down
      * by its own payments and notes, for the Ageing reports. Unlike
      * buildLedger(), payments/notes tied to a specific bill are NOT shown

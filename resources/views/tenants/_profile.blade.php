@@ -16,6 +16,40 @@
     .pdf-modal-header span { flex: 1; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: #E2E8F0; }
     .pdf-modal-iframe { flex: 1; border: none; width: 100%; background: #fff; }
 
+    .fs-hero {
+        background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius);
+        padding: 20px 24px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .fs-hero-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; }
+    .fs-hero-val { font-family: 'Outfit', sans-serif; font-size: 32px; font-weight: 800; margin-top: 4px; }
+    .fs-hero-val.owing   { color: #DC2626; }
+    .fs-hero-val.settled { color: #059669; }
+    .fs-hero-meta { text-align: right; font-size: 12px; color: var(--text-muted); line-height: 1.7; }
+
+    .fs-section-title {
+        font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+        color: var(--text-muted); margin: 22px 0 10px;
+    }
+    .fs-stats {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 14px;
+    }
+    .fs-stat {
+        background: var(--card-bg); border: 1px solid var(--card-border);
+        border-radius: var(--radius); padding: 16px 20px;
+        display: flex; align-items: center; gap: 14px;
+    }
+    .fs-stat-icon {
+        width: 40px; height: 40px; border-radius: var(--radius-sm);
+        display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+    }
+    .fs-stat-icon.blue  { background: #EFF6FF; color: #2563EB; }
+    .fs-stat-icon.green { background: #ECFDF5; color: #059669; }
+    .fs-stat-icon.red   { background: #FEF2F2; color: #DC2626; }
+    .fs-stat-icon.amber { background: #FFFBEB; color: #D97706; }
+    .fs-stat-val { font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 800; color: var(--text-primary); line-height: 1; }
+    .fs-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
     .tab-bar {
         display: flex;
         gap: 4px;
@@ -213,6 +247,9 @@
     <button class="tab-btn" id="tab-overview" onclick="switchTab('overview')">
         <i class="fa-solid fa-address-card"></i> Overview
     </button>
+    <button class="tab-btn" id="tab-financial" onclick="switchTab('financial')">
+        <i class="fa-solid fa-chart-pie"></i> Financial Summary
+    </button>
     <button class="tab-btn" id="tab-leases" onclick="switchTab('leases')">
         <i class="fa-solid fa-file-contract"></i> Lease Contracts
         <span class="tab-badge">{{ $tenant->leaseContracts->count() }}</span>
@@ -318,6 +355,99 @@
     </div>
 
 </div>
+</div>
+
+{{-- ===================== FINANCIAL SUMMARY TAB ===================== --}}
+<div class="tab-panel" id="panel-financial">
+
+<div class="fs-hero">
+    <div>
+        <div class="fs-hero-lbl">Total Outstanding Balance</div>
+        <div class="fs-hero-val {{ $financialSummary['total_outstanding'] > 0.001 ? 'owing' : 'settled' }}">
+            {{ number_format(abs($financialSummary['total_outstanding']), 3) }} BHD
+        </div>
+    </div>
+    <div class="fs-hero-meta">
+        <div>{{ $financialSummary['active_leases'] }} active lease{{ $financialSummary['active_leases'] === 1 ? '' : 's' }}</div>
+        <div>Last payment: {{ $financialSummary['last_payment_date'] ? \Illuminate\Support\Carbon::parse($financialSummary['last_payment_date'])->format('d M Y') : '—' }}</div>
+    </div>
+</div>
+
+<div class="fs-section-title">Rent</div>
+<div class="fs-stats">
+    <div class="fs-stat">
+        <div class="fs-stat-icon blue"><i class="fa-solid fa-file-invoice"></i></div>
+        <div>
+            <div class="fs-stat-val">{{ number_format($financialSummary['rent_invoiced'], 3) }}</div>
+            <div class="fs-stat-lbl">Total Invoiced (BHD)</div>
+        </div>
+    </div>
+    <div class="fs-stat">
+        <div class="fs-stat-icon green"><i class="fa-solid fa-coins"></i></div>
+        <div>
+            <div class="fs-stat-val">{{ number_format($financialSummary['rent_received'], 3) }}</div>
+            <div class="fs-stat-lbl">Total Received (BHD)</div>
+        </div>
+    </div>
+    <div class="fs-stat">
+        <div class="fs-stat-icon red"><i class="fa-solid fa-hourglass-half"></i></div>
+        <div>
+            <div class="fs-stat-val">{{ number_format($financialSummary['rent_outstanding'], 3) }}</div>
+            <div class="fs-stat-lbl">Outstanding (BHD)</div>
+        </div>
+    </div>
+</div>
+
+<div class="fs-section-title">EWA</div>
+<div class="fs-stats">
+    <div class="fs-stat">
+        <div class="fs-stat-icon blue"><i class="fa-solid fa-bolt"></i></div>
+        <div>
+            <div class="fs-stat-val">{{ number_format($financialSummary['ewa_invoiced'], 3) }}</div>
+            <div class="fs-stat-lbl">Total Invoiced (BHD)</div>
+        </div>
+    </div>
+    <div class="fs-stat">
+        <div class="fs-stat-icon green"><i class="fa-solid fa-coins"></i></div>
+        <div>
+            <div class="fs-stat-val">{{ number_format($financialSummary['ewa_received'], 3) }}</div>
+            <div class="fs-stat-lbl">Total Received (BHD)</div>
+        </div>
+    </div>
+    <div class="fs-stat">
+        <div class="fs-stat-icon red"><i class="fa-solid fa-hourglass-half"></i></div>
+        <div>
+            <div class="fs-stat-val">{{ number_format($financialSummary['ewa_outstanding'], 3) }}</div>
+            <div class="fs-stat-lbl">Outstanding (BHD)</div>
+        </div>
+    </div>
+</div>
+
+<div class="fs-section-title">Credit &amp; Debit Notes</div>
+<div class="fs-stats">
+    <div class="fs-stat">
+        <div class="fs-stat-icon green"><i class="fa-solid fa-file-circle-minus"></i></div>
+        <div>
+            <div class="fs-stat-val">{{ number_format($financialSummary['credit_notes_total'], 3) }}</div>
+            <div class="fs-stat-lbl">Total Credit Notes (BHD)</div>
+        </div>
+    </div>
+    <div class="fs-stat">
+        <div class="fs-stat-icon amber"><i class="fa-solid fa-file-circle-plus"></i></div>
+        <div>
+            <div class="fs-stat-val">{{ number_format($financialSummary['debit_notes_total'], 3) }}</div>
+            <div class="fs-stat-lbl">Total Debit Notes (BHD)</div>
+        </div>
+    </div>
+    <div class="fs-stat">
+        <div class="fs-stat-icon {{ $financialSummary['net_notes_adjustment'] > 0.001 ? 'amber' : 'green' }}"><i class="fa-solid fa-scale-balanced"></i></div>
+        <div>
+            <div class="fs-stat-val">{{ number_format($financialSummary['net_notes_adjustment'], 3) }}</div>
+            <div class="fs-stat-lbl">Net Adjustment (BHD)</div>
+        </div>
+    </div>
+</div>
+
 </div>
 
 {{-- ===================== LEASE CONTRACTS TAB ===================== --}}
@@ -690,7 +820,7 @@ document.addEventListener('keydown', function (e) {
         }
     };
 
-    const validTabs = ['overview', 'leases', 'invoices', 'payments', 'ewa', 'notes', 'ledger'];
+    const validTabs = ['overview', 'financial', 'leases', 'invoices', 'payments', 'ewa', 'notes', 'ledger'];
     const urlTab = inModal ? null : new URLSearchParams(window.location.search).get('tab');
     switchTab(validTabs.includes(urlTab) ? urlTab : 'overview');
 })();

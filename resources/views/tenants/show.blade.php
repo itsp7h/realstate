@@ -30,6 +30,6 @@
     </div>
 @endif
 
-@include('tenants._profile', ['tenant' => $tenant, 'rentSchedule' => $rentSchedule])
+@include('tenants._profile', ['tenant' => $tenant, 'rentSchedule' => $rentSchedule, 'financialSummary' => $financialSummary])
 
 @endsection
