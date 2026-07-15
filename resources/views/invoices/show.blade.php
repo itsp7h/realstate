@@ -139,7 +139,7 @@
             <i class="fa-solid fa-arrow-left"></i> Back
         </a>
         <button type="button" class="btn btn-outline"
-                onclick="openInvPdf('{{ route('invoices.pdf.preview', $invoice) }}', '{{ $invoice->invoice_number }}')">
+                onclick="openInvPdf('{{ route('invoices.pdf.preview', $invoice) }}', '{{ $invoice->invoice_number }}', '{{ route('invoices.pdf', $invoice) }}')">
             <i class="fa-solid fa-file-pdf"></i> Preview PDF
         </button>
         <a href="{{ route('invoices.pdf', $invoice) }}" class="btn btn-outline" download>
@@ -294,6 +294,10 @@
             </div>
             <div class="payment-amt">{{ number_format($pmt->amount, 3) }}</div>
             <div style="display:flex;gap:6px" onclick="event.stopPropagation()">
+                <button type="button" class="btn btn-outline btn-sm" title="Preview Receipt"
+                        onclick="openInvPdf('{{ route('invoices.payments.receipt.preview', [$invoice, $pmt]) }}', '{{ $pmt->payment_number }}', '{{ route('invoices.payments.receipt', [$invoice, $pmt]) }}')">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
                 <a href="{{ route('invoices.payments.receipt', [$invoice, $pmt]) }}" class="btn btn-outline btn-sm" title="Download Receipt" target="_blank">
                     <i class="fa-solid fa-file-arrow-down"></i>
                 </a>
@@ -451,7 +455,7 @@
         <div class="pdf-modal-header">
             <i class="fa-solid fa-file-pdf" style="color:var(--accent);font-size:16px"></i>
             <span id="invPdfTitle">{{ $invoice->invoice_number }}</span>
-            <a href="{{ route('invoices.pdf', $invoice) }}" class="btn btn-outline btn-sm" download>
+            <a id="invPdfDownloadLink" href="{{ route('invoices.pdf', $invoice) }}" class="btn btn-outline btn-sm" download>
                 <i class="fa-solid fa-download"></i> Download
             </a>
             <button type="button" class="btn btn-outline btn-sm" onclick="closeInvPdfBtn()">
@@ -466,9 +470,10 @@
 
 @push('scripts')
 <script>
-function openInvPdf(previewUrl, title) {
+function openInvPdf(previewUrl, title, downloadUrl) {
     document.getElementById('invPdfTitle').textContent = title;
     document.getElementById('invPdfFrame').src = previewUrl;
+    document.getElementById('invPdfDownloadLink').href = downloadUrl || previewUrl;
     document.getElementById('invPdfModal').classList.add('open');
 }
 function closeInvPdf(e) {

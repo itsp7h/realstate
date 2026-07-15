@@ -99,6 +99,7 @@ Route::get('/reports/rent-schedule/pdf',      [ReportController::class, 'rentSch
 Route::get('/reports/vat-return',             [ReportController::class, 'vatReturn'])->name('reports.vat-return');
 Route::get('/reports/vat-return/export',      [ReportController::class, 'vatReturnExport'])->name('reports.vat-return.export');
 Route::get('/invoices/{invoice}/payments/{payment}/receipt',  [PaymentController::class, 'receipt'])->name('invoices.payments.receipt');
+Route::get('/invoices/{invoice}/payments/{payment}/receipt/preview', [PaymentController::class, 'receiptPreview'])->name('invoices.payments.receipt.preview');
 
 Route::resource('buildings', BuildingController::class);
 Route::post('/buildings/{building}/images',                        [BuildingImageController::class, 'store'])->name('buildings.images.store');
