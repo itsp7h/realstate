@@ -294,6 +294,22 @@ class InvoiceTest extends TestCase
             ->assertSee('40.000');
     }
 
+    public function test_show_has_receipt_preview_button_for_each_payment(): void
+    {
+        $inv = $this->makeInvoice(['amount' => 100.000]);
+        $pmt = Payment::create([
+            'payment_number' => 'PAY-TEST-' . uniqid(),
+            'invoice_id'     => $inv->id,
+            'amount'         => 40.000,
+            'payment_date'   => '2024-03-05',
+            'method'         => 'cash',
+        ]);
+
+        $this->get(route('invoices.show', $inv))
+            ->assertStatus(200)
+            ->assertSee(route('invoices.payments.receipt.preview', [$inv, $pmt]), false);
+    }
+
     public function test_show_hides_record_payment_form_when_fully_paid(): void
     {
         $inv = $this->makeInvoice(['amount' => 100.000]);

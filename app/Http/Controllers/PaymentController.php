@@ -79,4 +79,13 @@ class PaymentController extends Controller
 
         return $pdf->download("receipt-{$payment->payment_number}.pdf");
     }
+
+    public function receiptPreview(Invoice $invoice, Payment $payment): Response
+    {
+        $payment->load('invoice.tenant');
+        $pdf = Pdf::loadView('payments.receipt', compact('payment', 'invoice'))
+                  ->setPaper('a4', 'portrait');
+
+        return $pdf->stream("receipt-{$payment->payment_number}.pdf");
+    }
 }
