@@ -11,11 +11,12 @@ class StorePaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'amount'       => ['required', 'numeric', 'min:0.001'],
+            'amount'      => ['required', 'numeric', 'min:0.001'],
             'payment_date' => ['required', 'date'],
-            'method'       => ['required', 'in:cash,bank_transfer,cheque,online_card'],
-            'reference'    => ['nullable', 'string', 'max:255'],
-            'notes'        => ['nullable', 'string'],
+            'method'      => ['required', 'in:cash,bank_transfer,cheque,online_card'],
+            'reference'   => ['nullable', 'string', 'max:255'],
+            'notes'       => ['nullable', 'string'],
+            'ewa_bill_id' => ['nullable', 'integer', 'exists:ewa_bills,id'],
         ];
     }
 

@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\EwaBill;
 use App\Models\Invoice;
+use App\Models\LeaseContract;
 use App\Models\Payment;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -196,6 +198,67 @@ class PaymentTest extends TestCase
         $response->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
         $this->assertStringContainsString('inline', $response->headers->get('Content-Disposition'));
+    }
+
+    public function test_receipt_shows_linked_ewa_bill_period_and_cap(): void
+    {
+        $invoice  = $this->makeInvoice();
+        $contract = LeaseContract::create([
+            'date'               => '2024-01-01',
+            'lease_agreement_no' => 'LA-' . uniqid(),
+            'tenant_id'          => $invoice->tenant_id,
+            'tenant_name'        => $invoice->tenant_name,
+            'property_name'      => 'Test Property',
+            'lease_start_date'   => '2024-01-01',
+            'lease_end_date'     => '2025-01-01',
+        ]);
+        $bill = EwaBill::create([
+            'bill_number'       => 'EWA-TEST-' . uniqid(),
+            'lease_contract_id' => $contract->id,
+            'tenant_name'       => $invoice->tenant_name,
+            'billing_period'    => 'March 2024',
+            'reading_type'      => 'actual',
+            'reading_date'      => '2024-03-01',
+            'elec_charges'      => 20.000,
+            'water_charges'     => 5.000,
+            'total_amount'      => 25.000,
+            'tenant_portion'    => 25.000,
+            'ewa_cap'           => 40.000,
+            'due_date'          => '2024-03-10',
+            'status'            => 'issued',
+        ]);
+        $payment = Payment::create([
+            'payment_number' => 'PAY-TEST-' . uniqid(),
+            'invoice_id'     => $invoice->id,
+            'ewa_bill_id'    => $bill->id,
+            'amount'         => 100.000,
+            'payment_date'   => '2024-03-15',
+            'method'         => 'cash',
+        ]);
+        $payment->load('invoice.tenant', 'ewaBill');
+
+        $html = view('payments.receipt', ['payment' => $payment, 'invoice' => $invoice])->render();
+
+        $this->assertStringContainsString($bill->bill_number, $html);
+        $this->assertStringContainsString('March 2024', $html);
+        $this->assertStringContainsString('40.000', $html);
+    }
+
+    public function test_receipt_hides_ewa_row_when_not_linked(): void
+    {
+        $invoice = $this->makeInvoice();
+        $payment = Payment::create([
+            'payment_number' => 'PAY-TEST-' . uniqid(),
+            'invoice_id'     => $invoice->id,
+            'amount'         => 100.000,
+            'payment_date'   => '2024-03-15',
+            'method'         => 'cash',
+        ]);
+        $payment->load('invoice.tenant', 'ewaBill');
+
+        $html = view('payments.receipt', ['payment' => $payment, 'invoice' => $invoice])->render();
+
+        $this->assertStringNotContainsString('EWA :', $html);
     }
 
     public function test_receipt_stylesheet_does_not_zero_out_page_margin(): void

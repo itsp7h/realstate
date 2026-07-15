@@ -151,6 +151,21 @@ table.rv td.divider, table.rv th.divider { width: 1px; padding: 0; background: #
             <td class="divider"></td>
             <td class="amt"></td>
         </tr>
+        @if($payment->ewaBill)
+        <tr>
+            <td>
+                <div class="rv-meta-lbl">EWA :</div>
+                <div class="rv-meta-val">
+                    {{ $payment->ewaBill->bill_number }} — {{ $payment->ewaBill->billing_period ?: $payment->ewaBill->reading_date?->format('M Y') }}
+                    @if($payment->ewaBill->ewa_cap !== null && (float) $payment->ewaBill->ewa_cap > 0)
+                        (Cap: {{ number_format($payment->ewaBill->ewa_cap, 3) }} BHD)
+                    @endif
+                </div>
+            </td>
+            <td class="divider"></td>
+            <td class="amt"></td>
+        </tr>
+        @endif
         <tr>
             <td>
                 <div class="rv-meta-lbl">Amount (in words) :</div>

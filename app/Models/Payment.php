@@ -11,7 +11,7 @@ class Payment extends Model
     use Auditable;
 
     protected $fillable = [
-        'payment_number', 'invoice_id', 'amount', 'payment_date', 'method', 'reference', 'notes',
+        'payment_number', 'invoice_id', 'ewa_bill_id', 'amount', 'payment_date', 'method', 'reference', 'notes',
     ];
 
     protected $casts = [
@@ -22,6 +22,17 @@ class Payment extends Model
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    /**
+     * Optional reference to an EWA bill this same payment also covers —
+     * e.g. the tenant paid rent and EWA together in one transaction. Purely
+     * informational (shown on the receipt); it doesn't mark the EWA bill
+     * itself as paid or affect its own balance_due.
+     */
+    public function ewaBill(): BelongsTo
+    {
+        return $this->belongsTo(EwaBill::class);
     }
 
     public function getMethodLabelAttribute(): string

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Building;
+use App\Models\EwaBill;
 use App\Models\Invoice;
 use App\Models\LeaseContract;
 use App\Models\Payment;
@@ -339,6 +340,61 @@ class InvoiceTest extends TestCase
         $inv->refresh();
         $this->assertEquals(0.0, $inv->balance_due);
         $this->assertEquals('paid', $inv->status);
+    }
+
+    public function test_can_record_payment_linked_to_ewa_bill(): void
+    {
+        $inv      = $this->makeInvoice(['amount' => 100.000]);
+        $contract = $this->makeContract(['tenant_id' => $inv->tenant_id, 'tenant_name' => $inv->tenant_name]);
+        $bill     = EwaBill::create([
+            'bill_number'       => 'EWA-TEST-' . uniqid(),
+            'lease_contract_id' => $contract->id,
+            'tenant_name'       => $inv->tenant_name,
+            'billing_period'    => 'March 2024',
+            'reading_type'      => 'actual',
+            'reading_date'      => '2024-03-01',
+            'elec_charges'      => 20.000,
+            'water_charges'     => 5.000,
+            'total_amount'      => 25.000,
+            'tenant_portion'    => 25.000,
+            'ewa_cap'           => 40.000,
+            'due_date'          => '2024-03-10',
+            'status'            => 'issued',
+        ]);
+
+        $this->post(route('invoices.payments.store', $inv), [
+            'amount'       => '100.000',
+            'payment_date' => '2024-03-15',
+            'method'       => 'cash',
+            'ewa_bill_id'  => $bill->id,
+        ])->assertRedirect(route('invoices.show', $inv));
+
+        $payment = Payment::where('invoice_id', $inv->id)->first();
+        $this->assertEquals($bill->id, $payment->ewa_bill_id);
+    }
+
+    public function test_record_payment_form_offers_tenants_ewa_bills(): void
+    {
+        $inv      = $this->makeInvoice(['amount' => 100.000]);
+        $contract = $this->makeContract(['tenant_id' => $inv->tenant_id, 'tenant_name' => $inv->tenant_name]);
+        $bill     = EwaBill::create([
+            'bill_number'       => 'EWA-TEST-' . uniqid(),
+            'lease_contract_id' => $contract->id,
+            'tenant_name'       => $inv->tenant_name,
+            'billing_period'    => 'March 2024',
+            'reading_type'      => 'actual',
+            'reading_date'      => '2024-03-01',
+            'elec_charges'      => 20.000,
+            'water_charges'     => 5.000,
+            'total_amount'      => 25.000,
+            'tenant_portion'    => 25.000,
+            'due_date'          => '2024-03-10',
+            'status'            => 'issued',
+        ]);
+
+        $this->get(route('invoices.show', $inv))
+            ->assertStatus(200)
+            ->assertSee($bill->bill_number);
     }
 
     // ── EDIT / UPDATE ─────────────────────────────────────────────

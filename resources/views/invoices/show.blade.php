@@ -290,7 +290,7 @@
             <div class="payment-icon"><i class="fa-solid fa-circle-check"></i></div>
             <div class="payment-info">
                 <div class="payment-num">{{ $pmt->payment_number }}</div>
-                <div class="payment-sub">{{ $pmt->payment_date->format('d M Y') }} &bull; {{ $pmt->method_label }}@if($pmt->reference) &bull; {{ $pmt->reference }}@endif</div>
+                <div class="payment-sub">{{ $pmt->payment_date->format('d M Y') }} &bull; {{ $pmt->method_label }}@if($pmt->reference) &bull; {{ $pmt->reference }}@endif @if($pmt->ewaBill) &bull; also covers {{ $pmt->ewaBill->bill_number }}@endif</div>
             </div>
             <div class="payment-amt">{{ number_format($pmt->amount, 3) }}</div>
             <div style="display:flex;gap:6px" onclick="event.stopPropagation()">
@@ -355,6 +355,21 @@
                         <label class="note-form-label">Reference</label>
                         <input type="text" name="reference" class="note-form-control" value="{{ old('reference') }}" maxlength="255" placeholder="Transaction ID, cheque no…">
                     </div>
+                    @php $tenantEwaBills = $invoice->tenant?->ewaBills()->orderByDesc('reading_date')->get() ?? collect(); @endphp
+                    @if($tenantEwaBills->isNotEmpty())
+                    <div class="form-group reason-group">
+                        <label class="note-form-label">Also covers EWA bill (optional)</label>
+                        <select name="ewa_bill_id" class="note-form-control {{ $errors->has('ewa_bill_id') ? 'is-invalid' : '' }}">
+                            <option value="">— None —</option>
+                            @foreach($tenantEwaBills as $bill)
+                            <option value="{{ $bill->id }}" {{ old('ewa_bill_id') == $bill->id ? 'selected' : '' }}>
+                                {{ $bill->bill_number }} — {{ $bill->billing_period ?: $bill->reading_date?->format('M Y') }}
+                            </option>
+                            @endforeach
+                        </select>
+                        <div class="note-invalid-feedback">{{ $errors->first('ewa_bill_id') }}</div>
+                    </div>
+                    @endif
                 </div>
             </form>
         </div>
