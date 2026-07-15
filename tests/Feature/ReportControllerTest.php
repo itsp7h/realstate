@@ -152,6 +152,69 @@ class ReportControllerTest extends TestCase
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
     }
 
+    // ── BILL-WISE STATEMENT (one row per bill, netted) ────────────
+
+    public function test_bill_wise_statement_renders_without_a_tenant_selected(): void
+    {
+        $this->get(route('reports.bill-wise-statement'))->assertStatus(200);
+    }
+
+    public function test_bill_wise_statement_shows_outstanding_invoice(): void
+    {
+        $tenant  = $this->makeTenant();
+        $invoice = $this->makeInvoice($tenant);
+
+        $response = $this->get(route('reports.bill-wise-statement', ['tenant_id' => $tenant->id]));
+        $response->assertStatus(200)->assertSee($invoice->invoice_number)->assertSee('100.000 Dr');
+    }
+
+    public function test_bill_wise_statement_nets_credit_note_into_bill_instead_of_showing_it_separately(): void
+    {
+        $tenant  = $this->makeTenant();
+        $invoice = $this->makeInvoice($tenant);
+        \App\Models\InvoiceNote::create([
+            'note_number' => 'CN-TEST-' . uniqid(),
+            'invoice_id'  => $invoice->id,
+            'tenant_id'   => $tenant->id,
+            'type'        => 'credit',
+            'amount'      => 40.000,
+            'note_date'   => now()->format('Y-m-d'),
+            'reason'      => 'Goodwill discount',
+        ]);
+
+        $response = $this->get(route('reports.bill-wise-statement', ['tenant_id' => $tenant->id]));
+        $rows = $response->viewData('rows');
+
+        $this->assertCount(1, $rows);
+        $this->assertEquals(60.0, $rows->first()['pending_amount']);
+    }
+
+    public function test_bill_wise_statement_excludes_fully_paid_invoices(): void
+    {
+        $tenant  = $this->makeTenant();
+        $invoice = $this->makeInvoice($tenant);
+        \App\Models\Payment::create([
+            'payment_number' => 'PAY-TEST-' . uniqid(),
+            'invoice_id'     => $invoice->id,
+            'amount'         => 100.000,
+            'payment_date'   => now(),
+            'method'         => 'cash',
+        ]);
+
+        $response = $this->get(route('reports.bill-wise-statement', ['tenant_id' => $tenant->id]));
+        $response->assertStatus(200)->assertDontSee($invoice->invoice_number);
+    }
+
+    public function test_bill_wise_statement_pdf_downloads(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeInvoice($tenant);
+
+        $response = $this->get(route('reports.bill-wise-statement.pdf', ['tenant_id' => $tenant->id]));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
+    }
+
     // ── TENANT LEDGER (full history, running balance) ────────────
 
     public function test_tenant_ledger_renders_without_a_tenant_selected(): void

@@ -42,6 +42,12 @@
         <div class="report-card-desc">A running bill-wise statement for one tenant — every outstanding rent invoice and EWA bill, in date order, with a balance due.</div>
     </a>
 
+    <a href="{{ route('reports.bill-wise-statement') }}" class="report-card">
+        <div class="report-card-icon"><i class="fa-solid fa-list-check"></i></div>
+        <div class="report-card-title">Bill-wise Statement</div>
+        <div class="report-card-desc">One row per outstanding bill for a tenant — opening amount, final balance, due date, and days overdue, matching the accountant's expected format.</div>
+    </a>
+
     <a href="{{ route('reports.tenant-ledger') }}" class="report-card">
         <div class="report-card-icon"><i class="fa-solid fa-book"></i></div>
         <div class="report-card-title">Tenant Ledger</div>

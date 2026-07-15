@@ -73,6 +73,47 @@ class ReportController extends Controller
         return $pdf->stream("statement-{$tenant->tenant_code}.pdf");
     }
 
+    // ── BILL-WISE STATEMENT (one row per bill, netted) ──────────────
+
+    public function billWiseStatement(Request $request): View
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $tenants = Tenant::orderBy('name')->get(['id', 'name', 'tenant_code']);
+
+        $tenant = null;
+        $rows   = collect();
+        if ($tenantId = $request->input('tenant_id')) {
+            $tenant = Tenant::findOrFail($tenantId);
+            $rows   = $this->ledger->buildAgeingLedger($tenant, $from, $to);
+        }
+
+        return view('reports.bill-wise-statement', [
+            'tenants' => $tenants,
+            'tenant'  => $tenant,
+            'rows'    => $rows,
+            'from'    => $from,
+            'to'      => $to,
+            'total'   => $this->ledger->runningBalance($rows),
+        ]);
+    }
+
+    public function billWiseStatementPdf(Request $request): Response
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $tenant = Tenant::findOrFail($request->input('tenant_id'));
+        $rows   = $this->ledger->buildAgeingLedger($tenant, $from, $to);
+
+        $pdf = Pdf::loadView('reports.bill-wise-statement-pdf', [
+            'tenant' => $tenant,
+            'rows'   => $rows,
+            'from'   => $from,
+            'to'     => $to,
+            'total'  => $this->ledger->runningBalance($rows),
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream("bill-wise-statement-{$tenant->tenant_code}.pdf");
+    }
+
     // ── TENANT LEDGER (full history, running balance) ───────────────
 
     public function tenantLedger(Request $request): View
