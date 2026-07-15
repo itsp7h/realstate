@@ -133,6 +133,73 @@ class TenantLedgerService
     }
 
     /**
+     * One row per outstanding bill (invoice/EWA), each already netted down
+     * by its own payments and notes, for the Ageing reports. Unlike
+     * buildLedger(), payments/notes tied to a specific bill are NOT shown
+     * as their own rows here — a payment or credit note isn't "an overdue
+     * item" with a meaningful age of its own, it's a reduction against one,
+     * so exploding them into the bucketed view (as buildLedger() correctly
+     * does for the Statement) just produces rows with a meaningless
+     * "days overdue". General (tenant-level) notes have no bill to net
+     * into, so they still get their own line.
+     */
+    public function buildAgeingLedger(Tenant $tenant, Carbon $from, Carbon $to): Collection
+    {
+        $invoiceRows = Invoice::where('tenant_id', $tenant->id)
+            ->whereBetween('invoice_date', [$from, $to])
+            ->get()
+            ->map(fn (Invoice $invoice) => [
+                'date'           => $invoice->invoice_date,
+                'bill_ref'       => $invoice->invoice_number,
+                'description'    => $this->invoicePeriodLabel($invoice),
+                'opening_amount' => (float) $invoice->total_incl_vat,
+                'pending_amount' => (float) $invoice->balance_due,
+                'due_on'         => $invoice->invoice_date,
+            ])
+            ->filter(fn ($row) => abs($row['pending_amount']) > 0.001);
+
+        $ewaRows = EwaBill::whereHas('leaseContract', fn ($q) => $q->where('tenant_id', $tenant->id))
+            ->whereBetween('reading_date', [$from, $to])
+            ->get()
+            ->map(fn (EwaBill $bill) => [
+                'date'           => $bill->reading_date ?? $bill->created_at,
+                'bill_ref'       => $bill->bill_number,
+                'description'    => 'EWA — ' . ($bill->billing_period ?: '—'),
+                'opening_amount' => (float) $bill->effective_tenant_portion,
+                'pending_amount' => (float) $bill->balance_due,
+                'due_on'         => $bill->due_date,
+            ])
+            ->filter(fn ($row) => abs($row['pending_amount']) > 0.001);
+
+        $noteRows = InvoiceNote::where('tenant_id', $tenant->id)
+            ->whereNull('invoice_id')
+            ->whereBetween('note_date', [$from, $to])
+            ->get()
+            ->map(fn (InvoiceNote $note) => [
+                'date'           => $note->note_date,
+                'bill_ref'       => $note->note_number,
+                'description'    => "{$note->type_label} — {$note->reason}",
+                'opening_amount' => $note->type === 'credit' ? -(float) $note->amount : (float) $note->amount,
+                'pending_amount' => $note->type === 'credit' ? -(float) $note->amount : (float) $note->amount,
+                'due_on'         => $note->note_date,
+            ])
+            ->filter(fn ($row) => abs($row['pending_amount']) > 0.001);
+
+        return $invoiceRows->concat($ewaRows)->concat($noteRows)
+            ->sortBy('date')
+            ->values()
+            ->map(function ($row) use ($to) {
+                $dueOn = ($row['due_on'] instanceof Carbon ? $row['due_on'] : Carbon::parse($row['due_on']))->copy()->startOfDay();
+                $asOf  = $to->copy()->startOfDay();
+
+                $row['overdue_days'] = $asOf->greaterThan($dueOn) ? $dueOn->diffInDays($asOf) : 0;
+                $row['bucket']       = $this->bucketFor($row['overdue_days']);
+
+                return $row;
+            });
+    }
+
+    /**
      * Full transaction history for a tenant — every rent invoice, EWA bill,
      * payment, and credit/debit note in the date range, in chronological
      * order, each with a running balance after it. Unlike buildLedger(),
@@ -225,7 +292,7 @@ class TenantLedgerService
     {
         return Tenant::orderBy('name')->get()
             ->map(function (Tenant $tenant) use ($from, $to) {
-                $rows = $this->buildLedger($tenant, $from, $to);
+                $rows = $this->buildAgeingLedger($tenant, $from, $to);
                 if ($rows->isEmpty()) {
                     return null;
                 }
