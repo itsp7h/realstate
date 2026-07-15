@@ -73,7 +73,7 @@ class PaymentController extends Controller
 
     public function receipt(Invoice $invoice, Payment $payment): Response
     {
-        $payment->load('invoice.tenant');
+        $payment->load('invoice.tenant', 'ewaBill');
         $pdf = Pdf::loadView('payments.receipt', compact('payment', 'invoice'))
                   ->setPaper('a4', 'portrait');
 
@@ -82,7 +82,7 @@ class PaymentController extends Controller
 
     public function receiptPreview(Invoice $invoice, Payment $payment): Response
     {
-        $payment->load('invoice.tenant');
+        $payment->load('invoice.tenant', 'ewaBill');
         $pdf = Pdf::loadView('payments.receipt', compact('payment', 'invoice'))
                   ->setPaper('a4', 'portrait');
 
