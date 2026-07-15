@@ -221,6 +221,30 @@ class ReportControllerTest extends TestCase
         $this->assertSame('lt60', $rows->first()['bucket']);
     }
 
+    public function test_tenant_ageing_nets_credit_note_into_bill_instead_of_showing_it_as_its_own_row(): void
+    {
+        $tenant  = $this->makeTenant();
+        $invoice = $this->makeInvoice($tenant);
+        \App\Models\InvoiceNote::create([
+            'note_number' => 'CN-TEST-' . uniqid(),
+            'invoice_id'  => $invoice->id,
+            'tenant_id'   => $tenant->id,
+            'type'        => 'credit',
+            'amount'      => 40.000,
+            'note_date'   => now()->format('Y-m-d'),
+            'reason'      => 'Goodwill discount',
+        ]);
+
+        $response = $this->get(route('reports.tenant-ageing', ['tenant_id' => $tenant->id]));
+        $rows = $response->viewData('rows');
+
+        // Exactly one row (the invoice itself), netted down to 60 — not a
+        // separate "Credit Note" row with its own (meaningless) age.
+        $this->assertCount(1, $rows);
+        $this->assertEquals(60.0, $rows->first()['pending_amount']);
+        $this->assertStringNotContainsString('Credit Note', $rows->first()['description']);
+    }
+
     public function test_tenant_ageing_shows_opening_amount_column(): void
     {
         $tenant = $this->makeTenant();

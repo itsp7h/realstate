@@ -123,7 +123,7 @@ class ReportController extends Controller
         $rows   = collect();
         if ($tenantId = $request->input('tenant_id')) {
             $tenant = Tenant::findOrFail($tenantId);
-            $rows   = $this->ledger->buildLedger($tenant, $from, $to);
+            $rows   = $this->ledger->buildAgeingLedger($tenant, $from, $to);
         }
 
         return view('reports.tenant-ageing', [
@@ -139,7 +139,7 @@ class ReportController extends Controller
     {
         [$from, $to] = $this->resolveDateRange($request);
         $tenant = Tenant::findOrFail($request->input('tenant_id'));
-        $rows   = $this->ledger->buildLedger($tenant, $from, $to);
+        $rows   = $this->ledger->buildAgeingLedger($tenant, $from, $to);
 
         $pdf = Pdf::loadView('reports.tenant-ageing-pdf', [
             'tenant' => $tenant,
