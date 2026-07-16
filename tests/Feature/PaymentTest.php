@@ -82,6 +82,8 @@ class PaymentTest extends TestCase
             'payment_date' => '2024-03-15',
             'method'       => 'cheque',
             'reference'    => 'CHQ-001',
+            'cheque_number' => 'CHQ-001',
+            'cheque_date'   => '2024-03-15',
         ]);
 
         $this->assertSame('paid', $inv->fresh()->status);
@@ -102,6 +104,42 @@ class PaymentTest extends TestCase
             'payment_date' => '2024-03-15',
             'method'       => 'cash',
         ])->assertSessionHasErrors(['amount']);
+    }
+
+    public function test_store_requires_cheque_number_and_date_when_method_is_cheque(): void
+    {
+        $inv = $this->makeInvoice();
+        $this->post(route('invoices.payments.store', $inv), [
+            'amount'       => '50.000',
+            'payment_date' => '2024-03-15',
+            'method'       => 'cheque',
+        ])->assertSessionHasErrors(['cheque_number', 'cheque_date']);
+    }
+
+    public function test_store_does_not_require_cheque_fields_for_cash(): void
+    {
+        $inv = $this->makeInvoice();
+        $this->post(route('invoices.payments.store', $inv), [
+            'amount'       => '50.000',
+            'payment_date' => '2024-03-15',
+            'method'       => 'cash',
+        ])->assertSessionHasNoErrors();
+    }
+
+    public function test_store_saves_cheque_number_and_date(): void
+    {
+        $inv = $this->makeInvoice();
+        $this->post(route('invoices.payments.store', $inv), [
+            'amount'        => '50.000',
+            'payment_date'  => '2024-03-15',
+            'method'        => 'cheque',
+            'cheque_number' => 'CHQ-9981',
+            'cheque_date'   => '2024-03-10',
+        ])->assertSessionHasNoErrors();
+
+        $payment = \App\Models\Payment::first();
+        $this->assertSame('CHQ-9981', $payment->cheque_number);
+        $this->assertSame('2024-03-10', $payment->cheque_date->format('Y-m-d'));
     }
 
     public function test_store_validates_method_values(): void
@@ -279,11 +317,12 @@ class PaymentTest extends TestCase
     {
         foreach (['cash', 'bank_transfer', 'cheque', 'online_card'] as $method) {
             $inv = $this->makeInvoice();
-            $this->post(route('invoices.payments.store', $inv), [
+            $this->post(route('invoices.payments.store', $inv), array_merge([
                 'amount'       => '50.000',
                 'payment_date' => '2024-03-15',
                 'method'       => $method,
-            ])->assertSessionHasNoErrors();
+            ], $method === 'cheque' ? ['cheque_number' => 'CHQ-001', 'cheque_date' => '2024-03-15'] : []))
+                ->assertSessionHasNoErrors();
         }
     }
 }

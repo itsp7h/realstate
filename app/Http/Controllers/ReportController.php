@@ -7,6 +7,7 @@ use App\Exports\VatReturnExport;
 use App\Models\Building;
 use App\Models\PropertyUnit;
 use App\Models\Tenant;
+use App\Services\CollectionReportService;
 use App\Services\ProfitLossService;
 use App\Services\RentScheduleService;
 use App\Services\TenantLedgerService;
@@ -26,6 +27,7 @@ class ReportController extends Controller
         private ProfitLossService $profitLoss,
         private RentScheduleService $rentSchedule,
         private VatReturnService $vatReturn,
+        private CollectionReportService $collectionReport,
     ) {}
 
     public function index(): View
@@ -571,6 +573,58 @@ class ReportController extends Controller
         $filename = 'vat-return-' . ($building ? Str::slug($building->property_name) : 'all') . '-' . now()->format('Y-m-d') . '.xlsx';
 
         return Excel::download(new VatReturnExport($groupedRows), $filename);
+    }
+
+    // ── COLLECTION REPORT (rent + EWA payments received) ─────────────
+
+    public function collection(Request $request): View
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $rows = $this->collectionReport->build($from, $to);
+
+        return view('reports.collection', [
+            'rows'  => $rows,
+            'from'  => $from,
+            'to'    => $to,
+            'total' => $this->collectionReport->total($rows),
+        ]);
+    }
+
+    public function collectionPdf(Request $request): Response
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $rows = $this->collectionReport->build($from, $to);
+
+        $pdf = Pdf::loadView('reports.collection-pdf', [
+            'rows'  => $rows,
+            'from'  => $from,
+            'to'    => $to,
+            'total' => $this->collectionReport->total($rows),
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('collection-report.pdf');
+    }
+
+    public function collectionExport(Request $request)
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $rows = $this->collectionReport->build($from, $to);
+
+        $headings = ['Receipt No', 'Date', 'Cheque No', 'Cheque Date', 'Tenant / Ledger Name', 'Particulars', 'Amount (BHD)'];
+        $mapper = fn ($row) => [
+            $row['receipt_no'],
+            $row['date']->format('Y-m-d'),
+            $row['cheque_number'],
+            $row['cheque_date']?->format('Y-m-d'),
+            $row['tenant_name'],
+            $row['particulars'],
+            $row['amount'],
+        ];
+
+        return Excel::download(
+            new ReportExport($rows, $headings, $mapper, 'Collection Report'),
+            'collection-report-' . now()->format('Y-m-d') . '.xlsx'
+        );
     }
 
     /**

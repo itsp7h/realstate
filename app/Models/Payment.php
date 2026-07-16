@@ -11,12 +11,14 @@ class Payment extends Model
     use Auditable;
 
     protected $fillable = [
-        'payment_number', 'invoice_id', 'ewa_bill_id', 'amount', 'payment_date', 'method', 'reference', 'notes',
+        'payment_number', 'invoice_id', 'ewa_bill_id', 'amount', 'payment_date', 'method', 'reference',
+        'cheque_number', 'cheque_date', 'notes',
     ];
 
     protected $casts = [
         'amount'       => 'decimal:3',
         'payment_date' => 'date',
+        'cheque_date'  => 'date',
     ];
 
     public function invoice(): BelongsTo

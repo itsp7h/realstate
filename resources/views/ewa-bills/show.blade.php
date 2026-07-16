@@ -391,7 +391,19 @@ textarea.form-control { resize: none; min-height: 56px; }
                 </div>
                 <div class="form-group" style="margin-bottom:12px">
                     <label class="form-label">Reference</label>
-                    <input type="text" name="reference" class="form-control" value="{{ old('reference') }}" maxlength="255" placeholder="Transaction ID, cheque no…">
+                    <input type="text" name="reference" class="form-control" value="{{ old('reference') }}" maxlength="255" placeholder="Transaction ID…">
+                </div>
+                <div class="form-group pay-cheque-field" style="margin-bottom:12px;display:{{ old('method') === 'cheque' ? 'block' : 'none' }}">
+                    <label class="form-label">Cheque No <span class="required">*</span></label>
+                    <input type="text" name="cheque_number" class="form-control {{ $errors->has('cheque_number') ? 'is-invalid' : '' }}"
+                           value="{{ old('cheque_number') }}" maxlength="50" placeholder="Cheque number">
+                    <div class="invalid-feedback">{{ $errors->first('cheque_number') }}</div>
+                </div>
+                <div class="form-group pay-cheque-field" style="margin-bottom:12px;display:{{ old('method') === 'cheque' ? 'block' : 'none' }}">
+                    <label class="form-label">Cheque Date <span class="required">*</span></label>
+                    <input type="date" name="cheque_date" class="form-control {{ $errors->has('cheque_date') ? 'is-invalid' : '' }}"
+                           value="{{ old('cheque_date') }}">
+                    <div class="invalid-feedback">{{ $errors->first('cheque_date') }}</div>
                 </div>
                 <div class="form-group" style="margin-bottom:16px">
                     <label class="form-label">Notes</label>
@@ -470,15 +482,38 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closePdfPrev
 document.getElementById('payAmount')?.addEventListener('blur', function() {
     if (this.value) this.value = parseFloat(this.value).toFixed(3);
 });
-document.getElementById('pay-form')?.addEventListener('submit', function(e) {
-    let ok = true;
-    const amount = document.getElementById('payAmount');
-    if (!amount?.value || parseFloat(amount.value) < 0.001) { amount?.classList.add('is-invalid'); ok = false; }
-    else { amount?.classList.remove('is-invalid'); }
-    const method = this.querySelector('[name="method"]');
-    if (!method?.value) { method?.classList.add('is-invalid'); ok = false; }
-    else { method?.classList.remove('is-invalid'); }
-    if (!ok) e.preventDefault();
-});
+(function () {
+    const form = document.getElementById('pay-form');
+    if (!form) return;
+    const method = form.querySelector('[name="method"]');
+    const chequeFields = form.querySelectorAll('.pay-cheque-field');
+    const chequeNumber = form.querySelector('[name="cheque_number"]');
+    const chequeDate = form.querySelector('[name="cheque_date"]');
+
+    function syncChequeFields() {
+        const isCheque = method.value === 'cheque';
+        chequeFields.forEach(el => { el.style.display = isCheque ? 'block' : 'none'; });
+        if (chequeNumber) chequeNumber.required = isCheque;
+        if (chequeDate) chequeDate.required = isCheque;
+    }
+    method?.addEventListener('change', syncChequeFields);
+    syncChequeFields();
+
+    form.addEventListener('submit', function(e) {
+        let ok = true;
+        const amount = document.getElementById('payAmount');
+        if (!amount?.value || parseFloat(amount.value) < 0.001) { amount?.classList.add('is-invalid'); ok = false; }
+        else { amount?.classList.remove('is-invalid'); }
+        if (!method?.value) { method?.classList.add('is-invalid'); ok = false; }
+        else { method?.classList.remove('is-invalid'); }
+        if (method.value === 'cheque') {
+            if (!chequeNumber?.value) { chequeNumber?.classList.add('is-invalid'); ok = false; }
+            else { chequeNumber?.classList.remove('is-invalid'); }
+            if (!chequeDate?.value) { chequeDate?.classList.add('is-invalid'); ok = false; }
+            else { chequeDate?.classList.remove('is-invalid'); }
+        }
+        if (!ok) e.preventDefault();
+    });
+})();
 </script>
 @endpush
