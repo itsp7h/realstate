@@ -284,6 +284,62 @@ class TenantTest extends TestCase
             ->assertSee('Overcharged tenant');
     }
 
+    public function test_show_computes_financial_summary_totals(): void
+    {
+        $tenant  = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+        $invoice = new Invoice([
+            'invoice_number' => 'INV-FINSUM-1',
+            'tenant_id'      => $tenant->id,
+            'tenant_name'    => $tenant->name,
+            'property_name'  => 'Profile Tower',
+            'type'           => 'rent',
+            'lines'          => [['property_name' => 'Profile Tower', 'amount' => 1000.000]],
+            'vat_rate'       => 0,
+            'invoice_date'   => '2026-01-01',
+            'status'         => 'issued',
+        ]);
+        $invoice->recomputeTotals();
+        $invoice->save();
+        Payment::create([
+            'payment_number' => 'PAY-FINSUM-1',
+            'invoice_id'     => $invoice->id,
+            'amount'         => 400.000,
+            'payment_date'   => '2026-01-15',
+            'method'         => 'cash',
+        ]);
+        // A general (tenant-level, not invoice-scoped) credit note.
+        InvoiceNote::create([
+            'note_number' => 'CN-FINSUM-1',
+            'tenant_id'   => $tenant->id,
+            'type'        => 'credit',
+            'amount'      => 50.000,
+            'note_date'   => '2026-01-20',
+            'reason'      => 'Goodwill credit',
+        ]);
+
+        $response = $this->get(route('tenants.show', $tenant));
+        $response->assertStatus(200);
+
+        $summary = $response->viewData('financialSummary');
+        $this->assertEquals(1000.0, $summary['rent_invoiced']);
+        $this->assertEquals(400.0, $summary['rent_received']);
+        $this->assertEquals(600.0, $summary['rent_outstanding']);
+        $this->assertEquals(50.0, $summary['credit_notes_total']);
+        $this->assertEquals(-50.0, $summary['net_notes_adjustment']);
+        // 600 rent outstanding - 50 general credit = 550.
+        $this->assertEquals(550.0, $summary['total_outstanding']);
+    }
+
+    public function test_financial_summary_tab_renders_on_show_page(): void
+    {
+        $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+
+        $this->get(route('tenants.show', $tenant))
+            ->assertStatus(200)
+            ->assertSee('Financial Summary')
+            ->assertSee('Total Outstanding Balance');
+    }
+
     public function test_show_displays_rent_ledger_tab_badge_count(): void
     {
         $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
