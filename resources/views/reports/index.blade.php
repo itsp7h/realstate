@@ -66,6 +66,12 @@
         <div class="report-card-desc">One row per tenant with an outstanding balance, in the same ageing buckets, with a grand total across everyone.</div>
     </a>
 
+    <a href="{{ route('reports.financial-summary') }}" class="report-card">
+        <div class="report-card-icon"><i class="fa-solid fa-chart-pie"></i></div>
+        <div class="report-card-title">Tenant Financial Summary</div>
+        <div class="report-card-desc">One row per tenant for a date range &mdash; opening balance carried in, amount billed and received in the period, and the resulting net balance.</div>
+    </a>
+
     <a href="{{ route('reports.profit-loss') }}" class="report-card">
         <div class="report-card-icon"><i class="fa-solid fa-scale-balanced"></i></div>
         <div class="report-card-title">Profit &amp; Loss</div>

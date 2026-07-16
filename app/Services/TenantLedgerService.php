@@ -133,48 +133,6 @@ class TenantLedgerService
     }
 
     /**
-     * All-time consolidated financial snapshot for one tenant — rent and
-     * EWA invoiced/received/outstanding, plus the net effect of any
-     * tenant-level (not invoice-scoped) credit/debit notes. Invoice-scoped
-     * notes are already netted into each invoice's own balance_due, so
-     * they're not added again here — only general notes need their own line,
-     * same reasoning as buildAgeingLedger().
-     */
-    public function buildFinancialSummary(Tenant $tenant): array
-    {
-        $invoices = Invoice::where('tenant_id', $tenant->id)->get();
-        $ewaBills = EwaBill::whereHas('leaseContract', fn ($q) => $q->where('tenant_id', $tenant->id))->get();
-
-        $rentInvoiced    = (float) $invoices->sum('total_incl_vat');
-        $rentReceived    = (float) $invoices->sum('total_paid');
-        $rentOutstanding = (float) $invoices->sum('balance_due');
-
-        $ewaInvoiced    = (float) $ewaBills->sum('effective_tenant_portion');
-        $ewaReceived    = (float) $ewaBills->sum('total_paid');
-        $ewaOutstanding = (float) $ewaBills->sum('balance_due');
-
-        $generalNotes = InvoiceNote::where('tenant_id', $tenant->id)->whereNull('invoice_id')->get();
-        $creditNotesTotal = (float) $generalNotes->where('type', 'credit')->sum('amount');
-        $debitNotesTotal  = (float) $generalNotes->where('type', 'debit')->sum('amount');
-        $netNotesAdjustment = $debitNotesTotal - $creditNotesTotal;
-
-        return [
-            'rent_invoiced'        => round($rentInvoiced, 3),
-            'rent_received'        => round($rentReceived, 3),
-            'rent_outstanding'     => round($rentOutstanding, 3),
-            'ewa_invoiced'         => round($ewaInvoiced, 3),
-            'ewa_received'         => round($ewaReceived, 3),
-            'ewa_outstanding'      => round($ewaOutstanding, 3),
-            'credit_notes_total'   => round($creditNotesTotal, 3),
-            'debit_notes_total'    => round($debitNotesTotal, 3),
-            'net_notes_adjustment' => round($netNotesAdjustment, 3),
-            'total_outstanding'    => round($rentOutstanding + $ewaOutstanding + $netNotesAdjustment, 3),
-            'active_leases'        => $tenant->leaseContracts()->where('lease_end_date', '>=', now())->count(),
-            'last_payment_date'    => Payment::whereIn('invoice_id', $invoices->pluck('id'))->orderByDesc('payment_date')->value('payment_date'),
-        ];
-    }
-
-    /**
      * One row per outstanding bill (invoice/EWA), each already netted down
      * by its own payments and notes, for the Ageing reports. Unlike
      * buildLedger(), payments/notes tied to a specific bill are NOT shown
@@ -347,6 +305,77 @@ class TenantLedgerService
                     'gt120'    => round($rows->where('bucket', 'gt120')->sum('pending_amount'), 3),
                     // "On Account" (unallocated tenant credit) isn't modelled yet — always 0 for now.
                     'on_account' => 0.0,
+                ];
+            })
+            ->filter()
+            ->values();
+    }
+
+    /**
+     * One row per tenant, for the Financial Summary report: the balance
+     * carried in from before the date range (opening), what was billed
+     * (rent + EWA + tenant-level notes) and received within the range, and
+     * the resulting net balance. Rent and EWA are combined into one figure
+     * per column rather than split, matching the report's simple 4-column
+     * layout. Tenants with zero opening balance and no activity in the
+     * range are left out, same reasoning as buildGroupOutstanding().
+     */
+    public function buildFinancialSummaryReport(Carbon $from, Carbon $to): Collection
+    {
+        return Tenant::orderBy('name')->get()
+            ->map(function (Tenant $tenant) use ($from, $to) {
+                // total_incl_vat / effective_tenant_portion / balance_due are PHP
+                // accessors, not real columns, so these have to be summed over
+                // fetched collections rather than via a query-builder ->sum().
+                $invoices = Invoice::where('tenant_id', $tenant->id)->get();
+                $ewaBills = EwaBill::whereHas('leaseContract', fn ($q) => $q->where('tenant_id', $tenant->id))->get();
+
+                $openingBilled = (float) $invoices->filter(fn (Invoice $i) => $i->invoice_date->lt($from))->sum('total_incl_vat')
+                    + (float) $ewaBills->filter(fn (EwaBill $b) => ($b->reading_date ?? $b->created_at)->lt($from))->sum('effective_tenant_portion');
+
+                $openingReceived = (float) Payment::whereIn('invoice_id', $invoices->pluck('id'))
+                    ->where('payment_date', '<', $from)
+                    ->sum('amount')
+                    + (float) EwaPayment::whereIn('ewa_bill_id', $ewaBills->pluck('id'))
+                        ->where('payment_date', '<', $from)
+                        ->sum('amount');
+
+                $openingNotes = InvoiceNote::where('tenant_id', $tenant->id)
+                    ->where('note_date', '<', $from)
+                    ->get();
+                $openingNetNotes = (float) $openingNotes->where('type', 'debit')->sum('amount')
+                    - (float) $openingNotes->where('type', 'credit')->sum('amount');
+
+                $openingBalance = $openingBilled - $openingReceived + $openingNetNotes;
+
+                $periodBilled = (float) $invoices->filter(fn (Invoice $i) => $i->invoice_date->between($from, $to))->sum('total_incl_vat')
+                    + (float) $ewaBills->filter(fn (EwaBill $b) => ($b->reading_date ?? $b->created_at)->between($from, $to))->sum('effective_tenant_portion');
+
+                $periodNotes = InvoiceNote::where('tenant_id', $tenant->id)
+                    ->whereBetween('note_date', [$from, $to])
+                    ->get();
+                $periodNetNotes = (float) $periodNotes->where('type', 'debit')->sum('amount')
+                    - (float) $periodNotes->where('type', 'credit')->sum('amount');
+
+                $periodAmount = $periodBilled + $periodNetNotes;
+
+                $periodReceived = (float) Payment::whereIn('invoice_id', $invoices->pluck('id'))
+                    ->whereBetween('payment_date', [$from, $to])
+                    ->sum('amount')
+                    + (float) EwaPayment::whereIn('ewa_bill_id', $ewaBills->pluck('id'))
+                        ->whereBetween('payment_date', [$from, $to])
+                        ->sum('amount');
+
+                if (abs($openingBalance) < 0.001 && abs($periodAmount) < 0.001 && abs($periodReceived) < 0.001) {
+                    return null;
+                }
+
+                return [
+                    'tenant'          => $tenant,
+                    'opening_balance' => round($openingBalance, 3),
+                    'period_amount'   => round($periodAmount, 3),
+                    'period_received' => round($periodReceived, 3),
+                    'net_balance'     => round($openingBalance + $periodAmount - $periodReceived, 3),
                 ];
             })
             ->filter()
