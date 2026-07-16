@@ -76,8 +76,14 @@
     </div>
     <div class="page-header-actions">
         <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
+        <button type="button" class="btn btn-outline"
+                onclick="openReportPdf('{{ route('reports.profit-loss.pdf', request()->only(['building_id','tenant_id','unit_id','date_from','date_to'])) }}', 'Profit &amp; Loss Statement')">
+            <i class="fa-solid fa-eye"></i> Preview
+        </button>
         <a href="{{ route('reports.profit-loss.pdf', request()->only(['building_id','tenant_id','unit_id','date_from','date_to'])) }}"
-           target="_blank" class="btn btn-primary"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+           target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+        <a href="{{ route('reports.profit-loss.export', request()->only(['building_id','tenant_id','unit_id','date_from','date_to'])) }}"
+           class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
     </div>
 </div>
 
@@ -182,5 +188,7 @@
     <i class="fa-solid fa-circle-info" style="margin-right:5px"></i>
     Cash-basis for revenue (payments actually received). Expenses are recognised when incurred — EWA bills on their reading date, maintenance costs once department-head approved — since the system doesn't track a "paid to EWA authority" or "paid to contractor" event. Maintenance costs currently only roll up by building, not by tenant, since maintenance requests aren't linked to a tenant record.
 </div>
+
+@include('reports._pdf-preview-modal')
 
 @endsection

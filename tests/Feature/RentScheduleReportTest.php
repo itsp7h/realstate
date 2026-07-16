@@ -91,4 +91,14 @@ class RentScheduleReportTest extends TestCase
 
         $response->assertStatus(200)->assertSee('Not Invoiced');
     }
+
+    public function test_export_downloads_xlsx(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeContract($tenant);
+
+        $response = $this->get(route('reports.rent-schedule.export', ['tenant_id' => $tenant->id]));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('spreadsheetml', $response->headers->get('Content-Type'));
+    }
 }

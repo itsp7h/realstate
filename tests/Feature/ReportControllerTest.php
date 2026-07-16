@@ -152,6 +152,16 @@ class ReportControllerTest extends TestCase
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
     }
 
+    public function test_tenant_statement_export_downloads_xlsx(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeInvoice($tenant);
+
+        $response = $this->get(route('reports.tenant-statement.export', ['tenant_id' => $tenant->id]));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('spreadsheetml', $response->headers->get('Content-Type'));
+    }
+
     // ── BILL-WISE STATEMENT (one row per bill, netted) ────────────
 
     public function test_bill_wise_statement_renders_without_a_tenant_selected(): void
@@ -215,6 +225,16 @@ class ReportControllerTest extends TestCase
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
     }
 
+    public function test_bill_wise_statement_export_downloads_xlsx(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeInvoice($tenant);
+
+        $response = $this->get(route('reports.bill-wise-statement.export', ['tenant_id' => $tenant->id]));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('spreadsheetml', $response->headers->get('Content-Type'));
+    }
+
     // ── TENANT LEDGER (full history, running balance) ────────────
 
     public function test_tenant_ledger_renders_without_a_tenant_selected(): void
@@ -269,6 +289,16 @@ class ReportControllerTest extends TestCase
         $response = $this->get(route('reports.tenant-ledger.pdf', ['tenant_id' => $tenant->id]));
         $response->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
+    }
+
+    public function test_tenant_ledger_export_downloads_xlsx(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeInvoice($tenant);
+
+        $response = $this->get(route('reports.tenant-ledger.export', ['tenant_id' => $tenant->id]));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('spreadsheetml', $response->headers->get('Content-Type'));
     }
 
     // ── TENANT AGEING ────────────────────────────────────────────
@@ -342,6 +372,16 @@ class ReportControllerTest extends TestCase
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
     }
 
+    public function test_tenant_ageing_export_downloads_xlsx(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeInvoice($tenant);
+
+        $response = $this->get(route('reports.tenant-ageing.export', ['tenant_id' => $tenant->id]));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('spreadsheetml', $response->headers->get('Content-Type'));
+    }
+
     // ── GROUP OUTSTANDING AGEING ─────────────────────────────────
 
     public function test_group_ageing_includes_tenants_with_outstanding_balances(): void
@@ -373,6 +413,16 @@ class ReportControllerTest extends TestCase
         $response = $this->get(route('reports.group-ageing.pdf'));
         $response->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
+    }
+
+    public function test_group_ageing_export_downloads_xlsx(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeInvoice($tenant);
+
+        $response = $this->get(route('reports.group-ageing.export'));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('spreadsheetml', $response->headers->get('Content-Type'));
     }
 
     // ── TENANT FINANCIAL SUMMARY (all tenants, date range) ────────
@@ -439,6 +489,16 @@ class ReportControllerTest extends TestCase
         $response = $this->get(route('reports.financial-summary.pdf'));
         $response->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
+    }
+
+    public function test_financial_summary_export_downloads_xlsx(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeInvoice($tenant);
+
+        $response = $this->get(route('reports.financial-summary.export'));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('spreadsheetml', $response->headers->get('Content-Type'));
     }
 
     // ── EWA BILLS APPEAR IN THE LEDGER TOO ────────────────────────
@@ -558,6 +618,16 @@ class ReportControllerTest extends TestCase
 
         $response = $this->get(route('reports.vat-return'));
         $response->assertStatus(200)->assertSee('150.000');
+    }
+
+    public function test_vat_return_pdf_downloads(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeInvoice($tenant, ['vat_rate' => 10]);
+
+        $response = $this->get(route('reports.vat-return.pdf'));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
     }
 
     public function test_vat_return_export_returns_xlsx(): void
