@@ -220,6 +220,34 @@ class ReportController extends Controller
         return $pdf->stream('group-outstanding-ageing.pdf');
     }
 
+    // ── FINANCIAL SUMMARY (all tenants, date range) ─────────────────
+
+    public function financialSummary(Request $request): View
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $rows = $this->ledger->buildFinancialSummaryReport($from, $to);
+
+        return view('reports.financial-summary', [
+            'rows' => $rows,
+            'from' => $from,
+            'to'   => $to,
+        ]);
+    }
+
+    public function financialSummaryPdf(Request $request): Response
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $rows = $this->ledger->buildFinancialSummaryReport($from, $to);
+
+        $pdf = Pdf::loadView('reports.financial-summary-pdf', [
+            'rows' => $rows,
+            'from' => $from,
+            'to'   => $to,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('tenant-financial-summary.pdf');
+    }
+
     // ── PROFIT & LOSS ────────────────────────────────────────────────
 
     public function profitLoss(Request $request): View

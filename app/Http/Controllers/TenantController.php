@@ -6,14 +6,12 @@ use App\Http\Requests\StoreTenantRequest;
 use App\Http\Requests\UpdateTenantRequest;
 use App\Models\Tenant;
 use App\Services\RentScheduleService;
-use App\Services\TenantLedgerService;
 use Illuminate\Http\Request;
 
 class TenantController extends Controller
 {
     public function __construct(
         private RentScheduleService $rentSchedule,
-        private TenantLedgerService $ledger,
     ) {}
 
     public function index(Request $request)
@@ -72,14 +70,13 @@ class TenantController extends Controller
             'invoiceNotes.invoice',
         ]);
 
-        $rentSchedule    = $this->rentSchedule->build($tenant);
-        $financialSummary = $this->ledger->buildFinancialSummary($tenant);
+        $rentSchedule = $this->rentSchedule->build($tenant);
 
         if ($request->boolean('modal')) {
-            return view('tenants._profile', compact('tenant', 'rentSchedule', 'financialSummary'));
+            return view('tenants._profile', compact('tenant', 'rentSchedule'));
         }
 
-        return view('tenants.show', compact('tenant', 'rentSchedule', 'financialSummary'));
+        return view('tenants.show', compact('tenant', 'rentSchedule'));
     }
 
     public function edit(Tenant $tenant)

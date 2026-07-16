@@ -375,6 +375,72 @@ class ReportControllerTest extends TestCase
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
     }
 
+    // ── TENANT FINANCIAL SUMMARY (all tenants, date range) ────────
+
+    public function test_financial_summary_renders_without_any_tenants(): void
+    {
+        $this->get(route('reports.financial-summary'))->assertStatus(200);
+    }
+
+    public function test_financial_summary_computes_opening_amount_received_and_net_balance(): void
+    {
+        $tenant = $this->makeTenant(['name' => 'Ledger Tenant']);
+
+        // Billed and unpaid before the report range — carries in as the opening balance.
+        $this->makeInvoice($tenant, [
+            'invoice_date' => now()->subDays(60)->format('Y-m-d'),
+        ]);
+
+        // Billed inside the range.
+        $inRangeInvoice = $this->makeInvoice($tenant, [
+            'invoice_date' => now()->subDays(5)->format('Y-m-d'),
+        ]);
+
+        // Paid inside the range, against the in-range invoice.
+        \App\Models\Payment::create([
+            'payment_number' => 'PAY-TEST-' . uniqid(),
+            'invoice_id'     => $inRangeInvoice->id,
+            'amount'         => 30.000,
+            'payment_date'   => now()->subDays(2)->format('Y-m-d'),
+            'method'         => 'cash',
+        ]);
+
+        $response = $this->get(route('reports.financial-summary', [
+            'date_from' => now()->subDays(30)->format('Y-m-d'),
+            'date_to'   => now()->format('Y-m-d'),
+        ]));
+        $response->assertStatus(200)->assertSee('Ledger Tenant');
+
+        $row = $response->viewData('rows')->firstWhere('tenant.id', $tenant->id);
+        $this->assertEquals(100.0, $row['opening_balance']);
+        $this->assertEquals(100.0, $row['period_amount']);
+        $this->assertEquals(30.0, $row['period_received']);
+        // 100 opening + 100 billed in range - 30 received = 170.
+        $this->assertEquals(170.0, $row['net_balance']);
+    }
+
+    public function test_financial_summary_excludes_tenants_with_no_balance_or_activity(): void
+    {
+        // No invoices, payments, or notes at all — nothing to report.
+        $this->makeTenant(['name' => 'Untouched Tenant']);
+
+        $response = $this->get(route('reports.financial-summary', [
+            'date_from' => now()->subDays(30)->format('Y-m-d'),
+            'date_to'   => now()->format('Y-m-d'),
+        ]));
+        $response->assertStatus(200)->assertDontSee('Untouched Tenant');
+    }
+
+    public function test_financial_summary_pdf_downloads(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeInvoice($tenant);
+
+        $response = $this->get(route('reports.financial-summary.pdf'));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
+    }
+
     // ── EWA BILLS APPEAR IN THE LEDGER TOO ────────────────────────
 
     public function test_ewa_bill_appears_in_tenant_statement_when_outstanding(): void
