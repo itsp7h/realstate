@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ReportExport;
 use App\Exports\VatReturnExport;
 use App\Models\Building;
 use App\Models\PropertyUnit;
@@ -73,6 +74,18 @@ class ReportController extends Controller
         return $pdf->stream("statement-{$tenant->tenant_code}.pdf");
     }
 
+    public function tenantStatementExport(Request $request)
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $tenant = Tenant::findOrFail($request->input('tenant_id'));
+        $rows   = $this->ledger->buildLedger($tenant, $from, $to);
+
+        return Excel::download(
+            new ReportExport($rows, $this->ledgerRowHeadings(), $this->ledgerRowMapper(), 'Tenant Statement'),
+            "statement-{$tenant->tenant_code}.xlsx"
+        );
+    }
+
     // ── BILL-WISE STATEMENT (one row per bill, netted) ──────────────
 
     public function billWiseStatement(Request $request): View
@@ -114,6 +127,18 @@ class ReportController extends Controller
         return $pdf->stream("bill-wise-statement-{$tenant->tenant_code}.pdf");
     }
 
+    public function billWiseStatementExport(Request $request)
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $tenant = Tenant::findOrFail($request->input('tenant_id'));
+        $rows   = $this->ledger->buildAgeingLedger($tenant, $from, $to);
+
+        return Excel::download(
+            new ReportExport($rows, $this->ledgerRowHeadings(), $this->ledgerRowMapper(), 'Bill-wise Statement'),
+            "bill-wise-statement-{$tenant->tenant_code}.xlsx"
+        );
+    }
+
     // ── TENANT LEDGER (full history, running balance) ───────────────
 
     public function tenantLedger(Request $request): View
@@ -151,6 +176,28 @@ class ReportController extends Controller
         ])->setPaper('a4', 'portrait');
 
         return $pdf->stream("ledger-{$tenant->tenant_code}.pdf");
+    }
+
+    public function tenantLedgerExport(Request $request)
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $tenant = Tenant::findOrFail($request->input('tenant_id'));
+        $rows   = $this->ledger->buildTransactionLedger($tenant, $from, $to);
+
+        $headings = ['Date', 'Bill Ref', 'Description', 'Debit (BHD)', 'Credit (BHD)', 'Balance (BHD)'];
+        $mapper = fn ($row) => [
+            Carbon::parse($row['date'])->format('Y-m-d'),
+            $row['bill_ref'],
+            $row['description'],
+            $row['debit'],
+            $row['credit'],
+            $row['balance'],
+        ];
+
+        return Excel::download(
+            new ReportExport($rows, $headings, $mapper, 'Tenant Ledger'),
+            "ledger-{$tenant->tenant_code}.xlsx"
+        );
     }
 
     // ── TENANT AGEING ──────────────────────────────────────────────
@@ -192,6 +239,18 @@ class ReportController extends Controller
         return $pdf->stream("ageing-{$tenant->tenant_code}.pdf");
     }
 
+    public function tenantAgeingExport(Request $request)
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $tenant = Tenant::findOrFail($request->input('tenant_id'));
+        $rows   = $this->ledger->buildAgeingLedger($tenant, $from, $to);
+
+        return Excel::download(
+            new ReportExport($rows, $this->ledgerRowHeadings(), $this->ledgerRowMapper(), 'Tenant Ageing'),
+            "ageing-{$tenant->tenant_code}.xlsx"
+        );
+    }
+
     // ── GROUP OUTSTANDING AGEING ────────────────────────────────────
 
     public function groupAgeing(Request $request): View
@@ -220,6 +279,27 @@ class ReportController extends Controller
         return $pdf->stream('group-outstanding-ageing.pdf');
     }
 
+    public function groupAgeingExport(Request $request)
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $groups = $this->ledger->buildGroupOutstanding($from, $to);
+
+        $headings = ['Tenant', 'Pending Bills (BHD)', '< 60 Days', '60-120 Days', '> 120 Days', 'On Account'];
+        $mapper = fn ($g) => [
+            $g['tenant']->name,
+            $g['pending'],
+            $g['lt60'],
+            $g['b60_120'],
+            $g['gt120'],
+            -$g['on_account'],
+        ];
+
+        return Excel::download(
+            new ReportExport($groups, $headings, $mapper, 'Group Ageing'),
+            'group-outstanding-ageing-' . now()->format('Y-m-d') . '.xlsx'
+        );
+    }
+
     // ── FINANCIAL SUMMARY (all tenants, date range) ─────────────────
 
     public function financialSummary(Request $request): View
@@ -246,6 +326,26 @@ class ReportController extends Controller
         ])->setPaper('a4', 'landscape');
 
         return $pdf->stream('tenant-financial-summary.pdf');
+    }
+
+    public function financialSummaryExport(Request $request)
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $rows = $this->ledger->buildFinancialSummaryReport($from, $to);
+
+        $headings = ['Tenant', 'Opening Balance (BHD)', 'Amount (BHD)', 'Received Amount (BHD)', 'Net Balance (BHD)'];
+        $mapper = fn ($r) => [
+            $r['tenant']->name,
+            $r['opening_balance'],
+            $r['period_amount'],
+            -$r['period_received'],
+            $r['net_balance'],
+        ];
+
+        return Excel::download(
+            new ReportExport($rows, $headings, $mapper, 'Financial Summary'),
+            'tenant-financial-summary-' . now()->format('Y-m-d') . '.xlsx'
+        );
     }
 
     // ── PROFIT & LOSS ────────────────────────────────────────────────
@@ -312,6 +412,51 @@ class ReportController extends Controller
         return $pdf->stream('profit-and-loss.pdf');
     }
 
+    public function profitLossExport(Request $request)
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $buildingId = $request->input('building_id') ? (int) $request->input('building_id') : null;
+        $tenantId   = $request->input('tenant_id') ? (int) $request->input('tenant_id') : null;
+        $unitId     = $request->input('unit_id') ? (int) $request->input('unit_id') : null;
+
+        if (! $buildingId && ! $tenantId && ! $unitId) {
+            $rows = $this->profitLoss->byBuilding($from, $to)
+                ->map(fn ($row) => array_merge(['label' => $row['building']->property_name], $row));
+        } else {
+            $label = $buildingId
+                ? Building::find($buildingId)?->property_name
+                : ($tenantId ? Tenant::find($tenantId)?->name : PropertyUnit::find($unitId)?->unit_name);
+
+            $rows = collect([array_merge(
+                ['label' => $label ?? 'All'],
+                $this->profitLoss->build($from, $to, $buildingId, $tenantId, $unitId)
+            )]);
+        }
+
+        $headings = [
+            'Building / Scope', 'Rent Collected (BHD)', 'Utilities Collected (BHD)', 'Other Collected (BHD)',
+            'EWA Collected (BHD)', 'Total Revenue (BHD)', 'EWA Landlord Expense (BHD)', 'Maintenance Expense (BHD)',
+            'Total Expense (BHD)', 'Net Profit (BHD)',
+        ];
+        $mapper = fn ($row) => [
+            $row['label'],
+            $row['revenue']['rent_collected'],
+            $row['revenue']['utilities_collected'],
+            $row['revenue']['other_collected'],
+            $row['revenue']['ewa_collected'],
+            $row['total_revenue'],
+            $row['expenses']['ewa_landlord_expense'],
+            $row['expenses']['maintenance_expense'],
+            $row['total_expense'],
+            $row['net_profit'],
+        ];
+
+        return Excel::download(
+            new ReportExport($rows, $headings, $mapper, 'Profit & Loss'),
+            'profit-and-loss-' . now()->format('Y-m-d') . '.xlsx'
+        );
+    }
+
     // ── RENT PAYMENT SCHEDULE ────────────────────────────────────────
 
     public function rentSchedule(Request $request): View
@@ -349,6 +494,32 @@ class ReportController extends Controller
         return $pdf->stream("rent-schedule-{$tenant->tenant_code}.pdf");
     }
 
+    public function rentScheduleExport(Request $request)
+    {
+        [$from, $to] = $this->resolveOptionalDateRange($request);
+        $tenant = Tenant::findOrFail($request->input('tenant_id'));
+        $rows   = $this->rentSchedule->build($tenant, $from, $to);
+
+        $headings = ['Month', 'Invoiced (BHD)', 'Received (BHD)', 'Remaining (BHD)', 'Status'];
+        $mapper = fn ($row) => [
+            $row['month']->format('F Y'),
+            $row['invoiced'],
+            $row['paid'],
+            $row['remaining'],
+            match ($row['status']) {
+                'paid'         => 'Received',
+                'partial'      => 'Partially Received',
+                'unpaid'       => 'Unpaid',
+                'not_invoiced' => 'Not Invoiced',
+            },
+        ];
+
+        return Excel::download(
+            new ReportExport($rows, $headings, $mapper, 'Rent Schedule'),
+            "rent-schedule-{$tenant->tenant_code}.xlsx"
+        );
+    }
+
     // ── VAT RETURN ───────────────────────────────────────────────────
 
     public function vatReturn(Request $request): View
@@ -369,6 +540,25 @@ class ReportController extends Controller
         ]);
     }
 
+    public function vatReturnPdf(Request $request): Response
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+        $buildingId = $request->input('building_id') ? (int) $request->input('building_id') : null;
+        $building   = $buildingId ? Building::find($buildingId) : null;
+
+        $rows = $this->vatReturn->build($from, $to, $buildingId);
+
+        $pdf = Pdf::loadView('reports.vat-return-pdf', [
+            'building' => $building,
+            'rows'     => $rows,
+            'totals'   => $this->vatReturn->totals($rows),
+            'from'     => $from,
+            'to'       => $to,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('vat-return.pdf');
+    }
+
     public function vatReturnExport(Request $request)
     {
         [$from, $to] = $this->resolveDateRange($request);
@@ -381,6 +571,30 @@ class ReportController extends Controller
         $filename = 'vat-return-' . ($building ? Str::slug($building->property_name) : 'all') . '-' . now()->format('Y-m-d') . '.xlsx';
 
         return Excel::download(new VatReturnExport($groupedRows), $filename);
+    }
+
+    /**
+     * Shared column set for the outstanding-bill row shape produced by
+     * TenantLedgerService::buildLedger() / buildAgeingLedger() — used by
+     * the Tenant Statement, Bill-wise Statement, and Tenant Ageing exports.
+     */
+    private function ledgerRowHeadings(): array
+    {
+        return ['Date', 'Bill Ref', 'Description', 'Opening Amount (BHD)', 'Pending Amount (BHD)', 'Due Date', 'Days Overdue', 'Bucket'];
+    }
+
+    private function ledgerRowMapper(): \Closure
+    {
+        return fn ($row) => [
+            Carbon::parse($row['date'])->format('Y-m-d'),
+            $row['bill_ref'],
+            $row['description'],
+            $row['opening_amount'],
+            $row['pending_amount'],
+            Carbon::parse($row['due_on'])->format('Y-m-d'),
+            $row['overdue_days'],
+            $row['bucket'],
+        ];
     }
 
     private function resolveOptionalDateRange(Request $request): array

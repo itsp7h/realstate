@@ -40,8 +40,14 @@
     <div class="page-header-actions">
         <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
         @if($tenant)
+        <button type="button" class="btn btn-outline"
+                onclick="openReportPdf('{{ route('reports.tenant-ledger.pdf', request()->only(['tenant_id','date_from','date_to'])) }}', 'Tenant Ledger — {{ $tenant->name }}')">
+            <i class="fa-solid fa-eye"></i> Preview
+        </button>
         <a href="{{ route('reports.tenant-ledger.pdf', request()->only(['tenant_id','date_from','date_to'])) }}"
-           target="_blank" class="btn btn-primary"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+           target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+        <a href="{{ route('reports.tenant-ledger.export', request()->only(['tenant_id','date_from','date_to'])) }}"
+           class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
         @endif
     </div>
 </div>
@@ -98,5 +104,7 @@
     </table>
 </div>
 @endif
+
+@include('reports._pdf-preview-modal')
 
 @endsection

@@ -38,8 +38,14 @@
     </div>
     <div class="page-header-actions">
         <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
+        <button type="button" class="btn btn-outline"
+                onclick="openReportPdf('{{ route('reports.group-ageing.pdf', request()->only(['date_from','date_to'])) }}', 'Group Outstanding — Ageing')">
+            <i class="fa-solid fa-eye"></i> Preview
+        </button>
         <a href="{{ route('reports.group-ageing.pdf', request()->only(['date_from','date_to'])) }}"
-           target="_blank" class="btn btn-primary"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+           target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+        <a href="{{ route('reports.group-ageing.export', request()->only(['date_from','date_to'])) }}"
+           class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
     </div>
 </div>
 
@@ -91,5 +97,7 @@
     </table>
 </div>
 @endif
+
+@include('reports._pdf-preview-modal')
 
 @endsection

@@ -157,4 +157,20 @@ class ProfitLossReportTest extends TestCase
         $response->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
     }
+
+    public function test_profit_loss_export_downloads_xlsx_without_filters(): void
+    {
+        $response = $this->get(route('reports.profit-loss.export'));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('spreadsheetml', $response->headers->get('Content-Type'));
+    }
+
+    public function test_profit_loss_export_downloads_xlsx_with_building_filter(): void
+    {
+        $building = $this->makeBuilding();
+
+        $response = $this->get(route('reports.profit-loss.export', ['building_id' => $building->id]));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('spreadsheetml', $response->headers->get('Content-Type'));
+    }
 }
