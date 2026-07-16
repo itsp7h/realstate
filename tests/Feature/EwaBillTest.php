@@ -229,6 +229,32 @@ class EwaBillTest extends TestCase
         $this->assertDatabaseHas('ewa_payments', ['ewa_bill_id' => $bill->id, 'amount' => 30.000]);
     }
 
+    public function test_payment_requires_cheque_number_and_date_when_method_is_cheque(): void
+    {
+        $bill = $this->makeBill(['total_amount' => 60.000, 'tenant_portion' => 60.000]);
+
+        $this->post(route('ewa-bills.payments.store', $bill), [
+            'amount'       => '30.000',
+            'payment_date' => now()->format('Y-m-d'),
+            'method'       => 'cheque',
+        ])->assertSessionHasErrors(['cheque_number', 'cheque_date']);
+    }
+
+    public function test_payment_saves_cheque_number_and_date(): void
+    {
+        $bill = $this->makeBill(['total_amount' => 60.000, 'tenant_portion' => 60.000]);
+
+        $this->post(route('ewa-bills.payments.store', $bill), [
+            'amount'        => '30.000',
+            'payment_date'  => now()->format('Y-m-d'),
+            'method'        => 'cheque',
+            'cheque_number' => 'CHQ-5521',
+            'cheque_date'   => now()->format('Y-m-d'),
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('ewa_payments', ['ewa_bill_id' => $bill->id, 'cheque_number' => 'CHQ-5521']);
+    }
+
     public function test_payment_syncs_status_to_partially_paid(): void
     {
         $bill = $this->makeBill(['total_amount' => 60.000, 'tenant_portion' => 60.000]);

@@ -111,6 +111,9 @@ Route::get('/reports/rent-schedule/export', [ReportController::class, 'rentSched
 Route::get('/reports/vat-return',             [ReportController::class, 'vatReturn'])->name('reports.vat-return');
 Route::get('/reports/vat-return/pdf',         [ReportController::class, 'vatReturnPdf'])->name('reports.vat-return.pdf');
 Route::get('/reports/vat-return/export',      [ReportController::class, 'vatReturnExport'])->name('reports.vat-return.export');
+Route::get('/reports/collection',        [ReportController::class, 'collection'])->name('reports.collection');
+Route::get('/reports/collection/pdf',    [ReportController::class, 'collectionPdf'])->name('reports.collection.pdf');
+Route::get('/reports/collection/export', [ReportController::class, 'collectionExport'])->name('reports.collection.export');
 Route::get('/invoices/{invoice}/payments/{payment}/receipt',  [PaymentController::class, 'receipt'])->name('invoices.payments.receipt');
 Route::get('/invoices/{invoice}/payments/{payment}/receipt/preview', [PaymentController::class, 'receiptPreview'])->name('invoices.payments.receipt.preview');
 

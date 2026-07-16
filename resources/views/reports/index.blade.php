@@ -84,6 +84,12 @@
         <div class="report-card-desc">Month-by-month for one tenant — which months were paid in full, which were only partly paid, and which were never invoiced at all.</div>
     </a>
 
+    <a href="{{ route('reports.collection') }}" class="report-card">
+        <div class="report-card-icon"><i class="fa-solid fa-receipt"></i></div>
+        <div class="report-card-title">Collection Report</div>
+        <div class="report-card-desc">Every rent and EWA payment received in a date range &mdash; receipt no, cheque details, tenant, and amount.</div>
+    </a>
+
     <a href="{{ route('reports.vat-return') }}" class="report-card">
         <div class="report-card-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
         <div class="report-card-title">VAT Return</div>

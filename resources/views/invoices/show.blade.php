@@ -353,7 +353,19 @@
                     </div>
                     <div class="form-group reason-group">
                         <label class="note-form-label">Reference</label>
-                        <input type="text" name="reference" class="note-form-control" value="{{ old('reference') }}" maxlength="255" placeholder="Transaction ID, cheque no…">
+                        <input type="text" name="reference" class="note-form-control" value="{{ old('reference') }}" maxlength="255" placeholder="Transaction ID…">
+                    </div>
+                    <div class="form-group reason-group pay-cheque-field" style="display:{{ old('method') === 'cheque' ? 'block' : 'none' }}">
+                        <label class="note-form-label">Cheque No <span style="color:#DC2626">*</span></label>
+                        <input type="text" name="cheque_number" class="note-form-control {{ $errors->has('cheque_number') ? 'is-invalid' : '' }}"
+                               value="{{ old('cheque_number') }}" maxlength="50" placeholder="Cheque number">
+                        <div class="note-invalid-feedback">{{ $errors->first('cheque_number') }}</div>
+                    </div>
+                    <div class="form-group reason-group pay-cheque-field" style="display:{{ old('method') === 'cheque' ? 'block' : 'none' }}">
+                        <label class="note-form-label">Cheque Date <span style="color:#DC2626">*</span></label>
+                        <input type="date" name="cheque_date" class="note-form-control {{ $errors->has('cheque_date') ? 'is-invalid' : '' }}"
+                               value="{{ old('cheque_date') }}">
+                        <div class="note-invalid-feedback">{{ $errors->first('cheque_date') }}</div>
                     </div>
                     @php $tenantEwaBills = $invoice->tenant?->ewaBills()->orderByDesc('reading_date')->get() ?? collect(); @endphp
                     @if($tenantEwaBills->isNotEmpty())
@@ -501,5 +513,24 @@ function closeInvPdfBtn() {
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeInvPdfBtn();
 });
+
+(function () {
+    var form = document.getElementById('payFormCard')?.querySelector('form');
+    if (!form) return;
+    var method = form.querySelector('[name="method"]');
+    var chequeFields = form.querySelectorAll('.pay-cheque-field');
+    var chequeNumber = form.querySelector('[name="cheque_number"]');
+    var chequeDate = form.querySelector('[name="cheque_date"]');
+
+    function syncChequeFields() {
+        var isCheque = method.value === 'cheque';
+        chequeFields.forEach(function (el) { el.style.display = isCheque ? 'block' : 'none'; });
+        if (chequeNumber) chequeNumber.required = isCheque;
+        if (chequeDate) chequeDate.required = isCheque;
+    }
+
+    method?.addEventListener('change', syncChequeFields);
+    syncChequeFields();
+})();
 </script>
 @endpush
