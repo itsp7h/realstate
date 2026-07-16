@@ -65,7 +65,7 @@ table.ledger tr.total-row td { border-top: 1.5px solid #111827; border-bottom: n
             <td>{{ $r['tenant']->name }}</td>
             <td class="right">{{ \App\Support\MoneyFormat::crDr($r['opening_balance']) }}</td>
             <td class="right">{{ \App\Support\MoneyFormat::crDr($r['period_amount']) }}</td>
-            <td class="right">{{ \App\Support\MoneyFormat::crDr($r['period_received']) }}</td>
+            <td class="right">{{ \App\Support\MoneyFormat::crDr(-$r['period_received']) }}</td>
             <td class="right {{ $r['net_balance'] > 0.001 ? 'net-owing' : ($r['net_balance'] < -0.001 ? 'net-credit' : '') }}">{{ \App\Support\MoneyFormat::crDr($r['net_balance']) }}</td>
         </tr>
         @empty
@@ -76,7 +76,7 @@ table.ledger tr.total-row td { border-top: 1.5px solid #111827; border-bottom: n
             <td>Grand Total</td>
             <td class="right">{{ \App\Support\MoneyFormat::crDr($rows->sum('opening_balance')) }}</td>
             <td class="right">{{ \App\Support\MoneyFormat::crDr($rows->sum('period_amount')) }}</td>
-            <td class="right">{{ \App\Support\MoneyFormat::crDr($rows->sum('period_received')) }}</td>
+            <td class="right">{{ \App\Support\MoneyFormat::crDr(-$rows->sum('period_received')) }}</td>
             <td class="right">{{ \App\Support\MoneyFormat::crDr($rows->sum('net_balance')) }}</td>
         </tr>
         @endif

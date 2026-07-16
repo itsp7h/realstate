@@ -72,7 +72,7 @@
                 </td>
                 <td class="right" style="padding:9px 14px;font-family:'Outfit',sans-serif">{{ \App\Support\MoneyFormat::crDr($r['opening_balance']) }}</td>
                 <td class="right" style="padding:9px 14px;font-family:'Outfit',sans-serif">{{ \App\Support\MoneyFormat::crDr($r['period_amount']) }}</td>
-                <td class="right" style="padding:9px 14px;font-family:'Outfit',sans-serif">{{ \App\Support\MoneyFormat::crDr($r['period_received']) }}</td>
+                <td class="right" style="padding:9px 14px;font-family:'Outfit',sans-serif">{{ \App\Support\MoneyFormat::crDr(-$r['period_received']) }}</td>
                 <td class="right {{ $r['net_balance'] > 0.001 ? 'net-owing' : ($r['net_balance'] < -0.001 ? 'net-credit' : '') }}" style="padding:9px 14px;font-family:'Outfit',sans-serif;font-weight:700">{{ \App\Support\MoneyFormat::crDr($r['net_balance']) }}</td>
             </tr>
             @endforeach
@@ -80,7 +80,7 @@
                 <td style="padding:12px 14px">Grand Total</td>
                 <td class="right" style="padding:12px 14px;font-family:'Outfit',sans-serif">{{ \App\Support\MoneyFormat::crDr($rows->sum('opening_balance')) }}</td>
                 <td class="right" style="padding:12px 14px;font-family:'Outfit',sans-serif">{{ \App\Support\MoneyFormat::crDr($rows->sum('period_amount')) }}</td>
-                <td class="right" style="padding:12px 14px;font-family:'Outfit',sans-serif">{{ \App\Support\MoneyFormat::crDr($rows->sum('period_received')) }}</td>
+                <td class="right" style="padding:12px 14px;font-family:'Outfit',sans-serif">{{ \App\Support\MoneyFormat::crDr(-$rows->sum('period_received')) }}</td>
                 <td class="right" style="padding:12px 14px;font-family:'Outfit',sans-serif">{{ \App\Support\MoneyFormat::crDr($rows->sum('net_balance')) }}</td>
             </tr>
         </tbody>
