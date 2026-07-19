@@ -172,6 +172,57 @@ class EwaBillTest extends TestCase
         $this->assertEquals(40.000, (float) $bill->tenant_portion);
     }
 
+    // ── REMARKS ───────────────────────────────────────────────────
+
+    public function test_can_add_remarks_after_creation(): void
+    {
+        $bill = $this->makeBill();
+
+        $this->put(route('ewa-bills.update', $bill), [
+            'tenant_name'    => $bill->tenant_name,
+            'billing_period' => $bill->billing_period,
+            'reading_type'   => $bill->reading_type,
+            'total_amount'   => $bill->total_amount,
+            'due_date'       => $bill->due_date->format('Y-m-d'),
+            'status'         => 'issued',
+            'remarks'        => 'Meter estimated due to access issue.',
+        ])->assertRedirect(route('ewa-bills.show', $bill));
+
+        $this->assertDatabaseHas('ewa_bills', [
+            'id'      => $bill->id,
+            'remarks' => 'Meter estimated due to access issue.',
+        ]);
+    }
+
+    public function test_remarks_validates_max_length(): void
+    {
+        $this->post(route('ewa-bills.store'), [
+            'tenant_name'    => 'Test Tenant',
+            'billing_period' => 'March 2024',
+            'reading_type'   => 'actual',
+            'due_date'       => now()->addDays(20)->format('Y-m-d'),
+            'remarks'        => str_repeat('a', 501),
+        ])->assertSessionHasErrors(['remarks']);
+    }
+
+    public function test_show_displays_remarks_when_present(): void
+    {
+        $bill = $this->makeBill(['remarks' => 'Reading taken manually this cycle.']);
+
+        $this->get(route('ewa-bills.show', $bill))
+            ->assertStatus(200)
+            ->assertSee('Reading taken manually this cycle.');
+    }
+
+    public function test_pdf_downloads_with_remarks(): void
+    {
+        $bill = $this->makeBill(['remarks' => 'Please note the estimated reading.']);
+
+        $response = $this->get(route('ewa-bills.pdf', $bill));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
+    }
+
     // ── DELETE ────────────────────────────────────────────────────
 
     public function test_can_delete_bill(): void

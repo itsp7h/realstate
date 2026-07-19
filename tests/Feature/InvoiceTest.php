@@ -421,6 +421,66 @@ class InvoiceTest extends TestCase
         $this->assertDatabaseHas('invoices', ['id' => $inv->id, 'type' => 'utilities', 'amount' => 75.500]);
     }
 
+    // ── REMARKS ───────────────────────────────────────────────────
+
+    public function test_can_add_remarks_after_creation(): void
+    {
+        $inv = $this->makeInvoice();
+
+        $this->put(route('invoices.update', $inv), [
+            'tenant_id'    => $inv->tenant_id,
+            'type'         => $inv->type,
+            'invoice_date' => $inv->invoice_date->format('Y-m-d'),
+            'status'       => 'issued',
+            'lines'        => $inv->lines,
+            'remarks'      => 'Please settle by the 5th of next month.',
+        ])->assertRedirect(route('invoices.show', $inv));
+
+        $this->assertDatabaseHas('invoices', [
+            'id'      => $inv->id,
+            'remarks' => 'Please settle by the 5th of next month.',
+        ]);
+    }
+
+    public function test_remarks_validates_max_length(): void
+    {
+        $tenant = $this->makeTenant();
+
+        $this->post(route('invoices.store'), [
+            'tenant_id'    => $tenant->id,
+            'type'         => 'rent',
+            'invoice_date' => '2024-04-01',
+            'remarks'      => str_repeat('a', 501),
+            'lines'        => $this->makeLines(),
+        ])->assertSessionHasErrors(['remarks']);
+    }
+
+    public function test_show_displays_remarks_when_present(): void
+    {
+        $inv = $this->makeInvoice(['remarks' => 'Settle via bank transfer only.']);
+
+        $this->get(route('invoices.show', $inv))
+            ->assertStatus(200)
+            ->assertSee('Settle via bank transfer only.');
+    }
+
+    public function test_pdf_shows_remarks_when_present(): void
+    {
+        $inv = $this->makeInvoice(['remarks' => 'Discount applied per verbal agreement.']);
+
+        $response = $this->get(route('invoices.pdf', $inv));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
+    }
+
+    public function test_pdf_omits_remarks_section_when_blank(): void
+    {
+        $inv = $this->makeInvoice();
+
+        $response = $this->get(route('invoices.pdf', $inv));
+        $response->assertStatus(200);
+    }
+
     // ── DELETE ────────────────────────────────────────────────────
 
     public function test_can_delete_invoice(): void

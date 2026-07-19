@@ -17,6 +17,7 @@ class StoreInvoiceRequest extends FormRequest
             'vat_rate'                       => ['nullable', 'numeric', 'min:0', 'max:100'],
             'invoice_date'                   => ['required', 'date'],
             'notes'                          => ['nullable', 'string'],
+            'remarks'                        => ['nullable', 'string', 'max:500'],
             'lines'                          => ['required', 'array', 'min:1'],
             'lines.*.lease_contract_id'      => ['nullable', 'integer', 'exists:lease_contracts,id'],
             'lines.*.property_name'          => ['required', 'string', 'max:255'],

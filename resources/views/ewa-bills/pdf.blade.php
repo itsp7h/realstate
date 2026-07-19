@@ -64,6 +64,10 @@ table.rental tr.total-row td { background: #D9D2B0; font-weight: 700; border-top
 .words-label { color: #991B1B; font-weight: 700; text-decoration: underline; font-size: 10.5px; margin: 16px 0 4px; }
 .words-value { font-size: 11px; font-weight: 700; }
 
+/* ── REMARKS ──────────────────────────────────────── */
+.remarks-label { font-weight: 700; text-decoration: underline; font-size: 10.5px; margin: 14px 0 4px; }
+.remarks-value { font-size: 10.5px; }
+
 /* ── BANK DETAILS ────────────────────────────────── */
 .bank-label { color: #991B1B; font-weight: 700; text-decoration: underline; font-size: 10.5px; margin: 14px 0 4px; }
 .bank-line { font-size: 10.5px; font-weight: 700; margin-bottom: 2px; }
@@ -197,6 +201,12 @@ table.rental tr.total-row td { background: #D9D2B0; font-weight: 700; border-top
     {{-- AMOUNT IN WORDS --}}
     <div class="words-label">Amount In Words</div>
     <div class="words-value">{{ $bill->amount_in_words }}</div>
+
+    @if($bill->remarks)
+    {{-- REMARKS --}}
+    <div class="remarks-label">Remarks</div>
+    <div class="remarks-value">{{ $bill->remarks }}</div>
+    @endif
 
     {{-- BANK DETAILS --}}
     <div class="bank-label">Please remit your payment to our Bankers</div>

@@ -298,6 +298,13 @@ textarea.form-control { resize: none; min-height: 56px; }
             {{ $bill->notes }}
         </div>
         @endif
+
+        @if($bill->remarks)
+        <div style="margin-top:16px;padding:12px 16px;background:var(--page-bg);border-radius:var(--radius-sm);font-size:13px;color:var(--text-secondary)">
+            <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Remarks (printed on invoice)</div>
+            {{ $bill->remarks }}
+        </div>
+        @endif
     </div>
 </div>
 

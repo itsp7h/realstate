@@ -268,6 +268,13 @@
             <div class="notes-block" style="border-left:3px solid var(--accent-dim);padding-left:14px">{{ $invoice->notes }}</div>
         </div>
         @endif
+
+        @if($invoice->remarks)
+        <div style="margin-top:14px">
+            <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px">Remarks <span style="text-transform:none;font-weight:400">(printed on invoice)</span></div>
+            <div class="notes-block">{{ $invoice->remarks }}</div>
+        </div>
+        @endif
     </div>
 </div>
 

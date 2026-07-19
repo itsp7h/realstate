@@ -28,6 +28,7 @@ class StoreEwaBillRequest extends FormRequest
             'ewa_cap'            => ['nullable', 'numeric', 'min:0'],
             'due_date'           => ['required', 'date'],
             'notes'              => ['nullable', 'string'],
+            'remarks'            => ['nullable', 'string', 'max:500'],
         ];
     }
 
