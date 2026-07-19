@@ -56,10 +56,12 @@ php artisan make:migration # Create migration
 - Form Requests must return a `422` JSON response for API calls and redirect back with errors for Blade forms — do not swallow validation errors silently
 
 ## Git Branching Rules
-- **ALWAYS** create a new git branch before starting any feature or task — never work directly on `main`
+- **ALWAYS** create a new git branch before starting any feature or task — never work directly on `main` or `development`
 - Branch names must be descriptive and kebab-case, e.g. `feature/tenant-crud`, `feature/lease-contracts-import`, `fix/floor-migration`
 - One branch per feature — do not mix unrelated changes on the same branch
-- When a feature is complete and tested, it is ready to be merged via PR into `main`
+- `development` is the integration branch: when a feature is complete and tested, it is merged via PR into `development` first, not `main`
+- `main` is production — only merged into via a separate PR from `development`, once everything on `development` has been checked. Merging into `main` triggers the production deploy (see below), so nothing lands there directly from a feature branch
+- A second self-hosted runner/LXC for a staging deploy off `development` is planned (same repo, separate container) — not wired up yet as of 2026-07-19; when it exists, a `deploy-staging.yml` workflow triggered off `development` should be added, mirroring `deploy.yml`'s structure but targeting the staging container/path
 
 ## Form & Template Configuration Rules
 - **EVERY** CRUD module built must have a corresponding entry in the **Forms Management** tab at `/form-configs?tab=forms`
