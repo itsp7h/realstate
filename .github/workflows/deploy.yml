@@ -29,7 +29,11 @@ env:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    # Both self-hosted runners carry the default "self-hosted" label, so
+    # scoping to just that would let GitHub route production deploys onto
+    # the staging runner (this happened once, deploying main onto
+    # 192.168.0.50 instead of 192.168.0.48) — pin to the production label.
+    runs-on: [self-hosted, production]
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
