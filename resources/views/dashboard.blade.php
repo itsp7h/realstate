@@ -21,6 +21,8 @@
     transition: box-shadow 0.2s, transform 0.2s;
 }
 .dash-stat:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+a.dash-stat { text-decoration: none; cursor: pointer; }
+.dash-table tr[data-href] { cursor: pointer; }
 .dash-stat-icon {
     width: 44px; height: 44px; border-radius: var(--radius-sm);
     display: flex; align-items: center; justify-content: center;
@@ -322,41 +324,41 @@ function smartImportFileChosen(input) {
 
 {{-- STATS --}}
 <div class="dash-stats">
-    <div class="dash-stat">
+    <a href="{{ route('buildings.index') }}" class="dash-stat">
         <div class="dash-stat-icon gold"><i class="fa-solid fa-building"></i></div>
         <div>
             <div class="dash-stat-val">{{ $stats['buildings'] }}</div>
             <div class="dash-stat-lbl">Buildings</div>
         </div>
-    </div>
-    <div class="dash-stat">
+    </a>
+    <a href="{{ route('floors.global') }}" class="dash-stat">
         <div class="dash-stat-icon blue"><i class="fa-solid fa-layer-group"></i></div>
         <div>
             <div class="dash-stat-val">{{ $stats['floors'] }}</div>
             <div class="dash-stat-lbl">Floors</div>
         </div>
-    </div>
-    <div class="dash-stat">
+    </a>
+    <a href="{{ route('property-units.index') }}" class="dash-stat">
         <div class="dash-stat-icon green"><i class="fa-solid fa-door-open"></i></div>
         <div>
             <div class="dash-stat-val">{{ $stats['units'] }}</div>
             <div class="dash-stat-lbl">Total Units</div>
         </div>
-    </div>
-    <div class="dash-stat">
+    </a>
+    <a href="{{ route('property-units.index', ['unit_condition' => 'Furnished']) }}" class="dash-stat">
         <div class="dash-stat-icon purple"><i class="fa-solid fa-couch"></i></div>
         <div>
             <div class="dash-stat-val">{{ $stats['furnished'] }}</div>
             <div class="dash-stat-lbl">Furnished</div>
         </div>
-    </div>
-    <div class="dash-stat">
+    </a>
+    <a href="{{ route('property-units.index', ['unit_condition' => 'Fitted']) }}" class="dash-stat">
         <div class="dash-stat-icon rose"><i class="fa-solid fa-hammer"></i></div>
         <div>
             <div class="dash-stat-val">{{ $stats['fitted'] }}</div>
             <div class="dash-stat-lbl">Fitted</div>
         </div>
-    </div>
+    </a>
 </div>
 
 {{-- IMPORT / EXPORT HERO --}}
@@ -522,7 +524,7 @@ function smartImportFileChosen(input) {
             <thead><tr><th>Code</th><th>Name</th><th>Type</th></tr></thead>
             <tbody>
                 @foreach($recentBuildings as $b)
-                <tr>
+                <tr data-href="{{ route('buildings.show', $b) }}">
                     <td><span class="dash-code">{{ $b->property_code }}</span></td>
                     <td>{{ $b->property_name }}</td>
                     <td>{{ $b->property_type ?? '—' }}</td>
@@ -545,7 +547,7 @@ function smartImportFileChosen(input) {
             <thead><tr><th>Unit</th><th>Building</th><th>Condition</th></tr></thead>
             <tbody>
                 @foreach($recentUnits as $u)
-                <tr>
+                <tr data-href="{{ route('property-units.show', $u) }}">
                     <td><span class="dash-code">{{ $u->unit_name }}</span></td>
                     <td>{{ optional($u->building)->property_code ?? '—' }}</td>
                     <td>{{ $u->unit_condition ?? '—' }}</td>
