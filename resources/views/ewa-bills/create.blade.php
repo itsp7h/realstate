@@ -506,6 +506,13 @@ textarea.form-control { resize: vertical; min-height: 80px; }
             <textarea name="notes" class="form-control" rows="2"
                       placeholder="Internal notes…">{{ old('notes', $record?->notes) }}</textarea>
         </div>
+
+        <div class="form-group" style="margin-top:16px">
+            <label class="form-label">Remarks</label>
+            <textarea name="remarks" class="form-control {{ $errors->has('remarks') ? 'is-invalid' : '' }}" rows="2" maxlength="500"
+                      placeholder="Printed on the invoice…">{{ old('remarks', $record?->remarks) }}</textarea>
+            <div class="invalid-feedback">{{ $errors->first('remarks') }}</div>
+        </div>
     </div>
 
     <div class="form-actions">

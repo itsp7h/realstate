@@ -17,7 +17,7 @@ class EwaBill extends Model
         'ewa_account_number', 'billing_period', 'reading_date', 'reading_type',
         'elec_prev_reading', 'elec_curr_reading', 'elec_consumption', 'elec_charges',
         'water_prev_reading', 'water_curr_reading', 'water_consumption', 'water_charges',
-        'ewa_cap', 'tenant_portion', 'total_amount', 'due_date', 'status', 'notes',
+        'ewa_cap', 'tenant_portion', 'total_amount', 'due_date', 'status', 'notes', 'remarks',
     ];
 
     protected $casts = [

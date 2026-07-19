@@ -15,7 +15,7 @@ class Invoice extends Model
     protected $fillable = [
         'invoice_number', 'tenant_id', 'tenant_name', 'tenant_code', 'tenant_address',
         'property_name', 'unit', 'type', 'description', 'lines', 'amount',
-        'vat_rate', 'vat_amount', 'invoice_date', 'status', 'notes',
+        'vat_rate', 'vat_amount', 'invoice_date', 'status', 'notes', 'remarks',
     ];
 
     protected $casts = [

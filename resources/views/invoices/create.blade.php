@@ -321,6 +321,13 @@ textarea.form-control { resize: vertical; min-height: 80px; }
                           placeholder="Private notes (not shown on invoice)…" rows="2">{{ old('notes', $record?->notes) }}</textarea>
                 <div class="invalid-feedback">{{ $errors->first('notes') }}</div>
             </div>
+
+            <div class="form-group" style="margin-top:2px">
+                <label class="form-label">Remarks</label>
+                <textarea name="remarks" class="form-control {{ $errors->has('remarks') ? 'is-invalid' : '' }}"
+                          placeholder="Printed on the invoice…" rows="2" maxlength="500">{{ old('remarks', $record?->remarks) }}</textarea>
+                <div class="invalid-feedback">{{ $errors->first('remarks') }}</div>
+            </div>
         </div>
 
         @if($record)
