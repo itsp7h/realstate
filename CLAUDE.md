@@ -61,7 +61,7 @@ php artisan make:migration # Create migration
 - One branch per feature — do not mix unrelated changes on the same branch
 - `development` is the integration branch: when a feature is complete and tested, it is merged via PR into `development` first, not `main`
 - `main` is production — only merged into via a separate PR from `development`, once everything on `development` has been checked. Merging into `main` triggers the production deploy (see below), so nothing lands there directly from a feature branch
-- A second self-hosted runner/LXC for a staging deploy off `development` is planned (same repo, separate container) — not wired up yet as of 2026-07-19; when it exists, a `deploy-staging.yml` workflow triggered off `development` should be added, mirroring `deploy.yml`'s structure but targeting the staging container/path
+- A staging LXC container (192.168.0.50, cloned from production, hostname `Realstate-Stage`) deploys automatically from `development` via `.github/workflows/deploy-staging.yml`, mirroring `deploy.yml` but targeting its own self-hosted runner (`staging-runner`, label `staging`) so it never conflicts with production's runner job queue. As of 2026-07-19 it's reachable at `http://192.168.0.50` (no subdomain assigned yet) and still holds a copy of production's database (not yet reset to empty)
 
 ## Form & Template Configuration Rules
 - **EVERY** CRUD module built must have a corresponding entry in the **Forms Management** tab at `/form-configs?tab=forms`
@@ -99,6 +99,12 @@ php artisan make:migration # Create migration
   - `systemctl reload php8.3-fpm` — so Deploy can reload php-fpm without a password prompt
   - `chown -R actionsrunner:actionsrunner /var/www/realstate/storage /var/www/realstate/bootstrap/cache /var/www/realstate/database` — reclaims ownership of paths php-fpm (www-data) writes into between deploys (logs, sqlite sessions), since `chmod` on a file you don't own fails even with group-write access
 - If a deploy ever fails at the permissions-fix step with `Operation not permitted`, it's this exact issue recurring — check the sudoers rule above is still in place before debugging further
+
+## Staging Server Setup (192.168.0.50)
+- Cloned from the production LXC on 2026-07-19 (hostname `Realstate-Stage`), then de-provisioned: re-registered GitHub Actions runner (`staging-runner`, label `staging`, was previously a duplicate of production's runner identity and conflicted with it), fresh `APP_KEY`, `APP_ENV=staging`, `APP_URL=http://192.168.0.50`, `APP_DEBUG=true`, nginx `server_name` corrected from the cloned `192.168.0.48` to `192.168.0.50`
+- Same `/var/www/realstate` deploy path, same sudoers rules, same PHP 8.3 / Node 20 versions as production (all carried over from the clone and verified working)
+- Still holds a copy of production's database as of 2026-07-19 (not yet reset to empty) — check with the user before assuming it's safe to treat as disposable test data
+- No subdomain assigned yet — reachable only by IP until DNS/subdomain work happens (planned, not yet started)
 
 ## Notes
 - App key is already generated
