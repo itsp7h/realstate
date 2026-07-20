@@ -62,6 +62,7 @@ php artisan make:migration # Create migration
 - `development` is the integration branch: when a feature is complete and tested, it is merged via PR into `development` first, not `main`
 - `main` is production — only merged into via a separate PR from `development`, once everything on `development` has been checked. Merging into `main` triggers the production deploy (see below), so nothing lands there directly from a feature branch
 - A staging LXC container (192.168.0.50, cloned from production, hostname `Realstate-Stage`) deploys automatically from `development` via `.github/workflows/deploy-staging.yml`, mirroring `deploy.yml` but targeting its own self-hosted runner (`staging-runner`, label `staging`) so it never conflicts with production's runner job queue. As of 2026-07-19 it's reachable at `http://192.168.0.50` (no subdomain assigned yet) and still holds a copy of production's database (not yet reset to empty)
+- **PRs into `main` must come from `development`**, except `chore/*` and `fix/*` branches (infra changes/hotfixes may go straight to `main`) — this is enforced automatically by `.github/workflows/enforce-pr-source.yml` as a required status check on the `Protect main` ruleset, not just a convention, since not everyone on the team is expected to track this manually
 
 ## Form & Template Configuration Rules
 - **EVERY** CRUD module built must have a corresponding entry in the **Forms Management** tab at `/form-configs?tab=forms`

@@ -1,0 +1,32 @@
+name: Enforce PR Source Branch
+
+# Your teammate does frontend work with limited git experience, so this
+# can't rely on remembering "PRs into main must come from development" —
+# it needs to be an automated, required check instead.
+#
+# Blocks any PR into main whose source isn't development, except for
+# chore/* and fix/* branches (infra changes and hotfixes are allowed to
+# go straight to main, same as this repo's own recent history).
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  check-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PR source branch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [[ "$HEAD_REF" == "development" ]]; then
+            echo "OK: PR is from development."
+            exit 0
+          fi
+          if [[ "$HEAD_REF" == chore/* || "$HEAD_REF" == fix/* ]]; then
+            echo "OK: '$HEAD_REF' is an infra/hotfix branch, allowed straight to main."
+            exit 0
+          fi
+          echo "::error::PRs into main must come from 'development' (feature work goes there first), or a chore/*, fix/* infra/hotfix branch. This PR is from '$HEAD_REF' — retarget it at development instead."
+          exit 1
