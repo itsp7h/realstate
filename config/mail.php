@@ -79,6 +79,18 @@ return [
             'transport' => 'array',
         ],
 
+        // Sends via Microsoft 365 / Azure AD (Graph API), from the
+        // promoseven/connect package. Not the default mailer yet — the
+        // Azure AD app registration (tenant_id/client_id/client_secret)
+        // doesn't exist yet, so these are all empty until that's set up.
+        'azure' => [
+            'transport'    => 'azure',
+            'tenant_id'    => env('AZURE_MAIL_TENANT_ID'),
+            'client_id'    => env('AZURE_MAIL_CLIENT_ID'),
+            'client_secret' => env('AZURE_MAIL_CLIENT_SECRET'),
+            'from_address' => env('AZURE_MAIL_FROM_ADDRESS'),
+        ],
+
         'failover' => [
             'transport' => 'failover',
             'mailers' => [
