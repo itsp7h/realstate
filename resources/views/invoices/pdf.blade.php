@@ -42,8 +42,8 @@ table.rental th {
 }
 table.rental th:last-child, table.rental td:last-child { border-right: none; }
 table.rental th.right, table.rental td.right { text-align: right; }
-table.rental td { padding: 5px 6px; border-bottom: 1px solid #94A3B8; border-right: 1px solid #94A3B8; height: 18px; }
-table.rental tr.empty-row td { height: 18px; }
+table.rental td { padding: 3px 6px; border-bottom: 1px solid #94A3B8; border-right: 1px solid #94A3B8; height: 15px; }
+table.rental tr.empty-row td { height: 15px; }
 table.rental tr.total-row td { background: #D9D2B0; font-weight: 700; border-top: 1.5px solid #111827; border-bottom: none; }
 
 /* ── TOTALS BOX ──────────────────────────────────── */
@@ -54,22 +54,22 @@ table.rental tr.total-row td { background: #D9D2B0; font-weight: 700; border-top
 .totals-box td.right { text-align: right; font-weight: 700; }
 
 /* ── AMOUNT IN WORDS ─────────────────────────────── */
-.words-label { color: #991B1B; font-weight: 700; text-decoration: underline; font-size: 10.5px; margin: 16px 0 4px; }
+.words-label { color: #991B1B; font-weight: 700; text-decoration: underline; font-size: 10.5px; margin: 12px 0 4px; }
 .words-value { font-size: 11px; font-weight: 700; }
 
 /* ── REMARKS ──────────────────────────────────────── */
-.remarks-label { font-weight: 700; text-decoration: underline; font-size: 10.5px; margin: 14px 0 4px; }
+.remarks-label { font-weight: 700; text-decoration: underline; font-size: 10.5px; margin: 10px 0 4px; }
 .remarks-value { font-size: 10.5px; }
 
 /* ── BANK DETAILS ────────────────────────────────── */
-.bank-label { color: #991B1B; font-weight: 700; text-decoration: underline; font-size: 10.5px; margin: 14px 0 4px; }
+.bank-label { color: #991B1B; font-weight: 700; text-decoration: underline; font-size: 10.5px; margin: 10px 0 4px; }
 .bank-line { font-size: 10.5px; font-weight: 700; margin-bottom: 2px; }
 
 /* ── SIGNATURE / FOOTER ──────────────────────────── */
-.sign-block { text-align: right; font-size: 10.5px; font-weight: 700; margin-top: 16px; line-height: 1.5; }
-.footer-note { text-align: center; font-size: 9.5px; font-style: italic; margin-top: 26px; }
+.sign-block { text-align: right; font-size: 10.5px; font-weight: 700; margin-top: 10px; line-height: 1.5; }
+.footer-note { text-align: center; font-size: 9.5px; font-style: italic; margin-top: 14px; }
 
-.spacer { height: 10px; }
+.spacer { height: 6px; }
 </style>
 </head>
 <body>
