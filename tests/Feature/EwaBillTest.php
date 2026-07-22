@@ -64,6 +64,16 @@ class EwaBillTest extends TestCase
         }
     }
 
+    public function test_index_filters_by_exact_property_name(): void
+    {
+        $this->makeBill(['bill_number' => 'EWA-TOWER-A', 'property_name' => 'Tower A']);
+        $this->makeBill(['bill_number' => 'EWA-TOWER-A-ANNEX', 'property_name' => 'Tower A Annex']);
+
+        $this->get(route('ewa-bills.index', ['property_name' => 'Tower A']))
+            ->assertSee('EWA-TOWER-A')
+            ->assertDontSee('EWA-TOWER-A-ANNEX');
+    }
+
     // ── CREATE ────────────────────────────────────────────────────
 
     public function test_create_form_renders(): void

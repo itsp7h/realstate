@@ -58,6 +58,18 @@ class MaintenanceRequestTest extends TestCase
              ->assertSee('UniqueProperty999')->assertDontSee('OtherBuilding');
     }
 
+    public function test_index_filters_by_building_id(): void
+    {
+        $buildingA = Building::create(['property_name' => 'Tower A', 'property_code' => 'TA1']);
+        $buildingB = Building::create(['property_name' => 'Tower B', 'property_code' => 'TB1']);
+
+        MaintenanceRequest::create($this->baseData(['job_order' => 'JO-TOWER-A', 'building_id' => $buildingA->id]));
+        MaintenanceRequest::create($this->baseData(['job_order' => 'JO-TOWER-B', 'building_id' => $buildingB->id]));
+
+        $this->get(route('maintenance.index', ['building_id' => $buildingA->id]))
+             ->assertSee('JO-TOWER-A')->assertDontSee('JO-TOWER-B');
+    }
+
     // ── CREATE ───────────────────────────────────────────────────────────────
 
     public function test_create_page_renders(): void

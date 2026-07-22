@@ -34,6 +34,10 @@ class MaintenanceRequestController extends Controller
             $query->where('status', $status);
         }
 
+        if ($buildingId = $request->input('building_id')) {
+            $query->where('building_id', $buildingId);
+        }
+
         if ($from = $request->input('date_from')) {
             $query->whereDate('date', '>=', $from);
         }
