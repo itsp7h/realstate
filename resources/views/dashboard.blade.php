@@ -145,12 +145,13 @@ a.dash-stat { text-decoration: none; cursor: pointer; }
 }
 .property-section-title i { color: var(--accent); }
 .property-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 20px;
     margin-bottom: 28px;
 }
 .property-card {
+    width: 420px;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: var(--radius);
@@ -160,6 +161,7 @@ a.dash-stat { text-decoration: none; cursor: pointer; }
     cursor: pointer;
     transition: box-shadow 0.2s, transform 0.2s;
 }
+@media (max-width: 460px) { .property-card { width: 100%; } }
 .property-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
 .property-carousel { position: relative; height: 190px; background: var(--page-bg); flex-shrink: 0; }
 .property-carousel-track { display: flex; height: 100%; transition: transform 0.35s cubic-bezier(0.22,1,0.36,1); }
@@ -220,6 +222,8 @@ a.dash-stat { text-decoration: none; cursor: pointer; }
 .property-expense-list {
     background: var(--page-bg); border: 1px solid var(--card-border);
     border-radius: var(--radius-sm); padding: 12px 14px; margin-top: auto;
+    box-sizing: border-box; min-height: 100px;
+    display: flex; flex-direction: column; justify-content: center;
 }
 .property-expense-row {
     display: flex; align-items: center; justify-content: space-between;
