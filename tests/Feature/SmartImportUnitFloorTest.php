@@ -37,7 +37,7 @@ class SmartImportUnitFloorTest extends TestCase
         );
 
         $this->post(route('import.smart'), ['file' => $file])
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('data.index'));
 
         $unit = PropertyUnit::where('unit_name', 'Flat 21')->first();
         $this->assertNotNull($unit);
@@ -54,7 +54,7 @@ class SmartImportUnitFloorTest extends TestCase
         );
 
         $this->post(route('import.smart'), ['file' => $file])
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('data.index'));
 
         $unit = PropertyUnit::where('unit_name', 'Flat 21')->first();
         $this->assertNotNull($unit);
@@ -71,7 +71,7 @@ class SmartImportUnitFloorTest extends TestCase
         );
 
         $this->post(route('import.smart'), ['file' => $file])
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('data.index'));
 
         $floor = Floor::where('building_id', $building->id)->where('floor_code', 'FL3')->first();
         $this->assertNotNull($floor);

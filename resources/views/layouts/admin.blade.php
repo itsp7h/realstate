@@ -559,6 +559,13 @@
         </a>
     </div>
 
+    <div class="sidebar-section">
+        <div class="sidebar-section-label">Settings</div>
+        <a href="{{ route('data.index') }}" class="nav-item {{ request()->is('data*') ? 'active' : '' }}">
+            <i class="fa-solid fa-arrows-rotate nav-icon"></i> Import / Export
+        </a>
+    </div>
+
     <div class="sidebar-footer">
         <div class="sidebar-user">
             <div class="user-avatar">A</div>

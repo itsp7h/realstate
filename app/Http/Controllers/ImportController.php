@@ -598,7 +598,7 @@ class ImportController extends Controller
             : $this->readCsv($request->file('file'));
 
         if (!$allRows || count($allRows) < 1) {
-            return redirect()->route('dashboard')
+            return redirect()->route('data.index')
                 ->with('smart_import_error', 'File appears empty or could not be read.');
         }
 
@@ -623,7 +623,7 @@ class ImportController extends Controller
         $detected = $this->detectEntities($headers);
 
         if (empty($detected)) {
-            return redirect()->route('dashboard')
+            return redirect()->route('data.index')
                 ->with('smart_import_error',
                     'Could not detect any known data type. Columns found: '
                     . implode(', ', array_filter($rawHeaders)));
@@ -645,7 +645,7 @@ class ImportController extends Controller
             }
         }
 
-        return redirect()->route('dashboard')->with('smart_import_results', $results);
+        return redirect()->route('data.index')->with('smart_import_results', $results);
     }
 
     private function detectEntities(array $headers): array
