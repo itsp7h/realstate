@@ -146,12 +146,24 @@ a.dash-stat { text-decoration: none; cursor: pointer; }
 .property-section-title i { color: var(--accent); }
 .property-grid {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 20px;
     margin-bottom: 28px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--card-border) transparent;
+    padding: 4px 2px 10px;
 }
+.property-grid::-webkit-scrollbar { height: 8px; }
+.property-grid::-webkit-scrollbar-track { background: transparent; }
+.property-grid::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
+.property-grid::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 .property-card {
     width: 420px;
+    flex: 0 0 420px;
+    scroll-snap-align: start;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: var(--radius);
@@ -161,7 +173,7 @@ a.dash-stat { text-decoration: none; cursor: pointer; }
     cursor: pointer;
     transition: box-shadow 0.2s, transform 0.2s;
 }
-@media (max-width: 460px) { .property-card { width: 100%; } }
+@media (max-width: 460px) { .property-card { width: 85vw; flex-basis: 85vw; } }
 .property-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
 .property-carousel { position: relative; height: 190px; background: var(--page-bg); flex-shrink: 0; }
 .property-carousel-track { display: flex; height: 100%; transition: transform 0.35s cubic-bezier(0.22,1,0.36,1); }
