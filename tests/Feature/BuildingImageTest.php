@@ -26,7 +26,7 @@ class BuildingImageTest extends TestCase
         $building = $this->building();
         $this->get(route('buildings.show', $building))
             ->assertOk()
-            ->assertSee('tab-photos', false)
+            ->assertSee('photos-tab', false)
             ->assertSee('panel-photos', false);
     }
 

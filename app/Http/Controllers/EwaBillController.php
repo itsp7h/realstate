@@ -37,6 +37,10 @@ class EwaBillController extends Controller
             $query->where('billing_period', 'like', "%{$period}%");
         }
 
+        if ($propertyName = $request->input('property_name')) {
+            $query->where('property_name', $propertyName);
+        }
+
         $bills = $query->paginate(20)->withQueryString();
 
         $stats = [
