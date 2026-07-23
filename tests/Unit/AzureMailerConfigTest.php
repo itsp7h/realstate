@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use PromoSeven\Connect\AzureMailer\Transport\AzureTransport;
 use Tests\TestCase;
@@ -14,6 +15,8 @@ use Tests\TestCase;
  */
 class AzureMailerConfigTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_azure_mailer_is_registered_in_config(): void
     {
         $this->assertSame('azure', config('mail.mailers.azure.transport'));

@@ -1,0 +1,5 @@
+# Every file in the repo requires approval from this account before a PR
+# can merge into a ruleset-protected branch with "Require review from Code
+# Owners" enabled (main) — restricts the required approval to this specific
+# account rather than any collaborator with Write access.
+* @yousif07Sei
