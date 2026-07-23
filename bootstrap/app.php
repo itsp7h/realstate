@@ -18,6 +18,15 @@ return Application::configure(basePath: dirname(__DIR__))
         // invoice PDF preview iframe, etc.), which browsers then block as
         // mixed content on the HTTPS page.
         $middleware->trustProxies(at: '*');
+
+        $middleware->alias([
+            'role' => \App\Http\Middleware\EnsureUserHasRole::class,
+        ]);
+
+        // Applied globally (not just inside the authenticated route group)
+        // so every DELETE request is covered, including any added later.
+        $middleware->append(\App\Http\Middleware\RestrictDestructiveActions::class);
+        $middleware->append(\App\Http\Middleware\RestrictMaintenanceRole::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

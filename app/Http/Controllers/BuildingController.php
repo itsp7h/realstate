@@ -8,11 +8,17 @@ use App\Models\LeaseContract;
 use App\Http\Requests\StoreBuildingRequest;
 use App\Http\Requests\UpdateBuildingRequest;
 use App\Http\Requests\UpdateBuildingSettingsRequest;
+use App\Services\DashboardAnalyticsService;
 use App\Services\FormConfigService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class BuildingController extends Controller
 {
+    public function __construct(private DashboardAnalyticsService $analytics)
+    {
+    }
+
     public function index(Request $request)
     {
         $filters = $request->only(['search', 'property_type', 'type_of_ownership']);
@@ -69,7 +75,9 @@ class BuildingController extends Controller
         // Unique tenants derived from contracts for this building
         $tenants = $contracts->pluck('tenant')->filter()->unique('id')->values();
 
-        return view('buildings.show', compact('building', 'floors', 'units', 'contracts', 'tenants'));
+        $dashboard = $this->analytics->buildingDashboard($building, $units, $contracts, Carbon::today()->year);
+
+        return view('buildings.show', compact('building', 'floors', 'units', 'contracts', 'tenants', 'dashboard'));
     }
 
     public function edit(Building $building)

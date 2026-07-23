@@ -491,6 +491,7 @@
         </a>
     </div>
 
+    @unless(auth()->user()?->isMaintenance())
     <div class="sidebar-section">
         <div class="sidebar-section-label">Property Management</div>
         <a href="{{ route('buildings.index') }}" class="nav-item {{ request()->is('buildings*') && !request()->is('floors') ? 'active' : '' }}">
@@ -503,20 +504,24 @@
             <i class="fa-solid fa-door-open nav-icon"></i> Units
         </a>
     </div>
+    @endunless
 
     <div class="sidebar-section">
         <div class="sidebar-section-label">Management</div>
+        @unless(auth()->user()?->isMaintenance())
         <a href="{{ route('tenants.index') }}" class="nav-item {{ request()->is('tenants*') ? 'active' : '' }}">
             <i class="fa-solid fa-users nav-icon"></i> Tenants
         </a>
         <a href="{{ route('lease-contracts.index') }}" class="nav-item {{ request()->is('lease-contracts*') ? 'active' : '' }}">
             <i class="fa-solid fa-file-contract nav-icon"></i> Lease Contracts
         </a>
+        @endunless
         <a href="{{ route('maintenance.index') }}" class="nav-item {{ request()->is('maintenance*') ? 'active' : '' }}">
             <i class="fa-solid fa-wrench nav-icon"></i> Maintenance
         </a>
     </div>
 
+    @unless(auth()->user()?->isMaintenance())
     <div class="sidebar-section">
         <div class="sidebar-section-label">Accounting</div>
         <a href="{{ route('invoices.index') }}" class="nav-item {{ request()->is('invoices*') ? 'active' : '' }}">
@@ -530,12 +535,14 @@
         </a>
     </div>
 
+    @if(auth()->user()?->canViewReports())
     <div class="sidebar-section">
         <div class="sidebar-section-label">Analytics</div>
         <a href="{{ route('reports.index') }}" class="nav-item {{ request()->is('reports*') ? 'active' : '' }}">
             <i class="fa-solid fa-chart-bar nav-icon"></i> Reports
         </a>
     </div>
+    @endif
 
     <div class="sidebar-section">
         <div class="sidebar-section-label">Form / Template Management</div>
@@ -549,8 +556,12 @@
         </a>
     </div>
 
+    @if(auth()->user()?->isAdmin())
     <div class="sidebar-section">
         <div class="sidebar-section-label">Admin</div>
+        <a href="{{ route('users.index') }}" class="nav-item {{ request()->is('users*') ? 'active' : '' }}">
+            <i class="fa-solid fa-user-shield nav-icon"></i> Users
+        </a>
         <a href="{{ route('admin.audit-log') }}" class="nav-item {{ request()->is('admin/audit-log*') ? 'active' : '' }}">
             <i class="fa-solid fa-clock-rotate-left nav-icon"></i> Audit Log
         </a>
@@ -558,15 +569,22 @@
             <i class="fa-solid fa-triangle-exclamation nav-icon"></i> Error Log
         </a>
     </div>
+    @endif
+    @endunless
 
     <div class="sidebar-footer">
         <div class="sidebar-user">
-            <div class="user-avatar">A</div>
+            <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
             <div class="user-info">
-                <strong>Admin User</strong>
-                <span>Administrator</span>
+                <strong>{{ auth()->user()->name ?? 'Unknown' }}</strong>
+                <span>{{ auth()->user()->role_label ?? '' }}</span>
             </div>
-            <i class="fa-solid fa-ellipsis-vertical" style="margin-left:auto;color:var(--text-sidebar);font-size:12px;"></i>
+            <form method="POST" action="{{ route('logout') }}" style="margin-left:auto">
+                @csrf
+                <button type="submit" class="topbar-icon-btn" style="width:28px;height:28px;font-size:12px" title="Sign out">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </form>
         </div>
     </div>
 </aside>
@@ -582,7 +600,7 @@
         <div class="topbar-actions">
             <button class="topbar-icon-btn"><i class="fa-regular fa-bell"></i></button>
             <button class="topbar-icon-btn"><i class="fa-regular fa-circle-question"></i></button>
-            <div class="user-avatar" style="width:32px;height:32px;font-size:12px;cursor:pointer;">A</div>
+            <div class="user-avatar" style="width:32px;height:32px;font-size:12px;cursor:pointer;">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
         </div>
     </header>
 
