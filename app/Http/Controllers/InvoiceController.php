@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateInvoiceRequest;
 use App\Models\Invoice;
 use App\Models\LeaseContract;
 use App\Models\Tenant;
+use App\Services\TenantMailer;
 use Illuminate\Support\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
@@ -16,6 +17,10 @@ use Illuminate\Http\Response;
 
 class InvoiceController extends Controller
 {
+    public function __construct(private readonly TenantMailer $tenantMailer)
+    {
+    }
+
     public function index(Request $request): View
     {
         $query = Invoice::with('tenant')->latest('invoice_date');
@@ -121,6 +126,7 @@ class InvoiceController extends Controller
             ]);
             $invoice->recomputeTotals();
             $invoice->save();
+            $this->tenantMailer->sendInvoiceIssued($invoice);
 
             $created++;
         }
@@ -155,6 +161,7 @@ class InvoiceController extends Controller
         $invoice = new Invoice($data);
         $invoice->recomputeTotals();
         $invoice->save();
+        $this->tenantMailer->sendInvoiceIssued($invoice);
 
         return redirect()->route('invoices.show', $invoice)
             ->with('success', "Invoice {$invoice->invoice_number} created successfully.");

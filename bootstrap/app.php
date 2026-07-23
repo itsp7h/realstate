@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -10,6 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command('invoices:send-overdue-reminders')->dailyAt('08:00');
+    })
     ->withMiddleware(function (Middleware $middleware): void {
         // The app sits behind a reverse proxy (rs.p7h.me terminates HTTPS,
         // then forwards to this server over plain HTTP) — without this,
