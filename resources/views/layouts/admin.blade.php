@@ -568,6 +568,9 @@
         <a href="{{ route('admin.error-log') }}" class="nav-item {{ request()->is('admin/error-log*') ? 'active' : '' }}">
             <i class="fa-solid fa-triangle-exclamation nav-icon"></i> Error Log
         </a>
+        <a href="{{ route('settings.azure-mail.edit') }}" class="nav-item {{ request()->is('settings/azure-mail*') ? 'active' : '' }}">
+            <i class="fa-solid fa-envelope nav-icon"></i> Mail Settings
+        </a>
     </div>
     @endif
     @endunless

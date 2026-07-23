@@ -22,6 +22,7 @@ use App\Http\Controllers\InvoiceNoteController;
 use App\Http\Controllers\TenantNoteController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AzureMailSettingController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -146,6 +147,10 @@ Route::middleware('auth')->group(function () {
         Route::delete('/admin/audit-log',      [AdminController::class, 'clearAuditLog'])->name('admin.audit-log.clear');
         Route::get('/admin/error-log',         [AdminController::class, 'errorLog'])->name('admin.error-log');
         Route::delete('/admin/error-log',      [AdminController::class, 'clearErrorLog'])->name('admin.error-log.clear');
+
+        Route::get('/settings/azure-mail',        [AzureMailSettingController::class, 'edit'])->name('settings.azure-mail.edit');
+        Route::put('/settings/azure-mail',        [AzureMailSettingController::class, 'update'])->name('settings.azure-mail.update');
+        Route::post('/settings/azure-mail/test',  [AzureMailSettingController::class, 'sendTest'])->name('settings.azure-mail.test');
     });
 
     Route::get('/form-configs', [FormConfigController::class, 'index'])->name('form-configs.index');
