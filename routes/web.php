@@ -24,6 +24,8 @@ use App\Http\Controllers\TenantNoteController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AzureMailSettingController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\RevenueController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -83,6 +85,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/invoices/{invoice}/pdf',         [InvoiceController::class, 'pdf'])->name('invoices.pdf');
     Route::get('/invoices/{invoice}/pdf/preview', [InvoiceController::class, 'pdfPreview'])->name('invoices.pdf.preview');
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::resource('expenses', ExpenseController::class)->except(['show']);
+    Route::resource('revenues', RevenueController::class)->except(['show']);
     Route::post('/ewa-bills/parse-import',             [EwaBillController::class, 'parseImport'])->name('ewa-bills.parse-import');
     Route::get('/ewa-bills/summary',               [EwaBillSummaryController::class, 'create'])->name('ewa-bills.summary.create');
     Route::post('/ewa-bills/summary',               [EwaBillSummaryController::class, 'store'])->name('ewa-bills.summary.store');

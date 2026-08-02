@@ -111,12 +111,12 @@
     <button class="tab-btn" id="tab-forms" onclick="switchTab('forms')">
         <i class="fa-solid fa-wpforms"></i>
         Forms Management
-        <span class="tab-count">4</span>
+        <span class="tab-count">6</span>
     </button>
     <button class="tab-btn" id="tab-templates" onclick="switchTab('templates')">
         <i class="fa-solid fa-file-export"></i>
         Template Management
-        <span class="tab-count">4</span>
+        <span class="tab-count">5</span>
     </button>
 </div>
 
@@ -252,6 +252,66 @@
                     <i class="fa-solid fa-plus"></i> New Invoice
                 </a>
                 <a href="{{ route('invoices.index') }}" class="btn btn-outline btn-sm" style="margin-left:6px;">
+                    <i class="fa-solid fa-list"></i> View All
+                </a>
+            </div>
+        </div>
+
+        {{-- Expense Form --}}
+        <div class="fc-card">
+            <div class="fc-card-header">
+                <div class="fc-icon"><i class="fa-solid fa-receipt"></i></div>
+                <div>
+                    <div class="fc-title">Expense Form</div>
+                    <div class="fc-desc">Building/unit, category, date, amount, vendor, description</div>
+                </div>
+            </div>
+            <div class="fc-card-body">
+                <div class="fc-meta">
+                    <i class="fa-solid fa-circle-dot"></i>
+                    <span>Status:</span>
+                    <span class="badge badge-green"><i class="fa-solid fa-check"></i> Available</span>
+                </div>
+                <div class="fc-meta">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>7 fields — Building, Unit, Category, Date, Amount, Vendor, Description</span>
+                </div>
+            </div>
+            <div class="fc-card-footer">
+                <a href="{{ route('expenses.create') }}" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-plus"></i> New Expense
+                </a>
+                <a href="{{ route('expenses.index') }}" class="btn btn-outline btn-sm" style="margin-left:6px;">
+                    <i class="fa-solid fa-list"></i> View All
+                </a>
+            </div>
+        </div>
+
+        {{-- Revenue Form --}}
+        <div class="fc-card">
+            <div class="fc-card-header">
+                <div class="fc-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+                <div>
+                    <div class="fc-title">Revenue Form</div>
+                    <div class="fc-desc">Building/unit, category, date, amount, source, description</div>
+                </div>
+            </div>
+            <div class="fc-card-body">
+                <div class="fc-meta">
+                    <i class="fa-solid fa-circle-dot"></i>
+                    <span>Status:</span>
+                    <span class="badge badge-green"><i class="fa-solid fa-check"></i> Available</span>
+                </div>
+                <div class="fc-meta">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>7 fields — Building, Unit, Category, Date, Amount, Source, Description</span>
+                </div>
+            </div>
+            <div class="fc-card-footer">
+                <a href="{{ route('revenues.create') }}" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-plus"></i> New Revenue
+                </a>
+                <a href="{{ route('revenues.index') }}" class="btn btn-outline btn-sm" style="margin-left:6px;">
                     <i class="fa-solid fa-list"></i> View All
                 </a>
             </div>
