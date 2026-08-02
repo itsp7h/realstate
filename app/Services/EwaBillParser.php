@@ -4,6 +4,13 @@ namespace App\Services;
 
 use Smalot\PdfParser\Parser;
 
+/**
+ * Extracts data from EWA (Electricity & Water Authority, Bahrain) government
+ * bill PDFs. Field positions below were reverse-engineered from real EWA
+ * bills (fixed layout used by ewa.bh) — the PDF text extraction interleaves
+ * the electricity/water columns in a specific, consistent order, which the
+ * patterns below rely on.
+ */
 class EwaBillParser
 {
     public function parse(string $filePath): array
@@ -11,21 +18,29 @@ class EwaBillParser
         $text = $this->extractText($filePath);
 
         return [
-            'ewa_account_number'  => $this->extractAccountNumber($text),
-            'billing_period'      => $this->extractBillingPeriod($text),
-            'reading_date'        => $this->extractReadingDate($text),
-            'reading_type'        => $this->extractReadingType($text),
-            'elec_prev_reading'   => $this->extractElecPrevReading($text),
-            'elec_curr_reading'   => $this->extractElecCurrReading($text),
-            'elec_charges'        => $this->extractElecCharges($text),
-            'water_prev_reading'  => $this->extractWaterPrevReading($text),
-            'water_curr_reading'  => $this->extractWaterCurrReading($text),
-            'water_charges'       => $this->extractWaterCharges($text),
-            'total_amount'        => $this->extractTotalAmount($text),
-            'due_date'            => $this->extractDueDate($text),
-            'tenant_name'         => $this->extractTenantName($text),
-            'property_name'       => $this->extractPropertyName($text),
-            '_raw_text'           => $text, // for debugging
+            'ewa_account_number'    => $this->extractAccountNumber($text),
+            'issue_date'            => $this->extractIssueDate($text),
+            'due_date'              => $this->extractDueDate($text),
+            'billing_period'        => $this->extractBillingPeriod($text),
+            'reading_type'          => $this->extractReadingTypes($text)[0],
+            'current_reading_type'  => $this->extractReadingTypes($text)[0],
+            'previous_reading_type' => $this->extractReadingTypes($text)[1],
+            'current_reading_date'  => $this->extractReadingDates($text)[0] ?? null,
+            'previous_reading_date' => $this->extractReadingDates($text)[1] ?? null,
+            'elec_prev_reading'     => $this->extractElecPrevReading($text),
+            'elec_curr_reading'     => $this->extractElecCurrReading($text),
+            'elec_consumption'      => $this->extractElecConsumption($text),
+            'elec_charges'          => $this->extractSubTotals($text)[0] ?? null,
+            'water_consumption'     => $this->extractWaterConsumption($text),
+            'water_charges'         => $this->extractSubTotals($text)[1] ?? null,
+            'municipality_fee'      => $this->extractMunicipalityFee($text),
+            'sanitary_fee'          => $this->extractSanitaryFee($text),
+            'arrears'               => $this->extractArrears($text),
+            'amount_due'            => $this->extractAmountDue($text),
+            'account_holder_name'   => $this->extractAccountHolder($text)[0] ?? null,
+            'flat_building_raw'     => $this->extractAccountHolder($text)[1] ?? null,
+            'address_raw'           => $this->extractAccountHolder($text)[2] ?? null,
+            '_raw_text'             => $text, // for debugging
         ];
     }
 
@@ -43,124 +58,17 @@ class EwaBillParser
     // ── Account Number ────────────────────────────────────────
     private function extractAccountNumber(string $text): ?string
     {
-        // Patterns: "Account No: 12345678", "Account Number: 12345678", "Customer Account: 12345678"
-        if (preg_match('/(?:account\s*(?:no|number|#)\s*[:\-]?\s*)(\d{5,12})/i', $text, $m)) {
+        if (preg_match('/Account Number\s*:\s*(\d{6,12})/i', $text, $m)) {
             return trim($m[1]);
         }
         return null;
     }
 
-    // ── Billing Period ────────────────────────────────────────
-    private function extractBillingPeriod(string $text): ?string
+    // ── Issue Date ────────────────────────────────────────────
+    private function extractIssueDate(string $text): ?string
     {
-        // "Billing Period: March 2024" or "Bill Date: 01/03/2024" or "March 2024"
-        $months = 'January|February|March|April|May|June|July|August|September|October|November|December';
-
-        if (preg_match('/(?:billing\s*period|bill\s*month|period)\s*[:\-]?\s*((?:'.$months.')\s+\d{4})/i', $text, $m)) {
-            return trim($m[1]);
-        }
-        // Standalone "March 2024"
-        if (preg_match('/\b((?:'.$months.')\s+\d{4})\b/i', $text, $m)) {
-            return trim($m[1]);
-        }
-        return null;
-    }
-
-    // ── Reading Date ──────────────────────────────────────────
-    private function extractReadingDate(string $text): ?string
-    {
-        // "Reading Date: 15/03/2024" or "Read Date: 15-03-2024"
-        if (preg_match('/(?:read(?:ing)?\s*date|meter\s*read)\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i', $text, $m)) {
+        if (preg_match('/Issue Date\s*:\s*(\d{1,2}\/\d{1,2}\/\d{4})/i', $text, $m)) {
             return $this->parseDate($m[1]);
-        }
-        return null;
-    }
-
-    // ── Reading Type ──────────────────────────────────────────
-    private function extractReadingType(string $text): string
-    {
-        if (preg_match('/\b(estimated|estimate)\b/i', $text)) {
-            return 'estimated';
-        }
-        return 'actual';
-    }
-
-    // ── Electricity Previous Reading ──────────────────────────
-    private function extractElecPrevReading(string $text): ?string
-    {
-        // "Previous Reading: 12345" near electricity/kWh context
-        // Try electricity-specific block first
-        if (preg_match('/electr\w+[\s\S]{0,300}?prev(?:ious)?\s*(?:reading|meter)?\s*[:\-]?\s*(\d+)/i', $text, $m)) {
-            return $m[1];
-        }
-        // Generic previous reading (first occurrence)
-        if (preg_match('/prev(?:ious)?\s*(?:reading|meter)?\s*[:\-]?\s*(\d{3,7})/i', $text, $m)) {
-            return $m[1];
-        }
-        return null;
-    }
-
-    // ── Electricity Current Reading ───────────────────────────
-    private function extractElecCurrReading(string $text): ?string
-    {
-        if (preg_match('/electr\w+[\s\S]{0,300}?curr?(?:ent)?\s*(?:reading|meter)?\s*[:\-]?\s*(\d+)/i', $text, $m)) {
-            return $m[1];
-        }
-        if (preg_match('/curr?(?:ent)?\s*(?:reading|meter)?\s*[:\-]?\s*(\d{3,7})/i', $text, $m)) {
-            return $m[1];
-        }
-        return null;
-    }
-
-    // ── Electricity Charges ───────────────────────────────────
-    private function extractElecCharges(string $text): ?string
-    {
-        // "Electricity: 7.190" or "Electricity Charges: BD 7.190"
-        if (preg_match('/electr\w+\s*(?:charges?|amount|cost)?\s*[:\-]?\s*(?:BD|BHD|BD)?\s*(\d+\.\d{1,3})/i', $text, $m)) {
-            return $m[1];
-        }
-        return null;
-    }
-
-    // ── Water Previous Reading ────────────────────────────────
-    private function extractWaterPrevReading(string $text): ?string
-    {
-        if (preg_match('/water[\s\S]{0,300}?prev(?:ious)?\s*(?:reading|meter)?\s*[:\-]?\s*(\d+(?:\.\d+)?)/i', $text, $m)) {
-            return $m[1];
-        }
-        // Second occurrence of "previous reading"
-        preg_match_all('/prev(?:ious)?\s*(?:reading|meter)?\s*[:\-]?\s*(\d+(?:\.\d+)?)/i', $text, $matches);
-        return isset($matches[1][1]) ? $matches[1][1] : null;
-    }
-
-    // ── Water Current Reading ─────────────────────────────────
-    private function extractWaterCurrReading(string $text): ?string
-    {
-        if (preg_match('/water[\s\S]{0,300}?curr?(?:ent)?\s*(?:reading|meter)?\s*[:\-]?\s*(\d+(?:\.\d+)?)/i', $text, $m)) {
-            return $m[1];
-        }
-        preg_match_all('/curr?(?:ent)?\s*(?:reading|meter)?\s*[:\-]?\s*(\d+(?:\.\d+)?)/i', $text, $matches);
-        return isset($matches[1][1]) ? $matches[1][1] : null;
-    }
-
-    // ── Water Charges ─────────────────────────────────────────
-    private function extractWaterCharges(string $text): ?string
-    {
-        if (preg_match('/water\s*(?:charges?|amount|cost)?\s*[:\-]?\s*(?:BD|BHD)?\s*(\d+\.\d{1,3})/i', $text, $m)) {
-            return $m[1];
-        }
-        return null;
-    }
-
-    // ── Total Amount ──────────────────────────────────────────
-    private function extractTotalAmount(string $text): ?string
-    {
-        // "Total Amount Due: BD 38.440" or "Amount Due: 38.440"
-        if (preg_match('/total\s*(?:amount\s*)?due\s*[:\-]?\s*(?:BD|BHD)?\s*(\d+\.\d{1,3})/i', $text, $m)) {
-            return $m[1];
-        }
-        if (preg_match('/amount\s*due\s*[:\-]?\s*(?:BD|BHD)?\s*(\d+\.\d{1,3})/i', $text, $m)) {
-            return $m[1];
         }
         return null;
     }
@@ -168,51 +76,155 @@ class EwaBillParser
     // ── Due Date ──────────────────────────────────────────────
     private function extractDueDate(string $text): ?string
     {
-        // "Due before 18/04/2023" or "Payment Due: 18/04/2023" or "Due Date: 18 April 2023"
-        $months = 'Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?';
-
-        if (preg_match('/(?:due\s*(?:before|date|by)|payment\s*due)\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i', $text, $m)) {
-            return $this->parseDate($m[1]);
-        }
-        if (preg_match('/(?:due\s*(?:before|date|by)|payment\s*due)\s*[:\-]?\s*(\d{1,2}\s+(?:'.$months.')\s+\d{4})/i', $text, $m)) {
+        if (preg_match('/Due Date\s*[\t\r\n ]*(\d{1,2}\/\d{1,2}\/\d{4})/i', $text, $m)) {
             return $this->parseDate($m[1]);
         }
         return null;
     }
 
-    // ── Tenant Name ───────────────────────────────────────────
-    private function extractTenantName(string $text): ?string
+    // ── Billing Period — from the consumption date range on the ────
+    // water line, which is present even when electricity usage is 0.
+    private function extractBillingPeriod(string $text): ?string
     {
-        // "Customer Name: John Smith" or "Account Holder: ..."
-        if (preg_match('/(?:customer\s*(?:name)?|account\s*holder|name)\s*[:\-]\s*([A-Za-z][A-Za-z\s]{2,50})/i', $text, $m)) {
-            $name = trim($m[1]);
-            // Avoid matching section headers
-            if (strlen($name) > 3 && !preg_match('/^(number|address|date|period|type|charges|amount)/i', $name)) {
-                return $name;
-            }
+        if (preg_match('/(\d{1,2}\/\d{1,2}\/\d{4})\s+\d{1,2}\/\d{1,2}\/\d{4}(?:Non )?Domestic/i', $text, $m)) {
+            $date = $this->parseDate($m[1]);
+            return $date ? date('F Y', strtotime($date)) : null;
         }
         return null;
     }
 
-    // ── Property / Supply Address ─────────────────────────────
-    private function extractPropertyName(string $text): ?string
+    // ── Reading Type(s) ───────────────────────────────────────
+    // The current and previous readings can each independently be Actual or
+    // Estimated — "Actual\tEstimated" is glued directly after the reading
+    // dates, in the same current-then-previous order as
+    // extractReadingDates() below. Returns [currentType, previousType],
+    // defaulting each to 'actual' when the pattern isn't found.
+    private function extractReadingTypes(string $text): array
     {
-        if (preg_match('/(?:supply\s*address|property|premises)\s*[:\-]\s*(.{5,80}?)(?:\n|$)/i', $text, $m)) {
-            return trim($m[1]);
+        if (preg_match('/Previous Reading\s*\d{1,2}\/\d{1,2}\/\d{4}[\t\s]+\d{1,2}\/\d{1,2}\/\d{4}\s*[\r\n]+\s*(Actual|Estimated)[\t\s]+(Actual|Estimated)/i', $text, $m)) {
+            return [strtolower($m[1]), strtolower($m[2])];
+        }
+        return ['actual', 'actual'];
+    }
+
+    // ── Current / Previous meter reading dates ─────────────────
+    // Both dates are glued onto the "Previous Reading" label:
+    // "Previous Reading30/06/2026\t31/05/2026" — first is the current
+    // reading's date (end of period), second is the previous one.
+    private function extractReadingDates(string $text): array
+    {
+        if (preg_match('/Previous Reading\s*(\d{1,2}\/\d{1,2}\/\d{4})[\t\s]+(\d{1,2}\/\d{1,2}\/\d{4})/i', $text, $m)) {
+            return [$this->parseDate($m[1]), $this->parseDate($m[2])];
+        }
+        return [null, null];
+    }
+
+    // ── Electricity Previous / Current Reading ─────────────────
+    // Numbers appear immediately *before* their label in the extracted text.
+    private function extractElecCurrReading(string $text): ?string
+    {
+        if (preg_match('/(\d+)\s*[\r\n]+\s*Current Reading/i', $text, $m)) {
+            return $m[1];
         }
         return null;
+    }
+
+    private function extractElecPrevReading(string $text): ?string
+    {
+        if (preg_match('/(\d+)\s*[\r\n]+\s*Previous Reading/i', $text, $m)) {
+            return $m[1];
+        }
+        return null;
+    }
+
+    // ── Consumption ───────────────────────────────────────────
+    private function extractElecConsumption(string $text): ?string
+    {
+        if (preg_match('/(\d+)\s*\(kWh\)/i', $text, $m)) {
+            return $m[1];
+        }
+        return null;
+    }
+
+    private function extractWaterConsumption(string $text): ?string
+    {
+        if (preg_match('/(\d+(?:\.\d+)?)\s*\(m3\)/i', $text, $m)) {
+            return $m[1];
+        }
+        return null;
+    }
+
+    // ── Electricity / Water Charges — the "Sub Total" line lists ───
+    // electricity first, then water: "Sub Total 105.350 BD Sub Total 14.600 BD"
+    private function extractSubTotals(string $text): array
+    {
+        preg_match_all('/Sub Total\s*[\t ]*([\d]+\.[\d]{1,3})\s*BD/i', $text, $m);
+        return [$m[1][0] ?? null, $m[1][1] ?? null];
+    }
+
+    // ── Municipality Fee — appears twice; the first occurrence is ───
+    // interleaved with the electricity block, so take the last (clean) one.
+    private function extractMunicipalityFee(string $text): ?string
+    {
+        preg_match_all('/Municipality Fees[\s\S]{0,15}?([\d]+\.[\d]{1,3})\s*BD/i', $text, $m);
+        return $m[1] ? end($m[1]) : null;
+    }
+
+    // ── Sanitary Fee ──────────────────────────────────────────
+    private function extractSanitaryFee(string $text): ?string
+    {
+        if (preg_match('/Sanitary Fees\s*[\t\r\n]*([\d]+\.[\d]{1,3})\s*BD/i', $text, $m)) {
+            return $m[1];
+        }
+        return null;
+    }
+
+    // ── Arrears (Previous Balance carried into this bill) ───────────
+    private function extractArrears(string $text): ?string
+    {
+        if (preg_match('/Your \w+ bill is\s*\.?[\-\d.]+\s*BD\s*[\r\n]+\s*[\r\n]*\s*(-?[\d]+\.[\d]{1,3})\s*BD/i', $text, $m)) {
+            return $m[1];
+        }
+        return null;
+    }
+
+    // ── Amount Due (this bill + previous balance, may be negative/credit) ──
+    private function extractAmountDue(string $text): ?string
+    {
+        if (preg_match('/\(\w+ bill \+ Previous Balance\)\s*[\r\n]+\s*(-?[\d]+\.[\d]{1,3})\s*BD/i', $text, $m)) {
+            return $m[1];
+        }
+        return null;
+    }
+
+    // ── Account holder / address — only used as a last-resort fallback ──
+    // when the account number doesn't match any bill/lease already on file.
+    // The bill is addressed to the landlord entity, not the tenant, so this
+    // is never the preferred source of tenant/property data.
+    private function extractAccountHolder(string $text): array
+    {
+        if (preg_match(
+            '/Account Number\s*:\s*\d+\s*[\r\n]+([^\r\n]+)[\r\n]+([^\r\n]+)[\r\n]+([^\r\n]*(?:Flat|Building)[^\r\n]*)[\r\n]+([^\r\n]+)[\r\n]+([^\r\n]+)/i',
+            $text,
+            $m
+        )) {
+            $holderName = trim($m[1] . ' ' . $m[2]);
+            $flatRaw    = trim($m[3]);
+            $address    = trim($m[4] . ', ' . $m[5]);
+
+            return [$holderName, $flatRaw, $address];
+        }
+        return [null, null, null];
     }
 
     // ── Date normalizer ───────────────────────────────────────
     private function parseDate(string $raw): ?string
     {
         $raw = trim($raw);
-        // Try d/m/Y and d-m-Y formats
         foreach (['d/m/Y', 'd-m-Y', 'd.m.Y'] as $fmt) {
             $d = \DateTime::createFromFormat($fmt, $raw);
             if ($d) return $d->format('Y-m-d');
         }
-        // Natural language "15 April 2024"
         try {
             return (new \DateTime($raw))->format('Y-m-d');
         } catch (\Throwable $e) {
