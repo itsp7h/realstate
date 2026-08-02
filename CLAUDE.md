@@ -3,6 +3,9 @@
 ## Core Rule
 - **ALWAYS** read this `CLAUDE.md` file in full before performing any task in this project
 - **ALWAYS verify state before reporting it** — check git log/CI status/live server state directly rather than assuming or restating what the user said back to them. Don't say "confirmed merged" or "that's fixed" without actually running the check first.
+- **Don't fucking touch the database without my permission** — no deleting, overwriting, migrating, or pulling/pushing data (local, staging, or production) unless the user explicitly says to do it in that moment. Always ask first.
+- **Don't touch the production container (192.168.0.48) without my permission** — no SSH commands, file changes, service restarts/reloads, or deploys against production unless the user explicitly says to do it in that moment. Always ask first.
+- **Always work locally first, then push to staging** — develop and test on the local machine; staging (192.168.0.50) gets changes via the normal push → PR → merge to `development` → auto-deploy flow. Don't SSH into or directly work on staging unless the user explicitly tells you to.
 
 ## Project Overview
 Laravel 12 real estate application.

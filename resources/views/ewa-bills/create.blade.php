@@ -766,7 +766,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
         const map = {
             'ewa_account_number'  : '[name="ewa_account_number"]',
             'billing_period'      : '[name="billing_period"]',
-            'reading_date'        : '[name="reading_date"]',
+            'current_reading_date': '[name="reading_date"]',
             'reading_type'        : '[name="reading_type"]',
             'elec_prev_reading'   : '#elecPrev',
             'elec_curr_reading'   : '#elecCurr',
