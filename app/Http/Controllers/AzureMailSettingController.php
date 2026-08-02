@@ -54,10 +54,43 @@ class AzureMailSettingController extends Controller
             );
         } catch (Throwable $e) {
             return redirect()->route('settings.azure-mail.edit')
-                ->with('error', 'Test email failed: ' . $e->getMessage());
+                ->with('error', 'Test email failed: ' . $this->friendlyMailErrorMessage($e));
         }
 
         return redirect()->route('settings.azure-mail.edit')
             ->with('success', 'Test email sent to ' . Auth::user()->email . '.');
+    }
+
+    /**
+     * Translates known Graph API failure strings into messages an admin can
+     * act on without needing to decode Microsoft's raw error codes. Falls
+     * back to the original message for anything not recognized.
+     */
+    private function friendlyMailErrorMessage(Throwable $e): string
+    {
+        $message = $e->getMessage();
+
+        if (str_contains($message, '[RAOP]') || str_contains($message, 'AppOnlyAccessPolicy')) {
+            return "The From Address (\"{$this->currentFromAddress()}\") is not allowed to send emails through this app. Ask IT to add it to the approved senders list.";
+        }
+
+        if (str_contains($message, 'ErrorAccessDenied') || str_contains($message, 'Forbidden')) {
+            return 'This app does not have permission to send from that address. Check the Azure app registration and its access policy.';
+        }
+
+        if (str_contains($message, 'invalid_client') || str_contains($message, 'AADSTS7000215')) {
+            return 'The Client ID or Client Secret is incorrect. Double-check both against the Azure app registration.';
+        }
+
+        if (str_contains($message, 'invalid_grant') || str_contains($message, 'AADSTS90002')) {
+            return 'The Tenant ID is incorrect or not recognized by Microsoft.';
+        }
+
+        return $message;
+    }
+
+    private function currentFromAddress(): string
+    {
+        return AzureMailSetting::current()->from_address ?? 'the configured address';
     }
 }
