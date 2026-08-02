@@ -75,7 +75,7 @@ class InvoiceMailTest extends TestCase
             'rent_per_month'     => 300.000,
         ]);
 
-        $this->post(route('invoices.generate-monthly'))->assertRedirect();
+        $this->post(route('invoices.generate-monthly'), ['invoice_date' => now()->format('Y-m-d')])->assertRedirect();
 
         Mail::assertSent(InvoiceIssuedMail::class, 1);
     }
