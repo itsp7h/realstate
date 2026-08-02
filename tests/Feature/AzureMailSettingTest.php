@@ -6,6 +6,7 @@ use App\Models\AzureMailSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AzureMailSettingTest extends TestCase
@@ -117,5 +118,42 @@ class AzureMailSettingTest extends TestCase
         $this->post(route('settings.azure-mail.test'))
             ->assertRedirect(route('settings.azure-mail.edit'))
             ->assertSessionHas('success');
+    }
+
+    #[DataProvider('graphErrorProvider')]
+    public function test_friendly_mail_error_message_translates_known_graph_errors(string $rawMessage, string $expectedFragment): void
+    {
+        $controller = new \App\Http\Controllers\AzureMailSettingController();
+        $method = new \ReflectionMethod($controller, 'friendlyMailErrorMessage');
+
+        $friendly = $method->invoke($controller, new \RuntimeException($rawMessage));
+
+        $this->assertStringContainsString($expectedFragment, $friendly);
+    }
+
+    public static function graphErrorProvider(): array
+    {
+        return [
+            'access policy block' => [
+                'Graph API error: [ErrorAccessDenied] Access to OData is disabled: [RAOP] : Blocked by tenant configured AppOnly AccessPolicy settings.',
+                'not allowed to send emails through this app',
+            ],
+            'generic access denied' => [
+                'Graph API error: [ErrorAccessDenied] Forbidden',
+                'does not have permission to send',
+            ],
+            'bad client credentials' => [
+                'AADSTS7000215: Invalid client secret provided',
+                'Client ID or Client Secret is incorrect',
+            ],
+            'bad tenant' => [
+                'AADSTS90002: Tenant not found',
+                'Tenant ID is incorrect',
+            ],
+            'unrecognized error passes through' => [
+                'Some totally unrelated failure',
+                'Some totally unrelated failure',
+            ],
+        ];
     }
 }
