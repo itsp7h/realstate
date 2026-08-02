@@ -45,13 +45,6 @@
     </div>
 </div>
 
-@if(session('success'))
-<div class="alert alert-success"><i class="fa-solid fa-circle-check"></i> {{ session('success') }}</div>
-@endif
-@if(session('error'))
-<div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation"></i> {{ session('error') }}</div>
-@endif
-
 <span class="status-pill {{ $setting->isConfigured() ? 'configured' : 'unconfigured' }}">
     <i class="fa-solid {{ $setting->isConfigured() ? 'fa-circle-check' : 'fa-circle-minus' }}"></i>
     {{ $setting->isConfigured() ? 'Configured' : 'Not configured yet' }}

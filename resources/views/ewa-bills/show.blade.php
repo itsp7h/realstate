@@ -160,13 +160,6 @@ textarea.form-control { resize: none; min-height: 56px; }
     </div>
 </div>
 
-@if(session('success'))
-<div class="alert alert-success"><i class="fa-solid fa-circle-check"></i> {{ session('success') }}</div>
-@endif
-@if(session('error'))
-<div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation"></i> {{ session('error') }}</div>
-@endif
-
 <div class="inv-layout">
 <div>
 
