@@ -76,9 +76,14 @@ class DashboardAnalyticsServiceTest extends TestCase
 
     public function test_monthly_series_places_income_in_the_correct_month(): void
     {
+        // monthlySeries() clamps the current month's range to today (it only
+        // counts payments made so far), so the fixture date must never be
+        // later than today — startOfMonth()+2 days landed in the future and
+        // was silently excluded whenever the test ran on the 1st or 2nd of
+        // a month.
         $tenant  = $this->makeTenant();
         $invoice = $this->makeInvoice($tenant);
-        $this->payInvoice($invoice, 100.000, now()->startOfMonth()->addDays(2)->format('Y-m-d'));
+        $this->payInvoice($invoice, 100.000, now()->format('Y-m-d'));
 
         $result = $this->service->monthlySeries(now()->year);
 
