@@ -617,7 +617,7 @@ class ImportController extends Controller
 
         $headers = array_map(function ($h) use ($fieldByLabel) {
             $h = trim((string) $h);
-            return $fieldByLabel[strtolower($h)] ?? $h;
+            return $fieldByLabel[strtolower($h)] ?? $this->fuzzyUnitIdentifierAlias($h) ?? $h;
         }, $rawHeaders);
 
         $detected = $this->detectEntities($headers);
@@ -646,6 +646,38 @@ class ImportController extends Controller
         }
 
         return redirect()->route('dashboard')->with('smart_import_results', $results);
+    }
+
+    /**
+     * Fuzzy fallback for the unit-identifier column when a header doesn't
+     * exact-match anything in UNIT_LABELS/CONTRACT_LABELS (e.g. "Flat No",
+     * "Apt #", "Suite Number"). Only ever consulted as a fallback after the
+     * exact alias lookup fails, and only recognizes this one column — it
+     * deliberately does not try to generically fuzzy-match every field,
+     * since a looser net risks misreading unrelated columns (see the
+     * "Total No. of Units" false-positive guarded against in the tests).
+     *
+     * Returns 'unit' (the same target 'Unit'/'Unit Name' already resolve to
+     * via CONTRACT_LABELS) so it flows through the exact same downstream
+     * unit_name-from-unit fallback that smartImportGeneric() already has.
+     */
+    private function fuzzyUnitIdentifierAlias(string $header): ?string
+    {
+        $normalized = strtolower(trim($header));
+        $normalized = preg_replace('/[^a-z0-9]+/', ' ', $normalized);
+        $tokens     = array_filter(explode(' ', trim($normalized)));
+
+        $unitWords = ['flat', 'unit', 'apt', 'apartment', 'suite'];
+        $noWords   = ['no', 'number', 'num'];
+
+        $hasUnitWord = (bool) array_intersect($tokens, $unitWords);
+        $hasNoWord   = (bool) array_intersect($tokens, $noWords);
+
+        if ($hasUnitWord && ($hasNoWord || count($tokens) === 1)) {
+            return 'unit';
+        }
+
+        return null;
     }
 
     private function detectEntities(array $headers): array
