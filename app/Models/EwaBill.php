@@ -13,7 +13,7 @@ class EwaBill extends Model
     use Auditable;
 
     protected $fillable = [
-        'bill_number', 'lease_contract_id', 'tenant_name', 'property_name', 'unit',
+        'bill_number', 'lease_contract_id', 'tenant_name', 'property_name', 'address', 'unit',
         'ewa_account_number', 'billing_period', 'reading_date', 'reading_type',
         'elec_prev_reading', 'elec_curr_reading', 'elec_consumption', 'elec_charges',
         'water_prev_reading', 'water_curr_reading', 'water_consumption', 'water_charges',

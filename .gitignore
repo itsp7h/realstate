@@ -23,3 +23,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Real EWA bill PDFs used to tune the parser — contain real account numbers
+# and billing amounts, never commit these.
+/ewa-samples
