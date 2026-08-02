@@ -533,6 +533,12 @@
         <a href="{{ route('ewa-bills.index') }}" class="nav-item {{ request()->is('ewa-bills*') ? 'active' : '' }}">
             <i class="fa-solid fa-droplet nav-icon"></i> EWA Bills
         </a>
+        <a href="{{ route('expenses.index') }}" class="nav-item {{ request()->is('expenses*') ? 'active' : '' }}">
+            <i class="fa-solid fa-receipt nav-icon"></i> Expenses
+        </a>
+        <a href="{{ route('revenues.index') }}" class="nav-item {{ request()->is('revenues*') ? 'active' : '' }}">
+            <i class="fa-solid fa-sack-dollar nav-icon"></i> Revenue
+        </a>
     </div>
 
     @if(auth()->user()?->canViewReports())

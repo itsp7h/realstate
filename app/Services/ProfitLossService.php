@@ -3,11 +3,13 @@
 namespace App\Services;
 
 use App\Models\Building;
+use App\Models\Expense;
 use App\Models\EwaBill;
 use App\Models\EwaPayment;
 use App\Models\MaintenanceRequest;
 use App\Models\Payment;
 use App\Models\PropertyUnit;
+use App\Models\Revenue;
 use App\Models\Tenant;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -34,17 +36,21 @@ class ProfitLossService
 
         $ewaLandlordExpense  = $this->ewaLandlordExpense($from, $to, $buildingName, $tenantId, $unitName);
         $maintenanceExpense  = $this->maintenanceExpense($from, $to, $buildingId, $unitId);
+        $manualRevenue       = $this->manualRevenue($from, $to, $buildingId, $unitId, $tenantId);
+        $manualExpense       = $this->manualExpense($from, $to, $buildingId, $unitId, $tenantId);
 
         $revenue = [
             'rent_collected'      => round($rentCollected, 3),
             'utilities_collected' => round($utilitiesCollected, 3),
             'other_collected'     => round($otherCollected, 3),
             'ewa_collected'       => round($ewaCollected, 3),
+            'manual_revenue'      => round($manualRevenue, 3),
         ];
 
         $expenses = [
             'ewa_landlord_expense' => round($ewaLandlordExpense, 3),
             'maintenance_expense'  => round($maintenanceExpense, 3),
+            'manual_expense'       => round($manualExpense, 3),
         ];
 
         $totalRevenue = round(array_sum($revenue), 3);
@@ -145,5 +151,47 @@ class ProfitLossService
         return $query->get()->sum(fn (MaintenanceRequest $r) => $r->selected_quotation
             ? (float) $r->{"quotation_{$r->selected_quotation}"}
             : 0.0);
+    }
+
+    /**
+     * Manually-logged expenses/revenue (Expense/Revenue models) have no
+     * tenant association, so they're only meaningful for building/unit-scoped
+     * totals — a tenant-scoped build() (byTenant()) excludes them entirely
+     * rather than attributing a building-wide cost to every tenant.
+     */
+    private function manualExpense(Carbon $from, Carbon $to, ?int $buildingId, ?int $unitId, ?int $tenantId): float
+    {
+        if ($tenantId !== null) {
+            return 0.0;
+        }
+
+        $query = Expense::whereDate('expense_date', '>=', $from)->whereDate('expense_date', '<=', $to);
+
+        if ($buildingId !== null) {
+            $query->where('building_id', $buildingId);
+        }
+        if ($unitId !== null) {
+            $query->where('unit_id', $unitId);
+        }
+
+        return (float) $query->sum('amount');
+    }
+
+    private function manualRevenue(Carbon $from, Carbon $to, ?int $buildingId, ?int $unitId, ?int $tenantId): float
+    {
+        if ($tenantId !== null) {
+            return 0.0;
+        }
+
+        $query = Revenue::whereDate('revenue_date', '>=', $from)->whereDate('revenue_date', '<=', $to);
+
+        if ($buildingId !== null) {
+            $query->where('building_id', $buildingId);
+        }
+        if ($unitId !== null) {
+            $query->where('unit_id', $unitId);
+        }
+
+        return (float) $query->sum('amount');
     }
 }

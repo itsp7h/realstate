@@ -5,11 +5,13 @@ namespace Tests\Unit;
 use App\Models\Building;
 use App\Models\EwaBill;
 use App\Models\EwaPayment;
+use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\LeaseContract;
 use App\Models\MaintenanceRequest;
 use App\Models\Payment;
 use App\Models\PropertyUnit;
+use App\Models\Revenue;
 use App\Models\Tenant;
 use App\Services\ProfitLossService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -325,5 +327,76 @@ class ProfitLossServiceTest extends TestCase
 
         $this->assertEquals(45.000, $resultA['expenses']['maintenance_expense']);
         $this->assertEquals(0.0, $resultB['expenses']['maintenance_expense']);
+    }
+
+    public function test_manually_logged_expense_and_revenue_count_toward_totals(): void
+    {
+        $building = $this->makeBuilding();
+
+        Expense::create([
+            'building_id'  => $building->id,
+            'category'     => 'repairs_maintenance',
+            'amount'       => 75.000,
+            'expense_date' => now()->format('Y-m-d'),
+        ]);
+
+        Revenue::create([
+            'building_id'  => $building->id,
+            'category'     => 'parking_fee',
+            'amount'       => 20.000,
+            'revenue_date' => now()->format('Y-m-d'),
+        ]);
+
+        [$from, $to] = $this->range();
+        $result = $this->service->build($from, $to, $building->id);
+
+        $this->assertEquals(75.000, $result['expenses']['manual_expense']);
+        $this->assertEquals(20.000, $result['revenue']['manual_revenue']);
+        $this->assertEquals(20.000, $result['total_revenue']);
+        $this->assertEquals(75.000, $result['total_expense']);
+        $this->assertEquals(-55.000, $result['net_profit']);
+    }
+
+    public function test_manual_expense_and_revenue_are_excluded_from_tenant_scoped_totals(): void
+    {
+        // Expense/Revenue have no tenant association — attributing a
+        // building-wide manual cost to one tenant would be wrong, so
+        // byTenant()-style calls (tenantId set) must exclude them entirely.
+        $building = $this->makeBuilding();
+        $tenant   = $this->makeTenant();
+
+        Expense::create([
+            'building_id'  => $building->id,
+            'category'     => 'other',
+            'amount'       => 30.000,
+            'expense_date' => now()->format('Y-m-d'),
+        ]);
+
+        [$from, $to] = $this->range();
+        $result = $this->service->build($from, $to, $building->id, $tenant->id);
+
+        $this->assertEquals(0.0, $result['expenses']['manual_expense']);
+    }
+
+    public function test_manual_expense_isolated_to_its_unit(): void
+    {
+        $building = $this->makeBuilding();
+        $unitA    = PropertyUnit::create(['building_id' => $building->id, 'property_name' => 'Tower A', 'property_code' => 'TA1', 'unit_name' => 'Flat 1']);
+        $unitB    = PropertyUnit::create(['building_id' => $building->id, 'property_name' => 'Tower A', 'property_code' => 'TA1', 'unit_name' => 'Flat 2']);
+
+        Expense::create([
+            'building_id'  => $building->id,
+            'unit_id'      => $unitA->id,
+            'category'     => 'other',
+            'amount'       => 12.500,
+            'expense_date' => now()->format('Y-m-d'),
+        ]);
+
+        [$from, $to] = $this->range();
+        $resultA = $this->service->build($from, $to, null, null, $unitA->id);
+        $resultB = $this->service->build($from, $to, null, null, $unitB->id);
+
+        $this->assertEquals(12.500, $resultA['expenses']['manual_expense']);
+        $this->assertEquals(0.0, $resultB['expenses']['manual_expense']);
     }
 }
