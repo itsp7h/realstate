@@ -146,10 +146,6 @@
     </div>
 </div>
 
-@if(session('success'))
-<div class="alert alert-success"><i class="fa-solid fa-circle-check"></i> {{ session('success') }}</div>
-@endif
-
 <div class="inv-stats">
     <div class="inv-stat">
         <div class="inv-stat-icon gray"><i class="fa-solid fa-file-invoice-dollar"></i></div>

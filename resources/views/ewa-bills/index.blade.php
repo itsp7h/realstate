@@ -134,10 +134,6 @@
 
 @include('ewa-bills._tabs')
 
-@if(session('success'))
-<div class="alert alert-success"><i class="fa-solid fa-circle-check"></i> {{ session('success') }}</div>
-@endif
-
 {{-- EWA Brand Strip --}}
 <div class="ewa-header-strip">
     <div class="ewa-logo-circle"><i class="fa-solid fa-droplet"></i></div>

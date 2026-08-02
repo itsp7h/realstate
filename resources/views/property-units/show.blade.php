@@ -196,13 +196,6 @@
     </div>
 </div>
 
-{{-- FLASH --}}
-@if(session('success'))
-    <div class="alert alert-success" style="margin-bottom:20px;">
-        <i class="fa-solid fa-circle-check"></i> {{ session('success') }}
-    </div>
-@endif
-
 {{-- HERO STRIP --}}
 <div class="unit-hero">
     <div class="hero-cell">
