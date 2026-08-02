@@ -405,6 +405,32 @@
             </div>
         </div>
 
+        {{-- EWA Bills Template --}}
+        <div class="fc-card">
+            <div class="fc-card-header">
+                <div class="fc-icon tpl"><i class="fa-solid fa-file-pdf"></i></div>
+                <div>
+                    <div class="fc-title">EWA Bills Template</div>
+                    <div class="fc-desc">Bulk-import EWA electricity &amp; water bills — upload one or more bill PDFs and they're parsed automatically</div>
+                </div>
+            </div>
+            <div class="fc-card-body">
+                <div class="fc-meta">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>No spreadsheet template — accepts EWA bill PDFs directly (up to 10 MB each)</span>
+                </div>
+                <div class="fc-meta">
+                    <i class="fa-solid fa-link"></i>
+                    <span>Matches each bill to its EWA account and existing tenant/property automatically</span>
+                </div>
+            </div>
+            <div class="fc-card-footer">
+                <a href="{{ route('ewa-bills.summary.create') }}" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-file-import"></i> Import EWA Bills
+                </a>
+            </div>
+        </div>
+
     </div>
 </div>
 

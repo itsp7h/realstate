@@ -16,6 +16,7 @@ use App\Http\Controllers\TenantController;
 use App\Http\Controllers\LeaseContractController;
 use App\Http\Controllers\BuildingImageController;
 use App\Http\Controllers\EwaBillController;
+use App\Http\Controllers\EwaBillSummaryController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\InvoiceNoteController;
@@ -83,6 +84,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/invoices/{invoice}/pdf/preview', [InvoiceController::class, 'pdfPreview'])->name('invoices.pdf.preview');
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::post('/ewa-bills/parse-import',             [EwaBillController::class, 'parseImport'])->name('ewa-bills.parse-import');
+    Route::get('/ewa-bills/summary',               [EwaBillSummaryController::class, 'create'])->name('ewa-bills.summary.create');
+    Route::post('/ewa-bills/summary',               [EwaBillSummaryController::class, 'store'])->name('ewa-bills.summary.store');
+    Route::get('/ewa-bills/summary/{batch}',        [EwaBillSummaryController::class, 'show'])->name('ewa-bills.summary.show');
+    Route::get('/ewa-bills/summary/{batch}/export', [EwaBillSummaryController::class, 'export'])->name('ewa-bills.summary.export');
     Route::resource('ewa-bills', EwaBillController::class);
     Route::post('/ewa-bills/{ewaBill}/payments',           [EwaBillController::class, 'storePayment'])->name('ewa-bills.payments.store');
     Route::delete('/ewa-bills/{ewaBill}/payments/{ewaPayment}', [EwaBillController::class, 'destroyPayment'])->name('ewa-bills.payments.destroy');
