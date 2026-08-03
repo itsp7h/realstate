@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\GenerateMonthlyInvoicesRequest;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
 use App\Models\Invoice;
 use App\Models\LeaseContract;
 use App\Models\Tenant;
+use App\Services\TenantMailer;
 use Illuminate\Support\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
@@ -16,6 +18,10 @@ use Illuminate\Http\Response;
 
 class InvoiceController extends Controller
 {
+    public function __construct(private readonly TenantMailer $tenantMailer)
+    {
+    }
+
     public function index(Request $request): View
     {
         $query = Invoice::with('tenant')->latest('invoice_date');
@@ -58,17 +64,17 @@ class InvoiceController extends Controller
      * Generate one consolidated rent invoice per tenant, covering every lease
      * contract that tenant currently has active, instead of one invoice per lease.
      */
-    public function generateMonthly(): RedirectResponse
+    public function generateMonthly(GenerateMonthlyInvoicesRequest $request): RedirectResponse
     {
-        $today     = Carbon::today();
-        $firstDay  = $today->copy()->startOfMonth();
-        $lastDay   = $today->copy()->endOfMonth();
-        $monthName = $firstDay->format('F Y');
+        $invoiceDate = Carbon::parse($request->validated()['invoice_date'])->startOfDay();
+        $firstDay    = $invoiceDate->copy()->startOfMonth();
+        $lastDay     = $invoiceDate->copy()->endOfMonth();
+        $monthName   = $firstDay->format('F Y');
 
         $contracts = LeaseContract::whereNotNull('rent_per_month')
             ->where('rent_per_month', '>', 0)
-            ->whereDate('lease_start_date', '<=', $today)
-            ->whereDate('lease_end_date',   '>=', $today)
+            ->whereDate('lease_start_date', '<=', $lastDay)
+            ->whereDate('lease_end_date',   '>=', $firstDay)
             ->whereNotNull('tenant_id')
             ->get()
             ->groupBy('tenant_id');
@@ -116,11 +122,12 @@ class InvoiceController extends Controller
                 'description'    => "Rent for {$monthName}",
                 'lines'          => $lines,
                 'vat_rate'       => 0,
-                'invoice_date'   => $firstDay,
+                'invoice_date'   => $invoiceDate,
                 'status'         => 'issued',
             ]);
             $invoice->recomputeTotals();
             $invoice->save();
+            $this->tenantMailer->sendInvoiceIssued($invoice);
 
             $created++;
         }
@@ -155,6 +162,7 @@ class InvoiceController extends Controller
         $invoice = new Invoice($data);
         $invoice->recomputeTotals();
         $invoice->save();
+        $this->tenantMailer->sendInvoiceIssued($invoice);
 
         return redirect()->route('invoices.show', $invoice)
             ->with('success', "Invoice {$invoice->invoice_number} created successfully.");

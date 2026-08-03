@@ -246,13 +246,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success border-0 shadow-sm rounded-3"><i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger border-0 shadow-sm rounded-3"><i class="fa-solid fa-circle-exclamation me-2"></i> {{ session('error') }}</div>
-    @endif
-
     {{-- BUILDING INFO CARD --}}
     <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
         <div class="card-body p-4 p-lg-5 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-4">
@@ -1057,7 +1050,7 @@
         };
 
         // Render Donuts
-        buildDonut('expenseChart', ['Electricity', 'Water', 'Maintenance'], [{{ $dashboard['expenses']['electricity'] ?? 0 }}, {{ $dashboard['expenses']['water'] ?? 0 }}, {{ $dashboard['expenses']['maintenance'] ?? 0 }}], ['#f59e0b', '#3b82f6', '#ef4444']);
+        buildDonut('expenseChart', ['Electricity', 'Water', 'Maintenance', 'Other'], [{{ $dashboard['expenses']['electricity'] ?? 0 }}, {{ $dashboard['expenses']['water'] ?? 0 }}, {{ $dashboard['expenses']['maintenance'] ?? 0 }}, {{ $dashboard['expenses']['other'] ?? 0 }}], ['#f59e0b', '#3b82f6', '#ef4444', '#64748b']);
         buildDonut('occupancyChart', ['Occupied', 'Vacant'], [{{ $dashboard['kpis']['occupied_units'] }}, {{ $dashboard['kpis']['vacant_units'] }}], ['#10b981', '#e2e8f0']);
         buildDonut('leaseChart', ['Active', 'Expiring', 'Upcoming', 'Expired'], [{{ $dashboard['lease_status_counts']['active'] }}, {{ $dashboard['lease_status_counts']['expiring'] }}, {{ $dashboard['lease_status_counts']['upcoming'] }}, {{ $dashboard['lease_status_counts']['expired'] }}], ['#10b981', '#f59e0b', '#3b82f6', '#94a3b8']);
 

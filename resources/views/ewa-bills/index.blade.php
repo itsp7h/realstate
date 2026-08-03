@@ -88,6 +88,17 @@
 .pdf-modal-btn.close    { background: #334155; color: #94A3B8; }
 .pdf-modal-frame { flex: 1; width: 100%; border: none; background: #fff; }
 
+/* ── TABS ──────────────────────────────────────────────────── */
+.tab-bar { display: flex; gap: 4px; border-bottom: 2px solid var(--card-border); margin-bottom: 20px; }
+.tab-btn {
+    padding: 11px 22px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13.5px; font-weight: 600;
+    color: var(--text-muted); border: none; background: none; cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.18s, border-color 0.18s;
+    display: flex; align-items: center; gap: 8px; text-decoration: none;
+}
+.tab-btn:hover { color: var(--text-primary); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
 /* EWA header strip */
 .ewa-header-strip {
     background: linear-gradient(135deg, #0D9488 0%, #0369A1 100%);
@@ -121,9 +132,7 @@
     </div>
 </div>
 
-@if(session('success'))
-<div class="alert alert-success"><i class="fa-solid fa-circle-check"></i> {{ session('success') }}</div>
-@endif
+@include('ewa-bills._tabs')
 
 {{-- EWA Brand Strip --}}
 <div class="ewa-header-strip">

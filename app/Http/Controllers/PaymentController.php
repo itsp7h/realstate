@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePaymentRequest;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Services\TenantMailer;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -13,6 +14,10 @@ use Illuminate\Http\Response;
 
 class PaymentController extends Controller
 {
+    public function __construct(private readonly TenantMailer $tenantMailer)
+    {
+    }
+
     public function index(Request $request): View
     {
         $query = Payment::with('invoice')->latest('payment_date');
@@ -55,8 +60,9 @@ class PaymentController extends Controller
         $data['payment_number'] = Payment::generateNumber();
         $data['invoice_id']     = $invoice->id;
 
-        Payment::create($data);
+        $payment = Payment::create($data);
         $invoice->syncStatus();
+        $this->tenantMailer->sendPaymentReceipt($payment);
 
         return redirect()->route('invoices.show', $invoice)
             ->with('success', 'Payment recorded successfully.');

@@ -79,6 +79,53 @@
 }
 .pdf-modal-header span { flex: 1; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: #E2E8F0; }
 .pdf-modal-iframe { flex: 1; border: none; width: 100%; background: #fff; }
+
+/* GENERATE INVOICES MODAL */
+.gen-modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1050;
+    background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(2px);
+    align-items: center; justify-content: center; padding: 20px;
+}
+.gen-modal-overlay.open { display: flex; }
+.gen-modal-box {
+    width: 100%; max-width: 420px; background: var(--card-bg);
+    border-radius: var(--radius); box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+    overflow: hidden;
+}
+.gen-modal-header {
+    padding: 20px 24px 16px; display: flex; align-items: flex-start; gap: 14px;
+    border-bottom: 1px solid var(--card-border);
+}
+.gen-modal-icon {
+    width: 40px; height: 40px; border-radius: var(--radius-sm); flex-shrink: 0;
+    background: var(--accent-dim); color: var(--accent);
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+.gen-modal-title { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.gen-modal-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
+.gen-modal-body { padding: 20px 24px; }
+.gen-modal-body label {
+    display: block; font-size: 12px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px;
+}
+.gen-modal-body input[type="date"] {
+    width: 100%; padding: 10px 13px; font-size: 14px; box-sizing: border-box;
+    border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
+    background: var(--input-bg); color: var(--text-primary); outline: none;
+    transition: border-color 0.18s; font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.gen-modal-body input[type="date"]:focus { border-color: var(--accent); }
+.gen-modal-preview {
+    margin-top: 14px; padding: 12px 14px; border-radius: var(--radius-sm);
+    background: var(--accent-dim); display: flex; align-items: center; gap: 10px;
+}
+.gen-modal-preview i { color: var(--accent); font-size: 14px; }
+.gen-modal-preview span { font-size: 13px; color: var(--text-primary); }
+.gen-modal-preview strong { font-family: 'Outfit', sans-serif; font-weight: 700; }
+.gen-modal-footer {
+    padding: 16px 24px; border-top: 1px solid var(--card-border);
+    display: flex; justify-content: flex-end; gap: 10px;
+}
 </style>
 @endpush
 
@@ -90,22 +137,14 @@
         <p class="page-header-sub">Manage and track invoices issued to tenants</p>
     </div>
     <div class="page-header-actions">
-        <form method="POST" action="{{ route('invoices.generate-monthly') }}"
-              onsubmit="return confirm('Generate rent invoices for all active contracts this month?\nDuplicates will be skipped.')">
-            @csrf
-            <button type="submit" class="btn btn-outline">
-                <i class="fa-solid fa-bolt"></i> Generate {{ now()->format('F') }} Invoices
-            </button>
-        </form>
+        <button type="button" class="btn btn-outline" onclick="openGenInvoicesModal()">
+            <i class="fa-solid fa-bolt"></i> Generate Invoices
+        </button>
         <a href="{{ route('invoices.create') }}" class="btn btn-primary">
             <i class="fa-solid fa-plus"></i> New Invoice
         </a>
     </div>
 </div>
-
-@if(session('success'))
-<div class="alert alert-success"><i class="fa-solid fa-circle-check"></i> {{ session('success') }}</div>
-@endif
 
 <div class="inv-stats">
     <div class="inv-stat">
@@ -254,6 +293,38 @@
     </div>
 </div>
 
+{{-- GENERATE INVOICES MODAL --}}
+<div class="gen-modal-overlay" id="genInvoicesModal" onclick="closeGenInvoicesModal(event)">
+    <div class="gen-modal-box" onclick="event.stopPropagation()">
+        <form method="POST" action="{{ route('invoices.generate-monthly') }}">
+            @csrf
+            <div class="gen-modal-header">
+                <div class="gen-modal-icon"><i class="fa-solid fa-bolt"></i></div>
+                <div>
+                    <div class="gen-modal-title">Generate Rent Invoices</div>
+                    <div class="gen-modal-sub">Creates one invoice per tenant for every lease contract active on the date below. Tenants that already have an invoice for that month are skipped.</div>
+                </div>
+            </div>
+            <div class="gen-modal-body">
+                <label for="genInvoiceDate">Invoice Date</label>
+                <input type="date" id="genInvoiceDate" name="invoice_date"
+                       value="{{ now()->format('Y-m-d') }}" required
+                       oninput="updateGenInvoicesPreview()">
+                <div class="gen-modal-preview">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>Invoices will be dated <strong id="genInvoicesMonthLabel">{{ now()->format('d F Y') }}</strong>, covering active leases for <strong id="genInvoicesRangeLabel">{{ now()->format('F Y') }}</strong>.</span>
+                </div>
+            </div>
+            <div class="gen-modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeGenInvoicesModalBtn()">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-bolt"></i> Generate
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -272,7 +343,30 @@ function closeInvPdfBtn() {
     document.getElementById('invPdfFrame').src = 'about:blank';
 }
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeInvPdfBtn();
+    if (e.key === 'Escape') { closeInvPdfBtn(); closeGenInvoicesModalBtn(); }
 });
+
+function openGenInvoicesModal() {
+    updateGenInvoicesPreview();
+    document.getElementById('genInvoicesModal').classList.add('open');
+}
+function closeGenInvoicesModal(e) {
+    if (e.target === document.getElementById('genInvoicesModal')) closeGenInvoicesModalBtn();
+}
+function closeGenInvoicesModalBtn() {
+    document.getElementById('genInvoicesModal').classList.remove('open');
+}
+function updateGenInvoicesPreview() {
+    const raw = document.getElementById('genInvoiceDate').value;
+    if (!raw) return;
+    const [year, month, day] = raw.split('-').map(Number);
+    const picked = new Date(year, month - 1, day);
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    document.getElementById('genInvoicesMonthLabel').textContent =
+        String(picked.getDate()).padStart(2, '0') + ' ' + months[picked.getMonth()] + ' ' + picked.getFullYear();
+    document.getElementById('genInvoicesRangeLabel').textContent =
+        months[picked.getMonth()] + ' ' + picked.getFullYear();
+}
 </script>
 @endpush

@@ -601,7 +601,8 @@ class InvoiceTest extends TestCase
             'lease_end_date'   => now()->addMonth()->format('Y-m-d'),
         ]);
 
-        $this->post(route('invoices.generate-monthly'))->assertRedirect(route('invoices.index'));
+        $this->post(route('invoices.generate-monthly'), ['invoice_date' => now()->format('Y-m-d')])
+            ->assertRedirect(route('invoices.index'));
 
         $invoices = Invoice::where('tenant_id', $tenant->id)->get();
         $this->assertCount(1, $invoices);
@@ -619,8 +620,52 @@ class InvoiceTest extends TestCase
             'lease_end_date'   => now()->addMonth()->format('Y-m-d'),
         ]);
 
-        $this->post(route('invoices.generate-monthly'));
-        $this->post(route('invoices.generate-monthly'));
+        $this->post(route('invoices.generate-monthly'), ['invoice_date' => now()->format('Y-m-d')]);
+        $this->post(route('invoices.generate-monthly'), ['invoice_date' => now()->format('Y-m-d')]);
+
+        $this->assertCount(1, Invoice::where('tenant_id', $tenant->id)->get());
+    }
+
+    public function test_generate_monthly_uses_the_picked_date_as_invoice_date(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeContract([
+            'tenant_id'        => $tenant->id,
+            'rent_per_month'   => 100.000,
+            'lease_start_date' => now()->subYear()->format('Y-m-d'),
+            'lease_end_date'   => now()->addYear()->format('Y-m-d'),
+        ]);
+
+        $pickedDate = now()->subMonths(2)->format('Y-m-d');
+
+        $this->post(route('invoices.generate-monthly'), ['invoice_date' => $pickedDate])
+            ->assertRedirect(route('invoices.index'));
+
+        $invoice = Invoice::where('tenant_id', $tenant->id)->first();
+        $this->assertNotNull($invoice);
+        $this->assertSame($pickedDate, $invoice->invoice_date->format('Y-m-d'));
+    }
+
+    public function test_generate_monthly_requires_invoice_date(): void
+    {
+        $this->post(route('invoices.generate-monthly'), [])
+            ->assertSessionHasErrors('invoice_date');
+    }
+
+    public function test_generate_monthly_includes_lease_starting_mid_month(): void
+    {
+        // A lease that starts partway through the picked month is still
+        // "active in July" and should be invoiced, even though it wasn't
+        // active on the 1st specifically.
+        $tenant = $this->makeTenant();
+        $this->makeContract([
+            'tenant_id'        => $tenant->id,
+            'rent_per_month'   => 100.000,
+            'lease_start_date' => '2026-07-15',
+            'lease_end_date'   => '2027-07-14',
+        ]);
+
+        $this->post(route('invoices.generate-monthly'), ['invoice_date' => '2026-07-01']);
 
         $this->assertCount(1, Invoice::where('tenant_id', $tenant->id)->get());
     }

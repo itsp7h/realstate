@@ -87,6 +87,16 @@ class PropertyUnit extends Model
             ->whereDate('lease_end_date', '>=', $today);
     }
 
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class, 'unit_id');
+    }
+
+    public function revenues()
+    {
+        return $this->hasMany(Revenue::class, 'unit_id');
+    }
+
     public function scopeFilter($query, array $filters): void
     {
         $query->when($filters['search'] ?? null, function ($q, $search) {

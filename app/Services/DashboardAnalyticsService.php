@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Building;
 use App\Models\EwaBill;
+use App\Models\Expense;
 use App\Models\InvoiceNote;
 use App\Models\LeaseContract;
 use App\Models\MaintenanceRequest;
@@ -151,6 +152,10 @@ class DashboardAnalyticsService
             ->get()
             ->sum(fn (MaintenanceRequest $r) => $r->selected_quotation ? (float) $r->{"quotation_{$r->selected_quotation}"} : 0.0);
 
+        $otherExpenses = (float) Expense::where('building_id', $building->id)
+            ->whereDate('expense_date', '>=', $from)->whereDate('expense_date', '<=', $to)
+            ->sum('amount');
+
         return [
             'total_income'      => $pl['total_revenue'],
             'net_income'        => $pl['net_profit'],
@@ -160,6 +165,7 @@ class DashboardAnalyticsService
                 'electricity' => round($electricity, 3),
                 'water'       => round($water, 3),
                 'maintenance' => round($maintenance, 3),
+                'other'       => round($otherExpenses, 3),
             ],
         ];
     }

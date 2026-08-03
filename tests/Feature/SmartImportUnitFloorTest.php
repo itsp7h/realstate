@@ -61,6 +61,26 @@ class SmartImportUnitFloorTest extends TestCase
         $this->assertNull($unit->floor_id);
     }
 
+    public function test_smart_import_recognizes_flat_no_as_the_unit_identifier(): void
+    {
+        // Real-world sheets don't always use the canonical "Unit Name" header —
+        // "Flat No" should resolve to the same unit_name field via the fuzzy
+        // unit-identifier fallback rather than being skipped as unmapped.
+        $building = Building::create(['property_name' => 'Tower A', 'property_code' => 'TA1']);
+
+        $file = $this->makeCsv(
+            ['Property Code', 'Flat No', 'Unit Type', 'Unit Condition'],
+            ['TA1', '21', 'Apartment', 'Fully Furnished']
+        );
+
+        $this->post(route('import.smart'), ['file' => $file])
+            ->assertRedirect(route('dashboard'));
+
+        $unit = PropertyUnit::where('unit_name', '21')->first();
+        $this->assertNotNull($unit);
+        $this->assertEquals($building->id, $unit->building_id);
+    }
+
     public function test_smart_import_links_units_to_floors_created_in_the_same_file(): void
     {
         $building = Building::create(['property_name' => 'Tower A', 'property_code' => 'TA1']);

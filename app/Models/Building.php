@@ -70,6 +70,16 @@ class Building extends Model
         return $this->hasMany(BuildingImage::class)->orderBy('sort_order');
     }
 
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    public function revenues()
+    {
+        return $this->hasMany(Revenue::class);
+    }
+
     public function getEffectiveVatRateAttribute(): float
     {
         return $this->vat_enabled ? (float) $this->vat_rate : 0.0;

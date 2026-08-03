@@ -16,12 +16,16 @@ use App\Http\Controllers\TenantController;
 use App\Http\Controllers\LeaseContractController;
 use App\Http\Controllers\BuildingImageController;
 use App\Http\Controllers\EwaBillController;
+use App\Http\Controllers\EwaBillSummaryController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\InvoiceNoteController;
 use App\Http\Controllers\TenantNoteController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AzureMailSettingController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\RevenueController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -81,7 +85,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/invoices/{invoice}/pdf',         [InvoiceController::class, 'pdf'])->name('invoices.pdf');
     Route::get('/invoices/{invoice}/pdf/preview', [InvoiceController::class, 'pdfPreview'])->name('invoices.pdf.preview');
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::resource('expenses', ExpenseController::class)->except(['show']);
+    Route::resource('revenues', RevenueController::class)->except(['show']);
     Route::post('/ewa-bills/parse-import',             [EwaBillController::class, 'parseImport'])->name('ewa-bills.parse-import');
+    Route::get('/ewa-bills/summary',               [EwaBillSummaryController::class, 'create'])->name('ewa-bills.summary.create');
+    Route::post('/ewa-bills/summary',               [EwaBillSummaryController::class, 'store'])->name('ewa-bills.summary.store');
+    Route::get('/ewa-bills/summary/{batch}',        [EwaBillSummaryController::class, 'show'])->name('ewa-bills.summary.show');
+    Route::get('/ewa-bills/summary/{batch}/export', [EwaBillSummaryController::class, 'export'])->name('ewa-bills.summary.export');
     Route::resource('ewa-bills', EwaBillController::class);
     Route::post('/ewa-bills/{ewaBill}/payments',           [EwaBillController::class, 'storePayment'])->name('ewa-bills.payments.store');
     Route::delete('/ewa-bills/{ewaBill}/payments/{ewaPayment}', [EwaBillController::class, 'destroyPayment'])->name('ewa-bills.payments.destroy');
@@ -146,6 +156,10 @@ Route::middleware('auth')->group(function () {
         Route::delete('/admin/audit-log',      [AdminController::class, 'clearAuditLog'])->name('admin.audit-log.clear');
         Route::get('/admin/error-log',         [AdminController::class, 'errorLog'])->name('admin.error-log');
         Route::delete('/admin/error-log',      [AdminController::class, 'clearErrorLog'])->name('admin.error-log.clear');
+
+        Route::get('/settings/azure-mail',        [AzureMailSettingController::class, 'edit'])->name('settings.azure-mail.edit');
+        Route::put('/settings/azure-mail',        [AzureMailSettingController::class, 'update'])->name('settings.azure-mail.update');
+        Route::post('/settings/azure-mail/test',  [AzureMailSettingController::class, 'sendTest'])->name('settings.azure-mail.test');
     });
 
     Route::get('/form-configs', [FormConfigController::class, 'index'])->name('form-configs.index');
