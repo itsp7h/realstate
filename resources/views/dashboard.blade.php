@@ -422,6 +422,64 @@ a.dash-stat { text-decoration: none; cursor: pointer; }
 .property-expense-row .label i { width: 14px; text-align: center; }
 .property-expense-row .value { font-weight: 700; color: var(--text-primary); }
 .property-expense-empty { text-align: center; font-size: 12px; color: var(--text-muted); padding: 6px 0; }
+
+/* ── MOBILE FINANCE SUMMARY (hidden on desktop) ──────────── */
+.mobile-finance-tiles { display: none; }
+
+/* ── MOBILE PHOTO BADGE (overlaid on carousel, hidden on desktop) ── */
+.property-photo-badge { display: none; }
+
+/* ── MOBILE CARDS LAYOUT ──────────────────────────────────── */
+@media (max-width: 768px) {
+    .mobile-finance-tiles {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .mobile-finance-tile {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius);
+        padding: 16px 16px;
+    }
+    .mobile-finance-label {
+        font-size: 10.5px; font-weight: 700; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;
+    }
+    .mobile-finance-value { font-family: 'Outfit', sans-serif; font-size: 21px; font-weight: 800; color: var(--text-primary); line-height: 1.1; }
+    .mobile-finance-value.positive { color: var(--success); }
+    .mobile-finance-value.negative { color: var(--danger); }
+    .mobile-finance-sub { font-size: 10.5px; color: var(--text-muted); margin-top: 4px; }
+
+    .property-photo-badge {
+        display: inline-flex;
+        position: absolute;
+        top: 10px; right: 10px;
+        z-index: 2;
+        background: rgba(11,17,32,0.72);
+        color: #fff;
+        border: none;
+        backdrop-filter: blur(3px);
+    }
+    .property-title-row .badge { display: none; }
+
+    .property-grid { grid-template-columns: 1fr; gap: 14px; margin-bottom: 22px; }
+    .property-carousel { height: 148px; }
+    .property-body { padding: 14px 16px 16px; }
+    .property-name { font-size: 15.5px; }
+    .property-address { margin-bottom: 14px; font-size: 11.5px; }
+    .property-period-label { margin-bottom: 8px; }
+    .property-stats-row { gap: 6px; margin-bottom: 14px; }
+    .property-stat-box { padding: 8px 5px; }
+    .property-stat-value { font-size: 13.5px; }
+    .property-expense-list { padding: 10px 12px; }
+
+    .dash-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+    .dash-stat { padding: 14px 12px; gap: 10px; }
+    .dash-stat-val { font-size: 19px; }
+    .dash-stat-lbl { font-size: 11px; }
+}
 </style>
 @endpush
 
@@ -577,6 +635,24 @@ document.querySelectorAll('.property-carousel').forEach(function (carousel) {
     </div>
 </div>
 
+{{-- MOBILE FINANCE SUMMARY (real portfolio totals, same source as the chart below) --}}
+@php
+    $portfolioIncome = $buildingPerformance->sum('total_income');
+    $portfolioNet = $buildingPerformance->sum('net_income');
+@endphp
+<div class="mobile-finance-tiles">
+    <div class="mobile-finance-tile">
+        <div class="mobile-finance-label">This Month &middot; Income</div>
+        <div class="mobile-finance-value">BHD {{ number_format($portfolioIncome, 0) }}</div>
+        <div class="mobile-finance-sub">Across {{ $buildingPerformance->count() }} {{ Str::plural('property', $buildingPerformance->count()) }}</div>
+    </div>
+    <div class="mobile-finance-tile">
+        <div class="mobile-finance-label">This Month &middot; Net</div>
+        <div class="mobile-finance-value {{ $portfolioNet >= 0 ? 'positive' : 'negative' }}">BHD {{ number_format($portfolioNet, 0) }}</div>
+        <div class="mobile-finance-sub">{{ now()->format('F Y') }} portfolio</div>
+    </div>
+</div>
+
 {{-- STATS --}}
 <div class="dash-stats">
     <a href="{{ route('buildings.index') }}" class="dash-stat">
@@ -679,6 +755,7 @@ document.querySelectorAll('.property-carousel').forEach(function (carousel) {
     @php $building = $perf['building']; @endphp
     <div class="property-card" data-href="{{ route('buildings.show', $building) }}">
         <div class="property-carousel">
+            <span class="property-photo-badge badge badge-gold">{{ $building->property_type ?? 'Active' }}</span>
             @if($building->images->isNotEmpty())
                 <div class="property-carousel-track">
                     @foreach($building->images as $image)

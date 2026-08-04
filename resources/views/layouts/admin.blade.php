@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') — RealEstate Admin</title>
 
@@ -41,6 +41,10 @@
             --radius:           12px;
             --radius-sm:        8px;
             --sidebar-width:    260px;
+            --sheet-radius:     22px;
+            --ease-spring:      cubic-bezier(.32,.72,0,1);
+            --duration-sheet:   380ms;
+            --scrim:            rgba(11,17,32,0.55);
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -463,6 +467,19 @@
             .form-group.col-span-2 { grid-column: span 1; }
         }
 
+        /* ── SIDEBAR BACKDROP (scrim behind the drawer) ────── */
+        .sidebar-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 99;
+            background: var(--scrim);
+            backdrop-filter: blur(2px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .sidebar-backdrop.show { opacity: 1; pointer-events: all; }
+
         /* ── SCROLLBAR ────────────────────────────────────── */
         ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -471,6 +488,96 @@
     </style>
 
     @stack('styles')
+
+    {{-- ── MOBILE APP SYSTEM ──────────────────────────────────────────────
+         Loaded after @stack('styles') on purpose: at the same specificity,
+         later-in-source wins, so these rules override any per-page mobile
+         modal tweaks and give every .modal-overlay/.modal-box in the app
+         (buildings, units, tenants, floors, maintenance, leases, invoices,
+         EWA bills, dashboard import, form-configs, ...) one consistent
+         bottom-sheet behavior without editing each view. Drawer + sheet
+         share the same spring easing so they read as one native system. --}}
+    <style>
+        @media (max-width: 768px) {
+            #menuBtn { display: flex !important; }
+
+            .sidebar {
+                width: clamp(260px, 84vw, 300px);
+                transition: transform var(--duration-sheet) var(--ease-spring);
+                box-shadow: none;
+            }
+            .sidebar.open { box-shadow: var(--shadow-lg); }
+
+            /* ── Bottom sheet ──────────────────────────────────────── */
+            .modal-overlay {
+                align-items: flex-end;
+                padding: 0;
+                background: var(--scrim);
+            }
+            .modal-box {
+                width: 100%;
+                max-width: 100%;
+                max-height: 92vh;
+                margin: 0;
+                border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+                transform: translateY(100%) scale(1);
+                transition: transform var(--duration-sheet) var(--ease-spring);
+                padding-top: 6px;
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            .modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
+
+            .sheet-handle {
+                width: 36px;
+                height: 4px;
+                border-radius: 3px;
+                background: var(--input-border);
+                margin: 10px auto 4px;
+                transition: background 0.15s ease, box-shadow 0.15s ease;
+                touch-action: none;
+            }
+            .sheet-handle.dragging { transition: none; }
+
+            /* ── Bottom tab bar ──────────────────────────────────── */
+            .page-content { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+
+            .bottom-tabbar {
+                display: flex;
+                position: fixed;
+                left: 0; right: 0; bottom: 0;
+                z-index: 95;
+                background: var(--card-bg);
+                border-top: 1px solid var(--card-border);
+                padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+                box-shadow: 0 -2px 16px rgba(0,0,0,0.05);
+            }
+            .tabbar-item {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+                padding: 6px 2px;
+                border: none;
+                background: none;
+                color: var(--text-muted);
+                text-decoration: none;
+                font-family: 'Plus Jakarta Sans', sans-serif;
+                font-size: 10.5px;
+                font-weight: 600;
+                transition: color 0.15s ease;
+            }
+            .tabbar-item i { font-size: 18px; transition: transform 0.15s var(--ease-spring); }
+            .tabbar-item.active { color: var(--accent); }
+            .tabbar-item.active i { transform: translateY(-1px); }
+            .tabbar-item:active i { transform: scale(0.88); }
+        }
+
+        @media (min-width: 769px) {
+            .sheet-handle { display: none; }
+            .bottom-tabbar { display: none; }
+        }
+    </style>
 </head>
 <body>
 
@@ -598,11 +705,13 @@
     </div>
 </aside>
 
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
 <!-- MAIN WRAP -->
 <div class="main-wrap">
     <!-- TOPBAR -->
     <header class="topbar">
-        <button class="topbar-icon-btn" onclick="document.getElementById('sidebar').classList.toggle('open')" style="display:none" id="menuBtn">
+        <button class="topbar-icon-btn" style="display:none" id="menuBtn">
             <i class="fa-solid fa-bars"></i>
         </button>
         <div class="topbar-title">@yield('topbar-title', 'Dashboard')</div>
@@ -632,13 +741,148 @@
     </main>
 </div>
 
+<!-- BOTTOM TAB BAR -->
+@php
+    $tabbarIsMain = request()->is('dashboard') || request()->is('/');
+    $tabbarIsBuildings = request()->is('buildings*') && !request()->is('floors');
+    $tabbarIsTenants = request()->is('tenants*');
+    $tabbarIsMaintenance = request()->is('maintenance*');
+    $tabbarIsMore = !$tabbarIsMain && !$tabbarIsBuildings && !$tabbarIsTenants && !$tabbarIsMaintenance;
+@endphp
+<nav class="bottom-tabbar" id="bottomTabbar">
+    <a href="{{ url('/dashboard') }}" class="tabbar-item {{ $tabbarIsMain ? 'active' : '' }}">
+        <i class="fa-solid fa-gauge-high"></i> Dashboard
+    </a>
+    @unless(auth()->user()?->isMaintenance())
+    <a href="{{ route('buildings.index') }}" class="tabbar-item {{ $tabbarIsBuildings ? 'active' : '' }}">
+        <i class="fa-solid fa-building"></i> Buildings
+    </a>
+    <a href="{{ route('tenants.index') }}" class="tabbar-item {{ $tabbarIsTenants ? 'active' : '' }}">
+        <i class="fa-solid fa-users"></i> Tenants
+    </a>
+    @endunless
+    <a href="{{ route('maintenance.index') }}" class="tabbar-item {{ $tabbarIsMaintenance ? 'active' : '' }}">
+        <i class="fa-solid fa-wrench"></i> Maintenance
+    </a>
+    <button type="button" class="tabbar-item {{ $tabbarIsMore ? 'active' : '' }}" id="moreTabBtn">
+        <i class="fa-solid fa-ellipsis"></i> More
+    </button>
+</nav>
+
 <script>
-    // Mobile menu
+(function () {
+    const MOBILE = 768;
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
     const menuBtn = document.getElementById('menuBtn');
-    if (window.innerWidth <= 768) menuBtn.style.display = 'flex';
-    window.addEventListener('resize', () => {
-        menuBtn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+    const isMobile = () => window.innerWidth <= MOBILE;
+
+    // ── Side drawer ──────────────────────────────────────────────
+    function openDrawer() {
+        sidebar.classList.add('open');
+        backdrop.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeDrawer() {
+        sidebar.classList.remove('open');
+        backdrop.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+    menuBtn.addEventListener('click', () => {
+        sidebar.classList.contains('open') ? closeDrawer() : openDrawer();
     });
+    document.getElementById('moreTabBtn')?.addEventListener('click', openDrawer);
+    backdrop.addEventListener('click', closeDrawer);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && sidebar.classList.contains('open')) closeDrawer();
+    });
+    // Auto-close after picking a destination, like a native app drawer
+    sidebar.querySelectorAll('.nav-item').forEach((link) => {
+        link.addEventListener('click', () => { if (isMobile()) closeDrawer(); });
+    });
+
+    // Swipe the drawer itself left to dismiss
+    (function swipeToCloseDrawer() {
+        let startX = null;
+        sidebar.addEventListener('touchstart', (e) => {
+            if (!isMobile() || !sidebar.classList.contains('open')) { startX = null; return; }
+            startX = e.touches[0].clientX;
+        }, { passive: true });
+        sidebar.addEventListener('touchmove', (e) => {
+            if (startX === null) return;
+            const dx = e.touches[0].clientX - startX;
+            if (dx < 0) sidebar.style.transform = `translateX(${dx}px)`;
+        }, { passive: true });
+        sidebar.addEventListener('touchend', (e) => {
+            if (startX === null) return;
+            const dx = e.changedTouches[0].clientX - startX;
+            sidebar.style.transform = '';
+            if (dx < -70) closeDrawer();
+            startX = null;
+        });
+    })();
+
+    // Swipe in from the left edge to open
+    (function swipeToOpenDrawer() {
+        let startX = null;
+        document.addEventListener('touchstart', (e) => {
+            if (!isMobile() || sidebar.classList.contains('open') || e.touches[0].clientX > 24) { startX = null; return; }
+            startX = e.touches[0].clientX;
+        }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            if (startX === null) return;
+            const dx = e.changedTouches[0].clientX - startX;
+            if (dx > 60) openDrawer();
+            startX = null;
+        });
+    })();
+
+    // ── Bottom sheets (any .modal-overlay / .modal-box form dialog) ──
+    function attachSheetHandle(box) {
+        if (box.querySelector('.sheet-handle')) return;
+        const handle = document.createElement('div');
+        handle.className = 'sheet-handle';
+        box.prepend(handle);
+
+        let startY = null, dragging = false;
+        const overlay = box.closest('.modal-overlay');
+        const threshold = 90;
+
+        handle.addEventListener('touchstart', (e) => {
+            if (!isMobile()) return;
+            startY = e.touches[0].clientY;
+            dragging = true;
+            handle.classList.add('dragging');
+            box.style.transition = 'none';
+        }, { passive: true });
+
+        handle.addEventListener('touchmove', (e) => {
+            if (!dragging) return;
+            const dy = Math.max(0, e.touches[0].clientY - startY);
+            box.style.transform = `translateY(${dy}px)`;
+            const progress = Math.min(1, dy / threshold);
+            handle.style.background = `color-mix(in srgb, var(--accent) ${progress * 100}%, var(--input-border))`;
+            handle.style.boxShadow = progress > 0.15 ? `0 0 ${8 * progress}px var(--accent-glow)` : 'none';
+        }, { passive: true });
+
+        handle.addEventListener('touchend', (e) => {
+            if (!dragging) return;
+            dragging = false;
+            handle.classList.remove('dragging');
+            box.style.transition = '';
+            box.style.transform = '';
+            handle.style.background = '';
+            handle.style.boxShadow = '';
+            const dy = e.changedTouches[0].clientY - startY;
+            if (dy > threshold) {
+                overlay.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+        });
+    }
+
+    document.querySelectorAll('.modal-overlay .modal-box').forEach(attachSheetHandle);
+})();
 </script>
 
 @stack('scripts')
