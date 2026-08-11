@@ -246,10 +246,10 @@
             @csrf
 
             <div class="form-group">
-                <label class="form-label" for="email">Email address</label>
-                <input type="email" id="email" name="email" class="form-control {{ $errors->has('email') ? 'is-invalid' : '' }}"
-                       value="{{ old('email') }}" placeholder="you@promoseven.com" required autofocus>
-                @error('email')
+                <label class="form-label" for="login">Email or Username</label>
+                <input type="text" id="login" name="login" class="form-control {{ $errors->has('login') ? 'is-invalid' : '' }}"
+                       value="{{ old('login') }}" placeholder="you@promoseven.com or username" required autofocus>
+                @error('login')
                     <div class="field-error">{{ $message }}</div>
                 @enderror
             </div>

@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
+use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class LoginController extends Controller
 {
@@ -18,14 +20,21 @@ class LoginController extends Controller
 
     public function login(LoginRequest $request): RedirectResponse
     {
-        $credentials = $request->validated();
+        $validated = $request->validated();
+        $identifierField = filter_var($validated['login'], FILTER_VALIDATE_EMAIL) ? 'email' : 'name';
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        // Case-insensitive lookup — "developer" must match a user named
+        // "Developer" the same way it would match on exact case, since
+        // people don't reliably remember/retype their own capitalization.
+        $user = User::whereRaw("LOWER({$identifierField}) = ?", [strtolower($validated['login'])])->first();
+
+        if (! $user || ! Hash::check($validated['password'], $user->password)) {
             return back()
-                ->withErrors(['email' => 'These credentials do not match our records.'])
-                ->onlyInput('email');
+                ->withErrors(['login' => 'These credentials do not match our records.'])
+                ->onlyInput('login');
         }
 
+        Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard'));

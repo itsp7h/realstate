@@ -22,7 +22,7 @@ class AuthTest extends TestCase
         $response->assertViewIs('auth.login');
     }
 
-    public function test_user_can_login_with_correct_credentials(): void
+    public function test_user_can_login_with_email(): void
     {
         auth()->logout();
 
@@ -32,7 +32,63 @@ class AuthTest extends TestCase
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'test@example.com',
+            'login' => 'test@example.com',
+            'password' => 'password123',
+        ]);
+
+        $response->assertRedirect(route('dashboard'));
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_user_can_login_with_username(): void
+    {
+        auth()->logout();
+
+        $user = User::factory()->create([
+            'name' => 'Mariam',
+            'email' => 'mariam@example.com',
+            'password' => Hash::make('password123'),
+        ]);
+
+        $response = $this->post('/login', [
+            'login' => 'Mariam',
+            'password' => 'password123',
+        ]);
+
+        $response->assertRedirect(route('dashboard'));
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_user_can_login_with_username_regardless_of_case(): void
+    {
+        auth()->logout();
+
+        $user = User::factory()->create([
+            'name' => 'Developer',
+            'email' => 'developer@example.com',
+            'password' => Hash::make('password123'),
+        ]);
+
+        $response = $this->post('/login', [
+            'login' => 'developer',
+            'password' => 'password123',
+        ]);
+
+        $response->assertRedirect(route('dashboard'));
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_user_can_login_with_email_regardless_of_case(): void
+    {
+        auth()->logout();
+
+        $user = User::factory()->create([
+            'email' => 'Test@Example.com',
+            'password' => Hash::make('password123'),
+        ]);
+
+        $response = $this->post('/login', [
+            'login' => 'test@example.com',
             'password' => 'password123',
         ]);
 
@@ -50,7 +106,7 @@ class AuthTest extends TestCase
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'test@example.com',
+            'login' => 'test@example.com',
             'password' => 'wrong-password',
         ]);
 
@@ -58,13 +114,13 @@ class AuthTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_login_requires_email_and_password(): void
+    public function test_login_requires_login_and_password(): void
     {
         auth()->logout();
 
         $response = $this->post('/login', []);
 
-        $response->assertSessionHasErrors(['email', 'password']);
+        $response->assertSessionHasErrors(['login', 'password']);
     }
 
     public function test_user_can_logout(): void
@@ -169,6 +225,22 @@ class AuthTest extends TestCase
         $response = $this->get('/users');
 
         $response->assertForbidden();
+    }
+
+    public function test_creating_user_with_duplicate_name_fails_validation(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+        User::factory()->create(['name' => 'Mariam']);
+
+        $response = $this->post('/users', [
+            'name'     => 'Mariam',
+            'email'    => 'another@example.com',
+            'role'     => 'user',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $response->assertSessionHasErrors('name');
     }
 
     public function test_admin_can_access_user_management(): void
