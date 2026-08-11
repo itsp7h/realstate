@@ -37,12 +37,16 @@ class TenantsExport implements FromQuery, WithHeadings, WithMapping, WithStyles,
             $q->where('tenant_type', $this->filters['tenant_type']);
         }
 
+        if (!empty($this->filters['company_name'])) {
+            $q->where('company_name', $this->filters['company_name']);
+        }
+
         return $q;
     }
 
     public function headings(): array
     {
-        return ['Name', 'Tenant Type', 'ID / CR Number', 'Phone', 'Email', 'Nationality / Country'];
+        return ['Name', 'Tenant Type', 'Company Name', 'ID / CR Number', 'Phone', 'Email', 'Nationality / Country'];
     }
 
     public function map($row): array
@@ -50,6 +54,7 @@ class TenantsExport implements FromQuery, WithHeadings, WithMapping, WithStyles,
         return [
             $row->name,
             $row->tenant_type,
+            $row->company_name,
             $row->id_cr_number,
             $row->phone,
             $row->email,
