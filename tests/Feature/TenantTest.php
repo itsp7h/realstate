@@ -59,6 +59,18 @@ class TenantTest extends TestCase
         $this->assertEquals('Zahra Investments', $tenants->first()->name);
     }
 
+    public function test_index_filters_by_company_name(): void
+    {
+        Tenant::create(['name' => 'Bahrain Insurance Co.', 'tenant_type' => 'company', 'company_name' => 'Promoseven']);
+        Tenant::create(['name' => 'Zahra Investments', 'tenant_type' => 'company', 'company_name' => 'Al Fajer']);
+
+        $response = $this->get(route('tenants.index', ['company_name' => 'Promoseven']));
+        $tenants  = $response->viewData('tenants');
+
+        $this->assertCount(1, $tenants);
+        $this->assertEquals('Bahrain Insurance Co.', $tenants->first()->name);
+    }
+
     // ── STORE ────────────────────────────────────────────────────
 
     public function test_store_creates_tenant_with_minimal_fields(): void

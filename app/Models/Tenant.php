@@ -13,6 +13,7 @@ class Tenant extends Model
     protected $fillable = [
         'name',
         'tenant_type',
+        'company_name',
         'tenant_code',
         'id_cr_number',
         'phone',

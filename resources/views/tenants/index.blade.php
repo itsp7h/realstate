@@ -240,7 +240,7 @@
         <p class="page-header-sub">Manage all tenant profiles and contact records</p>
     </div>
     <div class="page-header-actions">
-        <a href="{{ route('export.tenants', request()->only(['search','tenant_type'])) }}" class="btn btn-outline">
+        <a href="{{ route('export.tenants', request()->only(['search','tenant_type','company_name'])) }}" class="btn btn-outline">
             <i class="fa-solid fa-file-export"></i> Export
         </a>
         <button type="button" class="btn btn-outline" onclick="openImport_tenants()">
@@ -287,8 +287,19 @@
                     <option value="company"    {{ request('tenant_type') === 'company'    ? 'selected' : '' }}>Company</option>
                 </select>
             </div>
+            @if($companies->isNotEmpty())
+            <div class="filter-group">
+                <label>Company</label>
+                <select name="company_name" onchange="this.form.submit()">
+                    <option value="">All Companies</option>
+                    @foreach($companies as $company)
+                        <option value="{{ $company }}" {{ request('company_name') === $company ? 'selected' : '' }}>{{ $company }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
             <div class="filter-actions">
-                @if(request()->hasAny(['search','tenant_type']))
+                @if(request()->hasAny(['search','tenant_type','company_name']))
                     <a href="{{ route('tenants.index') }}" class="btn btn-outline btn-sm">
                         <i class="fa-solid fa-xmark"></i> Clear
                     </a>
@@ -329,6 +340,9 @@
                             <span class="badge badge-green"><i class="fa-solid fa-user"></i> Individual</span>
                         @else
                             <span class="badge badge-blue"><i class="fa-solid fa-building-user"></i> Company</span>
+                            @if($tenant->company_name)
+                                <div class="tenant-sub" style="margin-top:4px;">Under {{ $tenant->company_name }}</div>
+                            @endif
                         @endif
                     </td>
                     <td>

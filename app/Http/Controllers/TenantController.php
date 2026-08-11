@@ -30,6 +30,10 @@ class TenantController extends Controller
             $query->where('tenant_type', $type);
         }
 
+        if ($company = $request->input('company_name')) {
+            $query->where('company_name', $company);
+        }
+
         if ($sort = $request->input('sort')) {
             $direction = $request->input('direction', 'asc');
             $query->orderBy($sort, $direction);
@@ -44,7 +48,12 @@ class TenantController extends Controller
             ->pluck('total', 'tenant_type')
             ->toArray();
 
-        return view('tenants.index', compact('tenants', 'stats'));
+        $companies = Tenant::whereNotNull('company_name')
+            ->distinct()
+            ->orderBy('company_name')
+            ->pluck('company_name');
+
+        return view('tenants.index', compact('tenants', 'stats', 'companies'));
     }
 
     public function create()
