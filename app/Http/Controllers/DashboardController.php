@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Building;
 use App\Models\Floor;
 use App\Models\PropertyUnit;
@@ -22,10 +23,12 @@ class DashboardController extends Controller
             'units'     => PropertyUnit::count(),
             'furnished' => PropertyUnit::where('unit_condition', 'Furnished')->count(),
             'fitted'    => PropertyUnit::where('unit_condition', 'Fitted')->count(),
+            'occupied'  => PropertyUnit::whereHas('activeContract')->count(),
         ];
 
         $recentBuildings = Building::latest()->limit(5)->get();
         $recentUnits     = PropertyUnit::with('building', 'floor')->latest()->limit(5)->get();
+        $recentActivity  = AuditLog::latest()->limit(3)->get();
 
         $chartYear  = Carbon::today()->year;
         $chartData  = $this->analytics->monthlySeries($chartYear);
@@ -35,7 +38,7 @@ class DashboardController extends Controller
         );
 
         return view('dashboard', compact(
-            'stats', 'recentBuildings', 'recentUnits', 'chartYear', 'chartData', 'buildingPerformance'
+            'stats', 'recentBuildings', 'recentUnits', 'recentActivity', 'chartYear', 'chartData', 'buildingPerformance'
         ));
     }
 }

@@ -423,62 +423,159 @@ a.dash-stat { text-decoration: none; cursor: pointer; }
 .property-expense-row .value { font-weight: 700; color: var(--text-primary); }
 .property-expense-empty { text-align: center; font-size: 12px; color: var(--text-muted); padding: 6px 0; }
 
-/* ── MOBILE FINANCE SUMMARY (hidden on desktop) ──────────── */
-.mobile-finance-tiles { display: none; }
-
 /* ── MOBILE PHOTO BADGE (overlaid on carousel, hidden on desktop) ── */
 .property-photo-badge { display: none; }
 
-/* ── MOBILE CARDS LAYOUT ──────────────────────────────────── */
+/* ── MOBILE DASHBOARD (hidden on desktop) ──────────────────── */
+.m-dash { display: none; }
+
+/* ── MOBILE DASHBOARD (Promoseven RE mobile spec) ──────────
+     The desktop dashboard sections below are replaced wholesale by the
+     .m-dash-* markup on mobile — not squeezed responsively — since the
+     mobile spec is a different screen, not a narrower desktop one. ── */
 @media (max-width: 768px) {
-    .mobile-finance-tiles {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin-bottom: 20px;
+    .page-header, .dash-stats, .data-hero,
+    .finance-card, .property-section-head, .property-grid, .dash-grid {
+        display: none !important;
     }
-    .mobile-finance-tile {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius);
-        padding: 16px 16px;
-    }
-    .mobile-finance-label {
-        font-size: 10.5px; font-weight: 700; color: var(--text-muted);
-        text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;
-    }
-    .mobile-finance-value { font-family: 'Outfit', sans-serif; font-size: 21px; font-weight: 800; color: var(--text-primary); line-height: 1.1; }
-    .mobile-finance-value.positive { color: var(--success); }
-    .mobile-finance-value.negative { color: var(--danger); }
-    .mobile-finance-sub { font-size: 10.5px; color: var(--text-muted); margin-top: 4px; }
 
-    .property-photo-badge {
-        display: inline-flex;
-        position: absolute;
-        top: 10px; right: 10px;
-        z-index: 2;
-        background: rgba(11,17,32,0.72);
-        color: #fff;
-        border: none;
-        backdrop-filter: blur(3px);
+    @keyframes m-drift-1 { from { transform: translate(0,0) scale(1); } to { transform: translate(-45px,35px) scale(1.18); } }
+    @keyframes m-drift-2 { from { transform: translate(0,0) scale(1); } to { transform: translate(55px,-28px) scale(1.12); } }
+    @keyframes m-sheen   { 0% { transform: translateX(-140%) skewX(-18deg); } 100% { transform: translateX(320%) skewX(-18deg); } }
+
+    .m-dash { display: block; font-family: 'Poppins', sans-serif; color: var(--m-ink); }
+
+    /* ── Hero ──────────────────────────────────────────── */
+    .m-hero {
+        background: linear-gradient(150deg, var(--m-navy), var(--m-navy-2));
+        border-radius: 0 0 30px 30px;
+        padding: calc(20px + env(safe-area-inset-top)) 20px 56px;
+        display: flex; flex-direction: column; gap: 20px;
+        position: relative; overflow: hidden;
     }
-    .property-title-row .badge { display: none; }
+    .m-hero-fx { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .m-hero-fx span { position: absolute; border-radius: 50%; filter: blur(12px); }
+    .m-hero-fx .b1 { width: 280px; height: 280px; top: -90px; right: -70px; background: radial-gradient(circle,rgba(231,178,102,.30),transparent 65%); animation: m-drift-1 9s ease-in-out infinite alternate; }
+    .m-hero-fx .b2 { width: 240px; height: 240px; bottom: -110px; left: -80px; background: radial-gradient(circle,rgba(74,125,240,.22),transparent 65%); animation: m-drift-2 12s ease-in-out infinite alternate; }
+    .m-hero-fx .sheen { top: 0; bottom: 0; width: 90px; background: linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent); animation: m-sheen 7s ease-in-out infinite; }
+    .m-hero-top { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
+    .m-hero-icon-btn {
+        width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,.08);
+        border: none; display: flex; align-items: center; justify-content: center;
+        color: #C6D0E2; cursor: pointer; flex-shrink: 0; position: relative;
+    }
+    .m-hero-greeting { flex: 1; }
+    .m-hero-greeting .g1 { font-size: 11.5px; color: var(--m-navy-text); }
+    .m-hero-greeting .g2 { font-size: 16px; font-weight: 700; color: #fff; }
+    .m-hero-avatar {
+        width: 40px; height: 40px; border-radius: 50%; background: var(--m-gold-deep);
+        color: #fff; font-weight: 700; font-size: 14px; border: none; cursor: pointer; flex-shrink: 0;
+    }
+    .m-hero-net { display: flex; flex-direction: column; gap: 4px; position: relative; z-index: 1; }
+    .m-hero-net-label { font-size: 10.5px; letter-spacing: 1.2px; font-weight: 600; color: var(--m-navy-text); }
+    .m-hero-net-val { font-size: 34px; font-weight: 800; color: #fff; }
+    .m-hero-net-val span { font-size: 12px; color: var(--m-navy-text); font-weight: 500; margin-left: 10px; }
+    .m-hero-tiles { display: flex; gap: 10px; position: relative; z-index: 1; }
+    .m-hero-tile { flex: 1; background: rgba(255,255,255,.07); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 1px; }
+    .m-hero-tile-label { font-size: 10px; color: var(--m-navy-text); font-weight: 600; }
+    .m-hero-tile-val { font-size: 16px; font-weight: 700; }
 
-    .property-grid { grid-template-columns: 1fr; gap: 14px; margin-bottom: 22px; }
-    .property-carousel { height: 148px; }
-    .property-body { padding: 14px 16px 16px; }
-    .property-name { font-size: 15.5px; }
-    .property-address { margin-bottom: 14px; font-size: 11.5px; }
-    .property-period-label { margin-bottom: 8px; }
-    .property-stats-row { gap: 6px; margin-bottom: 14px; }
-    .property-stat-box { padding: 8px 5px; }
-    .property-stat-value { font-size: 13.5px; }
-    .property-expense-list { padding: 10px 12px; }
+    /* ── Stat strip ────────────────────────────────────── */
+    .m-strip {
+        margin: -32px 18px 0; background: var(--m-card); border-radius: 20px; padding: 16px 4px;
+        display: flex; box-shadow: var(--m-shadow-float); position: relative; z-index: 1;
+    }
+    .m-strip-item {
+        flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+        border: none; background: none; cursor: pointer; font-family: 'Poppins', sans-serif;
+        border-right: 1px solid var(--m-line); text-decoration: none; min-height: 44px; justify-content: center;
+    }
+    .m-strip-item:last-child { border-right: none; }
+    .m-strip-item .v { font-size: 19px; font-weight: 800; color: var(--m-ink); }
+    .m-strip-item.is-green .v { color: var(--m-green); }
+    .m-strip-item .l { font-size: 10.5px; color: var(--m-muted); }
 
-    .dash-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
-    .dash-stat { padding: 14px 12px; gap: 10px; }
-    .dash-stat-val { font-size: 19px; }
-    .dash-stat-lbl { font-size: 11px; }
+    /* ── Section heads ─────────────────────────────────── */
+    .m-sec-head { display: flex; align-items: center; padding: 22px 18px 10px; }
+    .m-sec-head .t { font-size: 14px; font-weight: 700; flex: 1; }
+    .m-sec-head a, .m-sec-head button {
+        font-size: 11.5px; font-weight: 600; color: var(--m-gold-text); border: none;
+        background: none; cursor: pointer; font-family: 'Poppins', sans-serif; text-decoration: none;
+        min-height: 44px; display: flex; align-items: center;
+    }
+
+    /* ── Quick actions ─────────────────────────────────── */
+    .m-quick { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; padding: 22px 18px 0; }
+    .m-quick-item { display: flex; flex-direction: column; align-items: center; gap: 7px; text-decoration: none; }
+    .m-quick-tile { width: 56px; height: 56px; border-radius: 17px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .m-quick-item .l { font-size: 10px; font-weight: 600; color: #4A5568; }
+
+    /* ── Activity list ─────────────────────────────────── */
+    .m-activity-list { display: flex; flex-direction: column; gap: 9px; padding: 0 18px 4px; }
+    .m-activity-row {
+        background: var(--m-card); border-radius: 15px; padding: 13px 15px; display: flex;
+        align-items: center; gap: 12px; box-shadow: var(--m-shadow);
+    }
+    .m-activity-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; }
+    .m-activity-body { flex: 1; min-width: 0; }
+    .m-activity-title { font-size: 12.5px; font-weight: 600; }
+    .m-activity-sub { font-size: 10.5px; color: var(--m-muted); }
+
+    /* ── Finance card ───────────────────────────────────── */
+    .m-finance-card {
+        margin: 18px 18px 0; background: var(--m-card); border-radius: var(--m-r-card);
+        padding: 18px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--m-shadow);
+    }
+    .m-finance-head { display: flex; align-items: center; gap: 12px; }
+    .m-finance-icon { width: 42px; height: 42px; border-radius: 13px; background: var(--m-gold); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(231,178,102,.3); color: var(--m-gold-on); font-size: 16px; }
+    .m-finance-title { font-size: 14px; font-weight: 700; }
+    .m-finance-sub { font-size: 10.5px; color: var(--m-muted); }
+    .m-finance-year { padding: 6px 12px; border-radius: 10px; background: var(--m-line); font-size: 11.5px; font-weight: 600; }
+    .m-finance-canvas { height: 110px; }
+    .m-finance-legend { display: flex; gap: 8px; overflow-x: auto; }
+    .m-finance-chip {
+        display: flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 10px;
+        font-size: 11.5px; font-family: 'Poppins', sans-serif; cursor: pointer; flex-shrink: 0;
+        border: 1.5px solid transparent; background: #F7F8FB; color: var(--m-muted); font-weight: 500;
+    }
+    .m-finance-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .m-finance-chip.active { font-weight: 700; }
+
+    /* ── Property performance ──────────────────────────── */
+    .m-perf-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 0 18px 4px; }
+    .m-perf-card {
+        flex-shrink: 0; width: 246px; background: var(--m-card); border-radius: var(--m-r-card);
+        box-shadow: var(--m-shadow); padding: 16px; display: flex; flex-direction: column; gap: 13px;
+        text-decoration: none; color: inherit;
+    }
+    .m-perf-top { display: flex; align-items: center; gap: 12px; }
+    .m-perf-name { font-size: 13.5px; font-weight: 700; color: var(--m-ink); line-height: 1.25; }
+    .m-perf-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 5px; }
+    .m-perf-chip { padding: 3px 8px; border-radius: 7px; font-size: 9.5px; font-weight: 700; }
+    .m-perf-foot { display: flex; gap: 8px; padding-top: 11px; border-top: 1px solid var(--m-line); }
+    .m-perf-foot > div { flex: 1; display: flex; flex-direction: column; }
+    .m-perf-foot .l { font-size: 9px; font-weight: 600; color: var(--m-faint); letter-spacing: .4px; }
+    .m-perf-foot .v { font-size: 12.5px; font-weight: 800; color: var(--m-ink); }
+
+    /* ── Recent lists ───────────────────────────────────── */
+    .m-list-card { margin: 0 18px; background: var(--m-card); border-radius: var(--m-r-card); box-shadow: var(--m-shadow); overflow: hidden; }
+    .m-list-card + .m-list-card { margin-top: 16px; }
+    .m-list-head { display: flex; align-items: center; gap: 10px; padding: 15px 16px; border-bottom: 1px solid var(--m-line); }
+    .m-list-head-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .m-list-head-title { font-size: 13.5px; font-weight: 700; flex: 1; }
+    .m-list-head a { height: 34px; padding: 0 13px; border: 1.5px solid var(--m-border); border-radius: 10px; background: var(--m-card); color: #4A5568; font-weight: 600; font-size: 11.5px; font-family: 'Poppins', sans-serif; cursor: pointer; text-decoration: none; display: flex; align-items: center; }
+    .m-list-row {
+        display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 16px;
+        border: none; border-bottom: 1px solid var(--m-line); background: none; cursor: pointer;
+        font-family: 'Poppins', sans-serif; text-align: left; min-height: 48px; text-decoration: none; color: inherit;
+    }
+    .m-list-row:last-child { border-bottom: none; }
+    .m-list-code { padding: 5px 9px; border-radius: 8px; background: var(--m-gold-tint); color: var(--m-gold-text); font-size: 10px; font-weight: 700; flex-shrink: 0; min-width: 42px; text-align: center; }
+    .m-list-name { font-size: 12.5px; font-weight: 600; color: var(--m-ink); flex: 1; }
+    .m-list-meta { font-size: 11px; font-weight: 500; }
+    .m-empty-row { padding: 24px 16px; text-align: center; font-size: 12px; color: var(--m-muted); }
+
+    .m-dash-bottom-space { height: 26px; }
 }
 </style>
 @endpush
@@ -623,10 +720,254 @@ document.querySelectorAll('.property-carousel').forEach(function (carousel) {
         });
     });
 })();
+
+/* ── MOBILE DASHBOARD: hero menu button + single-series finance chart ── */
+(function () {
+    document.getElementById('mHeroMenuBtn')?.addEventListener('click', function () {
+        document.getElementById('menuBtn')?.click();
+    });
+
+    const canvas = document.getElementById('mobileChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const chartData = @json($chartData);
+    const seriesColor = { income: '#17A96C', expenses: '#D64545', credits: '#4A7DF0', debits: '#E7B266', profit: '#7A5AF8' };
+    const seriesStyle = {
+        income: { bg: '#E6F6EE', fg: '#0B6E47' }, expenses: { bg: '#FCEBEB', fg: '#B03030' },
+        credits: { bg: '#E9F0FD', fg: '#2C5BD0' }, debits: { bg: '#FBF3E4', fg: '#8A6118' },
+        profit: { bg: '#EFEBFD', fg: '#5A3BD8' },
+    };
+
+    let activeSeries = 'income';
+    const mobileChart = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                data: chartData[activeSeries],
+                backgroundColor: chartData[activeSeries].map((v) => v === null ? '#F3F5F9' : (v < 0 ? '#D64545' : seriesColor[activeSeries])),
+                borderRadius: 5, borderSkipped: false, barPercentage: 0.7, categoryPercentage: 0.9,
+            }],
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: {
+                backgroundColor: '#0B1120', padding: 10, cornerRadius: 8,
+                callbacks: { label: (c) => 'BHD ' + new Intl.NumberFormat('en-US').format(c.parsed.y) },
+            } },
+            scales: {
+                y: { display: false, beginAtZero: true },
+                x: { grid: { display: false }, ticks: { color: '#A7B0C0', font: { family: 'Poppins', size: 7, weight: '600' } } },
+            },
+        },
+    });
+
+    document.querySelectorAll('#mFinanceLegend .m-finance-chip').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+            activeSeries = chip.dataset.series;
+            mobileChart.data.datasets[0].data = chartData[activeSeries];
+            mobileChart.data.datasets[0].backgroundColor = chartData[activeSeries].map((v) => v === null ? '#F3F5F9' : (v < 0 ? '#D64545' : seriesColor[activeSeries]));
+            mobileChart.update();
+
+            document.querySelectorAll('#mFinanceLegend .m-finance-chip').forEach(function (c) {
+                const on = c === chip;
+                const style = seriesStyle[c.dataset.series];
+                c.classList.toggle('active', on);
+                c.style.background = on ? style.bg : '#F7F8FB';
+                c.style.color = on ? style.fg : 'var(--m-muted)';
+                c.style.borderColor = on ? seriesColor[c.dataset.series] : 'transparent';
+            });
+        });
+    });
+})();
 </script>
 @endpush
 
 @section('content')
+
+@php
+    $portfolioIncome = $buildingPerformance->sum('total_income');
+    $portfolioNet = $buildingPerformance->sum('net_income');
+    $portfolioExpense = $portfolioIncome - $portfolioNet;
+    $greetingHour = now()->hour;
+    $greeting = $greetingHour < 12 ? 'Good morning' : ($greetingHour < 18 ? 'Good afternoon' : 'Good evening');
+    $activityMeta = [
+        'created' => ['icon' => 'fa-circle-plus', 'bg' => 'var(--m-green-tint)', 'fg' => 'var(--m-green)'],
+        'imported' => ['icon' => 'fa-file-arrow-up', 'bg' => 'var(--m-blue-tint)', 'fg' => 'var(--m-blue)'],
+        'updated' => ['icon' => 'fa-pen', 'bg' => 'var(--m-gold-tint)', 'fg' => 'var(--m-gold-text)'],
+        'deleted' => ['icon' => 'fa-trash', 'bg' => 'var(--m-red-tint)', 'fg' => 'var(--m-red)'],
+    ];
+@endphp
+
+{{-- ═══════════════════════════════ MOBILE DASHBOARD ═══════════════════════════════ --}}
+<div class="m-dash">
+    <div class="m-hero">
+        <div class="m-hero-fx"><span class="b1"></span><span class="b2"></span><span class="sheen"></span></div>
+        <div class="m-hero-top">
+            <button type="button" class="m-hero-icon-btn" id="mHeroMenuBtn"><i class="fa-solid fa-bars"></i></button>
+            <div class="m-hero-greeting">
+                <div class="g1">{{ $greeting }}</div>
+                <div class="g2">{{ auth()->user()->name ?? 'there' }}</div>
+            </div>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="m-hero-avatar" title="Sign out">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</button>
+            </form>
+            <button type="button" class="m-hero-icon-btn"><i class="fa-regular fa-bell"></i></button>
+        </div>
+        <div class="m-hero-net">
+            <div class="m-hero-net-label">{{ $chartYear }} &middot; NET POSITION</div>
+            <div class="m-hero-net-val">BHD {{ number_format($portfolioNet, 0) }}<span>{{ now()->format('F') }}: BHD {{ number_format($portfolioNet, 0) }}</span></div>
+        </div>
+        <div class="m-hero-tiles">
+            <div class="m-hero-tile">
+                <div class="m-hero-tile-label">INCOME &middot; {{ $chartYear }}</div>
+                <div class="m-hero-tile-val" style="color:#7ED8AC;">BHD {{ number_format($portfolioIncome, 0) }}</div>
+            </div>
+            <div class="m-hero-tile">
+                <div class="m-hero-tile-label">EXPENSES &middot; {{ $chartYear }}</div>
+                <div class="m-hero-tile-val" style="color:#F0A3A3;">BHD {{ number_format($portfolioExpense, 0) }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="m-strip">
+        <a href="{{ route('buildings.index') }}" class="m-strip-item"><span class="v">{{ $stats['buildings'] }}</span><span class="l">Buildings</span></a>
+        <a href="{{ route('floors.global') }}" class="m-strip-item"><span class="v">{{ $stats['floors'] }}</span><span class="l">Floors</span></a>
+        <a href="{{ route('property-units.index') }}" class="m-strip-item"><span class="v">{{ $stats['units'] }}</span><span class="l">Units</span></a>
+        <a href="{{ route('property-units.index') }}" class="m-strip-item is-green"><span class="v">{{ $stats['occupied'] }}</span><span class="l">Occupied</span></a>
+    </div>
+
+    <div class="m-sec-head"><div class="t">Quick actions</div></div>
+    <div class="m-quick">
+        <a href="{{ route('property-units.index') }}" class="m-quick-item">
+            <div class="m-quick-tile" style="background:var(--m-gold);box-shadow:0 6px 14px rgba(231,178,102,.35);color:var(--m-gold-on);"><i class="fa-solid fa-plus"></i></div>
+            <div class="l">Add unit</div>
+        </a>
+        <a href="{{ route('invoices.index') }}" class="m-quick-item">
+            <div class="m-quick-tile" style="background:var(--m-green-tint);color:var(--m-green);"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+            <div class="l">Invoice</div>
+        </a>
+        <a href="{{ route('tenants.index') }}" class="m-quick-item">
+            <div class="m-quick-tile" style="background:var(--m-blue-tint);color:var(--m-blue);"><i class="fa-solid fa-users"></i></div>
+            <div class="l">Tenant</div>
+        </a>
+        <a href="{{ route('maintenance.index') }}" class="m-quick-item">
+            <div class="m-quick-tile" style="background:var(--m-red-tint);color:var(--m-red);"><i class="fa-solid fa-wrench"></i></div>
+            <div class="l">Repair</div>
+        </a>
+    </div>
+
+    <div class="m-sec-head"><div class="t">Recent activity</div><a href="{{ route('admin.audit-log') }}">See all</a></div>
+    <div class="m-activity-list">
+        @forelse($recentActivity as $entry)
+            @php $meta = $activityMeta[$entry->action] ?? ['icon' => 'fa-circle-info', 'bg' => 'var(--m-line)', 'fg' => 'var(--m-muted)']; @endphp
+            <div class="m-activity-row">
+                <div class="m-activity-icon" style="background:{{ $meta['bg'] }};color:{{ $meta['fg'] }};"><i class="fa-solid {{ $meta['icon'] }}"></i></div>
+                <div class="m-activity-body">
+                    <div class="m-activity-title">{{ ucfirst($entry->action) }} {{ $entry->entity_type }}</div>
+                    <div class="m-activity-sub">{{ $entry->entity_name ?? '—' }} &middot; {{ $entry->created_at->diffForHumans() }}</div>
+                </div>
+            </div>
+        @empty
+            <div class="m-empty-row">No recent activity yet</div>
+        @endforelse
+    </div>
+
+    @if(collect($chartData['income'])->filter(fn($v) => $v !== null)->isNotEmpty())
+    <div class="m-finance-card">
+        <div class="m-finance-head">
+            <div class="m-finance-icon"><i class="fa-solid fa-chart-line"></i></div>
+            <div style="flex:1;">
+                <div class="m-finance-title">Portfolio Financial Overview</div>
+                <div class="m-finance-sub">{{ $chartYear }} &middot; Income, expenses, profit, credits &amp; debits</div>
+            </div>
+            <div class="m-finance-year">{{ $chartYear }}</div>
+        </div>
+        <div class="m-finance-canvas"><canvas id="mobileChart"></canvas></div>
+        <div class="m-finance-legend" id="mFinanceLegend">
+            <button type="button" class="m-finance-chip active" data-series="income" style="border-color:#17A96C;background:#E6F6EE;color:#0B6E47;"><span class="dot" style="background:#17A96C;"></span>Income</button>
+            <button type="button" class="m-finance-chip" data-series="expenses"><span class="dot" style="background:#D64545;"></span>Expenses</button>
+            <button type="button" class="m-finance-chip" data-series="credits"><span class="dot" style="background:#4A7DF0;"></span>Credits</button>
+            <button type="button" class="m-finance-chip" data-series="debits"><span class="dot" style="background:#E7B266;"></span>Debits</button>
+            <button type="button" class="m-finance-chip" data-series="profit"><span class="dot" style="background:#7A5AF8;"></span>Profit</button>
+        </div>
+    </div>
+    @endif
+
+    @if($buildingPerformance->isNotEmpty())
+    <div class="m-sec-head"><div class="t">Property performance</div><a href="{{ route('buildings.index') }}">View all</a></div>
+    <div class="m-perf-scroll">
+        @foreach($buildingPerformance as $perf)
+            @php
+                $b = $perf['building'];
+                $pct = min(100, max(0, (int) $perf['occupancy_percent']));
+                $dash = round($pct * 1.508, 1) . ' 151';
+                $hasType = !empty($b->property_type);
+            @endphp
+            <a href="{{ route('buildings.show', $b) }}" class="m-perf-card">
+                <div class="m-perf-top">
+                    <svg width="62" height="62" viewBox="0 0 60 60" style="flex-shrink:0;">
+                        <circle cx="30" cy="30" r="24" fill="none" stroke="#F1F3F8" stroke-width="7"></circle>
+                        <circle cx="30" cy="30" r="24" fill="none" stroke="#E7B266" stroke-width="7" stroke-linecap="round" stroke-dasharray="{{ $dash }}" transform="rotate(-90 30 30)"></circle>
+                        <text x="30" y="34" text-anchor="middle" font-family="Poppins" font-size="12" font-weight="800" fill="#17203A">{{ $pct }}%</text>
+                    </svg>
+                    <div style="flex:1;min-width:0;">
+                        <div class="m-perf-name">{{ $b->property_name }}</div>
+                        <div class="m-perf-chips">
+                            <span class="m-perf-chip" style="background:var(--m-gold-tint);color:var(--m-gold-text);">{{ $b->property_code }}</span>
+                            <span class="m-perf-chip" style="background:{{ $hasType ? 'var(--m-blue-tint)' : 'var(--m-line)' }};color:{{ $hasType ? 'var(--m-blue)' : '#6B7688' }};">{{ $hasType ? strtoupper($b->property_type) : 'ACTIVE' }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="m-perf-foot">
+                    <div><span class="l">INCOME</span><span class="v" style="color:var(--m-green);">BHD {{ number_format($perf['total_income'], 0) }}</span></div>
+                    <div><span class="l">NET</span><span class="v">BHD {{ number_format($perf['net_income'], 0) }}</span></div>
+                    <div><span class="l">TENANTS</span><span class="v">{{ $perf['tenant_count'] }}</span></div>
+                </div>
+            </a>
+        @endforeach
+    </div>
+    @endif
+
+    <div class="m-sec-head"><div class="t">Recent Buildings</div></div>
+    <div class="m-list-card">
+        <div class="m-list-head">
+            <div class="m-list-head-icon" style="background:var(--m-gold-tint);"><i class="fa-solid fa-building" style="color:var(--m-gold-text);font-size:14px;"></i></div>
+            <div class="m-list-head-title">Recent Buildings</div>
+            <a href="{{ route('buildings.index') }}">View all</a>
+        </div>
+        @forelse($recentBuildings->take(4) as $b)
+            <a href="{{ route('buildings.show', $b) }}" class="m-list-row">
+                <span class="m-list-code">{{ $b->property_code }}</span>
+                <span class="m-list-name">{{ $b->property_name }}</span>
+                <span class="m-list-meta" style="color:{{ $b->property_type ? 'var(--m-blue)' : 'var(--m-faint)' }};">{{ $b->property_type ?? '—' }}</span>
+            </a>
+        @empty
+            <div class="m-empty-row">No buildings yet</div>
+        @endforelse
+    </div>
+
+    <div class="m-sec-head" style="padding-top:16px;"><div class="t">Recent Units</div></div>
+    <div class="m-list-card">
+        <div class="m-list-head">
+            <div class="m-list-head-icon" style="background:var(--m-green-tint);"><i class="fa-solid fa-door-open" style="color:var(--m-green);font-size:14px;"></i></div>
+            <div class="m-list-head-title">Recent Units</div>
+            <a href="{{ route('property-units.index') }}">View all</a>
+        </div>
+        @forelse($recentUnits->take(5) as $u)
+            <a href="{{ route('property-units.show', $u) }}" class="m-list-row">
+                <span class="m-list-name" style="font-weight:700;">{{ $u->unit_name }}</span>
+                <span class="m-list-code" style="background:var(--m-line);color:#6B7688;">{{ optional($u->building)->property_code ?? '—' }}</span>
+                <span class="m-list-meta" style="min-width:64px;text-align:right;color:{{ $u->unit_condition ? 'var(--m-purple)' : 'var(--m-faint)' }};">{{ $u->unit_condition ?? '—' }}</span>
+            </a>
+        @empty
+            <div class="m-empty-row">No units yet</div>
+        @endforelse
+    </div>
+
+    <div class="m-dash-bottom-space"></div>
+</div>
 
 <div class="page-header">
     <div>
@@ -634,25 +975,6 @@ document.querySelectorAll('.property-carousel').forEach(function (carousel) {
         <p class="page-header-sub">Overview of your real estate portfolio</p>
     </div>
 </div>
-
-{{-- MOBILE FINANCE SUMMARY (real portfolio totals, same source as the chart below) --}}
-@php
-    $portfolioIncome = $buildingPerformance->sum('total_income');
-    $portfolioNet = $buildingPerformance->sum('net_income');
-@endphp
-<div class="mobile-finance-tiles">
-    <div class="mobile-finance-tile">
-        <div class="mobile-finance-label">This Month &middot; Income</div>
-        <div class="mobile-finance-value">BHD {{ number_format($portfolioIncome, 0) }}</div>
-        <div class="mobile-finance-sub">Across {{ $buildingPerformance->count() }} {{ Str::plural('property', $buildingPerformance->count()) }}</div>
-    </div>
-    <div class="mobile-finance-tile">
-        <div class="mobile-finance-label">This Month &middot; Net</div>
-        <div class="mobile-finance-value {{ $portfolioNet >= 0 ? 'positive' : 'negative' }}">BHD {{ number_format($portfolioNet, 0) }}</div>
-        <div class="mobile-finance-sub">{{ now()->format('F Y') }} portfolio</div>
-    </div>
-</div>
-
 {{-- STATS --}}
 <div class="dash-stats">
     <a href="{{ route('buildings.index') }}" class="dash-stat">

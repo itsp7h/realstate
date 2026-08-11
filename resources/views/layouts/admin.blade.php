@@ -532,6 +532,8 @@
         @media (max-width: 768px) {
             #menuBtn { display: flex !important; }
             body { font-family: 'Poppins', sans-serif; }
+            body.is-dashboard .topbar { display: none; }
+            body.is-dashboard .page-content { padding: 0 0 calc(78px + env(safe-area-inset-bottom)); }
 
             .sidebar {
                 width: clamp(260px, 84vw, 300px);
@@ -660,7 +662,7 @@
         }
     </style>
 </head>
-<body>
+<body class="{{ request()->routeIs('dashboard') ? 'is-dashboard' : '' }}">
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
