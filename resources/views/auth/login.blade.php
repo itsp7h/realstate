@@ -204,12 +204,56 @@
     .btn-submit:hover { filter: brightness(1.06); transform: translateY(-1px); }
     .btn-submit:active { transform: translateY(0); }
 
-    @media (max-width: 860px) {
+    @media (max-width: 860px) and (min-width: 769px) {
         body { flex-direction: column; }
         .brand-panel { flex: 0 0 auto; padding: 40px 32px; }
         .brand-headline { font-size: 26px; margin-top: 28px; }
         .brand-footer { display: none; }
         .form-panel { padding: 40px 24px 60px; }
+    }
+
+    /* ── Mobile "Midnight" login (Promoseven RE mobile spec) ──────── */
+    @media (max-width: 768px) {
+        body {
+            flex-direction: column;
+            background: #10141F;
+            font-family: 'Poppins', sans-serif;
+        }
+        .brand-panel {
+            flex: 0 0 auto;
+            padding: 74px 26px 12px;
+            background: radial-gradient(circle at 80% 0%, rgba(231,178,102,.16), transparent 55%),
+                        radial-gradient(circle at 0% 100%, rgba(74,125,240,.10), transparent 50%);
+        }
+        .brand-panel::before { display: none; }
+        .brand-logo img { width: 46px; height: 46px; border-radius: 50%; }
+        .brand-headline { font-size: 32px; margin-top: 24px; font-family: 'Poppins', sans-serif; }
+        .brand-sub { font-size: 13px; color: #8B99B5; }
+        .brand-footer { display: none; }
+
+        .form-panel { flex: 1; background: #10141F; padding: 4px 26px 44px; align-items: stretch; justify-content: flex-start; }
+        .form-title, .form-sub { display: none; }
+        .form-label { color: #C6D0E2; font-family: 'Poppins', sans-serif; }
+        .form-control {
+            height: 52px;
+            border: 1.5px solid #2C3550;
+            border-radius: 13px;
+            background: #1A2133;
+            color: #fff;
+            font-family: 'Poppins', sans-serif;
+        }
+        .form-control:focus { border-color: var(--accent); }
+        .remember-check { color: #8B99B5; font-family: 'Poppins', sans-serif; }
+        .remember-check input { accent-color: #D99A3D; }
+        .btn-submit {
+            height: 54px;
+            border-radius: 14px;
+            background: linear-gradient(135deg,#EDBE78,#DC9E45);
+            color: #2A2312;
+            font-family: 'Poppins', sans-serif;
+            box-shadow: 0 8px 22px rgba(231,178,102,.35);
+        }
+        .alert-error { background: #2A1414; border-color: #4A2020; color: #F0A3A3; }
     }
 </style>
 </head>

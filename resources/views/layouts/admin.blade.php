@@ -8,7 +8,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <style>
@@ -45,6 +45,37 @@
             --ease-spring:      cubic-bezier(.32,.72,0,1);
             --duration-sheet:   380ms;
             --scrim:            rgba(11,17,32,0.55);
+
+            /* ── Mobile app design tokens (Promoseven RE mobile spec) ── */
+            --m-bg:            #F4F1EA;
+            --m-card:          #FFFFFF;
+            --m-ink:           #17203A;
+            --m-muted:         #8E9AAE;
+            --m-faint:         #A7B0C0;
+            --m-line:          #F1F3F8;
+            --m-border:        #E4E9F0;
+
+            --m-navy:          #10141F;
+            --m-navy-2:        #1E2842;
+            --m-navy-line:     #1A2540;
+            --m-navy-active:   #1E2D4A;
+            --m-navy-text:     #8A9BBE;
+
+            --m-gold:          #E7B266;
+            --m-gold-deep:     #D99A3D;
+            --m-gold-text:     #C08A2D;
+            --m-gold-tint:     #FBF3E4;
+            --m-gold-on:       #2A2312;
+            --m-gold-grad:     linear-gradient(135deg,#EDBE78,#DC9E45);
+
+            --m-green:  #17A96C;  --m-green-tint:  #E6F6EE;
+            --m-red:    #D64545;  --m-red-tint:    #FCEBEB;
+            --m-blue:   #4A7DF0;  --m-blue-tint:   #E9F0FD;
+            --m-purple: #7A5AF8;  --m-purple-tint: #EFEBFD;
+
+            --m-r-card: 18px;  --m-r-btn: 12px;  --m-r-chip: 10px;  --m-r-badge: 7px;
+            --m-shadow: 0 1px 3px rgba(23,32,58,.05);
+            --m-shadow-float: 0 8px 24px rgba(23,32,58,.10);
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -500,15 +531,35 @@
     <style>
         @media (max-width: 768px) {
             #menuBtn { display: flex !important; }
+            body { font-family: 'Poppins', sans-serif; }
 
             .sidebar {
                 width: clamp(260px, 84vw, 300px);
+                background: var(--m-navy);
                 transition: transform var(--duration-sheet) var(--ease-spring);
                 box-shadow: none;
             }
             .sidebar.open { box-shadow: var(--shadow-lg); }
+            .logo-desktop { display: none; }
+            .logo-mobile {
+                display: flex; align-items: center; gap: 12px;
+                padding: 24px 20px 18px; border-bottom: 1px solid var(--m-navy-line);
+            }
+            .logo-mobile-tile {
+                width: 40px; height: 40px; border-radius: 11px;
+                background: var(--m-gold); color: var(--m-navy);
+                display: flex; align-items: center; justify-content: center;
+                font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 15px;
+                box-shadow: 0 0 20px rgba(231,178,102,.25); flex-shrink: 0;
+            }
+            .logo-mobile-text strong { display: block; color: #fff; font-weight: 700; font-size: 14px; }
+            .logo-mobile-text span { color: var(--m-navy-text); font-size: 9.5px; letter-spacing: 1.2px; font-weight: 600; }
 
-            /* ── Bottom sheet ──────────────────────────────────────── */
+            .sidebar .nav-item { border-radius: 10px; font-family: 'Poppins', sans-serif; min-height: 44px; }
+            .sidebar .nav-item.active .nav-icon { color: var(--m-gold); }
+            .sidebar .nav-item.active::before { background: var(--m-gold); }
+
+            /* ── Bottom sheet (shared by modals + the More menu) ────── */
             .modal-overlay {
                 align-items: flex-end;
                 padding: 0;
@@ -538,6 +589,34 @@
             }
             .sheet-handle.dragging { transition: none; }
 
+            /* ── Standard mobile header ───────────────────────────── */
+            .topbar {
+                height: auto;
+                padding: calc(18px + env(safe-area-inset-top)) 18px 12px;
+                gap: 10px;
+                font-family: 'Poppins', sans-serif;
+            }
+            .topbar-title { font-size: 19px; font-weight: 800; font-family: 'Poppins', sans-serif; }
+            #menuBtn, .topbar-actions .topbar-icon-btn { width: 40px; height: 40px; border-radius: 12px; }
+            .topbar .user-avatar { width: 40px; height: 40px; font-size: 14px; }
+
+            /* ── More sheet ───────────────────────────────────────── */
+            .more-sheet-item {
+                display: flex; align-items: center; gap: 14px;
+                width: 100%; padding: 12px 10px; border: none; background: none;
+                border-radius: 14px; cursor: pointer; text-align: left;
+                font-family: 'Poppins', sans-serif; min-height: 56px;
+                text-decoration: none; color: inherit;
+            }
+            .more-sheet-item:active { background: var(--m-line); }
+            .more-sheet-icon {
+                width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
+                display: flex; align-items: center; justify-content: center; font-size: 17px;
+            }
+            .more-sheet-label { font-size: 14px; font-weight: 700; color: var(--m-ink); }
+            .more-sheet-desc { font-size: 11px; color: var(--m-muted); margin-top: 1px; }
+            .more-sheet-item.danger .more-sheet-label { color: var(--m-red); }
+
             /* ── Bottom tab bar ──────────────────────────────────── */
             .page-content { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
 
@@ -546,8 +625,8 @@
                 position: fixed;
                 left: 0; right: 0; bottom: 0;
                 z-index: 95;
-                background: var(--card-bg);
-                border-top: 1px solid var(--card-border);
+                background: var(--m-card);
+                border-top: 1px solid #E9EDF3;
                 padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
                 box-shadow: 0 -2px 16px rgba(0,0,0,0.05);
             }
@@ -560,15 +639,15 @@
                 padding: 6px 2px;
                 border: none;
                 background: none;
-                color: var(--text-muted);
+                color: #9AA5B8;
                 text-decoration: none;
-                font-family: 'Plus Jakarta Sans', sans-serif;
-                font-size: 10.5px;
+                font-family: 'Poppins', sans-serif;
+                font-size: 10px;
                 font-weight: 600;
                 transition: color 0.15s ease;
             }
-            .tabbar-item i { font-size: 18px; transition: transform 0.15s var(--ease-spring); }
-            .tabbar-item.active { color: var(--accent); }
+            .tabbar-item i { font-size: 21px; transition: transform 0.15s var(--ease-spring); }
+            .tabbar-item.active { color: var(--m-gold-deep); }
             .tabbar-item.active i { transform: translateY(-1px); }
             .tabbar-item:active i { transform: scale(0.88); }
         }
@@ -576,6 +655,8 @@
         @media (min-width: 769px) {
             .sheet-handle { display: none; }
             .bottom-tabbar { display: none; }
+            .logo-mobile { display: none; }
+            #moreSheet { display: none !important; }
         }
     </style>
 </head>
@@ -583,11 +664,18 @@
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
-    <a href="{{ url('/') }}" class="sidebar-logo">
+    <a href="{{ url('/') }}" class="sidebar-logo logo-desktop">
         <div class="sidebar-logo-icon"><i class="fa-solid fa-building-columns"></i></div>
         <div class="sidebar-logo-text">
             <strong>RealEstate</strong>
             <span>Management Suite</span>
+        </div>
+    </a>
+    <a href="{{ url('/') }}" class="logo-mobile" style="text-decoration:none;">
+        <div class="logo-mobile-tile">P7</div>
+        <div class="logo-mobile-text">
+            <strong>Promoseven RE</strong>
+            <span>MANAGEMENT SUITE</span>
         </div>
     </a>
 
@@ -707,6 +795,43 @@
 
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
+<!-- MORE SHEET (mobile bottom tab bar "More" destination) -->
+<div class="modal-overlay" id="moreSheet">
+    <div class="modal-box" style="max-width:100%;padding:14px 10px 20px;">
+        @unless(auth()->user()?->isMaintenance())
+        <a href="{{ route('floors.global') }}" class="more-sheet-item">
+            <div class="more-sheet-icon" style="background:var(--m-blue-tint);"><i class="fa-solid fa-layer-group" style="color:var(--m-blue);"></i></div>
+            <div><div class="more-sheet-label">Floors</div><div class="more-sheet-desc">Browse all floors</div></div>
+        </a>
+        <a href="{{ route('property-units.index') }}" class="more-sheet-item">
+            <div class="more-sheet-icon" style="background:var(--m-green-tint);"><i class="fa-solid fa-door-open" style="color:var(--m-green);"></i></div>
+            <div><div class="more-sheet-label">Property Units</div><div class="more-sheet-desc">Browse property units</div></div>
+        </a>
+        <a href="{{ route('invoices.index') }}" class="more-sheet-item">
+            <div class="more-sheet-icon" style="background:var(--m-gold-tint);"><i class="fa-solid fa-file-invoice-dollar" style="color:var(--m-gold-text);"></i></div>
+            <div><div class="more-sheet-label">Invoices &amp; Payments</div><div class="more-sheet-desc">View invoices and payments</div></div>
+        </a>
+        @endunless
+        @if(auth()->user()?->canViewReports())
+        <a href="{{ route('reports.index') }}" class="more-sheet-item">
+            <div class="more-sheet-icon" style="background:var(--m-purple-tint);"><i class="fa-solid fa-chart-bar" style="color:var(--m-purple);"></i></div>
+            <div><div class="more-sheet-label">Reports</div><div class="more-sheet-desc">Export portfolio reports</div></div>
+        </a>
+        @endif
+        <button type="button" class="more-sheet-item" id="moreMenuBtn">
+            <div class="more-sheet-icon" style="background:var(--m-navy-active);"><i class="fa-solid fa-bars" style="color:#fff;"></i></div>
+            <div><div class="more-sheet-label">Full menu</div><div class="more-sheet-desc">All sections</div></div>
+        </button>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="more-sheet-item danger">
+                <div class="more-sheet-icon" style="background:var(--m-red-tint);"><i class="fa-solid fa-right-from-bracket" style="color:var(--m-red);"></i></div>
+                <div><div class="more-sheet-label">Sign out</div><div class="more-sheet-desc">{{ auth()->user()->email ?? '' }}</div></div>
+            </button>
+        </form>
+    </div>
+</div>
+
 <!-- MAIN WRAP -->
 <div class="main-wrap">
     <!-- TOPBAR -->
@@ -791,8 +916,21 @@
     menuBtn.addEventListener('click', () => {
         sidebar.classList.contains('open') ? closeDrawer() : openDrawer();
     });
-    document.getElementById('moreTabBtn')?.addEventListener('click', openDrawer);
     backdrop.addEventListener('click', closeDrawer);
+
+    // ── More sheet (bottom tab bar "More" destination) ───────────
+    const moreSheet = document.getElementById('moreSheet');
+    function openMoreSheet() {
+        moreSheet.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeMoreSheet() {
+        moreSheet.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    document.getElementById('moreTabBtn')?.addEventListener('click', openMoreSheet);
+    moreSheet.addEventListener('click', (e) => { if (e.target === moreSheet) closeMoreSheet(); });
+    document.getElementById('moreMenuBtn')?.addEventListener('click', () => { closeMoreSheet(); openDrawer(); });
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && sidebar.classList.contains('open')) closeDrawer();
     });
