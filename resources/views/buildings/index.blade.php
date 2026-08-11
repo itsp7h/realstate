@@ -533,6 +533,46 @@
     </div>
 </div>
 
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+<div class="m-screen">
+    <div class="m-action-row">
+        <a href="{{ route('export.buildings', request()->only(['search','property_type','type_of_ownership'])) }}" class="m-action-btn green-outline">Export</a>
+        <button type="button" class="m-action-btn outline" onclick="openImport_buildings()">Import</button>
+        <button type="button" class="m-action-btn primary" onclick="openBuildingModal()">+ Add Building</button>
+    </div>
+    <div class="m-mini-row">
+        <div class="m-mini-stat"><span class="v">{{ $stats['total'] ?? 0 }}</span><span class="l">Total</span></div>
+        <div class="m-mini-stat"><span class="v" style="color:var(--m-green);">{{ $stats['residential'] ?? 0 }}</span><span class="l">Residential</span></div>
+        <div class="m-mini-stat"><span class="v" style="color:var(--m-blue);">{{ $stats['commercial'] ?? 0 }}</span><span class="l">Commercial</span></div>
+    </div>
+    <form method="GET" action="{{ route('buildings.index') }}">
+        <input type="text" class="m-search-input" name="search" value="{{ request('search') }}"
+               placeholder="Property name, code…" oninput="mDebounceSubmit(this)">
+    </form>
+    <div class="m-row-list">
+        @forelse($buildings as $building)
+            @php $floorCount = $building->total_no_of_floors ?? $building->floors_count ?? 0; $unitCount = $building->total_no_of_units ?? $building->units_count ?? 0; @endphp
+            <a href="{{ route('buildings.show', $building) }}" class="m-row-card">
+                <span class="m-row-chip">{{ $building->property_code }}</span>
+                <div style="flex:1;min-width:0;">
+                    <div class="m-row-title">{{ $building->property_name }}</div>
+                    <div class="m-row-sub">{{ $floorCount }} floors &middot; {{ $unitCount }} units</div>
+                </div>
+                @if($building->property_type)
+                    <span class="m-row-badge" style="background:var(--m-blue-tint);color:var(--m-blue);">{{ $building->property_type }}</span>
+                @endif
+                <i class="fa-solid fa-chevron-right m-row-chevron"></i>
+            </a>
+        @empty
+            <div class="m-empty">
+                <div class="m-empty-icon"><i class="fa-solid fa-building"></i></div>
+                <div class="m-empty-title">No buildings found</div>
+                <div class="m-empty-sub">Try adjusting your search or add a new building.</div>
+            </div>
+        @endforelse
+    </div>
+</div>
+
 @include('components.import-modal', [
     'type'        => 'buildings',
     'label'       => 'Buildings',
@@ -559,7 +599,7 @@
 </div>
 
 {{-- FILTER BAR + TABLE CARD --}}
-<div class="card" style="overflow:hidden;">
+<div class="card m-hide-desktop-index" style="overflow:hidden;">
 
     <form method="GET" action="{{ route('buildings.index') }}" id="filterForm">
         <div class="filter-bar">

@@ -561,6 +561,67 @@
             .sidebar .nav-item.active .nav-icon { color: var(--m-gold); }
             .sidebar .nav-item.active::before { background: var(--m-gold); }
 
+            /* ── Shared mobile screen components (list pages) ───────
+                 Reused across Buildings/Floors/Units/Tenants/Maintenance/
+                 Invoices/Reports so each page doesn't repeat this CSS. ── */
+            .m-screen { font-family: 'Poppins', sans-serif; color: var(--m-ink); padding: 18px 18px calc(28px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; }
+
+            .m-action-row { display: flex; gap: 10px; }
+            .m-action-btn {
+                flex: 1; height: 46px; border-radius: var(--m-r-btn); font-weight: 600; font-size: 13px;
+                font-family: 'Poppins', sans-serif; cursor: pointer; display: flex; align-items: center;
+                justify-content: center; gap: 6px; text-decoration: none; border: none;
+            }
+            .m-action-btn.primary { background: var(--m-gold); color: var(--m-gold-on); font-weight: 700; flex: 1.4; }
+            .m-action-btn.outline { background: var(--m-card); border: 1.5px solid var(--m-border); color: #4A5568; }
+            .m-action-btn.green-outline { background: #F2FBF6; border: 1.5px solid #A8DFC6; color: var(--m-green); }
+
+            .m-mini-row { display: flex; gap: 10px; }
+            .m-mini-stat { flex: 1; background: var(--m-card); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; box-shadow: var(--m-shadow); }
+            .m-mini-stat .v { font-size: 19px; font-weight: 800; color: var(--m-ink); }
+            .m-mini-stat .l { font-size: 10.5px; color: var(--m-muted); }
+
+            .m-search-input {
+                height: 48px; border: 1.5px solid var(--m-border); border-radius: var(--m-r-btn);
+                padding: 0 16px; font-size: 13.5px; font-family: 'Poppins', sans-serif;
+                background: var(--m-card); outline: none; color: var(--m-ink); width: 100%;
+            }
+
+            .m-chip-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+            .m-chip-row.no-sb::-webkit-scrollbar { display: none; }
+            .m-chip {
+                height: 40px; padding: 0 16px; border-radius: 11px; font-size: 12.5px; font-weight: 600;
+                font-family: 'Poppins', sans-serif; cursor: pointer; flex-shrink: 0; display: flex;
+                align-items: center; text-decoration: none; border: 1.5px solid var(--m-border);
+                background: var(--m-card); color: #6B7688;
+            }
+            .m-chip.active { border-color: var(--m-gold); background: var(--m-gold); color: var(--m-gold-on); }
+
+            .m-row-list { display: flex; flex-direction: column; gap: 10px; }
+            .m-row-card {
+                background: var(--m-card); border-radius: 15px; padding: 14px 16px; display: flex;
+                align-items: center; gap: 13px; box-shadow: var(--m-shadow); text-decoration: none; color: inherit;
+                border: none; width: 100%; text-align: left; font-family: 'Poppins', sans-serif; cursor: pointer;
+            }
+            .m-row-icon { width: 42px; height: 42px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 17px; }
+            .m-row-title { font-size: 13.5px; font-weight: 700; color: var(--m-ink); }
+            .m-row-sub { font-size: 11px; color: var(--m-muted); margin-top: 1px; }
+            .m-row-chip { padding: 6px 9px; border-radius: 9px; background: var(--m-gold-tint); color: var(--m-gold-text); font-size: 10.5px; font-weight: 700; flex-shrink: 0; }
+            .m-row-badge { padding: 4px 10px; border-radius: 8px; font-size: 10.5px; font-weight: 600; flex-shrink: 0; }
+            .m-row-chevron { color: #C3CBD8; font-size: 14px; flex-shrink: 0; }
+
+            .m-empty { text-align: center; padding: 60px 24px; }
+            .m-empty-icon { width: 64px; height: 64px; border-radius: 18px; background: var(--m-gold-tint); display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--m-gold-text); margin: 0 auto 14px; }
+            .m-empty-title { font-size: 15px; font-weight: 700; color: var(--m-ink); margin-bottom: 4px; }
+            .m-empty-sub { font-size: 12px; color: var(--m-muted); }
+
+            /* Desktop list-page chrome each redesigned mobile screen replaces —
+               scoped to body.is-mobile-screen so untouched pages (Lease
+               Contracts, Expenses, Payments, ...) keep their normal header. */
+            body.is-mobile-screen .page-header,
+            body.is-mobile-screen .stats-grid,
+            body.is-mobile-screen .m-hide-desktop-index { display: none !important; }
+
             /* ── Bottom sheet (shared by modals + the More menu) ────── */
             .modal-overlay {
                 align-items: flex-end;
@@ -659,10 +720,18 @@
             .bottom-tabbar { display: none; }
             .logo-mobile { display: none; }
             #moreSheet { display: none !important; }
+            .m-screen { display: none !important; }
         }
     </style>
 </head>
-<body class="{{ request()->routeIs('dashboard') ? 'is-dashboard' : '' }}">
+@php
+    $mobileRedesignedRoutes = [
+        'buildings.index', 'floors.global', 'property-units.index', 'tenants.index',
+        'maintenance.index', 'invoices.index', 'reports.index',
+    ];
+    $isMobileScreen = request()->routeIs($mobileRedesignedRoutes);
+@endphp
+<body class="{{ request()->routeIs('dashboard') ? 'is-dashboard' : '' }} {{ $isMobileScreen ? 'is-mobile-screen' : '' }}">
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
@@ -897,6 +966,11 @@
 </nav>
 
 <script>
+let mDebounceTimer;
+function mDebounceSubmit(el) {
+    clearTimeout(mDebounceTimer);
+    mDebounceTimer = setTimeout(() => el.form.submit(), 500);
+}
 (function () {
     const MOBILE = 768;
     const sidebar = document.getElementById('sidebar');
