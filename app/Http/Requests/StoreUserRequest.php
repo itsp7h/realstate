@@ -17,7 +17,7 @@ class StoreUserRequest extends FormRequest
         $userId = $this->route('user')?->id;
 
         return [
-            'name'     => ['required', 'string', 'max:255'],
+            'name'     => ['required', 'string', 'max:255', Rule::unique('users', 'name')->ignore($userId)],
             'email'    => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
             'role'     => ['required', Rule::in(['admin', 'user', 'maintenance'])],
             'password' => [$userId ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
