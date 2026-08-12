@@ -311,6 +311,10 @@
 {{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
 @php
     $mntStatusLabels = ['waiting_supervisor' => 'Pending Assessment','waiting_approval' => 'Pending Approval','approved' => 'Approved','in_progress' => 'In Progress','completed' => 'Completed','cancelled' => 'Cancelled'];
+    $mntBadgeColors = [
+        'orange' => ['#FBF3E4', '#C08A2D'], 'purple' => ['#EFEBFD', '#7A5AF8'], 'green' => ['#E6F6EE', '#17A96C'],
+        'blue' => ['#E9F0FD', '#4A7DF0'], 'teal' => ['#E6F6EE', '#0F8A6E'], 'red' => ['#FCEBEB', '#D64545'], 'gray' => ['#F1F3F8', '#6B7688'],
+    ];
 @endphp
 <div class="m-screen">
     <div class="m-chip-row no-sb">
@@ -321,10 +325,11 @@
     </div>
     <div class="m-row-list">
         @forelse($requests as $req)
+            @php [$bg, $fg] = $mntBadgeColors[$req->status_color] ?? ['#F1F3F8', '#6B7688']; @endphp
             <a href="{{ route('maintenance.show', $req) }}" class="m-row-card" style="flex-direction:column;align-items:stretch;gap:9px;">
                 <div style="display:flex;align-items:center;gap:10px;">
                     <div class="m-row-title" style="flex:1;">{{ $req->job_order ?? 'Request #'.$req->id }}</div>
-                    <span class="m-row-badge" style="background:var(--m-{{ $req->status_color === 'orange' ? 'gold' : $req->status_color }}-tint,var(--m-line));color:var(--m-{{ $req->status_color === 'orange' ? 'gold-text' : $req->status_color }},var(--m-muted));">{{ $req->status_label }}</span>
+                    <span class="m-row-badge" style="background:{{ $bg }};color:{{ $fg }};">{{ $req->status_label }}</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--m-muted);flex-wrap:wrap;">
                     @if($req->flat)<span class="m-row-chip" style="font-size:10px;">{{ $req->flat }}</span>@endif

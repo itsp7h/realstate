@@ -146,7 +146,54 @@
     </div>
 </div>
 
-<div class="inv-stats">
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+@php
+    $invStatusLabels = ['issued' => 'Issued', 'partially_paid' => 'Partially Paid', 'paid' => 'Paid', 'overdue' => 'Overdue'];
+    $invBadgeColors = [
+        'paid'           => ['#E6F6EE', '#17A96C'],
+        'partially_paid' => ['#FBF3E4', '#C08A2D'],
+        'issued'         => ['#E9F0FD', '#4A7DF0'],
+        'overdue'        => ['#FCEBEB', '#D64545'],
+        'draft'          => ['#F1F3F8', '#6B7688'],
+        'cancelled'      => ['#F1F3F8', '#6B7688'],
+    ];
+@endphp
+<div class="m-screen">
+    <div style="background:linear-gradient(135deg,#10141F,#232B42);border-radius:18px;padding:20px;display:flex;gap:24px;">
+        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">COLLECTED &middot; {{ now()->format('M') }}</div><div style="font-size:21px;font-weight:800;color:#7ED8AC;">BHD {{ number_format($collectedThisMonth, 0) }}</div></div>
+        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">OUTSTANDING</div><div style="font-size:21px;font-weight:800;color:#E7B266;">BHD {{ number_format($outstanding, 0) }}</div></div>
+    </div>
+    <div class="m-chip-row no-sb">
+        <a href="{{ route('invoices.index') }}" class="m-chip {{ !request('status') ? 'active' : '' }}">All</a>
+        @foreach($invStatusLabels as $val => $label)
+            <a href="{{ route('invoices.index', ['status' => $val]) }}" class="m-chip {{ request('status') === $val ? 'active' : '' }}">{{ $label }}</a>
+        @endforeach
+    </div>
+    <div class="m-row-list">
+        @forelse($invoices as $inv)
+            @php [$bg, $fg] = $invBadgeColors[$inv->status] ?? ['#F1F3F8', '#6B7688']; @endphp
+            <a href="{{ route('invoices.show', $inv) }}" class="m-row-card">
+                <div class="m-row-icon" style="background:var(--m-line);color:#8E9AAE;"><i class="fa-solid fa-file-invoice"></i></div>
+                <div style="flex:1;min-width:0;">
+                    <div class="m-row-title">{{ $inv->invoice_number }}</div>
+                    <div class="m-row-sub">{{ $inv->tenant_name }}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                    <div style="font-size:13.5px;font-weight:800;">BHD {{ number_format($inv->amount, 0) }}</div>
+                    <span class="m-row-badge" style="background:{{ $bg }};color:{{ $fg }};">{{ $inv->status_label }}</span>
+                </div>
+            </a>
+        @empty
+            <div class="m-empty">
+                <div class="m-empty-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                <div class="m-empty-title">No invoices found</div>
+                <div class="m-empty-sub">Try adjusting your filters.</div>
+            </div>
+        @endforelse
+    </div>
+</div>
+
+<div class="inv-stats m-hide-desktop-index">
     <div class="inv-stat">
         <div class="inv-stat-icon gray"><i class="fa-solid fa-file-invoice-dollar"></i></div>
         <div><div class="inv-stat-val">{{ $stats['total'] }}</div><div class="inv-stat-lbl">Total</div></div>
@@ -169,7 +216,7 @@
     </div>
 </div>
 
-<form method="GET" action="{{ route('invoices.index') }}" class="filter-bar">
+<form method="GET" action="{{ route('invoices.index') }}" class="filter-bar m-hide-desktop-index">
     <input type="search" name="search" value="{{ request('search') }}" placeholder="Search invoice #, tenant, property…">
     <select name="status" onchange="this.form.submit()">
         <option value="">All Statuses</option>
@@ -191,7 +238,7 @@
     @endif
 </form>
 
-<div class="table-card">
+<div class="table-card m-hide-desktop-index">
     @if($invoices->isEmpty())
     <div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
         <i class="fa-solid fa-file-invoice-dollar" style="font-size:36px;display:block;margin-bottom:12px;opacity:0.3"></i>

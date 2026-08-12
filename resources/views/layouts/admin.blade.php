@@ -511,6 +511,18 @@
         }
         .sidebar-backdrop.show { opacity: 1; pointer-events: all; }
 
+        /* ── MORE SHEET (base positioning — this lives in the shared
+             layout, so unlike per-page modals it can't rely on that
+             page also defining .modal-overlay's fixed/centered base) ── */
+        #moreSheet {
+            position: fixed; inset: 0; z-index: 1050;
+            background: var(--scrim);
+            display: flex;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        #moreSheet.open { opacity: 1; pointer-events: all; }
+
         /* ── SCROLLBAR ────────────────────────────────────── */
         ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }

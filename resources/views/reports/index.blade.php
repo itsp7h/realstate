@@ -35,7 +35,41 @@
     </div>
 </div>
 
-<div class="report-grid">
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+@php
+    $mobileReports = [
+        ['route' => 'reports.tenant-statement',       'icon' => 'fa-file-invoice',         'bg' => 'var(--m-gold-tint)', 'fg' => 'var(--m-gold-text)', 'name' => 'Tenant Statement',            'desc' => 'Bill-wise statement of outstanding rent invoices & EWA bills for one tenant.'],
+        ['route' => 'reports.bill-wise-statement',    'icon' => 'fa-list-check',           'bg' => 'var(--m-blue-tint)', 'fg' => 'var(--m-blue)',      'name' => 'Bill-wise Statement',          'desc' => 'One row per outstanding bill — opening amount, balance, due date, days overdue.'],
+        ['route' => 'reports.tenant-ledger',          'icon' => 'fa-book',                 'bg' => 'var(--m-purple-tint)','fg' => 'var(--m-purple)',   'name' => 'Tenant Ledger',                'desc' => 'Complete transaction history for one tenant with a running balance.'],
+        ['route' => 'reports.tenant-ageing',          'icon' => 'fa-hourglass-half',       'bg' => 'var(--m-green-tint)', 'fg' => 'var(--m-green)',    'name' => 'Tenant Ageing',                'desc' => 'Outstanding bills split into under 60 / 60–120 / over 120 day buckets.'],
+        ['route' => 'reports.group-ageing',           'icon' => 'fa-table-list',           'bg' => 'var(--m-blue-tint)', 'fg' => 'var(--m-blue)',      'name' => 'Group Outstanding (Ageing)',   'desc' => 'One row per tenant with an outstanding balance, plus a grand total.'],
+        ['route' => 'reports.financial-summary',      'icon' => 'fa-chart-pie',            'bg' => 'var(--m-purple-tint)','fg' => 'var(--m-purple)',   'name' => 'Tenant Financial Summary',     'desc' => 'Opening balance, billed and received amounts, and net balance per tenant.'],
+        ['route' => 'reports.profit-loss',            'icon' => 'fa-scale-balanced',       'bg' => 'var(--m-gold-tint)', 'fg' => 'var(--m-gold-text)', 'name' => 'Profit & Loss',                'desc' => 'Rent, utilities & EWA collected against maintenance costs and unrecovered EWA.'],
+        ['route' => 'reports.rent-schedule',          'icon' => 'fa-calendar-check',       'bg' => 'var(--m-green-tint)', 'fg' => 'var(--m-green)',    'name' => 'Rent Payment Schedule',        'desc' => 'Month-by-month paid / partly paid / never invoiced status for one tenant.'],
+        ['route' => 'reports.collection',             'icon' => 'fa-receipt',              'bg' => 'var(--m-blue-tint)', 'fg' => 'var(--m-blue)',      'name' => 'Collection Report',            'desc' => 'Every rent & EWA payment received in a date range, with receipt details.'],
+        ['route' => 'reports.vat-return',             'icon' => 'fa-file-invoice-dollar',  'bg' => 'var(--m-gold-tint)', 'fg' => 'var(--m-gold-text)', 'name' => 'VAT Return',                   'desc' => 'Rent invoices & EWA bills in the exact format the quarterly VAT filing needs.'],
+    ];
+@endphp
+<div class="m-screen">
+    <div class="m-row-list">
+        @foreach($mobileReports as $r)
+            <a href="{{ route($r['route']) }}" class="m-row-card">
+                <div class="m-row-icon" style="background:{{ $r['bg'] }};color:{{ $r['fg'] }};"><i class="fa-solid {{ $r['icon'] }}"></i></div>
+                <div style="flex:1;min-width:0;">
+                    <div class="m-row-title">{{ $r['name'] }}</div>
+                    <div class="m-row-sub" style="line-height:1.4;">{{ $r['desc'] }}</div>
+                </div>
+                <i class="fa-solid fa-chevron-right m-row-chevron"></i>
+            </a>
+        @endforeach
+    </div>
+    <div style="font-size:11px;color:var(--m-muted);line-height:1.5;padding:0 4px;">
+        <i class="fa-solid fa-circle-info"></i>
+        Draft reports — "On Account" credit balances and post-dated cheques aren't tracked yet, so those columns aren't included.
+    </div>
+</div>
+
+<div class="report-grid m-hide-desktop-index">
     <a href="{{ route('reports.tenant-statement') }}" class="report-card">
         <div class="report-card-icon"><i class="fa-solid fa-file-invoice"></i></div>
         <div class="report-card-title">Tenant Statement</div>
@@ -97,7 +131,7 @@
     </a>
 </div>
 
-<div style="margin-top:20px;font-size:12px;color:var(--text-muted);max-width:640px">
+<div class="m-hide-desktop-index" style="margin-top:20px;font-size:12px;color:var(--text-muted);max-width:640px">
     <i class="fa-solid fa-circle-info" style="margin-right:5px"></i>
     Draft reports — "On Account" credit balances and post-dated cheques aren't tracked in the system yet, so those columns aren't included.
 </div>
