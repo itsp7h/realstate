@@ -214,46 +214,136 @@
 
     /* ── Mobile "Midnight" login (Promoseven RE mobile spec) ──────── */
     @media (max-width: 768px) {
+        :root {
+            --p7-gold:        #E7B266;
+            --p7-gold-deep:   #DC9E45;
+            --p7-gold-light:  #EDBE78;
+            --p7-gold-text:   #D99A3D;
+            --p7-btn-text:    #2A2312;
+            --p7-bg-dark:     #161512;
+            --p7-input-bg:    rgba(13,16,26,.6);
+            --p7-input-border:#33394E;
+            --p7-text-body:   #C6D0E2;
+            --p7-text-muted:  #8B99B5;
+            --p7-text-btn2:   #C9CFDC;
+        }
+
+        @keyframes p7GlowPulse {
+            from { opacity: 0.75; transform: scale(1); }
+            to   { opacity: 1;    transform: scale(1.08); }
+        }
+        @keyframes p7WatermarkDrift {
+            from { transform: translate(0, 0) rotate(0deg); }
+            to   { transform: translate(6px, -10px) rotate(0.6deg); }
+        }
+        @keyframes p7FadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            body::before, body::after { animation: none !important; }
+            .brand-logo, .brand-headline, .brand-sub, .form-group, .form-row, .m-login-buttons { animation: none !important; opacity: 1 !important; transform: none !important; }
+        }
+
         body {
             flex-direction: column;
-            background: #10141F;
+            background: var(--p7-bg-dark);
             font-family: 'Poppins', sans-serif;
+            position: relative;
+            overflow-x: hidden;
         }
-        .brand-panel {
-            flex: 0 0 auto;
-            padding: 74px 26px 12px;
-            background: radial-gradient(circle at 80% 0%, rgba(231,178,102,.16), transparent 55%),
-                        radial-gradient(circle at 0% 100%, rgba(74,125,240,.10), transparent 50%);
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background: radial-gradient(ellipse 70% 50% at 50% 38%, rgba(90,72,45,.30), transparent 70%);
+            animation: p7GlowPulse 6s ease-in-out infinite alternate;
         }
+        body::after {
+            content: 'P7';
+            position: fixed; top: -40px; left: -60px; z-index: 0; pointer-events: none;
+            font-size: 340px; font-weight: 800; font-family: 'Poppins', sans-serif;
+            color: transparent; -webkit-text-stroke: 2px rgba(231,178,102,.14);
+            line-height: 1;
+            animation: p7WatermarkDrift 14s ease-in-out infinite alternate;
+        }
+        .brand-panel, .form-panel { position: relative; z-index: 1; }
+
+        .brand-logo, .brand-headline, .brand-sub, .form-group, .form-row, .m-login-buttons {
+            opacity: 0;
+            animation: p7FadeUp 0.6s cubic-bezier(.22,1,.36,1) forwards;
+        }
+        .brand-logo       { animation-delay: 0.05s; }
+        .brand-headline    { animation-delay: 0.12s; }
+        .brand-sub         { animation-delay: 0.20s; }
+        .form-group:nth-of-type(1) { animation-delay: 0.28s; }
+        .form-group:nth-of-type(2) { animation-delay: 0.34s; }
+        .form-row          { animation-delay: 0.40s; }
+        .m-login-buttons   { animation-delay: 0.46s; }
+
+        .brand-panel { flex: 0 0 auto; padding: 74px 26px 12px; background: none; }
         .brand-panel::before { display: none; }
         .brand-logo img { width: 46px; height: 46px; border-radius: 50%; }
-        .brand-headline { font-size: 32px; margin-top: 24px; font-family: 'Poppins', sans-serif; }
-        .brand-sub { font-size: 13px; color: #8B99B5; }
+        .brand-logo-text { font-size: 15px; }
+        .brand-logo-text span { color: var(--p7-gold-text); font-size: 10px; letter-spacing: 1.5px; }
+        .brand-headline { font-size: 32px; margin-top: 24px; font-family: 'Poppins', sans-serif; line-height: 1.12; }
+        .brand-headline em { color: var(--p7-gold); }
+        .brand-sub { font-size: 13px; color: var(--p7-text-muted); }
         .brand-footer { display: none; }
 
-        .form-panel { flex: 1; background: #10141F; padding: 4px 26px 44px; align-items: stretch; justify-content: flex-start; }
+        .form-panel { flex: 1; background: none; padding: 4px 26px 44px; align-items: stretch; justify-content: flex-start; }
+        .form-card { display: flex; flex-direction: column; height: 100%; }
+        .form-card form { display: flex; flex-direction: column; flex: 1; }
         .form-title, .form-sub { display: none; }
-        .form-label { color: #C6D0E2; font-family: 'Poppins', sans-serif; }
+        .form-label { color: var(--p7-text-body); font-family: 'Poppins', sans-serif; font-size: 12.5px; font-weight: 600; }
         .form-control {
             height: 52px;
-            border: 1.5px solid #2C3550;
+            min-height: 44px;
+            border: 1.5px solid var(--p7-input-border);
             border-radius: 13px;
-            background: #1A2133;
+            background: var(--p7-input-bg);
             color: #fff;
             font-family: 'Poppins', sans-serif;
+            font-size: 14px;
         }
-        .form-control:focus { border-color: var(--accent); }
-        .remember-check { color: #8B99B5; font-family: 'Poppins', sans-serif; }
-        .remember-check input { accent-color: #D99A3D; }
+        .form-control:focus { border-color: var(--p7-gold); }
+        .form-row { justify-content: space-between; min-height: 44px; }
+        .remember-check { color: var(--p7-text-muted); font-family: 'Poppins', sans-serif; }
+        .remember-check input { accent-color: var(--p7-gold-text); }
+        .forgot-link {
+            color: var(--p7-gold); font-weight: 600; font-size: 13px;
+            text-decoration: none; min-height: 44px; display: flex; align-items: center;
+        }
         .btn-submit {
             height: 54px;
+            min-height: 44px;
             border-radius: 14px;
-            background: linear-gradient(135deg,#EDBE78,#DC9E45);
-            color: #2A2312;
+            background: linear-gradient(135deg, var(--p7-gold-light), var(--p7-gold-deep));
+            color: var(--p7-btn-text);
             font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
             box-shadow: 0 8px 22px rgba(231,178,102,.35);
         }
+        .btn-submit:active, .btn-secondary:active { transform: scale(.98); }
+        .btn-secondary {
+            height: 54px;
+            min-height: 44px;
+            border-radius: 14px;
+            background: transparent;
+            border: 1.5px solid var(--p7-input-border);
+            color: var(--p7-text-btn2);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            width: 100%;
+            display: flex; align-items: center; justify-content: center; gap: 9px;
+            cursor: pointer;
+        }
+        .m-login-buttons { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
         .alert-error { background: #2A1414; border-color: #4A2020; color: #F0A3A3; }
+    }
+    @media (min-width: 769px) {
+        .forgot-link, .btn-secondary { display: none; }
     }
 </style>
 </head>
@@ -312,11 +402,17 @@
                     <input type="checkbox" name="remember">
                     Keep me signed in
                 </label>
+                <span class="forgot-link" title="Password reset isn't available yet">Forgot?</span>
             </div>
 
-            <button type="submit" class="btn-submit">
-                <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign in
-            </button>
+            <div class="m-login-buttons">
+                <button type="submit" class="btn-submit">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign in
+                </button>
+                <button type="button" class="btn-secondary" disabled title="Not available yet" style="opacity:0.6;cursor:not-allowed;">
+                    <i class="fa-solid fa-face-smile"></i> Sign in with Face ID
+                </button>
+            </div>
         </form>
     </div>
 </div>
