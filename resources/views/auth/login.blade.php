@@ -228,20 +228,15 @@
             --p7-text-btn2:   #C9CFDC;
         }
 
-        @keyframes p7GlowPulse {
-            from { opacity: 0.75; transform: scale(1); }
-            to   { opacity: 1;    transform: scale(1.08); }
-        }
-        @keyframes p7WatermarkDrift {
-            from { transform: translate(0, 0) rotate(0deg); }
-            to   { transform: translate(6px, -10px) rotate(0.6deg); }
-        }
+        @keyframes p7Drift1 { from { transform: translate(0,0) scale(1); } to { transform: translate(-45px,35px) scale(1.18); } }
+        @keyframes p7Drift2 { from { transform: translate(0,0) scale(1); } to { transform: translate(55px,-28px) scale(1.12); } }
+        @keyframes p7Sheen  { 0% { transform: translateX(-140%) skewX(-18deg); } 100% { transform: translateX(320%) skewX(-18deg); } }
         @keyframes p7FadeUp {
             from { opacity: 0; transform: translateY(14px); }
             to   { opacity: 1; transform: translateY(0); }
         }
         @media (prefers-reduced-motion: reduce) {
-            body::before, body::after { animation: none !important; }
+            .p7-hero-fx * { animation: none !important; }
             .brand-logo, .brand-headline, .brand-sub, .form-group, .form-row, .m-login-buttons { animation: none !important; opacity: 1 !important; transform: none !important; }
         }
 
@@ -252,19 +247,23 @@
             position: relative;
             overflow-x: hidden;
         }
-        body::before {
-            content: '';
-            position: fixed; inset: 0; z-index: 0; pointer-events: none;
-            background: radial-gradient(ellipse 70% 50% at 50% 38%, rgba(90,72,45,.30), transparent 70%);
-            animation: p7GlowPulse 6s ease-in-out infinite alternate;
+        .p7-hero-fx { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+        .p7-hero-fx span { position: absolute; border-radius: 50%; filter: blur(12px); }
+        .p7-hero-fx .b1 {
+            width: 280px; height: 280px; top: -90px; right: -70px;
+            background: radial-gradient(circle, rgba(231,178,102,.30), transparent 65%);
+            animation: p7Drift1 9s ease-in-out infinite alternate;
         }
-        body::after {
-            content: 'P7';
-            position: fixed; top: -20px; right: -40px; z-index: 0; pointer-events: none;
-            font-size: 200px; font-weight: 800; font-family: 'Poppins', sans-serif;
-            color: transparent; -webkit-text-stroke: 1.5px rgba(231,178,102,.09);
-            line-height: 1;
-            animation: p7WatermarkDrift 14s ease-in-out infinite alternate;
+        .p7-hero-fx .b2 {
+            width: 240px; height: 240px; bottom: -110px; left: -80px;
+            background: radial-gradient(circle, rgba(74,125,240,.22), transparent 65%);
+            animation: p7Drift2 12s ease-in-out infinite alternate;
+        }
+        .p7-hero-fx .sheen {
+            top: 0; bottom: 0; left: 0; width: 90px; border-radius: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.05), transparent);
+            filter: none;
+            animation: p7Sheen 7s ease-in-out infinite;
         }
         .brand-panel, .form-panel { position: relative; z-index: 1; }
 
@@ -353,11 +352,13 @@
         .alert-error { background: #2A1414; border-color: #4A2020; color: #F0A3A3; }
     }
     @media (min-width: 769px) {
-        .forgot-link, .btn-secondary { display: none; }
+        .forgot-link, .btn-secondary, .p7-hero-fx { display: none; }
     }
 </style>
 </head>
 <body>
+
+<div class="p7-hero-fx"><span class="b1"></span><span class="b2"></span><span class="sheen"></span></div>
 
 <div class="brand-panel">
     <div class="brand-logo">
