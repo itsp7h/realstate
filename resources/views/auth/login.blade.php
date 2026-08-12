@@ -334,9 +334,13 @@
         .login-right { flex: 0 0 46%; }
     }
     @media (max-width: 900px) {
-        .login-left { flex: 0 0 100%; max-width: 100%; }
+        .login-left {
+            flex: 0 0 100%; max-width: 100%;
+            background: linear-gradient(180deg, rgba(5,7,12,.75) 0%, rgba(5,7,12,.55) 40%, rgba(5,7,12,.92) 78%, rgba(5,7,12,.98) 100%),
+                        url('{{ asset('images/login-building.jpg') }}') center 20% / cover no-repeat;
+        }
         .login-right { display: none; }
-        .login-left-watermark { font-size: 60vw; top: -4%; right: -18%; }
+        .login-left-watermark { display: none; }
     }
     @media (max-width: 560px) {
         .login-left { padding: 40px 24px; align-items: flex-start; }
