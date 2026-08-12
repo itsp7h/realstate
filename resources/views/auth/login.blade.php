@@ -80,13 +80,22 @@
         min-height: 100vh;
         color: var(--text-primary);
         font-size: 14px;
-        background: var(--bg-dark);
+        background: #05070C;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
     }
 
     .login-page {
         position: relative;
         display: flex;
-        min-height: 100vh;
+        width: 100%;
+        min-height: calc(100vh - 40px);
+        max-width: 1600px;
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.55);
     }
 
     /* ── LEFT — login panel ──────────────────────────────── */
@@ -289,81 +298,55 @@
     }
     .login-footer a { color: var(--text-secondary); text-decoration: underline; cursor: default; }
 
-    /* ── RIGHT — showcase (desktop only) ─────────────────── */
+    /* ── RIGHT — building showcase (desktop only) ────────── */
     .login-right {
         flex: 1;
         position: relative;
         overflow: hidden;
-        background: var(--bg-dark);
+        background: #0A0E1A;
     }
     .skyline-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
     .skyline-overlay {
         position: absolute;
         inset: 0;
-        background: linear-gradient(115deg, rgba(11,16,32,0.94) 0%, rgba(11,16,32,0.55) 38%, rgba(20,32,64,0.28) 65%, rgba(20,32,64,0.15) 100%);
+        background: linear-gradient(100deg, rgba(6,9,18,0.88) 0%, rgba(6,9,18,0.32) 30%, rgba(6,9,18,0) 55%);
     }
 
-    /* Decorative dashboard preview — static mock data only, never wired
-       to real app state, since this renders on the public login page. */
-    .dash-preview {
-        position: absolute;
-        left: 43%;
-        bottom: 8%;
-        z-index: 2;
-        width: 560px;
-        max-width: 50vw;
-        background: #0F1524;
-        border: 1px solid #232B40;
-        border-radius: var(--radius-lg);
-        box-shadow: 0 30px 70px rgba(0,0,0,0.5);
-        overflow: hidden;
+    /* ── Social auth (secondary, quiet — no OAuth exists yet,
+         so these are disabled rather than fake-functional) ── */
+    .social-divider { display: flex; align-items: center; gap: 12px; margin: 28px 0; }
+    .social-divider::before, .social-divider::after { content: ''; flex: 1; height: 1px; background: var(--panel-line); }
+    .social-divider span { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+    .social-row { display: flex; gap: 12px; }
+    .btn-social {
+        flex: 1;
+        height: 48px;
+        border-radius: var(--radius);
+        border: 1.5px solid var(--input-border);
+        background: var(--input-bg);
+        color: var(--text-secondary);
         font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 13.5px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        cursor: not-allowed;
+        opacity: 0.6;
     }
-    .dash-preview-top {
-        display: flex; align-items: center; gap: 10px;
-        padding: 14px 18px;
-        border-bottom: 1px solid #1E2536;
-    }
-    .dash-preview-logo { width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0; }
-    .dash-preview-brand { font-size: 12.5px; font-weight: 700; color: #fff; }
-    .dash-preview-title { font-size: 12px; font-weight: 600; color: #B7C0D1; margin-left: 14px; flex: 1; }
-    .dash-preview-icon { width: 26px; height: 26px; border-radius: 7px; background: #1B2233; display: flex; align-items: center; justify-content: center; color: #8B99B5; font-size: 10.5px; }
-    .dash-preview-avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #241705; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-
-    .dash-preview-body { display: flex; }
-    .dash-preview-nav { width: 118px; flex-shrink: 0; padding: 12px 8px; border-right: 1px solid #1E2536; display: flex; flex-direction: column; gap: 2px; }
-    .dash-preview-nav-item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 7px; font-size: 10px; font-weight: 600; color: #7E8AA3; }
-    .dash-preview-nav-item i { width: 12px; font-size: 10px; }
-    .dash-preview-nav-item.active { background: rgba(245,166,35,0.14); color: var(--accent); }
-
-    .dash-preview-main { flex: 1; padding: 14px 16px; min-width: 0; }
-    .dash-preview-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
-    .dash-preview-stat { background: #141B2C; border: 1px solid #1E2536; border-radius: 9px; padding: 8px 10px; }
-    .dash-preview-stat-label { font-size: 8.5px; font-weight: 600; color: #7E8AA3; text-transform: uppercase; letter-spacing: 0.04em; }
-    .dash-preview-stat-value { font-size: 14px; font-weight: 800; color: #fff; font-family: 'Outfit', sans-serif; margin-top: 2px; }
-
-    .dash-preview-panels { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; }
-    .dash-preview-panel { background: #141B2C; border: 1px solid #1E2536; border-radius: 9px; padding: 10px 12px; }
-    .dash-preview-panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-    .dash-preview-panel-title { font-size: 10px; font-weight: 700; color: #E3E7EF; }
-    .dash-preview-panel-chip { font-size: 8px; font-weight: 600; color: #7E8AA3; background: #1B2233; padding: 2px 6px; border-radius: 5px; }
-
-    .dash-activity-row { display: flex; align-items: flex-start; gap: 7px; margin-bottom: 8px; }
-    .dash-activity-row:last-child { margin-bottom: 0; }
-    .dash-activity-dot { width: 16px; height: 16px; border-radius: 50%; background: rgba(59,111,245,0.16); color: var(--accent-2); display: flex; align-items: center; justify-content: center; font-size: 7px; flex-shrink: 0; margin-top: 1px; }
-    .dash-activity-text { font-size: 9px; font-weight: 700; color: #E3E7EF; line-height: 1.3; }
-    .dash-activity-sub { font-size: 8px; color: #7E8AA3; margin-top: 1px; }
+    .btn-social svg { width: 17px; height: 17px; flex-shrink: 0; }
 
     /* ── Responsive ───────────────────────────────────────── */
     @media (max-width: 1180px) {
         .login-left { flex: 0 0 54%; max-width: 54%; padding: 48px; }
         .login-right { flex: 0 0 46%; }
-        .dash-preview { width: 420px; left: auto; right: 3%; bottom: 6%; max-width: 44vw; }
-        .dash-preview-nav { display: none; }
     }
     @media (max-width: 900px) {
+        body { padding: 0; }
+        .login-page { border-radius: 0; min-height: 100vh; box-shadow: none; }
         .login-left { flex: 0 0 100%; max-width: 100%; }
-        .login-right, .dash-preview { display: none; }
+        .login-right { display: none; }
         .login-left-watermark { font-size: 60vw; top: -4%; right: -18%; }
     }
     @media (max-width: 560px) {
@@ -449,6 +432,18 @@
                 </button>
             </form>
 
+            <div class="social-divider"><span>or continue with</span></div>
+            <div class="social-row">
+                <button type="button" class="btn-social" disabled title="Not available yet">
+                    <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M23.52 12.27c0-.82-.07-1.6-.2-2.36H12v4.47h6.47c-.28 1.5-1.13 2.77-2.42 3.62v3.01h3.9c2.28-2.1 3.57-5.2 3.57-8.74z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.95-2.9l-3.9-3c-1.08.73-2.46 1.16-4.05 1.16-3.11 0-5.75-2.1-6.69-4.92H1.24v3.09C3.22 21.3 7.28 24 12 24z"/><path fill="#FBBC05" d="M5.31 14.34A7.24 7.24 0 0 1 4.9 12c0-.81.14-1.6.4-2.34V6.57H1.24A11.96 11.96 0 0 0 0 12c0 1.93.46 3.76 1.24 5.43l4.07-3.09z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.45-3.45C17.94 1.19 15.24 0 12 0 7.28 0 3.22 2.7 1.24 6.57l4.07 3.09C6.25 6.85 8.89 4.75 12 4.75z"/></svg>
+                    Google
+                </button>
+                <button type="button" class="btn-social" disabled title="Not available yet">
+                    <svg viewBox="0 0 24 24"><path fill="#F25022" d="M1 1h10.5v10.5H1z"/><path fill="#7FBA00" d="M12.5 1H23v10.5H12.5z"/><path fill="#00A4EF" d="M1 12.5h10.5V23H1z"/><path fill="#FFB900" d="M12.5 12.5H23V23H12.5z"/></svg>
+                    Microsoft
+                </button>
+            </div>
+
             <div class="login-footer">
                 By signing in, you agree to our <a>Terms of Service</a> and <a>Privacy Policy</a>.
             </div>
@@ -457,140 +452,106 @@
 
     <div class="login-right">
         @php
-            // Deterministic-looking but not identical every load — purely decorative,
-            // this whole panel is static marketing chrome and never touches real data
-            // (it renders on the public, pre-auth login page).
-            $litSeed = 17;
+            // Purely decorative marketing chrome — never wired to real app
+            // data, since this renders on the public, pre-auth login page.
+            $litSeed = 23;
         @endphp
         <svg class="skyline-svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#241B3D"/>
-                    <stop offset="45%" stop-color="#3B2E52"/>
-                    <stop offset="75%" stop-color="#7A4B58"/>
-                    <stop offset="100%" stop-color="#B9714A"/>
+                    <stop offset="0%" stop-color="#131A33"/>
+                    <stop offset="38%" stop-color="#2B2A52"/>
+                    <stop offset="68%" stop-color="#6B4468"/>
+                    <stop offset="88%" stop-color="#B06A4E"/>
+                    <stop offset="100%" stop-color="#7A4636"/>
                 </linearGradient>
-                <linearGradient id="towerGrad" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stop-color="#0F1626"/>
-                    <stop offset="55%" stop-color="#1B2740"/>
-                    <stop offset="100%" stop-color="#101827"/>
+                <linearGradient id="towerGlass" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#0B0F1C"/>
+                    <stop offset="45%" stop-color="#182236"/>
+                    <stop offset="70%" stop-color="#22314D"/>
+                    <stop offset="100%" stop-color="#0E1424"/>
                 </linearGradient>
-                <linearGradient id="towerGradB" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stop-color="#0B1120"/>
-                    <stop offset="100%" stop-color="#161F33"/>
+                <linearGradient id="towerGlassB" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#0A0D18"/>
+                    <stop offset="100%" stop-color="#161E30"/>
                 </linearGradient>
+                <linearGradient id="groundGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#0A0D16"/>
+                    <stop offset="100%" stop-color="#050710"/>
+                </linearGradient>
+                <radialGradient id="sunGlow" cx="82%" cy="78%" r="35%">
+                    <stop offset="0%" stop-color="rgba(230,150,90,.35)"/>
+                    <stop offset="100%" stop-color="rgba(230,150,90,0)"/>
+                </radialGradient>
             </defs>
+
             <rect x="0" y="0" width="1000" height="1000" fill="url(#skyGrad)"/>
+            <rect x="0" y="0" width="1000" height="1000" fill="url(#sunGlow)"/>
 
             {{-- Back tower --}}
-            <rect x="640" y="120" width="230" height="880" fill="url(#towerGradB)"/>
-            {{-- Main tower --}}
-            <rect x="330" y="40" width="340" height="960" fill="url(#towerGrad)"/>
-            {{-- Foreground low block --}}
-            <rect x="60" y="560" width="300" height="440" fill="#0C1220"/>
+            <rect x="120" y="260" width="150" height="640" fill="url(#towerGlassB)"/>
+            {{-- Main tower (with a stepped setback near the top) --}}
+            <polygon points="430,60 700,60 700,220 660,220 660,900 430,900" fill="url(#towerGlass)"/>
+            {{-- Lit vertical service core seam --}}
+            <rect x="618" y="220" width="24" height="680" fill="#E7A05C" opacity="0.55"/>
 
-            {{-- Windows: main tower --}}
-            @for ($row = 0; $row < 32; $row++)
-                @for ($col = 0; $col < 9; $col++)
+            {{-- Ground / plaza --}}
+            <rect x="0" y="900" width="1000" height="100" fill="url(#groundGrad)"/>
+
+            {{-- Windows: back tower --}}
+            @for ($row = 0; $row < 22; $row++)
+                @for ($col = 0; $col < 4; $col++)
                     @php
-                        $x = 344 + $col * 36;
-                        $y = 64 + $row * 28;
-                        $lit = (($row * 9 + $col + $litSeed) * 7) % 11 < 3;
+                        $x = 132 + $col * 34;
+                        $y = 272 + $row * 28;
+                        $lit = (($row * 4 + $col + $litSeed) * 5) % 13 < 2;
                     @endphp
-                    <rect x="{{ $x }}" y="{{ $y }}" width="20" height="16" rx="1"
+                    <rect x="{{ $x }}" y="{{ $y }}" width="18" height="15" rx="1"
+                          fill="{{ $lit ? '#E9A867' : '#202B44' }}"
+                          opacity="{{ $lit ? '0.65' : '0.55' }}"/>
+                @endfor
+            @endfor
+
+            {{-- Windows: main tower (left of the lit seam) --}}
+            @for ($row = 0; $row < 30; $row++)
+                @for ($col = 0; $col < 5; $col++)
+                    @php
+                        $x = 444 + $col * 34;
+                        $y = 80 + $row * 27;
+                        $lit = (($row * 5 + $col + $litSeed) * 7) % 11 < 3;
+                    @endphp
+                    <rect x="{{ $x }}" y="{{ $y }}" width="19" height="15" rx="1"
                           fill="{{ $lit ? '#F3B25C' : '#233250' }}"
                           opacity="{{ $lit ? '0.85' : '0.55' }}"/>
                 @endfor
             @endfor
 
-            {{-- Windows: back tower --}}
-            @for ($row = 0; $row < 26; $row++)
-                @for ($col = 0; $col < 6; $col++)
-                    @php
-                        $x = 656 + $col * 34;
-                        $y = 140 + $row * 28;
-                        $lit = (($row * 6 + $col + $litSeed) * 5) % 13 < 2;
-                    @endphp
-                    <rect x="{{ $x }}" y="{{ $y }}" width="18" height="15" rx="1"
-                          fill="{{ $lit ? '#E9A867' : '#1B2740' }}"
-                          opacity="{{ $lit ? '0.7' : '0.5' }}"/>
-                @endfor
+            {{-- Windows: main tower (right of the lit seam) --}}
+            @for ($row = 6; $row < 30; $row++)
+                @php
+                    $y = 80 + $row * 27;
+                    $lit = (($row + $litSeed) * 3) % 7 < 2;
+                @endphp
+                <rect x="646" y="{{ $y }}" width="10" height="15" rx="1"
+                      fill="{{ $lit ? '#F3B25C' : '#233250' }}"
+                      opacity="{{ $lit ? '0.8' : '0.5' }}"/>
             @endfor
+
+            {{-- Simple foreground tree silhouettes + walkway lights --}}
+            <ellipse cx="120" cy="880" rx="34" ry="46" fill="#050710"/>
+            <rect x="115" y="900" width="8" height="30" fill="#050710"/>
+            <ellipse cx="230" cy="895" rx="24" ry="32" fill="#050710"/>
+            <rect x="226" y="908" width="6" height="22" fill="#050710"/>
+            <circle cx="330" cy="928" r="3.5" fill="#F3B25C" opacity="0.8"/>
+            <circle cx="410" cy="932" r="3.5" fill="#F3B25C" opacity="0.7"/>
+            <circle cx="500" cy="934" r="3.5" fill="#F3B25C" opacity="0.75"/>
+            <circle cx="780" cy="930" r="3.5" fill="#F3B25C" opacity="0.7"/>
+            <circle cx="860" cy="926" r="3.5" fill="#F3B25C" opacity="0.65"/>
         </svg>
         <div class="skyline-overlay"></div>
     </div>
 
-    <div class="dash-preview">
-            <div class="dash-preview-top">
-                <img src="{{ asset('logo/promoseven-logo.png') }}" alt="" class="dash-preview-logo">
-                <span class="dash-preview-brand">Promoseven</span>
-                <span class="dash-preview-title"><i class="fa-solid fa-bars" style="margin-right:6px;"></i>Dashboard</span>
-                <span class="dash-preview-icon"><i class="fa-regular fa-bell"></i></span>
-                <span class="dash-preview-avatar" style="margin-left:8px;">A</span>
-            </div>
-            <div class="dash-preview-body">
-                <div class="dash-preview-nav">
-                    <div class="dash-preview-nav-item active"><i class="fa-solid fa-gauge-high"></i> Dashboard</div>
-                    <div class="dash-preview-nav-item"><i class="fa-solid fa-building"></i> Buildings</div>
-                    <div class="dash-preview-nav-item"><i class="fa-solid fa-users"></i> Tenants</div>
-                    <div class="dash-preview-nav-item"><i class="fa-solid fa-file-contract"></i> Leases</div>
-                    <div class="dash-preview-nav-item"><i class="fa-solid fa-file-invoice-dollar"></i> Invoices</div>
-                    <div class="dash-preview-nav-item"><i class="fa-solid fa-chart-bar"></i> Reports</div>
-                </div>
-                <div class="dash-preview-main">
-                    <div class="dash-preview-stats">
-                        <div class="dash-preview-stat">
-                            <div class="dash-preview-stat-label">Total Buildings</div>
-                            <div class="dash-preview-stat-value">27</div>
-                        </div>
-                        <div class="dash-preview-stat">
-                            <div class="dash-preview-stat-label">Active Tenants</div>
-                            <div class="dash-preview-stat-value">186</div>
-                        </div>
-                        <div class="dash-preview-stat">
-                            <div class="dash-preview-stat-label">Outstanding Invoices</div>
-                            <div class="dash-preview-stat-value">$124,850</div>
-                        </div>
-                        <div class="dash-preview-stat">
-                            <div class="dash-preview-stat-label">Monthly Revenue</div>
-                            <div class="dash-preview-stat-value">$98,420</div>
-                        </div>
-                    </div>
-                    <div class="dash-preview-panels">
-                        <div class="dash-preview-panel">
-                            <div class="dash-preview-panel-head">
-                                <span class="dash-preview-panel-title">Revenue Overview</span>
-                                <span class="dash-preview-panel-chip">This Month</span>
-                            </div>
-                            <svg viewBox="0 0 220 70" width="100%" height="56" preserveAspectRatio="none">
-                                <polyline points="0,58 25,50 50,54 75,40 100,44 125,30 150,34 175,18 200,22 220,10"
-                                          fill="none" stroke="#3B6FF5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                <polyline points="0,58 25,50 50,54 75,40 100,44 125,30 150,34 175,18 200,22 220,10 220,70 0,70"
-                                          fill="rgba(59,111,245,0.12)" stroke="none"/>
-                            </svg>
-                        </div>
-                        <div class="dash-preview-panel">
-                            <div class="dash-preview-panel-head">
-                                <span class="dash-preview-panel-title">Recent Activity</span>
-                            </div>
-                            <div class="dash-activity-row">
-                                <span class="dash-activity-dot"><i class="fa-solid fa-file-contract"></i></span>
-                                <div><div class="dash-activity-text">New lease signed</div><div class="dash-activity-sub">2h ago</div></div>
-                            </div>
-                            <div class="dash-activity-row">
-                                <span class="dash-activity-dot"><i class="fa-solid fa-file-invoice-dollar"></i></span>
-                                <div><div class="dash-activity-text">Invoice paid</div><div class="dash-activity-sub">5h ago</div></div>
-                            </div>
-                            <div class="dash-activity-row">
-                                <span class="dash-activity-dot"><i class="fa-solid fa-user-plus"></i></span>
-                                <div><div class="dash-activity-text">New tenant added</div><div class="dash-activity-sub">1d ago</div></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+</div>
 
 <script>
 document.getElementById('togglePassword').addEventListener('click', function () {
