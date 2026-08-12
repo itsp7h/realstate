@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sign In — RealEstate Admin</title>
+<script>
+(function () {
+    // Applied before first paint to avoid a flash of the wrong theme.
+    var saved = localStorage.getItem('p7-login-theme');
+    var theme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,7 +19,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-    :root {
+    :root, :root[data-theme="dark"] {
         --bg-dark:       #0B1020;
         --bg-dark-2:     #101625;
         --panel-line:    #1D2436;
@@ -26,8 +34,41 @@
         --danger:        #EF4444;
         --danger-bg:     rgba(239,68,68,0.12);
         --danger-border: rgba(239,68,68,0.35);
+        --danger-text:   #FCA5A5;
         --radius:        12px;
         --radius-lg:     16px;
+        --watermark-stroke: rgba(245,166,35,0.05);
+        --theme-toggle-bg: rgba(255,255,255,0.06);
+        --theme-toggle-border: rgba(255,255,255,0.12);
+        --theme-toggle-fg: #B7C0D1;
+    }
+
+    /* ── Light mode — same layout/composition, light UI chrome on the
+         left panel. The right-side skyline + dashboard preview stay
+         identical in both modes since it's hero photography, not
+         interface surface. ── */
+    :root[data-theme="light"] {
+        --bg-dark:       #FFFFFF;
+        --bg-dark-2:     #F1F4F9;
+        --panel-line:    #E4E9F0;
+        --input-bg:      #F5F7FA;
+        --input-border:  #DCE2EC;
+        --input-focus:   #F5A623;
+        --text-primary:  #0F172A;
+        --text-secondary:#475569;
+        --text-muted:    #8A94A6;
+        --accent:        #F5A623;
+        --accent-2:      #3B6FF5;
+        --danger:        #DC2626;
+        --danger-bg:     #FEF2F2;
+        --danger-border: #FECACA;
+        --danger-text:   #991B1B;
+        --radius:        12px;
+        --radius-lg:     16px;
+        --watermark-stroke: rgba(15,23,42,0.045);
+        --theme-toggle-bg: #F1F4F9;
+        --theme-toggle-border: #E2E6EE;
+        --theme-toggle-fg: #475569;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -68,7 +109,7 @@
         font-size: 30vw;
         line-height: 1;
         color: transparent;
-        -webkit-text-stroke: 1.5px rgba(245,166,35,0.05);
+        -webkit-text-stroke: 1.5px var(--watermark-stroke);
         pointer-events: none;
         z-index: 0;
         user-select: none;
@@ -81,16 +122,38 @@
         margin: 0 auto;
     }
 
+    .theme-toggle {
+        position: absolute;
+        top: 28px;
+        right: 28px;
+        z-index: 2;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: var(--theme-toggle-bg);
+        border: 1px solid var(--theme-toggle-border);
+        color: var(--theme-toggle-fg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s, transform 0.1s;
+    }
+    .theme-toggle:hover { color: var(--accent); }
+    .theme-toggle:active { transform: scale(0.94); }
+    .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
     .brand-logo { display: flex; align-items: center; gap: 14px; }
     .brand-logo img { width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0; }
-    .brand-logo-text { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: #FFFFFF; line-height: 1.3; }
+    .brand-logo-text { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
     .brand-logo-text span { display: block; font-size: 10.5px; font-weight: 600; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
 
     .brand-headline {
         font-family: 'Outfit', sans-serif;
         font-size: 36px;
         font-weight: 800;
-        color: #FFFFFF;
+        color: var(--text-primary);
         line-height: 1.2;
         margin-top: 40px;
     }
@@ -109,7 +172,7 @@
         gap: 10px;
         background: var(--danger-bg);
         border: 1px solid var(--danger-border);
-        color: #FCA5A5;
+        color: var(--danger-text);
         border-radius: var(--radius);
         padding: 12px 14px;
         font-size: 13px;
@@ -154,7 +217,7 @@
     .form-control:focus { border-color: var(--input-focus); box-shadow: 0 0 0 3px rgba(245,166,35,0.16); }
     .form-control.is-invalid { border-color: var(--danger); }
     .form-control.has-toggle { padding-right: 44px; }
-    .field-error { color: #FCA5A5; font-size: 12px; margin-top: 6px; }
+    .field-error { color: var(--danger-text); font-size: 12px; margin-top: 6px; }
 
     .toggle-visibility {
         position: absolute;
@@ -318,6 +381,10 @@
 
     <div class="login-left">
         <div class="login-left-watermark">P7</div>
+
+        <button type="button" class="theme-toggle" id="themeToggle" aria-label="Switch to light mode" title="Switch theme">
+            <i class="fa-solid fa-sun"></i>
+        </button>
 
         <div class="login-left-inner">
             <div class="brand-logo">
@@ -542,6 +609,26 @@ document.querySelector('.login-form').addEventListener('submit', function () {
     document.getElementById('submitLabel').textContent = 'Signing in…';
     document.getElementById('submitIcon').className = 'fa-solid fa-spinner fa-spin';
 });
+
+/* ── Theme toggle ─────────────────────────────────────── */
+(function () {
+    const btn = document.getElementById('themeToggle');
+    const icon = btn.querySelector('i');
+
+    function syncIcon() {
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        icon.className = isLight ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+        btn.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
+    }
+    syncIcon();
+
+    btn.addEventListener('click', function () {
+        const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('p7-login-theme', next);
+        syncIcon();
+    });
+})();
 </script>
 
 </body>
