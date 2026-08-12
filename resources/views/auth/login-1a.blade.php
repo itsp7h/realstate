@@ -22,7 +22,6 @@
     .phone {
         position: relative;
         width: 100%;
-        max-width: 420px;
         height: 100vh;
         overflow: hidden;
         background: #0a0f18;
@@ -122,10 +121,10 @@
 
     .home-indicator { height: 5px; width: 134px; border-radius: 3px; background: rgba(255,255,255,.3); margin: 24px auto 0; }
 
-    @media (min-width: 421px) {
+    @media (min-width: 700px) {
         html, body { height: auto; overflow: auto; }
         body { padding: 24px 0; align-items: center; }
-        .phone { height: 844px; border-radius: 38px; box-shadow: 0 18px 50px rgba(0,0,0,.35); }
+        .phone { max-width: 420px; height: 844px; border-radius: 38px; box-shadow: 0 18px 50px rgba(0,0,0,.35); }
     }
 </style>
 </head>
