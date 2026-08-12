@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') — RealEstate Admin</title>
+    <script>
+        (function () {
+            // Applied before first paint to avoid a flash of the wrong theme.
+            var saved = localStorage.getItem('p7-theme');
+            var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +20,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <style>
-        :root {
+        :root, :root[data-theme="light"] {
             --sidebar-bg:       #0B1120;
             --sidebar-border:   #1A2540;
             --sidebar-hover:    #131E35;
@@ -45,6 +53,59 @@
             --ease-spring:      cubic-bezier(.32,.72,0,1);
             --duration-sheet:   380ms;
             --scrim:            rgba(11,17,32,0.55);
+        }
+
+        /* ── Dark mode ──────────────────────────────────────
+             Retheme's the shared shell (sidebar, topbar, page bg,
+             cards, tables, inputs, alerts) which every page builds
+             on. Pages' own colored accents (status badge tints,
+             chart series colors) intentionally stay as-is in both
+             modes, same as most dark-mode products keep their tag
+             colors vivid rather than desaturating them. ── */
+        :root[data-theme="dark"] {
+            --sidebar-bg:       #0B1120;
+            --sidebar-border:   #1A2540;
+            --sidebar-hover:    #131E35;
+            --sidebar-active:   #1E2D4A;
+            --accent:           #E8B86D;
+            --accent-dim:       rgba(232,184,109,0.12);
+            --accent-glow:      rgba(232,184,109,0.25);
+            --page-bg:          #0D1220;
+            --card-bg:          #131A2B;
+            --card-border:      #232C42;
+            --text-primary:     #F1F4F9;
+            --text-secondary:   #B7C0D1;
+            --text-muted:       #7E8AA3;
+            --text-sidebar:     #8A9BBE;
+            --text-sidebar-active: #FFFFFF;
+            --input-bg:         #0F1524;
+            --input-border:     #2A3348;
+            --input-focus:      #E8B86D;
+            --danger:           #F87171;
+            --success:          #34D399;
+            --info:             #60A5FA;
+            --warning:          #FBBF24;
+            --shadow-sm:        0 1px 3px rgba(0,0,0,0.30), 0 1px 2px rgba(0,0,0,0.20);
+            --shadow-md:        0 4px 16px rgba(0,0,0,0.36), 0 2px 6px rgba(0,0,0,0.24);
+            --shadow-lg:        0 10px 40px rgba(0,0,0,0.45);
+            --radius:           12px;
+            --radius-sm:        8px;
+            --sidebar-width:    260px;
+            --sheet-radius:     22px;
+            --ease-spring:      cubic-bezier(.32,.72,0,1);
+            --duration-sheet:   380ms;
+            --scrim:            rgba(0,0,0,0.65);
+        }
+        :root[data-theme="dark"] body { background: var(--page-bg); }
+        :root[data-theme="dark"] thead th { background: #0F1526; }
+        :root[data-theme="dark"] tbody tr:hover td { background: #171F33; }
+        :root[data-theme="dark"] input[type="text"],
+        :root[data-theme="dark"] input[type="number"],
+        :root[data-theme="dark"] input[type="date"],
+        :root[data-theme="dark"] input[type="email"],
+        :root[data-theme="dark"] select,
+        :root[data-theme="dark"] textarea {
+            color-scheme: dark;
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -716,6 +777,7 @@
         </button>
         <div class="topbar-title">@yield('topbar-title', 'Dashboard')</div>
         <div class="topbar-actions">
+            <button class="topbar-icon-btn" id="themeToggleBtn" title="Switch theme" aria-label="Switch to dark mode"><i class="fa-solid fa-moon"></i></button>
             <button class="topbar-icon-btn"><i class="fa-regular fa-bell"></i></button>
             <button class="topbar-icon-btn"><i class="fa-regular fa-circle-question"></i></button>
             <div class="user-avatar" style="width:32px;height:32px;font-size:12px;cursor:pointer;">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
@@ -882,6 +944,27 @@
     }
 
     document.querySelectorAll('.modal-overlay .modal-box').forEach(attachSheetHandle);
+})();
+
+/* ── Theme toggle ─────────────────────────────────────── */
+(function () {
+    const btn = document.getElementById('themeToggleBtn');
+    if (!btn) return;
+    const icon = btn.querySelector('i');
+
+    function syncIcon() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    }
+    syncIcon();
+
+    btn.addEventListener('click', function () {
+        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('p7-theme', next);
+        syncIcon();
+    });
 })();
 </script>
 

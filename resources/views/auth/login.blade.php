@@ -7,7 +7,7 @@
 <script>
 (function () {
     // Applied before first paint to avoid a flash of the wrong theme.
-    var saved = localStorage.getItem('p7-login-theme');
+    var saved = localStorage.getItem('p7-theme');
     var theme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
     document.documentElement.setAttribute('data-theme', theme);
 })();
@@ -625,7 +625,7 @@ document.querySelector('.login-form').addEventListener('submit', function () {
     btn.addEventListener('click', function () {
         const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('p7-login-theme', next);
+        localStorage.setItem('p7-theme', next);
         syncIcon();
     });
 })();
