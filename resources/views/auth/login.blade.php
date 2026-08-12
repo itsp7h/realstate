@@ -306,6 +306,16 @@
             font-size: 14px;
         }
         .form-control:focus { border-color: var(--p7-gold); }
+        .form-control:-webkit-autofill,
+        .form-control:-webkit-autofill:hover,
+        .form-control:-webkit-autofill:focus {
+            -webkit-text-fill-color: #fff;
+            -webkit-box-shadow: 0 0 0 1000px var(--p7-input-bg) inset;
+            box-shadow: 0 0 0 1000px var(--p7-input-bg) inset;
+            border-color: var(--p7-input-border);
+            caret-color: #fff;
+            transition: background-color 5000s ease-in-out 0s;
+        }
         .form-row { justify-content: space-between; min-height: 44px; }
         .remember-check { color: var(--p7-text-muted); font-family: 'Poppins', sans-serif; }
         .remember-check input { accent-color: var(--p7-gold-text); }
