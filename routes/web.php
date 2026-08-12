@@ -30,6 +30,12 @@ use App\Http\Controllers\RevenueController;
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->name('login.attempt');
+
+    // Temporary side-by-side design previews for the mobile login redesign
+    // (options 1a/1b) — both post to the real login route, so they're fully
+    // functional, not just static mockups. Remove once a direction is picked.
+    Route::get('/login-preview/1a', fn () => view('auth.login-1a'))->name('login.preview.1a');
+    Route::get('/login-preview/1b', fn () => view('auth.login-1b'))->name('login.preview.1b');
 });
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
