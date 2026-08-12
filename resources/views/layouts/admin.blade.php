@@ -218,6 +218,13 @@
             flex-shrink: 0;
         }
         .nav-item.active .nav-icon { color: var(--accent); }
+
+        /* Dark mode: active nav item reads as a solid blue pill (matching
+           the after-login reference) instead of the gold left-bar accent —
+           gold stays reserved for primary actions/CTAs, not navigation. */
+        :root[data-theme="dark"] .nav-item.active { background: #3B5BDB; color: #fff; }
+        :root[data-theme="dark"] .nav-item.active::before { display: none; }
+        :root[data-theme="dark"] .nav-item.active .nav-icon { color: #fff; }
         .nav-badge {
             margin-left: auto;
             background: var(--accent-dim);
@@ -253,6 +260,7 @@
             color: #0B1120;
             flex-shrink: 0;
         }
+        :root[data-theme="dark"] .user-avatar { background: linear-gradient(135deg, #6C8CF5, #3B5BDB); color: #fff; }
         .user-info strong { display: block; font-size: 13px; color: #fff; font-weight: 600; }
         .user-info span { font-size: 11px; color: var(--text-sidebar); }
 
