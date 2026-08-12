@@ -80,22 +80,14 @@
         min-height: 100vh;
         color: var(--text-primary);
         font-size: 14px;
-        background: #05070C;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
+        background: var(--bg-dark);
     }
 
     .login-page {
         position: relative;
         display: flex;
         width: 100%;
-        min-height: calc(100vh - 40px);
-        max-width: 1600px;
-        border-radius: 22px;
-        overflow: hidden;
-        box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+        min-height: 100vh;
     }
 
     /* ── LEFT — login panel ──────────────────────────────── */
@@ -303,13 +295,12 @@
         flex: 1;
         position: relative;
         overflow: hidden;
-        background: #0A0E1A;
+        background: #0A0E1A url('{{ asset('images/login-building.jpg') }}') center center / cover no-repeat;
     }
-    .skyline-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
     .skyline-overlay {
         position: absolute;
         inset: 0;
-        background: linear-gradient(100deg, rgba(6,9,18,0.88) 0%, rgba(6,9,18,0.32) 30%, rgba(6,9,18,0) 55%);
+        background: linear-gradient(100deg, rgba(6,9,18,0.55) 0%, rgba(6,9,18,0.15) 30%, rgba(6,9,18,0) 55%);
     }
 
     /* ── Social auth (secondary, quiet — no OAuth exists yet,
@@ -343,8 +334,6 @@
         .login-right { flex: 0 0 46%; }
     }
     @media (max-width: 900px) {
-        body { padding: 0; }
-        .login-page { border-radius: 0; min-height: 100vh; box-shadow: none; }
         .login-left { flex: 0 0 100%; max-width: 100%; }
         .login-right { display: none; }
         .login-left-watermark { font-size: 60vw; top: -4%; right: -18%; }
@@ -451,103 +440,6 @@
     </div>
 
     <div class="login-right">
-        @php
-            // Purely decorative marketing chrome — never wired to real app
-            // data, since this renders on the public, pre-auth login page.
-            $litSeed = 23;
-        @endphp
-        <svg class="skyline-svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#131A33"/>
-                    <stop offset="38%" stop-color="#2B2A52"/>
-                    <stop offset="68%" stop-color="#6B4468"/>
-                    <stop offset="88%" stop-color="#B06A4E"/>
-                    <stop offset="100%" stop-color="#7A4636"/>
-                </linearGradient>
-                <linearGradient id="towerGlass" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stop-color="#0B0F1C"/>
-                    <stop offset="45%" stop-color="#182236"/>
-                    <stop offset="70%" stop-color="#22314D"/>
-                    <stop offset="100%" stop-color="#0E1424"/>
-                </linearGradient>
-                <linearGradient id="towerGlassB" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stop-color="#0A0D18"/>
-                    <stop offset="100%" stop-color="#161E30"/>
-                </linearGradient>
-                <linearGradient id="groundGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#0A0D16"/>
-                    <stop offset="100%" stop-color="#050710"/>
-                </linearGradient>
-                <radialGradient id="sunGlow" cx="82%" cy="78%" r="35%">
-                    <stop offset="0%" stop-color="rgba(230,150,90,.35)"/>
-                    <stop offset="100%" stop-color="rgba(230,150,90,0)"/>
-                </radialGradient>
-            </defs>
-
-            <rect x="0" y="0" width="1000" height="1000" fill="url(#skyGrad)"/>
-            <rect x="0" y="0" width="1000" height="1000" fill="url(#sunGlow)"/>
-
-            {{-- Back tower --}}
-            <rect x="120" y="260" width="150" height="640" fill="url(#towerGlassB)"/>
-            {{-- Main tower (with a stepped setback near the top) --}}
-            <polygon points="430,60 700,60 700,220 660,220 660,900 430,900" fill="url(#towerGlass)"/>
-            {{-- Lit vertical service core seam --}}
-            <rect x="618" y="220" width="24" height="680" fill="#E7A05C" opacity="0.55"/>
-
-            {{-- Ground / plaza --}}
-            <rect x="0" y="900" width="1000" height="100" fill="url(#groundGrad)"/>
-
-            {{-- Windows: back tower --}}
-            @for ($row = 0; $row < 22; $row++)
-                @for ($col = 0; $col < 4; $col++)
-                    @php
-                        $x = 132 + $col * 34;
-                        $y = 272 + $row * 28;
-                        $lit = (($row * 4 + $col + $litSeed) * 5) % 13 < 2;
-                    @endphp
-                    <rect x="{{ $x }}" y="{{ $y }}" width="18" height="15" rx="1"
-                          fill="{{ $lit ? '#E9A867' : '#202B44' }}"
-                          opacity="{{ $lit ? '0.65' : '0.55' }}"/>
-                @endfor
-            @endfor
-
-            {{-- Windows: main tower (left of the lit seam) --}}
-            @for ($row = 0; $row < 30; $row++)
-                @for ($col = 0; $col < 5; $col++)
-                    @php
-                        $x = 444 + $col * 34;
-                        $y = 80 + $row * 27;
-                        $lit = (($row * 5 + $col + $litSeed) * 7) % 11 < 3;
-                    @endphp
-                    <rect x="{{ $x }}" y="{{ $y }}" width="19" height="15" rx="1"
-                          fill="{{ $lit ? '#F3B25C' : '#233250' }}"
-                          opacity="{{ $lit ? '0.85' : '0.55' }}"/>
-                @endfor
-            @endfor
-
-            {{-- Windows: main tower (right of the lit seam) --}}
-            @for ($row = 6; $row < 30; $row++)
-                @php
-                    $y = 80 + $row * 27;
-                    $lit = (($row + $litSeed) * 3) % 7 < 2;
-                @endphp
-                <rect x="646" y="{{ $y }}" width="10" height="15" rx="1"
-                      fill="{{ $lit ? '#F3B25C' : '#233250' }}"
-                      opacity="{{ $lit ? '0.8' : '0.5' }}"/>
-            @endfor
-
-            {{-- Simple foreground tree silhouettes + walkway lights --}}
-            <ellipse cx="120" cy="880" rx="34" ry="46" fill="#050710"/>
-            <rect x="115" y="900" width="8" height="30" fill="#050710"/>
-            <ellipse cx="230" cy="895" rx="24" ry="32" fill="#050710"/>
-            <rect x="226" y="908" width="6" height="22" fill="#050710"/>
-            <circle cx="330" cy="928" r="3.5" fill="#F3B25C" opacity="0.8"/>
-            <circle cx="410" cy="932" r="3.5" fill="#F3B25C" opacity="0.7"/>
-            <circle cx="500" cy="934" r="3.5" fill="#F3B25C" opacity="0.75"/>
-            <circle cx="780" cy="930" r="3.5" fill="#F3B25C" opacity="0.7"/>
-            <circle cx="860" cy="926" r="3.5" fill="#F3B25C" opacity="0.65"/>
-        </svg>
         <div class="skyline-overlay"></div>
     </div>
 
