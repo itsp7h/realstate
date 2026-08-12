@@ -27,3 +27,7 @@ Thumbs.db
 # Real EWA bill PDFs used to tune the parser — contain real account numbers
 # and billing amounts, never commit these.
 /ewa-samples
+
+# Scratch folder for design reference screenshots/mockups the user drops in —
+# not project assets, and some have contained real email addresses baked in.
+/draft
