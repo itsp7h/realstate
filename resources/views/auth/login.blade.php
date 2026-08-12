@@ -260,9 +260,9 @@
         }
         body::after {
             content: 'P7';
-            position: fixed; top: -40px; left: -60px; z-index: 0; pointer-events: none;
-            font-size: 340px; font-weight: 800; font-family: 'Poppins', sans-serif;
-            color: transparent; -webkit-text-stroke: 2px rgba(231,178,102,.14);
+            position: fixed; top: -20px; right: -40px; z-index: 0; pointer-events: none;
+            font-size: 200px; font-weight: 800; font-family: 'Poppins', sans-serif;
+            color: transparent; -webkit-text-stroke: 1.5px rgba(231,178,102,.09);
             line-height: 1;
             animation: p7WatermarkDrift 14s ease-in-out infinite alternate;
         }
