@@ -682,7 +682,8 @@
             #menuBtn { display: flex !important; }
             body { font-family: 'Poppins', sans-serif; }
             body.is-dashboard .topbar { display: none; }
-            body.is-dashboard .page-content { padding: 0 0 calc(78px + env(safe-area-inset-bottom)); }
+            body.is-dashboard .page-content,
+            body.is-mobile-screen .page-content { padding: 0 0 calc(78px + env(safe-area-inset-bottom)); }
             body.is-pushed-screen .topbar { display: none; }
 
             /* ── Touch/scroll physics — the tells that a page is "just a
