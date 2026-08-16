@@ -813,7 +813,7 @@ function pmToggleFloor(id) {
                                     @foreach($floors as $floor)
                                     <tr>
                                         <td class="ps-4 fw-bold text-dark">{{ $floor->floor_name }}</td>
-                                        <td>{!! $floor->floor_code ? "<span class='badge badge-soft-secondary'>{$floor->floor_code}</span>" : '<span class="text-muted">—</span>' !!}</td>
+                                        <td>@if($floor->floor_code)<span class="badge badge-soft-secondary">{{ $floor->floor_code }}</span>@else<span class="text-muted">—</span>@endif</td>
                                         <td>{{ $floor->block_name ?? '—' }}</td>
                                         <td><span class="badge bg-light text-dark border">{{ $floor->total_no_of_units ?? '—' }}</span></td>
                                         <td class="text-end pe-4">
@@ -868,9 +868,9 @@ function pmToggleFloor(id) {
                                         <td class="ps-4 fw-bold text-dark">{{ $unit->unit_name }}</td>
                                         <td>
                                             <div class="small text-muted mb-1">{{ $unit->floor?->floor_name ?? '—' }}</div>
-                                            {!! $unit->unit_type ? "<span class='badge badge-soft-primary'>{$unit->unit_type}</span>" : '' !!}
+                                            @if($unit->unit_type)<span class="badge badge-soft-primary">{{ $unit->unit_type }}</span>@endif
                                         </td>
-                                        <td>{!! $unit->unit_condition ? "<span class='badge badge-soft-secondary'>{$unit->unit_condition}</span>" : '<span class="text-muted">—</span>' !!}</td>
+                                        <td>@if($unit->unit_condition)<span class="badge badge-soft-secondary">{{ $unit->unit_condition }}</span>@else<span class="text-muted">—</span>@endif</td>
                                         <td>
                                             @if($unit->activeContract)
                                                 <span class="badge badge-soft-success"><i class="fa-solid fa-circle text-success" style="font-size:6px; vertical-align:middle; margin-right:4px;"></i>Occupied</span>
@@ -933,7 +933,7 @@ function pmToggleFloor(id) {
                                             <div class="small text-dark mb-1"><i class="fa-solid fa-phone text-muted me-1" style="width:14px;"></i> {{ $t->phone ?? '—' }}</div>
                                             <div class="small text-muted"><i class="fa-solid fa-envelope text-muted me-1" style="width:14px;"></i> {{ $t->email ?? '—' }}</div>
                                         </td>
-                                        <td>{!! $t->tenant_type ? "<span class='badge badge-soft-secondary'>".ucfirst($t->tenant_type)."</span>" : '—' !!}</td>
+                                        <td>@if($t->tenant_type)<span class="badge badge-soft-secondary">{{ ucfirst($t->tenant_type) }}</span>@else—@endif</td>
                                         <td class="text-end pe-4">
                                             {!! $activeContracts > 0 ? "<span class='badge badge-soft-success rounded-pill px-3 py-2'>$activeContracts active</span>" : '<span class="text-muted">—</span>' !!}
                                         </td>
