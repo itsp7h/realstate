@@ -1071,6 +1071,7 @@
     $mobileRedesignedRoutes = [
         'buildings.index', 'floors.global', 'property-units.index', 'tenants.index',
         'maintenance.index', 'invoices.index', 'reports.index', 'tenants.show', 'buildings.show',
+        'lease-contracts.index', 'payments.index',
     ];
     $isMobileScreen = request()->routeIs($mobileRedesignedRoutes);
     $pushedScreenRoutes = ['tenants.show', 'buildings.show'];
@@ -1223,9 +1224,17 @@
             <div class="more-sheet-icon" style="background:var(--m-green-tint);"><i class="fa-solid fa-door-open" style="color:var(--m-green);"></i></div>
             <div><div class="more-sheet-label">Property Units</div><div class="more-sheet-desc">Browse property units</div></div>
         </a>
+        <a href="{{ route('lease-contracts.index') }}" class="more-sheet-item">
+            <div class="more-sheet-icon" style="background:var(--m-navy-active);"><i class="fa-solid fa-file-contract" style="color:#fff;"></i></div>
+            <div><div class="more-sheet-label">Lease Contracts</div><div class="more-sheet-desc">Browse lease agreements</div></div>
+        </a>
         <a href="{{ route('invoices.index') }}" class="more-sheet-item">
             <div class="more-sheet-icon" style="background:var(--m-gold-tint);"><i class="fa-solid fa-file-invoice-dollar" style="color:var(--m-gold-text);"></i></div>
-            <div><div class="more-sheet-label">Invoices &amp; Payments</div><div class="more-sheet-desc">View invoices and payments</div></div>
+            <div><div class="more-sheet-label">Invoices</div><div class="more-sheet-desc">View and manage invoices</div></div>
+        </a>
+        <a href="{{ route('payments.index') }}" class="more-sheet-item">
+            <div class="more-sheet-icon" style="background:#E6F6EE;"><i class="fa-solid fa-money-bill-transfer" style="color:#17A96C;"></i></div>
+            <div><div class="more-sheet-label">Payments</div><div class="more-sheet-desc">Track received payments</div></div>
         </a>
         @endunless
         @if(auth()->user()?->canViewReports())

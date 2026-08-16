@@ -325,4 +325,37 @@ class PaymentTest extends TestCase
                 ->assertSessionHasNoErrors();
         }
     }
+
+    // ── INDEX (mobile + desktop render) ─────────────────────────────
+
+    public function test_index_renders_successfully(): void
+    {
+        $inv = $this->makeInvoice();
+        $this->post(route('invoices.payments.store', $inv), [
+            'amount'       => '75.000',
+            'payment_date' => '2024-03-15',
+            'method'       => 'bank_transfer',
+        ]);
+
+        $this->get(route('payments.index'))
+            ->assertOk()
+            ->assertSee('Payments')
+            ->assertSee('m-row-list', false);
+    }
+
+    public function test_index_filters_by_method(): void
+    {
+        $inv = $this->makeInvoice();
+        $this->post(route('invoices.payments.store', $inv), [
+            'amount'       => '75.000',
+            'payment_date' => '2024-03-15',
+            'method'       => 'cheque',
+            'cheque_number' => 'CHQ-999',
+            'cheque_date'  => '2024-03-15',
+        ]);
+
+        $this->get(route('payments.index', ['method' => 'cash']))
+            ->assertOk()
+            ->assertDontSee('CHQ-999');
+    }
 }

@@ -58,7 +58,46 @@
     </div>
 </div>
 
-<div class="pay-stats">
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+@php
+    $payMethodLabels = ['cash' => 'Cash', 'bank_transfer' => 'Bank Transfer', 'cheque' => 'Cheque', 'online_card' => 'Online / Card'];
+@endphp
+<div class="m-screen">
+    <div style="background:linear-gradient(135deg,#10141F,#232B42);border-radius:18px;padding:20px;display:flex;gap:24px;">
+        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">COLLECTED &middot; {{ now()->format('M') }}</div><div style="font-size:21px;font-weight:800;color:#7ED8AC;">BHD {{ number_format($stats['this_month'], 0) }}</div></div>
+        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">ALL-TIME</div><div style="font-size:21px;font-weight:800;color:#E7B266;">BHD {{ number_format($stats['total_collected'], 0) }}</div></div>
+    </div>
+    <div class="m-chip-row no-sb">
+        <a href="{{ route('payments.index') }}" class="m-chip {{ !request('method') ? 'active' : '' }}">All</a>
+        @foreach($payMethodLabels as $val => $label)
+            <a href="{{ route('payments.index', ['method' => $val]) }}" class="m-chip {{ request('method') === $val ? 'active' : '' }}">{{ $label }}</a>
+        @endforeach
+    </div>
+    <div class="m-row-list">
+        @forelse($payments as $pmt)
+            @php $mInv = $pmt->invoice; @endphp
+            <a href="{{ $mInv ? route('invoices.show', $mInv) : '#' }}" class="m-row-card">
+                <div class="m-row-icon" style="background:#E6F6EE;color:#17A96C;"><i class="fa-solid fa-money-bill-transfer"></i></div>
+                <div style="flex:1;min-width:0;">
+                    <div class="m-row-title">{{ $pmt->payment_number }}</div>
+                    <div class="m-row-sub">{{ $mInv?->tenant_name ?? '—' }} &middot; {{ $pmt->payment_date->format('d M Y') }}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                    <div style="font-size:13.5px;font-weight:800;color:#17A96C;">BHD {{ number_format($pmt->amount, 0) }}</div>
+                    <span class="m-row-badge" style="background:var(--m-line);color:#6B7688;">{{ $pmt->method_label }}</span>
+                </div>
+            </a>
+        @empty
+            <div class="m-empty">
+                <div class="m-empty-icon"><i class="fa-solid fa-money-bill-transfer"></i></div>
+                <div class="m-empty-title">No payments recorded yet</div>
+                <div class="m-empty-sub">Try adjusting your filters.</div>
+            </div>
+        @endforelse
+    </div>
+</div>
+
+<div class="pay-stats m-hide-desktop-index">
     <div class="pay-stat">
         <div class="pay-stat-icon green"><i class="fa-solid fa-coins"></i></div>
         <div>
@@ -82,7 +121,7 @@
     </div>
 </div>
 
-<form method="GET" action="{{ route('payments.index') }}" class="filter-bar">
+<form method="GET" action="{{ route('payments.index') }}" class="filter-bar m-hide-desktop-index">
     <input type="search" name="search" value="{{ request('search') }}" placeholder="Search payment #, tenant, invoice #, reference…">
     <select name="method" onchange="this.form.submit()">
         <option value="">All Methods</option>
@@ -98,7 +137,7 @@
     @endif
 </form>
 
-<div class="table-card">
+<div class="table-card m-hide-desktop-index">
     @if($payments->isEmpty())
     <div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
         <i class="fa-solid fa-money-bill-transfer" style="font-size:36px;display:block;margin-bottom:12px;opacity:0.3"></i>
