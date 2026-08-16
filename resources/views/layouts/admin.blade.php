@@ -659,6 +659,17 @@
             transition: opacity 0.25s ease;
         }
         #moreSheet.open { opacity: 1; pointer-events: all; }
+        /* The panel itself: same gap as #moreSheet above — pages that don't
+           define their own .modal-box (e.g. buildings.show, invoices.index,
+           payments.index, reports.index) leave this sheet with no background
+           at all, so the navy scrim shows straight through the "solid" card.
+           ID-scoped like #expenseModal's own copy of this rule so it can't
+           bleed into other pages' .modal-box instances. */
+        #moreSheet .modal-box {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.18);
+        }
 
         /* ── SCROLLBAR ────────────────────────────────────── */
         ::-webkit-scrollbar { width: 5px; height: 5px; }
