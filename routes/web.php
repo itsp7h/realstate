@@ -41,25 +41,29 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 
 Route::middleware('auth')->group(function () {
 
-    // Unified data import/export
-    Route::get('/data',                      [DataController::class, 'index'])->name('data.index');
-    Route::get('/data/template/{format?}',   [DataController::class, 'template'])->name('data.template');
-    Route::get('/data/export',               [DataController::class, 'export'])->name('data.export');
-    Route::post('/data/import',              [DataController::class, 'import'])->name('data.import');
+    // Unified data import/export — bulk create/overwrite across buildings,
+    // floors, units, tenants, and lease contracts, and bulk data export.
+    // Larger blast radius than single-record CRUD, so kept to Admin only.
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/data',                      [DataController::class, 'index'])->name('data.index');
+        Route::get('/data/template/{format?}',   [DataController::class, 'template'])->name('data.template');
+        Route::get('/data/export',               [DataController::class, 'export'])->name('data.export');
+        Route::post('/data/import',              [DataController::class, 'import'])->name('data.import');
 
-    Route::get('/import/template/{type}/{format?}', [ImportController::class, 'template'])->name('import.template');
-    Route::post('/import/buildings', [ImportController::class, 'buildings'])->name('import.buildings');
-    Route::post('/import/floors',    [ImportController::class, 'floors'])->name('import.floors');
-    Route::post('/import/units',     [ImportController::class, 'units'])->name('import.units');
-    Route::post('/import/tenants',   [ImportController::class, 'tenants'])->name('import.tenants');
-    Route::post('/import/contracts', [ImportController::class, 'contracts'])->name('import.contracts');
-    Route::post('/import/smart',    [ImportController::class, 'smart'])->name('import.smart');
+        Route::get('/import/template/{type}/{format?}', [ImportController::class, 'template'])->name('import.template');
+        Route::post('/import/buildings', [ImportController::class, 'buildings'])->name('import.buildings');
+        Route::post('/import/floors',    [ImportController::class, 'floors'])->name('import.floors');
+        Route::post('/import/units',     [ImportController::class, 'units'])->name('import.units');
+        Route::post('/import/tenants',   [ImportController::class, 'tenants'])->name('import.tenants');
+        Route::post('/import/contracts', [ImportController::class, 'contracts'])->name('import.contracts');
+        Route::post('/import/smart',    [ImportController::class, 'smart'])->name('import.smart');
 
-    Route::get('/export/buildings', [ImportController::class, 'exportBuildings'])->name('export.buildings');
-    Route::get('/export/floors',    [ImportController::class, 'exportFloors'])->name('export.floors');
-    Route::get('/export/units',     [ImportController::class, 'exportUnits'])->name('export.units');
-    Route::get('/export/tenants',   [ImportController::class, 'exportTenants'])->name('export.tenants');
-    Route::get('/export/contracts', [ImportController::class, 'exportContracts'])->name('export.contracts');
+        Route::get('/export/buildings', [ImportController::class, 'exportBuildings'])->name('export.buildings');
+        Route::get('/export/floors',    [ImportController::class, 'exportFloors'])->name('export.floors');
+        Route::get('/export/units',     [ImportController::class, 'exportUnits'])->name('export.units');
+        Route::get('/export/tenants',   [ImportController::class, 'exportTenants'])->name('export.tenants');
+        Route::get('/export/contracts', [ImportController::class, 'exportContracts'])->name('export.contracts');
+    });
 
     Route::get('/', fn() => redirect()->route('dashboard'));
 
@@ -153,8 +157,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/floors', [FloorController::class, 'globalIndex'])->name('floors.global');
     Route::resource('buildings.floors', FloorController::class)->shallow()->except(['show']);
 
-    Route::post('/custom-fields', [CustomFieldController::class, 'store'])->name('custom-fields.store');
-    Route::delete('/custom-fields/{customField}', [CustomFieldController::class, 'destroy'])->name('custom-fields.destroy');
+    // Custom field definitions apply app-wide (every building/unit form for
+    // every user), so creating/removing one is kept to Admin only.
+    Route::middleware('role:admin')->group(function () {
+        Route::post('/custom-fields', [CustomFieldController::class, 'store'])->name('custom-fields.store');
+        Route::delete('/custom-fields/{customField}', [CustomFieldController::class, 'destroy'])->name('custom-fields.destroy');
+    });
 
     // Admin — Admin only
     Route::middleware('role:admin')->group(function () {
@@ -170,7 +178,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/form-configs', [FormConfigController::class, 'index'])->name('form-configs.index');
     Route::get('/form-configs/{formType}/{configType}/edit', [FormConfigController::class, 'edit'])->name('form-configs.edit');
-    Route::put('/form-configs/{formType}/{configType}', [FormConfigController::class, 'update'])->name('form-configs.update');
+    // Changes field visibility for every user's Building/Unit forms and
+    // templates app-wide, so the actual mutation is kept to Admin only.
+    Route::middleware('role:admin')->put('/form-configs/{formType}/{configType}', [FormConfigController::class, 'update'])->name('form-configs.update');
 
     // User management — Admin only
     Route::middleware('role:admin')->group(function () {
