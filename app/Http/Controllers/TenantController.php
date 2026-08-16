@@ -16,7 +16,7 @@ class TenantController extends Controller
 
     public function index(Request $request)
     {
-        $query = Tenant::query()->with('activeLease.unit');
+        $query = Tenant::query()->with(['activeLease', 'invoices']);
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -34,6 +34,15 @@ class TenantController extends Controller
             $query->where('company_name', $company);
         }
 
+        if ($status = $request->input('status')) {
+            if ($status === 'overdue') {
+                $query->whereHas('invoices', fn ($q) => $q->where('status', 'overdue'));
+            } elseif ($status === 'paid') {
+                $query->whereDoesntHave('invoices', fn ($q) => $q->where('status', 'overdue'))
+                      ->whereHas('invoices');
+            }
+        }
+
         if ($sort = $request->input('sort')) {
             $direction = $request->input('direction', 'asc');
             $query->orderBy($sort, $direction);
@@ -42,6 +51,11 @@ class TenantController extends Controller
         }
 
         $tenants = $query->paginate(15)->withQueryString();
+        $tenants->getCollection()->each(function (Tenant $tenant) {
+            $tenant->rentStatus = $tenant->invoices->isEmpty()
+                ? null
+                : ($tenant->invoices->contains('status', 'overdue') ? 'overdue' : 'paid');
+        });
 
         $stats = Tenant::selectRaw('tenant_type, count(*) as total')
             ->groupBy('tenant_type')

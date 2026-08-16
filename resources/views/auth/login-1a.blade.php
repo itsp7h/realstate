@@ -28,7 +28,7 @@
     }
     .photo {
         position: absolute; inset: 0;
-        background: url('{{ asset('images/login-building.jpg') }}') 60% 35% / cover no-repeat;
+        background: url('{{ asset('images/login-building.jpg') }}') 50% 22% / cover no-repeat;
     }
     .scrim {
         position: absolute; inset: 0;

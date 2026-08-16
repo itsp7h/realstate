@@ -168,7 +168,117 @@
     .detail-value.empty { color: var(--text-muted); font-weight: 400; font-style: italic; }
     .detail-value a { color: var(--info); text-decoration: none; }
     .detail-value a:hover { text-decoration: underline; }
+
+    /* ── Mobile tenant hero (Miknas Property Manager design) ──────
+         Shown only on mobile, above the same tabs/content desktop uses
+         below — adds the design's rent/lease summary + quick actions
+         without removing any of the existing tab functionality. ── */
+    .pm-tenant-hero { display: none; }
+    @media (max-width: 768px) {
+        .profile-hero { display: none; }
+        .pm-tenant-hero {
+            display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;
+        }
+        .pm-tenant-card {
+            background: var(--pm-navy); border-radius: 12px; padding: 18px;
+            display: flex; align-items: center; gap: 14px;
+        }
+        .pm-tenant-avatar {
+            flex: none; width: 52px; height: 52px; border-radius: 9999px; background: var(--pm-gold-tint);
+            color: var(--pm-gold); font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 18px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .pm-tenant-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 19px; color: #fff; }
+        .pm-tenant-meta { font-size: 12px; color: var(--pm-navy-text); margin-top: 1px; }
+        .pm-tenant-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .pm-tenant-kpi { background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; padding: 13px; }
+        .pm-tenant-kpi-label { font-size: 9.5px; font-weight: 700; letter-spacing: .6px; color: var(--pm-text-3); }
+        .pm-tenant-kpi-value { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 20px; color: var(--pm-text); margin-top: 4px; }
+        .pm-tenant-actions { display: flex; gap: 9px; }
+        .pm-tenant-actions .pm-btn-gold {
+            flex: 1; padding: 13px 0; border: 0; border-radius: 8px; background: var(--pm-gold); color: var(--pm-navy);
+            font-size: 13.5px; font-weight: 700; cursor: pointer; text-decoration: none; text-align: center;
+            box-shadow: 0 4px 16px var(--pm-gold-glow); font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .pm-tenant-actions .pm-btn-icon {
+            flex: none; width: 48px; border: 1px solid var(--pm-border); border-radius: 8px; background: var(--pm-surface);
+            color: var(--pm-text-2); font-size: 15px; cursor: pointer; text-decoration: none;
+            display: flex; align-items: center; justify-content: center;
+        }
+    }
 </style>
+
+@php
+    $mobileLease = $tenant->activeLease ?? $tenant->leaseContracts->first();
+    $mobileRentStatus = $tenant->invoices->isEmpty()
+        ? null
+        : ($tenant->invoices->contains('status', 'overdue') ? 'overdue' : 'paid');
+    $mobileStatusMeta = match ($mobileRentStatus) {
+        'paid'    => ['label' => 'Paid',    'tint' => 'var(--pm-green-tint)', 'tone' => 'var(--pm-green-text)'],
+        'overdue' => ['label' => 'Overdue', 'tint' => 'var(--pm-red-tint)',   'tone' => 'var(--pm-red)'],
+        default   => ['label' => 'No invoices yet', 'tint' => 'var(--pm-page)', 'tone' => 'var(--pm-text-3)'],
+    };
+    $mobileOpenInvoice = $tenant->invoices->first(fn ($i) => in_array($i->status, ['issued', 'partially_paid', 'overdue'], true));
+@endphp
+
+{{-- MOBILE TENANT HERO --}}
+<div class="pm-tenant-hero">
+    <div class="pm-tenant-card">
+        <div class="pm-tenant-avatar">{{ strtoupper(substr($tenant->name, 0, 2)) }}</div>
+        <div style="flex:1;min-width:0;">
+            <div class="pm-tenant-name">{{ $tenant->name }}</div>
+            <div class="pm-tenant-meta">{{ $mobileLease?->property_code ?? 'No active lease' }}{{ $mobileLease?->unit ? ' · Unit '.$mobileLease->unit : '' }}</div>
+        </div>
+        <span style="padding:5px 10px;border-radius:9999px;font-size:10px;font-weight:700;background:{{ $mobileStatusMeta['tint'] }};color:{{ $mobileStatusMeta['tone'] }};flex-shrink:0;">{{ $mobileStatusMeta['label'] }}</span>
+    </div>
+
+    <div class="pm-tenant-kpis">
+        <div class="pm-tenant-kpi">
+            <div class="pm-tenant-kpi-label">MONTHLY RENT</div>
+            <div class="pm-tenant-kpi-value">{{ $mobileLease?->rent_per_month ? 'BHD '.number_format($mobileLease->rent_per_month, 0) : '—' }}</div>
+        </div>
+        <div class="pm-tenant-kpi">
+            <div class="pm-tenant-kpi-label">LEASE ENDS</div>
+            <div class="pm-tenant-kpi-value">{{ $mobileLease?->lease_end_date?->format('d M Y') ?? '—' }}</div>
+        </div>
+    </div>
+
+    <div class="pm-tenant-actions">
+        @if($mobileOpenInvoice)
+            <a href="{{ route('invoices.show', $mobileOpenInvoice) }}" class="pm-btn-gold">Record rent payment</a>
+        @elseif($mobileRentStatus === 'paid')
+            <span class="pm-btn-gold" style="cursor:default;">Rent received</span>
+        @else
+            <span class="pm-btn-gold" style="opacity:.6;cursor:default;">No payment due</span>
+        @endif
+        @if($tenant->email)
+            <a href="mailto:{{ $tenant->email }}" class="pm-btn-icon"><i class="fa-regular fa-comment"></i></a>
+        @endif
+        @if($tenant->phone)
+            <a href="tel:{{ $tenant->phone }}" class="pm-btn-icon"><i class="fa-solid fa-phone"></i></a>
+        @endif
+    </div>
+
+    @if($tenant->payments->isNotEmpty())
+    <div>
+        <div class="pm-section-label">PAYMENT HISTORY</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            @foreach($tenant->payments->sortByDesc('payment_date')->take(6) as $payment)
+                <div style="display:flex;align-items:center;gap:12px;background:var(--pm-surface);border:1px solid var(--pm-border);border-radius:12px;padding:12px 14px;">
+                    <div style="flex:none;width:28px;height:28px;border-radius:9999px;background:var(--pm-green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="pm-action-title">{{ $payment->payment_date->format('F Y') }}</div>
+                        <div class="pm-action-sub">Paid &mdash; {{ str_replace('_', ' ', $payment->method) }}</div>
+                    </div>
+                    <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;color:var(--pm-text);flex-shrink:0;">BHD {{ number_format($payment->amount, 0) }}</div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+</div>
 
 {{-- PROFILE HERO --}}
 <div class="profile-hero">
