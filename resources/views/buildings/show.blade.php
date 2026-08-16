@@ -228,7 +228,6 @@
 @php
     $mobilePhoto = $building->images->first()?->url;
     $mobileAddress = trim(implode(', ', array_filter([$building->area, $building->city])));
-    $mobileNetColor = $dashboard['kpis']['month_profit'] < 0 ? 'var(--pm-red)' : 'var(--pm-text)';
     $mobileUnitFilters = [
         ['id' => 'all',     'label' => 'All'],
         ['id' => 'let',     'label' => 'Let'],
@@ -254,39 +253,35 @@
     <div class="pm-avatar" style="font-size:14px;">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
 </div>
 
-{{-- MOBILE: property detail (Miknas Property Manager design) --}}
+{{-- MOBILE: property detail (native app-style hero + row-card floors/units) --}}
 <div class="m-screen" style="padding-top:0;">
-    <div class="pm-hero-photo" @if($mobilePhoto) style="background-image:url('{{ $mobilePhoto }}')" @endif>
-        @unless($mobilePhoto)
-            <div class="pm-property-photo-fallback"><i class="fa-solid fa-building"></i></div>
-        @endunless
+    <div class="pm-hero-wrap">
+        <div class="pm-hero-photo" @if($mobilePhoto) style="background-image:url('{{ $mobilePhoto }}')" @endif>
+            @unless($mobilePhoto)
+                <div class="pm-property-photo-fallback"><i class="fa-solid fa-building"></i></div>
+            @endunless
+            <div class="pm-hero-topbar">
+                <span class="pm-hero-occ-pill"><i class="fa-solid fa-door-open"></i> {{ $dashboard['kpis']['occupancy_percent'] }}% occupied</span>
+                <a href="{{ route('buildings.edit', $building) }}" class="pm-hero-edit-btn" title="Edit building"><i class="fa-regular fa-pen-to-square"></i></a>
+            </div>
+            <div class="pm-hero-scrim">
+                <div class="pm-hero-name">{{ $building->property_name }}</div>
+                @if($mobileAddress)
+                    <div class="pm-hero-address"><i class="fa-solid fa-location-dot"></i> {{ $mobileAddress }}</div>
+                @endif
+            </div>
+        </div>
     </div>
 
-    <div>
-        <div class="pm-property-name" style="font-size:22px;">{{ $building->property_name }}</div>
-        @if($mobileAddress)
-            <div class="pm-property-address" style="font-size:12px;margin-top:4px;"><i class="fa-solid fa-location-dot"></i> {{ $mobileAddress }}</div>
-        @endif
+    <div style="background:linear-gradient(135deg,#10141F,#232B42);border-radius:18px;padding:20px;display:flex;gap:24px;">
+        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">INCOME &middot; {{ now()->format('M') }}</div><div style="font-size:21px;font-weight:800;color:#7ED8AC;">BHD {{ number_format($dashboard['kpis']['month_income'], 0) }}</div></div>
+        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">NET PROFIT</div><div style="font-size:21px;font-weight:800;color:{{ $dashboard['kpis']['month_profit'] < 0 ? '#F0A5A5' : '#E7B266' }};">BHD {{ number_format($dashboard['kpis']['month_profit'], 0) }}</div></div>
     </div>
 
-    <div class="pm-kpi-grid">
-        <div class="pm-kpi-card">
-            <div class="pm-kpi-label">TOTAL INCOME</div>
-            <div class="pm-kpi-value" style="color:var(--pm-green-text);font-size:20px;">BHD {{ number_format($dashboard['kpis']['month_income'], 0) }}</div>
-        </div>
-        <div class="pm-kpi-card">
-            <div class="pm-kpi-label">NET INCOME</div>
-            <div class="pm-kpi-value" style="font-size:20px;color:{{ $mobileNetColor }};">BHD {{ number_format($dashboard['kpis']['month_profit'], 0) }}</div>
-        </div>
-        <div class="pm-kpi-card">
-            <div class="pm-kpi-label">OCCUPANCY</div>
-            <div class="pm-kpi-value" style="font-size:20px;">{{ $dashboard['kpis']['occupancy_percent'] }}%</div>
-            <div class="pm-kpi-sub">{{ $dashboard['kpis']['occupied_units'] }} of {{ $dashboard['kpis']['total_units'] }} units let</div>
-        </div>
-        <div class="pm-kpi-card">
-            <div class="pm-kpi-label">TYPE</div>
-            <div class="pm-kpi-value" style="font-size:20px;">{{ $building->property_type ?? '—' }}</div>
-        </div>
+    <div class="m-mini-row">
+        <div class="m-mini-stat"><div class="v">{{ $dashboard['kpis']['occupancy_percent'] }}%</div><div class="l">OCCUPANCY</div></div>
+        <div class="m-mini-stat"><div class="v">{{ $dashboard['kpis']['occupied_units'] }}/{{ $dashboard['kpis']['total_units'] }}</div><div class="l">UNITS LET</div></div>
+        <div class="m-mini-stat"><div class="v" style="font-size:14px;">{{ $building->property_type ?? '—' }}</div><div class="l">TYPE</div></div>
     </div>
 
     <div>
@@ -320,7 +315,7 @@
         </div>
         @endif
 
-        <div class="pm-floor-card">
+        <div>
             @forelse($floorGroups as $group)
                 @php
                     $isOpen = $loop->first || $unitSearch !== '' || $unitFilter !== 'all';
@@ -328,7 +323,7 @@
                     $capped = !$isOpen ? false : ($rows->count() > 8 && $showAllFloorId !== $group['id']);
                     $visibleRows = $capped ? $rows->take(8) : $rows;
                 @endphp
-                <div id="pm-floor-{{ $group['id'] }}" style="border-bottom:1px solid var(--pm-border);">
+                <div id="pm-floor-{{ $group['id'] }}" class="pm-floor-section">
                     <button type="button" class="pm-floor-row {{ $isOpen ? 'is-open' : '' }}" onclick="pmToggleFloor({{ $group['id'] }})" data-floor-toggle="{{ $group['id'] }}">
                         <i class="fa-solid fa-layer-group" style="color:var(--pm-gold);font-size:13px;width:16px;text-align:center;"></i>
                         <div style="flex:1;min-width:0;">
@@ -337,20 +332,20 @@
                         </div>
                         <i class="fa-solid fa-chevron-{{ $isOpen ? 'up' : 'down' }}" style="color:var(--pm-border-strong);font-size:12px;" data-floor-chevron="{{ $group['id'] }}"></i>
                     </button>
-                    <div data-floor-body="{{ $group['id'] }}" style="{{ $isOpen ? '' : 'display:none;' }}padding-bottom:6px;">
+                    <div data-floor-body="{{ $group['id'] }}" class="pm-floor-units" style="{{ $isOpen ? '' : 'display:none;' }}">
                         @foreach($visibleRows as $row)
                             @php
                                 $meta = $mobileStatusMeta[$row['status']];
                                 $unitHref = $row['status'] === 'vacant' ? null : ($row['unit']->activeContract?->tenant_id ? route('tenants.show', $row['unit']->activeContract->tenant_id) : null);
                             @endphp
                             @if($unitHref)
-                            <a href="{{ $unitHref }}" class="pm-unit-row">
+                            <a href="{{ $unitHref }}" class="pm-unit-card">
                             @else
-                            <div class="pm-unit-row" title="Unit {{ $row['unit']->unit_name }} is vacant">
+                            <div class="pm-unit-card" title="Unit {{ $row['unit']->unit_name }} is vacant">
                             @endif
                                 <div class="pm-unit-tile {{ $row['status'] === 'vacant' ? 'is-vacant' : 'is-let' }}">{{ $row['unit']->unit_name }}</div>
                                 <div style="flex:1;min-width:0;">
-                                    <div class="pm-unit-name">{{ $row['occupant'] ?? 'No tenant' }}</div>
+                                    <div class="pm-unit-name">{{ $row['occupant'] ?? 'Vacant unit' }}</div>
                                     @if(!is_null($row['rent']))
                                         <div class="pm-unit-rent">BHD {{ number_format($row['rent'], 0) }} / mo</div>
                                     @endif
@@ -364,7 +359,7 @@
                         @endforeach
                         @if($capped)
                             <a href="{{ route('buildings.show', array_merge(['building' => $building], array_filter(['unit_search' => $unitSearch, 'unit_filter' => $unitFilter !== 'all' ? $unitFilter : null]), ['show_all_floor' => $group['id']])) }}"
-                               style="display:block;text-align:center;padding:11px 0;border-top:1px solid var(--pm-border);color:var(--pm-gold-dark);font-size:12.5px;font-weight:700;text-decoration:none;">
+                               class="pm-unit-more">
                                 Show all {{ $rows->count() }} units
                             </a>
                         @endif

@@ -713,12 +713,13 @@
             /* ── Pressed-state feedback in place of the killed tap flash ── */
             .m-action-btn, .pm-fab, .pm-icon-btn, .pm-avatar, .pm-chip, .m-chip,
             .pm-row-icon, .m-row-card, .pm-property-card, .pm-action-row,
-            .more-sheet-item, .pm-push-back, .nav-item {
+            .more-sheet-item, .pm-push-back, .nav-item, a.pm-unit-card, .pm-hero-edit-btn {
                 transition: transform .12s ease, opacity .12s ease;
             }
             .m-action-btn:active, .pm-fab:active, .pm-icon-btn:active, .pm-avatar:active,
             .pm-chip:active, .m-chip:active, .m-row-card:active, .pm-property-card:active,
-            .pm-action-row:active, .more-sheet-item:active, .pm-push-back:active, .nav-item:active {
+            .pm-action-row:active, .more-sheet-item:active, .pm-push-back:active, .nav-item:active,
+            a.pm-unit-card:active, .pm-hero-edit-btn:active {
                 transform: scale(0.96);
                 opacity: .8;
             }
@@ -943,27 +944,72 @@
             }
             .pm-chip.active { border-color: var(--pm-navy); background: var(--pm-navy); color: #fff; }
 
-            /* ── Property detail: photo hero + floors & units accordion ── */
-            .pm-hero-photo { position: relative; height: 170px; background: var(--pm-border); background-size: cover; background-position: center; }
-            .pm-floor-card { background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; overflow: hidden; }
-            .pm-floor-row {
-                display: flex; align-items: center; gap: 11px; padding: 13px 14px; cursor: pointer;
-                background: none; border: none; width: 100%; text-align: left; font-family: inherit;
+            /* ── Property detail: photo hero + floors & units native list ──
+                 Redesigned so the screen reads as an app detail screen (photo
+                 hero with identity baked into the image, a dark stat strip
+                 matching the Lease Contracts / Payments mobile screens, and
+                 a flat native row-card list) rather than a website's cropped
+                 photo + boxed accordion table. ── */
+            .pm-hero-wrap { position: relative; margin: -18px -18px 0; }
+            .pm-hero-photo {
+                position: relative; height: 232px; background: var(--pm-navy-800);
+                background-size: cover; background-position: center;
             }
-            .pm-floor-row.is-open { background: var(--pm-page-alt); }
+            .pm-hero-scrim {
+                position: absolute; inset: 0;
+                background: linear-gradient(180deg, rgba(11,17,32,0) 40%, rgba(11,17,32,.90) 100%);
+                display: flex; flex-direction: column; justify-content: flex-end;
+                padding: 16px 18px 14px;
+            }
+            .pm-hero-topbar { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+            .pm-hero-occ-pill {
+                background: rgba(11,17,32,.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+                color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .2px;
+                padding: 7px 12px; border-radius: 9999px; display: flex; align-items: center; gap: 6px;
+                border: 1px solid rgba(255,255,255,.14);
+            }
+            .pm-hero-occ-pill i { color: var(--pm-gold); font-size: 9px; }
+            .pm-hero-edit-btn {
+                flex: none; width: 34px; height: 34px; border-radius: 9999px;
+                background: rgba(11,17,32,.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+                border: 1px solid rgba(255,255,255,.14); color: #fff;
+                display: flex; align-items: center; justify-content: center; font-size: 13px; text-decoration: none;
+            }
+            .pm-hero-name { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 22px; color: #fff; line-height: 1.15; text-shadow: 0 1px 8px rgba(0,0,0,.25); }
+            .pm-hero-address { font-size: 12px; color: rgba(255,255,255,.8); margin-top: 5px; display: flex; align-items: center; gap: 6px; }
+            .pm-hero-address i { color: var(--pm-gold); font-size: 11px; }
+
+            /* Floors & units — flat sections, no boxed accordion table */
+            .pm-floor-section { margin-bottom: 4px; }
+            .pm-floor-row {
+                display: flex; align-items: center; gap: 11px; padding: 12px 2px; cursor: pointer;
+                background: none; border: none; width: 100%; text-align: left; font-family: inherit;
+                border-bottom: 1px solid var(--pm-border);
+            }
+            .pm-floor-row.is-open { border-bottom-color: transparent; }
             .pm-floor-name { font-size: 13.5px; font-weight: 700; color: var(--pm-text); }
-            .pm-floor-meta { font-size: 11px; color: var(--pm-text-3); }
-            .pm-unit-row { display: flex; align-items: center; gap: 11px; padding: 10px 14px 10px 41px; text-decoration: none; }
-            .pm-unit-row:hover { background: var(--pm-page-alt); }
+            .pm-floor-meta { font-size: 11px; color: var(--pm-text-3); margin-top: 1px; }
+            .pm-floor-units { display: flex; flex-direction: column; gap: 9px; padding: 12px 0 16px; }
+            .pm-unit-card {
+                display: flex; align-items: center; gap: 12px; padding: 12px 14px; text-decoration: none; color: inherit;
+                background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 14px;
+                box-shadow: 0 1px 3px rgba(0,0,0,.05);
+            }
+            div.pm-unit-card { cursor: default; }
             .pm-unit-tile {
-                flex: none; width: 38px; height: 32px; border-radius: 7px; font-family: 'Outfit', sans-serif;
+                flex: none; width: 42px; height: 42px; border-radius: 12px; font-family: 'Outfit', sans-serif;
                 font-weight: 700; font-size: 12.5px; display: flex; align-items: center; justify-content: center;
             }
             .pm-unit-tile.is-let { background: var(--pm-navy); color: var(--pm-gold); }
             .pm-unit-tile.is-vacant { background: var(--pm-page); color: var(--pm-text-3); }
-            .pm-unit-name { font-size: 13px; font-weight: 600; color: var(--pm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .pm-unit-rent { font-size: 11px; color: var(--pm-text-3); }
-            .pm-unit-badge { padding: 4px 9px; border-radius: 9999px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+            .pm-unit-name { font-size: 13.5px; font-weight: 700; color: var(--pm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .pm-unit-rent { font-size: 11px; color: var(--pm-text-3); margin-top: 1px; }
+            .pm-unit-badge { padding: 4px 10px; border-radius: 9999px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+            .pm-unit-more {
+                display: block; text-align: center; padding: 11px 0; margin-top: 2px;
+                color: var(--pm-gold-dark); font-size: 12.5px; font-weight: 700; text-decoration: none;
+                background: var(--pm-page-alt); border-radius: 12px;
+            }
 
             /* ── Bottom sheet (shared by modals + the More menu) ────── */
             .modal-overlay {
