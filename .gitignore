@@ -31,3 +31,4 @@ Thumbs.db
 # Scratch folder for design reference screenshots/mockups the user drops in —
 # not project assets, and some have contained real email addresses baked in.
 /draft
+graphify-out/cache/
