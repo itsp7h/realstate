@@ -28,6 +28,68 @@
         })();
     </script>
 
+    {{-- ── Native-style page transitions (progressive enhancement) ──────
+         Opts every same-origin navigation into the cross-document View
+         Transitions API. Unsupported browsers (older Safari/Firefox) just
+         ignore the @view-transition rule and keep today's hard navigation
+         — nothing to fall back to in JS. On mobile, navigating into or
+         out of a pushed screen (Tenant/Building detail) additionally gets
+         a directional slide via the `push`/`pop` transition types set in
+         the script below, instead of the browser's default cross-fade. --}}
+    <style>
+        @view-transition {
+            navigation: auto;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            ::view-transition-group(*),
+            ::view-transition-old(*),
+            ::view-transition-new(*) {
+                animation: none !important;
+            }
+        }
+        @media (max-width: 768px) {
+            @supports selector(:active-view-transition-type(pop)) {
+                ::view-transition-group(root) { animation-duration: .32s; }
+                ::view-transition-old(root), ::view-transition-new(root) {
+                    animation-timing-function: cubic-bezier(.32,.72,0,1);
+                }
+                :root:active-view-transition-type(push)::view-transition-old(root) { animation-name: pm-push-out; }
+                :root:active-view-transition-type(push)::view-transition-new(root) { animation-name: pm-push-in; }
+                :root:active-view-transition-type(pop)::view-transition-old(root) { animation-name: pm-pop-out; }
+                :root:active-view-transition-type(pop)::view-transition-new(root) { animation-name: pm-pop-in; }
+            }
+        }
+        @keyframes pm-push-out { to   { transform: translateX(-28%); opacity: .55; } }
+        @keyframes pm-push-in  { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes pm-pop-out  { to   { transform: translateX(100%); } }
+        @keyframes pm-pop-in   { from { transform: translateX(-28%); opacity: .55; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+    <script>
+        (function () {
+            // The back-chevron on a pushed screen is the only place a
+            // "pop" (backwards) navigation is initiated from; every other
+            // navigation defaults to "push" (see check below), so we only
+            // need to flag the back case before the browser unloads.
+            document.addEventListener('click', function (e) {
+                if (e.target.closest('.pm-push-back')) {
+                    sessionStorage.setItem('pm-nav-dir', 'pop');
+                }
+            }, true);
+
+            if (typeof PageRevealEvent === 'undefined') return;
+            window.addEventListener('pagereveal', function (e) {
+                if (!e.viewTransition) return;
+                var wasBack = sessionStorage.getItem('pm-nav-dir') === 'pop';
+                sessionStorage.removeItem('pm-nav-dir');
+                if (wasBack) {
+                    e.viewTransition.types.add('pop');
+                } else if (document.body.classList.contains('is-pushed-screen')) {
+                    e.viewTransition.types.add('push');
+                }
+            });
+        })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -622,6 +684,45 @@
             body.is-dashboard .topbar { display: none; }
             body.is-dashboard .page-content { padding: 0 0 calc(78px + env(safe-area-inset-bottom)); }
             body.is-pushed-screen .topbar { display: none; }
+
+            /* ── Touch/scroll physics — the tells that a page is "just a
+                 website" rather than an app. Kill the default blue/gray tap
+                 flash everywhere (chrome AND content — a stray highlight on
+                 a tenant note reads just as wrong as one on a button), and
+                 replace it with deliberate :active feedback below. Stop
+                 double-tap-to-zoom on anything interactive. Contain scroll
+                 so a drawer/sheet/list can't chain into the browser's
+                 pull-to-refresh. Text selection is only turned off on UI
+                 chrome (nav, buttons, tab bar) — real content stays
+                 selectable (tenant notes, addresses, invoice numbers, ...). ── */
+            * { -webkit-tap-highlight-color: transparent; }
+            a, button, [role="button"], input[type="submit"], input[type="button"] { touch-action: manipulation; }
+
+            html, body { overscroll-behavior-y: contain; }
+            .pm-scroll, .page-content, .sidebar, .modal-box, .m-chip-row, .pm-chip-row {
+                overscroll-behavior: contain;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .sidebar, .bottom-tabbar, .pm-header, .topbar, .pm-push-header,
+            .m-action-row, .m-mini-row, .m-chip-row, .pm-chip-row, .more-sheet-item,
+            .pm-fab, .pm-icon-btn, .pm-avatar, .tabbar-item {
+                -webkit-user-select: none; user-select: none;
+            }
+
+            /* ── Pressed-state feedback in place of the killed tap flash ── */
+            .m-action-btn, .pm-fab, .pm-icon-btn, .pm-avatar, .pm-chip, .m-chip,
+            .pm-row-icon, .m-row-card, .pm-property-card, .pm-action-row,
+            .more-sheet-item, .pm-push-back, .nav-item {
+                transition: transform .12s ease, opacity .12s ease;
+            }
+            .m-action-btn:active, .pm-fab:active, .pm-icon-btn:active, .pm-avatar:active,
+            .pm-chip:active, .m-chip:active, .m-row-card:active, .pm-property-card:active,
+            .pm-action-row:active, .more-sheet-item:active, .pm-push-back:active, .nav-item:active {
+                transform: scale(0.96);
+                opacity: .8;
+            }
+            .tabbar-item:active { opacity: .55; }
 
             /* ── Pushed-screen header (back chevron), e.g. Tenant detail ── */
             .pm-push-header {
