@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') — RealEstate Admin</title>
+
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#0B1120">
+    <link rel="icon" type="image/png" href="{{ asset('icons/favicon-32.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="P7H Real Estate">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+        }
+    </script>
     <script>
         (function () {
             // Applied before first paint to avoid a flash of the wrong theme.
@@ -607,6 +621,24 @@
             body { font-family: 'Poppins', sans-serif; }
             body.is-dashboard .topbar { display: none; }
             body.is-dashboard .page-content { padding: 0 0 calc(78px + env(safe-area-inset-bottom)); }
+            body.is-pushed-screen .topbar { display: none; }
+
+            /* ── Pushed-screen header (back chevron), e.g. Tenant detail ── */
+            .pm-push-header {
+                display: none;
+            }
+            body.is-pushed-screen .pm-push-header {
+                display: flex; align-items: center; gap: 12px;
+                padding: calc(14px + env(safe-area-inset-top)) 18px 12px;
+                background: var(--pm-surface); border-bottom: 1px solid var(--pm-border);
+                box-shadow: 0 1px 3px rgba(0,0,0,.06);
+            }
+            .pm-push-back {
+                flex: none; width: 34px; height: 34px; border-radius: 8px;
+                border: 1px solid var(--pm-border); background: var(--pm-surface); color: var(--pm-text-2);
+                font-size: 14px; cursor: pointer; text-decoration: none;
+                display: flex; align-items: center; justify-content: center;
+            }
 
             .sidebar {
                 width: clamp(260px, 84vw, 300px);
@@ -694,6 +726,143 @@
             body.is-mobile-screen .page-header,
             body.is-mobile-screen .stats-grid,
             body.is-mobile-screen .m-hide-desktop-index { display: none !important; }
+
+            /* ── Shared "pm-" design system (Miknas Property Manager
+                 mobile redesign) — tokens + components reused across every
+                 screen migrated to the new design (Home, Properties, ...).
+                 Pages not yet migrated keep using the --m-* / .m-screen
+                 system above untouched. ── */
+            :root {
+                --pm-gold:        #E8B86D;
+                --pm-gold-dark:   #B98A2E;
+                --pm-gold-tint:   rgba(232,184,109,0.12);
+                --pm-gold-glow:   rgba(232,184,109,0.25);
+                --pm-navy:        #0B1120;
+                --pm-navy-800:    #1A2540;
+                --pm-navy-text:   #8A9BBE;
+                --pm-text:        #0F172A;
+                --pm-text-2:      #475569;
+                --pm-text-3:      #94A3B8;
+                --pm-border:      #E2E8F0;
+                --pm-border-strong: #CBD5E1;
+                --pm-surface:     #FFFFFF;
+                --pm-page:        #F1F5F9;
+                --pm-page-alt:    #F8FAFC;
+                --pm-green:       #10B981;
+                --pm-green-tint:  rgba(16,185,129,0.12);
+                --pm-green-text:  #0F766E;
+                --pm-red:         #EF4444;
+                --pm-red-tint:    rgba(239,68,68,0.12);
+                --pm-warn:        #F59E0B;
+                --pm-warn-tint:   rgba(245,158,11,0.12);
+                --pm-info:        #3B82F6;
+            }
+
+            .pm-header {
+                flex: none; display: flex; align-items: center; gap: 12px;
+                padding: calc(14px + env(safe-area-inset-top)) 18px 12px;
+                background: var(--pm-surface); border-bottom: 1px solid var(--pm-border);
+                box-shadow: 0 1px 3px rgba(0,0,0,.06);
+            }
+            .pm-header-text { flex: 1; min-width: 0; }
+            .pm-title { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 21px; letter-spacing: -.2px; color: var(--pm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .pm-subtitle { font-size: 11px; font-weight: 500; color: var(--pm-text-3); margin-top: 1px; }
+            .pm-icon-btn {
+                position: relative; flex: none; width: 38px; height: 38px; border-radius: 8px;
+                border: 1px solid var(--pm-border); background: var(--pm-surface); color: var(--pm-text-2);
+                font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            }
+            .pm-icon-btn:active { background: var(--pm-page); }
+            .pm-dot { position: absolute; top: 6px; right: 7px; width: 8px; height: 8px; border-radius: 9999px; background: var(--pm-red); border: 1.5px solid var(--pm-surface); }
+            .pm-avatar {
+                flex: none; width: 38px; height: 38px; border-radius: 9999px; border: 0;
+                background: var(--pm-gold); color: var(--pm-navy); font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px;
+                display: flex; align-items: center; justify-content: center; cursor: pointer;
+                box-shadow: 0 0 0 3px var(--pm-gold-glow);
+            }
+
+            .pm-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+            .pm-bottom-space { height: calc(96px + env(safe-area-inset-bottom)); }
+            .pm-section-label { font-size: 10px; font-weight: 700; letter-spacing: .7px; color: var(--pm-text-3); margin-bottom: 8px; }
+            .pm-empty { padding: 24px 16px; text-align: center; font-size: 12px; color: var(--pm-text-3); }
+
+            /* ── KPI cards (Home Portfolio, Property detail, ...) ──── */
+            .pm-kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+            .pm-kpi-card { background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+            .pm-kpi-label { font-size: 10px; font-weight: 700; letter-spacing: .7px; color: var(--pm-text-3); }
+            .pm-kpi-value { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 26px; color: var(--pm-text); margin-top: 6px; }
+            .pm-kpi-sub { font-size: 11px; font-weight: 600; color: var(--pm-text-2); margin-top: 2px; }
+            .pm-kpi-sub.is-green { color: var(--pm-green); }
+
+            /* ── Property card (Home/Properties) ──────────────────── */
+            .pm-property-card { background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,.08); text-decoration: none; color: inherit; display: block; }
+            .pm-property-photo { position: relative; height: 132px; background: var(--pm-border); background-size: cover; background-position: center; }
+            .pm-property-photo-fallback { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--pm-border-strong); font-size: 30px; }
+            .pm-property-kind { position: absolute; top: 10px; right: 10px; padding: 4px 9px; border-radius: 9999px; background: rgba(11,17,32,.72); color: var(--pm-gold); font-size: 10px; font-weight: 700; letter-spacing: .4px; }
+            .pm-property-body { padding: 14px; }
+            .pm-property-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 17px; color: var(--pm-text); }
+            .pm-property-address { font-size: 11.5px; color: var(--pm-text-2); margin-top: 3px; }
+            .pm-property-address i { color: var(--pm-gold); }
+            .pm-property-wells { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+            .pm-well { background: var(--pm-page); border-radius: 8px; padding: 9px 10px; }
+            .pm-well-label { font-size: 9.5px; font-weight: 700; color: var(--pm-text-3); letter-spacing: .5px; }
+            .pm-well-value { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px; color: var(--pm-text); margin-top: 2px; }
+
+            /* ── Action / list rows (needs-you-today, empty states, etc.) ── */
+            .pm-action-list { display: flex; flex-direction: column; gap: 8px; }
+            .pm-action-row { display: flex; align-items: center; gap: 12px; background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; padding: 12px 14px; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+            .pm-action-icon { flex: none; width: 34px; height: 34px; border-radius: 8px; background: var(--pm-gold-tint); color: var(--pm-gold); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+            .pm-action-title { font-size: 13.5px; font-weight: 600; color: var(--pm-text); }
+            .pm-action-sub { font-size: 11.5px; color: var(--pm-text-3); }
+            .pm-action-chevron { color: var(--pm-border-strong); font-size: 12px; }
+
+            /* ── FAB ──────────────────────────────────────────────── */
+            .pm-fab {
+                position: absolute; right: 18px; bottom: calc(112px + env(safe-area-inset-bottom));
+                width: 56px; height: 56px; border-radius: 9999px; border: 0; background: var(--pm-gold); color: var(--pm-navy);
+                font-size: 19px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center;
+                box-shadow: 0 10px 40px rgba(0,0,0,.10), 0 0 0 6px var(--pm-gold-glow); z-index: 20;
+            }
+
+            /* ── Search field + filter chips (Tenants, Property detail units) ── */
+            .pm-search-field {
+                display: flex; align-items: center; gap: 9px; background: var(--pm-surface);
+                border: 1px solid var(--pm-border-strong); border-radius: 8px; padding: 10px 12px;
+            }
+            .pm-search-field input {
+                flex: 1; border: 0; outline: none; font-size: 13.5px; color: var(--pm-text);
+                background: transparent; font-family: 'Plus Jakarta Sans', sans-serif;
+            }
+            .pm-search-field i { color: var(--pm-text-3); font-size: 13px; }
+            .pm-chip-row { display: flex; gap: 7px; overflow-x: auto; }
+            .pm-chip {
+                padding: 7px 13px; border-radius: 9999px; font-size: 12px; font-weight: 600;
+                text-decoration: none; white-space: nowrap; flex-shrink: 0;
+                border: 1px solid var(--pm-border); background: var(--pm-surface); color: var(--pm-text-2);
+            }
+            .pm-chip.active { border-color: var(--pm-navy); background: var(--pm-navy); color: #fff; }
+
+            /* ── Property detail: photo hero + floors & units accordion ── */
+            .pm-hero-photo { position: relative; height: 170px; background: var(--pm-border); background-size: cover; background-position: center; }
+            .pm-floor-card { background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; overflow: hidden; }
+            .pm-floor-row {
+                display: flex; align-items: center; gap: 11px; padding: 13px 14px; cursor: pointer;
+                background: none; border: none; width: 100%; text-align: left; font-family: inherit;
+            }
+            .pm-floor-row.is-open { background: var(--pm-page-alt); }
+            .pm-floor-name { font-size: 13.5px; font-weight: 700; color: var(--pm-text); }
+            .pm-floor-meta { font-size: 11px; color: var(--pm-text-3); }
+            .pm-unit-row { display: flex; align-items: center; gap: 11px; padding: 10px 14px 10px 41px; text-decoration: none; }
+            .pm-unit-row:hover { background: var(--pm-page-alt); }
+            .pm-unit-tile {
+                flex: none; width: 38px; height: 32px; border-radius: 7px; font-family: 'Outfit', sans-serif;
+                font-weight: 700; font-size: 12.5px; display: flex; align-items: center; justify-content: center;
+            }
+            .pm-unit-tile.is-let { background: var(--pm-navy); color: var(--pm-gold); }
+            .pm-unit-tile.is-vacant { background: var(--pm-page); color: var(--pm-text-3); }
+            .pm-unit-name { font-size: 13px; font-weight: 600; color: var(--pm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .pm-unit-rent { font-size: 11px; color: var(--pm-text-3); }
+            .pm-unit-badge { padding: 4px 9px; border-radius: 9999px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
 
             /* ── Bottom sheet (shared by modals + the More menu) ────── */
             .modal-overlay {
@@ -783,7 +952,7 @@
                 transition: color 0.15s ease;
             }
             .tabbar-item i { font-size: 21px; transition: transform 0.15s var(--ease-spring); }
-            .tabbar-item.active { color: var(--m-gold-deep); }
+            .tabbar-item.active { color: #B98A2E; }
             .tabbar-item.active i { transform: translateY(-1px); }
             .tabbar-item:active i { transform: scale(0.88); }
         }
@@ -800,11 +969,13 @@
 @php
     $mobileRedesignedRoutes = [
         'buildings.index', 'floors.global', 'property-units.index', 'tenants.index',
-        'maintenance.index', 'invoices.index', 'reports.index',
+        'maintenance.index', 'invoices.index', 'reports.index', 'tenants.show', 'buildings.show',
     ];
     $isMobileScreen = request()->routeIs($mobileRedesignedRoutes);
+    $pushedScreenRoutes = ['tenants.show', 'buildings.show'];
+    $isPushedScreen = request()->routeIs($pushedScreenRoutes);
 @endphp
-<body class="{{ request()->routeIs('dashboard') ? 'is-dashboard' : '' }} {{ $isMobileScreen ? 'is-mobile-screen' : '' }}">
+<body class="{{ request()->routeIs('dashboard') ? 'is-dashboard' : '' }} {{ $isMobileScreen ? 'is-mobile-screen' : '' }} {{ $isPushedScreen ? 'is-pushed-screen' : '' }}">
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
@@ -985,7 +1156,7 @@
         </button>
         <div class="topbar-title">@yield('topbar-title', 'Dashboard')</div>
         <div class="topbar-actions">
-            <button class="topbar-icon-btn" id="themeToggleBtn" title="Switch theme" aria-label="Switch to dark mode"><i class="fa-solid fa-moon"></i></button>
+            <button class="topbar-icon-btn theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode"><i class="fa-solid fa-moon"></i></button>
             <button class="topbar-icon-btn"><i class="fa-regular fa-bell"></i></button>
             <button class="topbar-icon-btn"><i class="fa-regular fa-circle-question"></i></button>
             <div class="user-avatar" style="width:32px;height:32px;font-size:12px;cursor:pointer;">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
@@ -1021,18 +1192,18 @@
 @endphp
 <nav class="bottom-tabbar" id="bottomTabbar">
     <a href="{{ url('/dashboard') }}" class="tabbar-item {{ $tabbarIsMain ? 'active' : '' }}">
-        <i class="fa-solid fa-gauge-high"></i> Dashboard
+        <i class="fa-solid fa-house"></i> Home
     </a>
     @unless(auth()->user()?->isMaintenance())
     <a href="{{ route('buildings.index') }}" class="tabbar-item {{ $tabbarIsBuildings ? 'active' : '' }}">
-        <i class="fa-solid fa-building"></i> Buildings
+        <i class="fa-solid fa-building"></i> Properties
     </a>
     <a href="{{ route('tenants.index') }}" class="tabbar-item {{ $tabbarIsTenants ? 'active' : '' }}">
         <i class="fa-solid fa-users"></i> Tenants
     </a>
     @endunless
     <a href="{{ route('maintenance.index') }}" class="tabbar-item {{ $tabbarIsMaintenance ? 'active' : '' }}">
-        <i class="fa-solid fa-wrench"></i> Maintenance
+        <i class="fa-solid fa-screwdriver-wrench"></i> Requests
     </a>
     <button type="button" class="tabbar-item {{ $tabbarIsMore ? 'active' : '' }}" id="moreTabBtn">
         <i class="fa-solid fa-ellipsis"></i> More
@@ -1174,22 +1345,26 @@ function mDebounceSubmit(el) {
 
 /* ── Theme toggle ─────────────────────────────────────── */
 (function () {
-    const btn = document.getElementById('themeToggleBtn');
-    if (!btn) return;
-    const icon = btn.querySelector('i');
+    const btns = document.querySelectorAll('.theme-toggle-btn');
+    if (!btns.length) return;
 
-    function syncIcon() {
+    function syncIcons() {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-        btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+        btns.forEach(function (btn) {
+            const icon = btn.querySelector('i');
+            icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+        });
     }
-    syncIcon();
+    syncIcons();
 
-    btn.addEventListener('click', function () {
-        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('p7-theme', next);
-        syncIcon();
+    btns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('p7-theme', next);
+            syncIcons();
+        });
     });
 })();
 </script>

@@ -533,45 +533,72 @@
     </div>
 </div>
 
-{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+{{-- ═══════════════════════ MOBILE SCREEN (Miknas Property Manager design) ═══════════════════════ --}}
 <div class="m-screen">
-    <div class="m-action-row">
-        <a href="{{ route('export.buildings', request()->only(['search','property_type','type_of_ownership'])) }}" class="m-action-btn green-outline">Export</a>
-        <button type="button" class="m-action-btn outline" onclick="openImport_buildings()">Import</button>
-        <button type="button" class="m-action-btn primary" onclick="openBuildingModal()">+ Add Building</button>
+    <div style="display:flex;align-items:center;gap:9px;background:var(--pm-surface);border:1px solid var(--pm-border-strong);border-radius:8px;padding:10px 12px;">
+        <i class="fa-solid fa-magnifying-glass" style="color:var(--pm-text-3);font-size:13px;"></i>
+        <form method="GET" action="{{ route('buildings.index') }}" style="flex:1;">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search property name or code"
+                   style="width:100%;border:0;outline:none;font-size:13.5px;color:var(--pm-text);background:transparent;font-family:'Plus Jakarta Sans',sans-serif;"
+                   oninput="mDebounceSubmit(this)">
+        </form>
     </div>
-    <div class="m-mini-row">
-        <div class="m-mini-stat"><span class="v">{{ $stats['total'] ?? 0 }}</span><span class="l">Total</span></div>
-        <div class="m-mini-stat"><span class="v" style="color:var(--m-green);">{{ $stats['residential'] ?? 0 }}</span><span class="l">Residential</span></div>
-        <div class="m-mini-stat"><span class="v" style="color:var(--m-blue);">{{ $stats['commercial'] ?? 0 }}</span><span class="l">Commercial</span></div>
-    </div>
-    <form method="GET" action="{{ route('buildings.index') }}">
-        <input type="text" class="m-search-input" name="search" value="{{ request('search') }}"
-               placeholder="Property name, code…" oninput="mDebounceSubmit(this)">
-    </form>
-    <div class="m-row-list">
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
         @forelse($buildings as $building)
-            @php $floorCount = $building->total_no_of_floors ?? $building->floors_count ?? 0; $unitCount = $building->total_no_of_units ?? $building->units_count ?? 0; @endphp
-            <a href="{{ route('buildings.show', $building) }}" class="m-row-card">
-                <span class="m-row-chip">{{ $building->property_code }}</span>
-                <div style="flex:1;min-width:0;">
-                    <div class="m-row-title">{{ $building->property_name }}</div>
-                    <div class="m-row-sub">{{ $floorCount }} floors &middot; {{ $unitCount }} units</div>
+            @php
+                $fin = $financials[$building->id] ?? null;
+                $totalUnits = $building->units_count ?? 0;
+                $occupied = $building->occupied_units_count ?? 0;
+                $photo = $building->images->first()?->url;
+                $netColor = ($fin && $fin['net_income'] < 0) ? 'var(--pm-red)' : 'var(--pm-text)';
+            @endphp
+            <a href="{{ route('buildings.show', $building) }}" class="pm-property-card">
+                <div style="display:flex;align-items:stretch;gap:12px;padding:14px;">
+                    <div style="flex:none;width:96px;height:112px;border-radius:10px;overflow:hidden;background:var(--pm-border);@if($photo) background-image:url('{{ $photo }}');background-size:cover;background-position:center; @endif">
+                        @unless($photo)
+                            <div class="pm-property-photo-fallback"><i class="fa-solid fa-building"></i></div>
+                        @endunless
+                    </div>
+                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;">
+                        <div class="pm-property-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $building->property_name }}</div>
+                        <div class="pm-property-address" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><i class="fa-solid fa-location-dot"></i>&nbsp;{{ $building->property_type ?? 'Property' }} &middot; {{ $occupied }} of {{ $totalUnits }} units let</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right pm-action-chevron" style="align-self:center;"></i>
                 </div>
-                @if($building->property_type)
-                    <span class="m-row-badge" style="background:var(--m-blue-tint);color:var(--m-blue);">{{ $building->property_type }}</span>
+                @if($fin)
+                <div class="pm-property-wells" style="margin:0 14px 14px;">
+                    <div class="pm-well"><div class="pm-well-label">INCOME</div><div class="pm-well-value">BHD {{ number_format($fin['total_income'], 0) }}</div></div>
+                    <div class="pm-well"><div class="pm-well-label">NET</div><div class="pm-well-value" style="color:{{ $netColor }};">BHD {{ number_format($fin['net_income'], 0) }}</div></div>
+                    <div class="pm-well"><div class="pm-well-label">OCCUPIED</div><div class="pm-well-value">{{ $fin['occupancy_percent'] }}%</div></div>
+                </div>
                 @endif
-                <i class="fa-solid fa-chevron-right m-row-chevron"></i>
             </a>
         @empty
-            <div class="m-empty">
-                <div class="m-empty-icon"><i class="fa-solid fa-building"></i></div>
-                <div class="m-empty-title">No buildings found</div>
-                <div class="m-empty-sub">Try adjusting your search or add a new building.</div>
+            <div class="pm-empty">
+                <div style="font-size:14px;font-weight:700;color:var(--pm-text);margin-bottom:4px;">No buildings found</div>
+                <div>Try adjusting your search or add a new building.</div>
             </div>
         @endforelse
+
+        <div style="display:flex;gap:9px;margin-top:4px;">
+            <button type="button" onclick="openBuildingModal()" style="flex:1;padding:13px 0;border:1px dashed var(--pm-border-strong);border-radius:8px;background:var(--pm-surface);color:var(--pm-text-2);font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
+                <i class="fa-solid fa-plus" style="margin-right:7px;"></i>Add a property
+            </button>
+            <button type="button" onclick="openImport_buildings()" style="flex:1;padding:13px 0;border:0;border-radius:8px;background:var(--pm-navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
+                <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--pm-gold);margin-right:7px;"></i>Smart import
+            </button>
+        </div>
     </div>
+
+    <a href="{{ route('export.buildings', request()->only(['search','property_type','type_of_ownership'])) }}" style="text-align:center;font-size:12px;font-weight:600;color:var(--pm-text-3);text-decoration:none;padding:4px 0 8px;">
+        <i class="fa-solid fa-file-excel"></i> Export all to Excel
+    </a>
+
+    <button type="button" class="pm-fab" style="position:fixed;border:0;" onclick="openExpenseSheet()" title="Record expense"><i class="fa-solid fa-plus"></i></button>
 </div>
+
+@include('components.expense-sheet')
 
 @include('components.import-modal', [
     'type'        => 'buildings',

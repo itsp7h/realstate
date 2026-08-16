@@ -429,9 +429,9 @@ a.dash-stat { text-decoration: none; cursor: pointer; }
 /* ── MOBILE DASHBOARD (hidden on desktop) ──────────────────── */
 .m-dash { display: none; }
 
-/* ── MOBILE DASHBOARD (Promoseven RE mobile spec) ──────────
+/* ── MOBILE DASHBOARD — Miknas Property Manager design ──────
      The desktop dashboard sections below are replaced wholesale by the
-     .m-dash-* markup on mobile — not squeezed responsively — since the
+     .pm-* markup on mobile — not squeezed responsively — since the
      mobile spec is a different screen, not a narrower desktop one. ── */
 @media (max-width: 768px) {
     .page-header, .dash-stats, .data-hero,
@@ -439,143 +439,65 @@ a.dash-stat { text-decoration: none; cursor: pointer; }
         display: none !important;
     }
 
-    @keyframes m-drift-1 { from { transform: translate(0,0) scale(1); } to { transform: translate(-45px,35px) scale(1.18); } }
-    @keyframes m-drift-2 { from { transform: translate(0,0) scale(1); } to { transform: translate(55px,-28px) scale(1.12); } }
-    @keyframes m-sheen   { 0% { transform: translateX(-140%) skewX(-18deg); } 100% { transform: translateX(320%) skewX(-18deg); } }
-
-    .m-dash { display: block; font-family: 'Poppins', sans-serif; color: var(--m-ink); }
-
-    /* ── Hero ──────────────────────────────────────────── */
-    .m-hero {
-        background: linear-gradient(150deg, var(--m-navy), var(--m-navy-2));
-        border-radius: 0 0 30px 30px;
-        padding: calc(20px + env(safe-area-inset-top)) 20px 56px;
-        display: flex; flex-direction: column; gap: 20px;
-        position: relative; overflow: hidden;
-    }
-    .m-hero-fx { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-    .m-hero-fx span { position: absolute; border-radius: 50%; filter: blur(12px); }
-    .m-hero-fx .b1 { width: 280px; height: 280px; top: -90px; right: -70px; background: radial-gradient(circle,rgba(231,178,102,.30),transparent 65%); animation: m-drift-1 9s ease-in-out infinite alternate; }
-    .m-hero-fx .b2 { width: 240px; height: 240px; bottom: -110px; left: -80px; background: radial-gradient(circle,rgba(74,125,240,.22),transparent 65%); animation: m-drift-2 12s ease-in-out infinite alternate; }
-    .m-hero-fx .sheen { top: 0; bottom: 0; width: 90px; background: linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent); animation: m-sheen 7s ease-in-out infinite; }
-    .m-hero-top { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
-    .m-hero-icon-btn {
-        width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,.08);
-        border: none; display: flex; align-items: center; justify-content: center;
-        color: #C6D0E2; cursor: pointer; flex-shrink: 0; position: relative;
-    }
-    .m-hero-greeting { flex: 1; }
-    .m-hero-greeting .g1 { font-size: 11.5px; color: var(--m-navy-text); }
-    .m-hero-greeting .g2 { font-size: 16px; font-weight: 700; color: #fff; }
-    .m-hero-avatar {
-        width: 40px; height: 40px; border-radius: 50%; background: var(--m-gold-deep);
-        color: #fff; font-weight: 700; font-size: 14px; border: none; cursor: pointer; flex-shrink: 0;
-    }
-    .m-hero-net { display: flex; flex-direction: column; gap: 4px; position: relative; z-index: 1; }
-    .m-hero-net-label { font-size: 10.5px; letter-spacing: 1.2px; font-weight: 600; color: var(--m-navy-text); }
-    .m-hero-net-val { font-size: 34px; font-weight: 800; color: #fff; }
-    .m-hero-net-val span { font-size: 12px; color: var(--m-navy-text); font-weight: 500; margin-left: 10px; }
-    .m-hero-tiles { display: flex; gap: 10px; position: relative; z-index: 1; }
-    .m-hero-tile { flex: 1; background: rgba(255,255,255,.07); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 1px; }
-    .m-hero-tile-label { font-size: 10px; color: var(--m-navy-text); font-weight: 600; }
-    .m-hero-tile-val { font-size: 16px; font-weight: 700; }
-
-    /* ── Stat strip ────────────────────────────────────── */
-    .m-strip {
-        margin: -32px 18px 0; background: var(--m-card); border-radius: 20px; padding: 16px 4px;
-        display: flex; box-shadow: var(--m-shadow-float); position: relative; z-index: 1;
-    }
-    .m-strip-item {
-        flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
-        border: none; background: none; cursor: pointer; font-family: 'Poppins', sans-serif;
-        border-right: 1px solid var(--m-line); text-decoration: none; min-height: 44px; justify-content: center;
-    }
-    .m-strip-item:last-child { border-right: none; }
-    .m-strip-item .v { font-size: 19px; font-weight: 800; color: var(--m-ink); }
-    .m-strip-item.is-green .v { color: var(--m-green); }
-    .m-strip-item .l { font-size: 10.5px; color: var(--m-muted); }
-
-    /* ── Section heads ─────────────────────────────────── */
-    .m-sec-head { display: flex; align-items: center; padding: 22px 18px 10px; }
-    .m-sec-head .t { font-size: 14px; font-weight: 700; flex: 1; }
-    .m-sec-head a, .m-sec-head button {
-        font-size: 11.5px; font-weight: 600; color: var(--m-gold-text); border: none;
-        background: none; cursor: pointer; font-family: 'Poppins', sans-serif; text-decoration: none;
-        min-height: 44px; display: flex; align-items: center;
+    .m-dash {
+        display: flex; flex-direction: column; font-family: 'Plus Jakarta Sans', sans-serif;
+        position: fixed; inset: 0; z-index: 10; background: var(--pm-page);
     }
 
-    /* ── Quick actions ─────────────────────────────────── */
-    .m-quick { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; padding: 22px 18px 0; }
-    .m-quick-item { display: flex; flex-direction: column; align-items: center; gap: 7px; text-decoration: none; }
-    .m-quick-tile { width: 56px; height: 56px; border-radius: 17px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-    .m-quick-item .l { font-size: 10px; font-weight: 600; color: #4A5568; }
-
-    /* ── Activity list ─────────────────────────────────── */
-    .m-activity-list { display: flex; flex-direction: column; gap: 9px; padding: 0 18px 4px; }
-    .m-activity-row {
-        background: var(--m-card); border-radius: 15px; padding: 13px 15px; display: flex;
-        align-items: center; gap: 12px; box-shadow: var(--m-shadow);
+    /* ── Segmented control ───────────────────────────────── */
+    .pm-segment-wrap { padding: 16px 18px 0; }
+    .pm-segment { display: flex; gap: 4px; padding: 4px; background: var(--pm-border); border-radius: 10px; }
+    .pm-seg-btn {
+        flex: 1; padding: 8px 0; border: 0; border-radius: 7px; font-size: 12px; font-weight: 600;
+        cursor: pointer; background: transparent; color: var(--pm-text-2); font-family: 'Plus Jakarta Sans', sans-serif;
     }
-    .m-activity-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; }
-    .m-activity-body { flex: 1; min-width: 0; }
-    .m-activity-title { font-size: 12.5px; font-weight: 600; }
-    .m-activity-sub { font-size: 10.5px; color: var(--m-muted); }
+    .pm-seg-btn.active { background: var(--pm-surface); color: var(--pm-text); box-shadow: 0 1px 3px rgba(0,0,0,.06); }
 
-    /* ── Finance card ───────────────────────────────────── */
-    .m-finance-card {
-        margin: 18px 18px 0; background: var(--m-card); border-radius: var(--m-r-card);
-        padding: 18px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--m-shadow);
-    }
-    .m-finance-head { display: flex; align-items: center; gap: 12px; }
-    .m-finance-icon { width: 42px; height: 42px; border-radius: 13px; background: var(--m-gold); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(231,178,102,.3); color: var(--m-gold-on); font-size: 16px; }
-    .m-finance-title { font-size: 14px; font-weight: 700; }
-    .m-finance-sub { font-size: 10.5px; color: var(--m-muted); }
-    .m-finance-year { padding: 6px 12px; border-radius: 10px; background: var(--m-line); font-size: 11.5px; font-weight: 600; }
-    .m-finance-canvas { height: 110px; }
-    .m-finance-legend { display: flex; gap: 8px; overflow-x: auto; }
-    .m-finance-chip {
-        display: flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 10px;
-        font-size: 11.5px; font-family: 'Poppins', sans-serif; cursor: pointer; flex-shrink: 0;
-        border: 1.5px solid transparent; background: #F7F8FB; color: var(--m-muted); font-weight: 500;
-    }
-    .m-finance-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
-    .m-finance-chip.active { font-weight: 700; }
+    .pm-dash-layout { padding: 16px 18px 0; display: flex; flex-direction: column; gap: 14px; }
+    .pm-dash-layout[hidden] { display: none; }
 
-    /* ── Property performance ──────────────────────────── */
-    .m-perf-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 0 18px 4px; }
-    .m-perf-card {
-        flex-shrink: 0; width: 246px; background: var(--m-card); border-radius: var(--m-r-card);
-        box-shadow: var(--m-shadow); padding: 16px; display: flex; flex-direction: column; gap: 13px;
-        text-decoration: none; color: inherit;
-    }
-    .m-perf-top { display: flex; align-items: center; gap: 12px; }
-    .m-perf-name { font-size: 13.5px; font-weight: 700; color: var(--m-ink); line-height: 1.25; }
-    .m-perf-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 5px; }
-    .m-perf-chip { padding: 3px 8px; border-radius: 7px; font-size: 9.5px; font-weight: 700; }
-    .m-perf-foot { display: flex; gap: 8px; padding-top: 11px; border-top: 1px solid var(--m-line); }
-    .m-perf-foot > div { flex: 1; display: flex; flex-direction: column; }
-    .m-perf-foot .l { font-size: 9px; font-weight: 600; color: var(--m-faint); letter-spacing: .4px; }
-    .m-perf-foot .v { font-size: 12.5px; font-weight: 800; color: var(--m-ink); }
+    /* ── Today: navy hero ─────────────────────────────────── */
+    .pm-hero-card { background: var(--pm-navy); border-radius: 12px; padding: 18px; box-shadow: 0 10px 40px rgba(0,0,0,.10); }
+    .pm-hero-top-row { display: flex; justify-content: space-between; align-items: flex-start; }
+    .pm-hero-label { font-size: 10px; font-weight: 700; letter-spacing: .8px; color: var(--pm-navy-text); }
+    .pm-hero-figure { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 38px; color: #fff; line-height: 1.1; margin-top: 8px; }
+    .pm-hero-sub { font-size: 12px; font-weight: 500; color: var(--pm-navy-text); margin-top: 2px; }
+    .pm-hero-icon { width: 44px; height: 44px; border-radius: 9999px; background: var(--pm-gold-tint); color: var(--pm-gold); display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+    .pm-hero-bar { height: 6px; border-radius: 9999px; background: var(--pm-navy-800); margin-top: 16px; overflow: hidden; }
+    .pm-hero-bar-fill { height: 100%; border-radius: 9999px; background: var(--pm-gold); box-shadow: 0 0 12px var(--pm-gold-glow); }
+    .pm-hero-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 18px; }
+    .pm-hero-stat { border-left: 1px solid var(--pm-navy-800); padding-left: 10px; }
+    .pm-hero-stat-label { font-size: 9.5px; font-weight: 700; color: var(--pm-navy-text); letter-spacing: .5px; }
+    .pm-hero-stat-value { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 19px; color: #fff; margin-top: 2px; }
 
-    /* ── Recent lists ───────────────────────────────────── */
-    .m-list-card { margin: 0 18px; background: var(--m-card); border-radius: var(--m-r-card); box-shadow: var(--m-shadow); overflow: hidden; }
-    .m-list-card + .m-list-card { margin-top: 16px; }
-    .m-list-head { display: flex; align-items: center; gap: 10px; padding: 15px 16px; border-bottom: 1px solid var(--m-line); }
-    .m-list-head-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .m-list-head-title { font-size: 13.5px; font-weight: 700; flex: 1; }
-    .m-list-head a { height: 34px; padding: 0 13px; border: 1.5px solid var(--m-border); border-radius: 10px; background: var(--m-card); color: #4A5568; font-weight: 600; font-size: 11.5px; font-family: 'Poppins', sans-serif; cursor: pointer; text-decoration: none; display: flex; align-items: center; }
-    .m-list-row {
-        display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 16px;
-        border: none; border-bottom: 1px solid var(--m-line); background: none; cursor: pointer;
-        font-family: 'Poppins', sans-serif; text-align: left; min-height: 48px; text-decoration: none; color: inherit;
-    }
-    .m-list-row:last-child { border-bottom: none; }
-    .m-list-code { padding: 5px 9px; border-radius: 8px; background: var(--m-gold-tint); color: var(--m-gold-text); font-size: 10px; font-weight: 700; flex-shrink: 0; min-width: 42px; text-align: center; }
-    .m-list-name { font-size: 12.5px; font-weight: 600; color: var(--m-ink); flex: 1; }
-    .m-list-meta { font-size: 11px; font-weight: 500; }
-    .m-empty-row { padding: 24px 16px; text-align: center; font-size: 12px; color: var(--m-muted); }
+    /* ── Today: compact property rows ─────────────────────── */
+    .pm-compact-row { display: flex; align-items: center; gap: 12px; background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; padding: 12px 14px; text-decoration: none; }
+    .pm-compact-tile { flex: none; width: 40px; height: 40px; border-radius: 9px; background: var(--pm-navy); color: var(--pm-gold); font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center; }
+    .pm-compact-name { font-size: 14px; font-weight: 600; color: var(--pm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pm-compact-sub { font-size: 11.5px; color: var(--pm-text-3); }
+    .pm-compact-figure { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 15px; color: var(--pm-text); text-align: right; }
+    .pm-compact-net { font-size: 10.5px; font-weight: 600; text-align: right; }
 
-    .m-dash-bottom-space { height: 26px; }
+    /* ── Cash flow: ledger card ───────────────────────────── */
+    .pm-ledger-card { background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .pm-ledger-head { display: flex; justify-content: space-between; align-items: center; padding: 13px 15px; border-bottom: 1px solid var(--pm-border); }
+    .pm-ledger-head-label { font-size: 10px; font-weight: 700; letter-spacing: .7px; color: var(--pm-text-3); }
+    .pm-ledger-head-meta { font-size: 11px; font-weight: 600; color: var(--pm-gold-dark); }
+    .pm-ledger-row { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-bottom: 1px solid var(--pm-border); }
+    .pm-ledger-icon { flex: none; width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    .pm-ledger-label { font-size: 13px; font-weight: 600; color: var(--pm-text); }
+    .pm-ledger-meta { font-size: 11px; color: var(--pm-text-3); }
+    .pm-ledger-amount { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 15px; }
+    .pm-ledger-net { display: flex; justify-content: space-between; align-items: center; padding: 14px 15px; background: var(--pm-page); }
+    .pm-ledger-net-label { font-size: 12px; font-weight: 700; color: var(--pm-text-2); letter-spacing: .3px; }
+    .pm-ledger-net-value { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 20px; color: var(--pm-text); }
+
+    /* ── Cash flow: occupancy rows ─────────────────────────── */
+    .pm-occ-row { display: flex; align-items: center; gap: 11px; background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; padding: 11px 14px; text-decoration: none; }
+    .pm-occ-name { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; color: var(--pm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pm-occ-bar { flex: none; width: 70px; height: 6px; border-radius: 9999px; background: var(--pm-border); overflow: hidden; }
+    .pm-occ-bar-fill { height: 100%; background: var(--pm-gold); }
+    .pm-occ-pct { flex: none; width: 38px; text-align: right; font-size: 11.5px; font-weight: 700; color: var(--pm-text-2); }
 }
 </style>
 @endpush
@@ -721,64 +643,28 @@ document.querySelectorAll('.property-carousel').forEach(function (carousel) {
     });
 })();
 
-/* ── MOBILE DASHBOARD: hero menu button + single-series finance chart ── */
+/* ── MOBILE DASHBOARD: Portfolio / Today / Cash flow segmented control ── */
 (function () {
-    document.getElementById('mHeroMenuBtn')?.addEventListener('click', function () {
-        document.getElementById('menuBtn')?.click();
-    });
+    const segment = document.getElementById('pmSegment');
+    if (!segment) return;
 
-    const canvas = document.getElementById('mobileChart');
-    if (!canvas || typeof Chart === 'undefined') return;
+    const buttons = segment.querySelectorAll('.pm-seg-btn');
+    const layouts = document.querySelectorAll('.pm-dash-layout');
+    const STORAGE_KEY = 'pm-dash-tab';
 
-    const chartData = @json($chartData);
-    const seriesColor = { income: '#17A96C', expenses: '#D64545', credits: '#4A7DF0', debits: '#E7B266', profit: '#7A5AF8' };
-    const seriesStyle = {
-        income: { bg: '#E6F6EE', fg: '#0B6E47' }, expenses: { bg: '#FCEBEB', fg: '#B03030' },
-        credits: { bg: '#E9F0FD', fg: '#2C5BD0' }, debits: { bg: '#FBF3E4', fg: '#8A6118' },
-        profit: { bg: '#EFEBFD', fg: '#5A3BD8' },
-    };
+    function show(tab) {
+        buttons.forEach((b) => b.classList.toggle('active', b.dataset.seg === tab));
+        layouts.forEach((l) => { l.hidden = l.dataset.layout !== tab; });
+    }
 
-    let activeSeries = 'income';
-    const mobileChart = new Chart(canvas.getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: chartData.labels,
-            datasets: [{
-                data: chartData[activeSeries],
-                backgroundColor: chartData[activeSeries].map((v) => v === null ? '#F3F5F9' : (v < 0 ? '#D64545' : seriesColor[activeSeries])),
-                borderRadius: 5, borderSkipped: false, barPercentage: 0.7, categoryPercentage: 0.9,
-            }],
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: {
-                backgroundColor: '#0B1120', padding: 10, cornerRadius: 8,
-                callbacks: { label: (c) => 'BHD ' + new Intl.NumberFormat('en-US').format(c.parsed.y) },
-            } },
-            scales: {
-                y: { display: false, beginAtZero: true },
-                x: { grid: { display: false }, ticks: { color: '#A7B0C0', font: { family: 'Poppins', size: 7, weight: '600' } } },
-            },
-        },
-    });
-
-    document.querySelectorAll('#mFinanceLegend .m-finance-chip').forEach(function (chip) {
-        chip.addEventListener('click', function () {
-            activeSeries = chip.dataset.series;
-            mobileChart.data.datasets[0].data = chartData[activeSeries];
-            mobileChart.data.datasets[0].backgroundColor = chartData[activeSeries].map((v) => v === null ? '#F3F5F9' : (v < 0 ? '#D64545' : seriesColor[activeSeries]));
-            mobileChart.update();
-
-            document.querySelectorAll('#mFinanceLegend .m-finance-chip').forEach(function (c) {
-                const on = c === chip;
-                const style = seriesStyle[c.dataset.series];
-                c.classList.toggle('active', on);
-                c.style.background = on ? style.bg : '#F7F8FB';
-                c.style.color = on ? style.fg : 'var(--m-muted)';
-                c.style.borderColor = on ? seriesColor[c.dataset.series] : 'transparent';
-            });
+    buttons.forEach((btn) => {
+        btn.addEventListener('click', function () {
+            localStorage.setItem(STORAGE_KEY, btn.dataset.seg);
+            show(btn.dataset.seg);
         });
     });
+
+    show(localStorage.getItem(STORAGE_KEY) || 'cards');
 })();
 </script>
 @endpush
@@ -789,185 +675,269 @@ document.querySelectorAll('.property-carousel').forEach(function (carousel) {
     $portfolioIncome = $buildingPerformance->sum('total_income');
     $portfolioNet = $buildingPerformance->sum('net_income');
     $portfolioExpense = $portfolioIncome - $portfolioNet;
-    $greetingHour = now()->hour;
-    $greeting = $greetingHour < 12 ? 'Good morning' : ($greetingHour < 18 ? 'Good afternoon' : 'Good evening');
-    $activityMeta = [
-        'created' => ['icon' => 'fa-circle-plus', 'bg' => 'var(--m-green-tint)', 'fg' => 'var(--m-green)'],
-        'imported' => ['icon' => 'fa-file-arrow-up', 'bg' => 'var(--m-blue-tint)', 'fg' => 'var(--m-blue)'],
-        'updated' => ['icon' => 'fa-pen', 'bg' => 'var(--m-gold-tint)', 'fg' => 'var(--m-gold-text)'],
-        'deleted' => ['icon' => 'fa-trash', 'bg' => 'var(--m-red-tint)', 'fg' => 'var(--m-red)'],
-    ];
+    $elecTotal  = $buildingPerformance->sum(fn ($p) => $p['expenses']['electricity']);
+    $waterTotal = $buildingPerformance->sum(fn ($p) => $p['expenses']['water']);
+    $maintTotal = $buildingPerformance->sum(fn ($p) => $p['expenses']['maintenance']);
+    $otherTotal = $buildingPerformance->sum(fn ($p) => $p['expenses']['other']);
+
+    $needsToday = array_filter([
+        $portfolioMetrics['overdueCount'] > 0 ? [
+            'icon' => 'fa-solid fa-sack-dollar',
+            'title' => 'BHD ' . number_format($portfolioMetrics['outstanding'], 0) . ' overdue rent',
+            'sub' => $portfolioMetrics['overdueCount'] . ' ' . \Illuminate\Support\Str::plural('tenant', $portfolioMetrics['overdueCount']) . ' overdue',
+            'href' => route('invoices.index', ['status' => 'overdue']),
+        ] : null,
+        $portfolioMetrics['openMaintenance'] > 0 ? [
+            'icon' => 'fa-solid fa-screwdriver-wrench',
+            'title' => $portfolioMetrics['openMaintenance'] . ' open ' . \Illuminate\Support\Str::plural('request', $portfolioMetrics['openMaintenance']),
+            'sub' => 'Needs triage',
+            'href' => route('maintenance.index'),
+        ] : null,
+        $portfolioMetrics['expiringLeases'] > 0 ? [
+            'icon' => 'fa-solid fa-file-signature',
+            'title' => $portfolioMetrics['expiringLeases'] . ' ' . \Illuminate\Support\Str::plural('lease', $portfolioMetrics['expiringLeases']) . ' ending soon',
+            'sub' => 'Within 30 days',
+            'href' => route('tenants.index'),
+        ] : null,
+        [
+            'icon' => 'fa-solid fa-wand-magic-sparkles',
+            'title' => 'Smart import',
+            'sub' => 'Bring in properties from a spreadsheet',
+            'onclick' => 'openSmartImport()',
+        ],
+    ]);
 @endphp
 
 {{-- ═══════════════════════════════ MOBILE DASHBOARD ═══════════════════════════════ --}}
 <div class="m-dash">
-    <div class="m-hero">
-        <div class="m-hero-fx"><span class="b1"></span><span class="b2"></span><span class="sheen"></span></div>
-        <div class="m-hero-top">
-            <button type="button" class="m-hero-icon-btn" id="mHeroMenuBtn"><i class="fa-solid fa-bars"></i></button>
-            <div class="m-hero-greeting">
-                <div class="g1">{{ $greeting }}</div>
-                <div class="g2">{{ auth()->user()->name ?? 'there' }}</div>
-            </div>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="m-hero-avatar" title="Sign out">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</button>
-            </form>
-            <button type="button" class="m-hero-icon-btn"><i class="fa-regular fa-bell"></i></button>
+    <div class="pm-header">
+        <div class="pm-header-text">
+            <div class="pm-title">Dashboard</div>
+            <div class="pm-subtitle">{{ now()->format('F Y') }} &middot; {{ $stats['buildings'] }} {{ \Illuminate\Support\Str::plural('property', $stats['buildings']) }}</div>
         </div>
-        <div class="m-hero-net">
-            <div class="m-hero-net-label">{{ $chartYear }} &middot; NET POSITION</div>
-            <div class="m-hero-net-val">BHD {{ number_format($portfolioNet, 0) }}<span>{{ now()->format('F') }}: BHD {{ number_format($portfolioNet, 0) }}</span></div>
-        </div>
-        <div class="m-hero-tiles">
-            <div class="m-hero-tile">
-                <div class="m-hero-tile-label">INCOME &middot; {{ $chartYear }}</div>
-                <div class="m-hero-tile-val" style="color:#7ED8AC;">BHD {{ number_format($portfolioIncome, 0) }}</div>
-            </div>
-            <div class="m-hero-tile">
-                <div class="m-hero-tile-label">EXPENSES &middot; {{ $chartYear }}</div>
-                <div class="m-hero-tile-val" style="color:#F0A3A3;">BHD {{ number_format($portfolioExpense, 0) }}</div>
-            </div>
-        </div>
+        <button type="button" class="pm-icon-btn theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode"><i class="fa-solid fa-moon"></i></button>
+        <button type="button" class="pm-icon-btn" title="Notifications — coming soon">
+            <i class="fa-regular fa-bell"></i>
+            @if($portfolioMetrics['overdueCount'] > 0 || $portfolioMetrics['openMaintenance'] > 0)
+                <span class="pm-dot"></span>
+            @endif
+        </button>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="pm-avatar" title="Sign out">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</button>
+        </form>
     </div>
 
-    <div class="m-strip">
-        <a href="{{ route('buildings.index') }}" class="m-strip-item"><span class="v">{{ $stats['buildings'] }}</span><span class="l">Buildings</span></a>
-        <a href="{{ route('floors.global') }}" class="m-strip-item"><span class="v">{{ $stats['floors'] }}</span><span class="l">Floors</span></a>
-        <a href="{{ route('property-units.index') }}" class="m-strip-item"><span class="v">{{ $stats['units'] }}</span><span class="l">Units</span></a>
-        <a href="{{ route('property-units.index') }}" class="m-strip-item is-green"><span class="v">{{ $stats['occupied'] }}</span><span class="l">Occupied</span></a>
-    </div>
+    <div class="pm-scroll">
+        <div class="pm-segment-wrap">
+            <div class="pm-segment" id="pmSegment">
+                <button type="button" class="pm-seg-btn active" data-seg="cards">Portfolio</button>
+                <button type="button" class="pm-seg-btn" data-seg="pulse">Today</button>
+                <button type="button" class="pm-seg-btn" data-seg="ledger">Cash flow</button>
+            </div>
+        </div>
 
-    <div class="m-sec-head"><div class="t">Quick actions</div></div>
-    <div class="m-quick">
-        <a href="{{ route('property-units.index') }}" class="m-quick-item">
-            <div class="m-quick-tile" style="background:var(--m-gold);box-shadow:0 6px 14px rgba(231,178,102,.35);color:var(--m-gold-on);"><i class="fa-solid fa-plus"></i></div>
-            <div class="l">Add unit</div>
-        </a>
-        <a href="{{ route('invoices.index') }}" class="m-quick-item">
-            <div class="m-quick-tile" style="background:var(--m-green-tint);color:var(--m-green);"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-            <div class="l">Invoice</div>
-        </a>
-        <a href="{{ route('tenants.index') }}" class="m-quick-item">
-            <div class="m-quick-tile" style="background:var(--m-blue-tint);color:var(--m-blue);"><i class="fa-solid fa-users"></i></div>
-            <div class="l">Tenant</div>
-        </a>
-        <a href="{{ route('maintenance.index') }}" class="m-quick-item">
-            <div class="m-quick-tile" style="background:var(--m-red-tint);color:var(--m-red);"><i class="fa-solid fa-wrench"></i></div>
-            <div class="l">Repair</div>
-        </a>
-    </div>
-
-    <div class="m-sec-head"><div class="t">Recent activity</div><a href="{{ route('admin.audit-log') }}">See all</a></div>
-    <div class="m-activity-list">
-        @forelse($recentActivity as $entry)
-            @php $meta = $activityMeta[$entry->action] ?? ['icon' => 'fa-circle-info', 'bg' => 'var(--m-line)', 'fg' => 'var(--m-muted)']; @endphp
-            <div class="m-activity-row">
-                <div class="m-activity-icon" style="background:{{ $meta['bg'] }};color:{{ $meta['fg'] }};"><i class="fa-solid {{ $meta['icon'] }}"></i></div>
-                <div class="m-activity-body">
-                    <div class="m-activity-title">{{ ucfirst($entry->action) }} {{ $entry->entity_type }}</div>
-                    <div class="m-activity-sub">{{ $entry->entity_name ?? '—' }} &middot; {{ $entry->created_at->diffForHumans() }}</div>
+        {{-- ── Portfolio layout ─────────────────────────────────── --}}
+        <div class="pm-dash-layout" data-layout="cards">
+            <div class="pm-kpi-grid">
+                <div class="pm-kpi-card">
+                    <div class="pm-kpi-label">COLLECTED &mdash; {{ now()->format('M') }}</div>
+                    <div class="pm-kpi-value">BHD {{ number_format($portfolioMetrics['collected'], 0) }}</div>
+                    <div class="pm-kpi-sub is-green"><i class="fa-solid fa-arrow-up"></i> of BHD {{ number_format($portfolioMetrics['billed'], 0) }} billed</div>
+                </div>
+                <div class="pm-kpi-card">
+                    <div class="pm-kpi-label">OUTSTANDING</div>
+                    <div class="pm-kpi-value" style="color:var(--pm-red);">BHD {{ number_format($portfolioMetrics['outstanding'], 0) }}</div>
+                    <div class="pm-kpi-sub">{{ $portfolioMetrics['overdueCount'] }} {{ \Illuminate\Support\Str::plural('tenant', $portfolioMetrics['overdueCount']) }} overdue</div>
                 </div>
             </div>
-        @empty
-            <div class="m-empty-row">No recent activity yet</div>
-        @endforelse
-    </div>
 
-    @if(collect($chartData['income'])->filter(fn($v) => $v !== null)->isNotEmpty())
-    <div class="m-finance-card">
-        <div class="m-finance-head">
-            <div class="m-finance-icon"><i class="fa-solid fa-chart-line"></i></div>
-            <div style="flex:1;">
-                <div class="m-finance-title">Portfolio Financial Overview</div>
-                <div class="m-finance-sub">{{ $chartYear }} &middot; Income, expenses, profit, credits &amp; debits</div>
-            </div>
-            <div class="m-finance-year">{{ $chartYear }}</div>
-        </div>
-        <div class="m-finance-canvas"><canvas id="mobileChart"></canvas></div>
-        <div class="m-finance-legend" id="mFinanceLegend">
-            <button type="button" class="m-finance-chip active" data-series="income" style="border-color:#17A96C;background:#E6F6EE;color:#0B6E47;"><span class="dot" style="background:#17A96C;"></span>Income</button>
-            <button type="button" class="m-finance-chip" data-series="expenses"><span class="dot" style="background:#D64545;"></span>Expenses</button>
-            <button type="button" class="m-finance-chip" data-series="credits"><span class="dot" style="background:#4A7DF0;"></span>Credits</button>
-            <button type="button" class="m-finance-chip" data-series="debits"><span class="dot" style="background:#E7B266;"></span>Debits</button>
-            <button type="button" class="m-finance-chip" data-series="profit"><span class="dot" style="background:#7A5AF8;"></span>Profit</button>
-        </div>
-    </div>
-    @endif
-
-    @if($buildingPerformance->isNotEmpty())
-    <div class="m-sec-head"><div class="t">Property performance</div><a href="{{ route('buildings.index') }}">View all</a></div>
-    <div class="m-perf-scroll">
-        @foreach($buildingPerformance as $perf)
-            @php
-                $b = $perf['building'];
-                $pct = min(100, max(0, (int) $perf['occupancy_percent']));
-                $dash = round($pct * 1.508, 1) . ' 151';
-                $hasType = !empty($b->property_type);
-            @endphp
-            <a href="{{ route('buildings.show', $b) }}" class="m-perf-card">
-                <div class="m-perf-top">
-                    <svg width="62" height="62" viewBox="0 0 60 60" style="flex-shrink:0;">
-                        <circle cx="30" cy="30" r="24" fill="none" stroke="#F1F3F8" stroke-width="7"></circle>
-                        <circle cx="30" cy="30" r="24" fill="none" stroke="#E7B266" stroke-width="7" stroke-linecap="round" stroke-dasharray="{{ $dash }}" transform="rotate(-90 30 30)"></circle>
-                        <text x="30" y="34" text-anchor="middle" font-family="Poppins" font-size="12" font-weight="800" fill="#17203A">{{ $pct }}%</text>
-                    </svg>
-                    <div style="flex:1;min-width:0;">
-                        <div class="m-perf-name">{{ $b->property_name }}</div>
-                        <div class="m-perf-chips">
-                            <span class="m-perf-chip" style="background:var(--m-gold-tint);color:var(--m-gold-text);">{{ $b->property_code }}</span>
-                            <span class="m-perf-chip" style="background:{{ $hasType ? 'var(--m-blue-tint)' : 'var(--m-line)' }};color:{{ $hasType ? 'var(--m-blue)' : '#6B7688' }};">{{ $hasType ? strtoupper($b->property_type) : 'ACTIVE' }}</span>
+            @forelse($buildingPerformance as $perf)
+                @php
+                    $b = $perf['building'];
+                    $photo = $b->images->first()?->url;
+                    $address = trim(implode(', ', array_filter([$b->area, $b->city])));
+                    $netColor = $perf['net_income'] >= 0 ? 'var(--pm-text)' : 'var(--pm-red)';
+                @endphp
+                <a href="{{ route('buildings.show', $b) }}" class="pm-property-card">
+                    <div class="pm-property-photo" @if($photo) style="background-image:url('{{ $photo }}')" @endif>
+                        @unless($photo)
+                            <div class="pm-property-photo-fallback"><i class="fa-solid fa-building"></i></div>
+                        @endunless
+                        <span class="pm-property-kind">{{ $b->property_type ?? 'Active' }}</span>
+                    </div>
+                    <div class="pm-property-body">
+                        <div class="pm-property-name">{{ $b->property_name }}</div>
+                        @if($address)
+                        <div class="pm-property-address"><i class="fa-solid fa-location-dot"></i> {{ $address }}</div>
+                        @endif
+                        <div class="pm-property-wells">
+                            <div class="pm-well"><div class="pm-well-label">INCOME</div><div class="pm-well-value">BHD {{ number_format($perf['total_income'], 0) }}</div></div>
+                            <div class="pm-well"><div class="pm-well-label">NET</div><div class="pm-well-value" style="color:{{ $netColor }};">BHD {{ number_format($perf['net_income'], 0) }}</div></div>
+                            <div class="pm-well"><div class="pm-well-label">OCCUPIED</div><div class="pm-well-value">{{ $perf['occupancy_percent'] }}%</div></div>
                         </div>
                     </div>
-                </div>
-                <div class="m-perf-foot">
-                    <div><span class="l">INCOME</span><span class="v" style="color:var(--m-green);">BHD {{ number_format($perf['total_income'], 0) }}</span></div>
-                    <div><span class="l">NET</span><span class="v">BHD {{ number_format($perf['net_income'], 0) }}</span></div>
-                    <div><span class="l">TENANTS</span><span class="v">{{ $perf['tenant_count'] }}</span></div>
-                </div>
-            </a>
-        @endforeach
-    </div>
-    @endif
-
-    <div class="m-sec-head"><div class="t">Recent Buildings</div></div>
-    <div class="m-list-card">
-        <div class="m-list-head">
-            <div class="m-list-head-icon" style="background:var(--m-gold-tint);"><i class="fa-solid fa-building" style="color:var(--m-gold-text);font-size:14px;"></i></div>
-            <div class="m-list-head-title">Recent Buildings</div>
-            <a href="{{ route('buildings.index') }}">View all</a>
+                </a>
+            @empty
+                <div class="pm-empty">No properties yet</div>
+            @endforelse
         </div>
-        @forelse($recentBuildings->take(4) as $b)
-            <a href="{{ route('buildings.show', $b) }}" class="m-list-row">
-                <span class="m-list-code">{{ $b->property_code }}</span>
-                <span class="m-list-name">{{ $b->property_name }}</span>
-                <span class="m-list-meta" style="color:{{ $b->property_type ? 'var(--m-blue)' : 'var(--m-faint)' }};">{{ $b->property_type ?? '—' }}</span>
-            </a>
-        @empty
-            <div class="m-empty-row">No buildings yet</div>
-        @endforelse
-    </div>
 
-    <div class="m-sec-head" style="padding-top:16px;"><div class="t">Recent Units</div></div>
-    <div class="m-list-card">
-        <div class="m-list-head">
-            <div class="m-list-head-icon" style="background:var(--m-green-tint);"><i class="fa-solid fa-door-open" style="color:var(--m-green);font-size:14px;"></i></div>
-            <div class="m-list-head-title">Recent Units</div>
-            <a href="{{ route('property-units.index') }}">View all</a>
+        {{-- ── Today layout ─────────────────────────────────────── --}}
+        <div class="pm-dash-layout" data-layout="pulse" hidden>
+            <div class="pm-hero-card">
+                <div class="pm-hero-top-row">
+                    <div>
+                        <div class="pm-hero-label">PORTFOLIO &mdash; {{ strtoupper(now()->format('F Y')) }}</div>
+                        <div class="pm-hero-figure">BHD {{ number_format($portfolioMetrics['collected'], 0) }}</div>
+                        <div class="pm-hero-sub">collected of BHD {{ number_format($portfolioMetrics['billed'], 0) }} billed</div>
+                    </div>
+                    <div class="pm-hero-icon"><i class="fa-solid fa-building-columns"></i></div>
+                </div>
+                <div class="pm-hero-bar"><div class="pm-hero-bar-fill" style="width:{{ $portfolioMetrics['collectedPct'] }}%"></div></div>
+                <div class="pm-hero-stats">
+                    <div class="pm-hero-stat"><div class="pm-hero-stat-label">UNITS</div><div class="pm-hero-stat-value">{{ $stats['units'] }}</div></div>
+                    <div class="pm-hero-stat"><div class="pm-hero-stat-label">OCCUPANCY</div><div class="pm-hero-stat-value" style="color:var(--pm-gold);">{{ $portfolioMetrics['occupancyPct'] }}%</div></div>
+                    <div class="pm-hero-stat"><div class="pm-hero-stat-label">OVERDUE</div><div class="pm-hero-stat-value" style="color:var(--pm-red);">{{ $portfolioMetrics['overdueCount'] }}</div></div>
+                </div>
+            </div>
+
+            <div>
+                <div class="pm-section-label">NEEDS YOU TODAY</div>
+                <div class="pm-action-list">
+                    @foreach($needsToday as $item)
+                        @if(isset($item['onclick']))
+                        <button type="button" class="pm-action-row" style="width:100%;border:1px solid var(--pm-border);cursor:pointer;font-family:inherit;" onclick="{{ $item['onclick'] }}">
+                        @else
+                        <a href="{{ $item['href'] }}" class="pm-action-row">
+                        @endif
+                            <div class="pm-action-icon"><i class="{{ $item['icon'] }}"></i></div>
+                            <div style="flex:1;min-width:0;text-align:left;">
+                                <div class="pm-action-title">{{ $item['title'] }}</div>
+                                <div class="pm-action-sub">{{ $item['sub'] }}</div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right pm-action-chevron"></i>
+                        @if(isset($item['onclick']))
+                        </button>
+                        @else
+                        </a>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+
+            <div>
+                <div class="pm-section-label">PROPERTIES</div>
+                <div class="pm-action-list">
+                    @forelse($buildingPerformance as $perf)
+                        @php
+                            $b = $perf['building'];
+                            $initials = collect(explode(' ', $b->property_name))->map(fn($w) => $w[0] ?? '')->take(2)->implode('');
+                            $netColor = $perf['net_income'] >= 0 ? 'var(--pm-text-2)' : 'var(--pm-red)';
+                        @endphp
+                        <a href="{{ route('buildings.show', $b) }}" class="pm-compact-row">
+                            <div class="pm-compact-tile">{{ strtoupper($initials) }}</div>
+                            <div style="flex:1;min-width:0;">
+                                <div class="pm-compact-name">{{ $b->property_name }}</div>
+                                <div class="pm-compact-sub">{{ $perf['occupancy_percent'] }}% occupied</div>
+                            </div>
+                            <div>
+                                <div class="pm-compact-figure">BHD {{ number_format($perf['total_income'], 0) }}</div>
+                                <div class="pm-compact-net" style="color:{{ $netColor }};">net BHD {{ number_format($perf['net_income'], 0) }}</div>
+                            </div>
+                        </a>
+                    @empty
+                        <div class="pm-empty">No properties yet</div>
+                    @endforelse
+                </div>
+            </div>
         </div>
-        @forelse($recentUnits->take(5) as $u)
-            <a href="{{ route('property-units.show', $u) }}" class="m-list-row">
-                <span class="m-list-name" style="font-weight:700;">{{ $u->unit_name }}</span>
-                <span class="m-list-code" style="background:var(--m-line);color:#6B7688;">{{ optional($u->building)->property_code ?? '—' }}</span>
-                <span class="m-list-meta" style="min-width:64px;text-align:right;color:{{ $u->unit_condition ? 'var(--m-purple)' : 'var(--m-faint)' }};">{{ $u->unit_condition ?? '—' }}</span>
-            </a>
-        @empty
-            <div class="m-empty-row">No units yet</div>
-        @endforelse
+
+        {{-- ── Cash flow layout ─────────────────────────────────── --}}
+        <div class="pm-dash-layout" data-layout="ledger" hidden>
+            <div class="pm-ledger-card">
+                <div class="pm-ledger-head">
+                    <div class="pm-ledger-head-label">{{ strtoupper(now()->format('F')) }} LEDGER</div>
+                    <div class="pm-ledger-head-meta">BHD, month to date</div>
+                </div>
+                <div class="pm-ledger-row">
+                    <div class="pm-ledger-icon" style="background:var(--pm-green-tint);color:var(--pm-green-text);"><i class="fa-solid fa-sack-dollar"></i></div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="pm-ledger-label">Rent collected</div>
+                        <div class="pm-ledger-meta">Accrued across {{ $stats['buildings'] }} {{ \Illuminate\Support\Str::plural('property', $stats['buildings']) }}</div>
+                    </div>
+                    <div class="pm-ledger-amount" style="color:var(--pm-green-text);">+{{ number_format($portfolioIncome, 0) }}</div>
+                </div>
+                @if($portfolioMetrics['outstanding'] > 0)
+                <div class="pm-ledger-row">
+                    <div class="pm-ledger-icon" style="background:var(--pm-red-tint);color:var(--pm-red);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="pm-ledger-label">Rent outstanding</div>
+                        <div class="pm-ledger-meta">{{ $portfolioMetrics['overdueCount'] }} {{ \Illuminate\Support\Str::plural('tenant', $portfolioMetrics['overdueCount']) }} overdue</div>
+                    </div>
+                    <div class="pm-ledger-amount" style="color:var(--pm-red);">-{{ number_format($portfolioMetrics['outstanding'], 0) }}</div>
+                </div>
+                @endif
+                @if($elecTotal + $waterTotal > 0)
+                <div class="pm-ledger-row">
+                    <div class="pm-ledger-icon" style="background:var(--pm-warn-tint);color:var(--pm-warn);"><i class="fa-solid fa-bolt"></i></div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="pm-ledger-label">Utilities</div>
+                        <div class="pm-ledger-meta">Electricity &amp; water</div>
+                    </div>
+                    <div class="pm-ledger-amount" style="color:var(--pm-text-2);">-{{ number_format($elecTotal + $waterTotal, 0) }}</div>
+                </div>
+                @endif
+                @if($maintTotal > 0)
+                <div class="pm-ledger-row">
+                    <div class="pm-ledger-icon" style="background:var(--pm-info);color:#fff;background-color:rgba(59,130,246,.12);color:var(--pm-info);"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="pm-ledger-label">Maintenance</div>
+                        <div class="pm-ledger-meta">Approved repairs</div>
+                    </div>
+                    <div class="pm-ledger-amount" style="color:var(--pm-text-2);">-{{ number_format($maintTotal, 0) }}</div>
+                </div>
+                @endif
+                @if($otherTotal > 0)
+                <div class="pm-ledger-row">
+                    <div class="pm-ledger-icon" style="background:var(--pm-page);color:var(--pm-text-2);"><i class="fa-solid fa-receipt"></i></div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="pm-ledger-label">Other expenses</div>
+                        <div class="pm-ledger-meta">Recorded this month</div>
+                    </div>
+                    <div class="pm-ledger-amount" style="color:var(--pm-text-2);">-{{ number_format($otherTotal, 0) }}</div>
+                </div>
+                @endif
+                <div class="pm-ledger-net">
+                    <div class="pm-ledger-net-label">NET POSITION</div>
+                    <div class="pm-ledger-net-value">BHD {{ number_format($portfolioNet, 0) }}</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="pm-section-label">OCCUPANCY BY PROPERTY</div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    @forelse($buildingPerformance as $perf)
+                        @php $b = $perf['building']; $pct = min(100, max(0, (int) $perf['occupancy_percent'])); @endphp
+                        <a href="{{ route('buildings.show', $b) }}" class="pm-occ-row">
+                            <div class="pm-occ-name">{{ $b->property_name }}</div>
+                            <div class="pm-occ-bar"><div class="pm-occ-bar-fill" style="width:{{ $pct }}%"></div></div>
+                            <div class="pm-occ-pct">{{ $pct }}%</div>
+                        </a>
+                    @empty
+                        <div class="pm-empty">No properties yet</div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        <div class="pm-bottom-space"></div>
     </div>
 
-    <div class="m-dash-bottom-space"></div>
+    <button type="button" class="pm-fab" style="border:0;" onclick="openExpenseSheet()" title="Record expense"><i class="fa-solid fa-plus"></i></button>
 </div>
+
+@include('components.expense-sheet')
 
 <div class="page-header">
     <div>

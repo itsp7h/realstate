@@ -224,7 +224,183 @@
 @endpush
 
 @section('content')
-<div class="container-fluid px-0">
+
+@php
+    $mobilePhoto = $building->images->first()?->url;
+    $mobileAddress = trim(implode(', ', array_filter([$building->area, $building->city])));
+    $mobileNetColor = $dashboard['kpis']['month_profit'] < 0 ? 'var(--pm-red)' : 'var(--pm-text)';
+    $mobileUnitFilters = [
+        ['id' => 'all',     'label' => 'All'],
+        ['id' => 'let',     'label' => 'Let'],
+        ['id' => 'vacant',  'label' => 'Vacant'],
+        ['id' => 'overdue', 'label' => 'Overdue'],
+    ];
+    $mobileStatusMeta = [
+        'let'     => ['label' => 'Let',     'tint' => 'var(--pm-page)',        'tone' => 'var(--pm-text-2)'],
+        'paid'    => ['label' => 'Paid',     'tint' => 'var(--pm-green-tint)', 'tone' => 'var(--pm-green-text)'],
+        'overdue' => ['label' => 'Overdue', 'tint' => 'var(--pm-red-tint)',    'tone' => 'var(--pm-red)'],
+        'vacant'  => ['label' => 'Vacant',   'tint' => 'var(--pm-page)',       'tone' => 'var(--pm-text-3)'],
+    ];
+@endphp
+
+{{-- MOBILE: pushed-screen header with a back chevron --}}
+<div class="pm-push-header">
+    <a href="{{ route('buildings.index') }}" class="pm-push-back"><i class="fa-solid fa-chevron-left"></i></a>
+    <div class="pm-header-text">
+        <div class="pm-title" style="font-size:19px;">{{ $building->property_name }}</div>
+        <div class="pm-subtitle">{{ $building->property_type ?? 'Property' }}</div>
+    </div>
+    <button type="button" class="pm-icon-btn" title="Notifications — coming soon"><i class="fa-regular fa-bell"></i></button>
+    <div class="pm-avatar" style="font-size:14px;">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
+</div>
+
+{{-- MOBILE: property detail (Miknas Property Manager design) --}}
+<div class="m-screen" style="padding-top:0;">
+    <div class="pm-hero-photo" @if($mobilePhoto) style="background-image:url('{{ $mobilePhoto }}')" @endif>
+        @unless($mobilePhoto)
+            <div class="pm-property-photo-fallback"><i class="fa-solid fa-building"></i></div>
+        @endunless
+    </div>
+
+    <div>
+        <div class="pm-property-name" style="font-size:22px;">{{ $building->property_name }}</div>
+        @if($mobileAddress)
+            <div class="pm-property-address" style="font-size:12px;margin-top:4px;"><i class="fa-solid fa-location-dot"></i> {{ $mobileAddress }}</div>
+        @endif
+    </div>
+
+    <div class="pm-kpi-grid">
+        <div class="pm-kpi-card">
+            <div class="pm-kpi-label">TOTAL INCOME</div>
+            <div class="pm-kpi-value" style="color:var(--pm-green-text);font-size:20px;">BHD {{ number_format($dashboard['kpis']['month_income'], 0) }}</div>
+        </div>
+        <div class="pm-kpi-card">
+            <div class="pm-kpi-label">NET INCOME</div>
+            <div class="pm-kpi-value" style="font-size:20px;color:{{ $mobileNetColor }};">BHD {{ number_format($dashboard['kpis']['month_profit'], 0) }}</div>
+        </div>
+        <div class="pm-kpi-card">
+            <div class="pm-kpi-label">OCCUPANCY</div>
+            <div class="pm-kpi-value" style="font-size:20px;">{{ $dashboard['kpis']['occupancy_percent'] }}%</div>
+            <div class="pm-kpi-sub">{{ $dashboard['kpis']['occupied_units'] }} of {{ $dashboard['kpis']['total_units'] }} units let</div>
+        </div>
+        <div class="pm-kpi-card">
+            <div class="pm-kpi-label">TYPE</div>
+            <div class="pm-kpi-value" style="font-size:20px;">{{ $building->property_type ?? '—' }}</div>
+        </div>
+    </div>
+
+    <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div class="pm-section-label" style="margin-bottom:0;">FLOORS &amp; UNITS</div>
+            <div style="font-size:11px;font-weight:600;color:var(--pm-text-2);">
+                Units <strong style="color:var(--pm-text);">{{ $dashboard['kpis']['total_units'] }}</strong>
+                &nbsp;Let <strong style="color:var(--pm-green-text);">{{ $dashboard['kpis']['occupied_units'] }}</strong>
+                &nbsp;Vacant <strong style="color:var(--pm-red);">{{ $dashboard['kpis']['vacant_units'] }}</strong>
+            </div>
+        </div>
+
+        <form method="GET" action="{{ route('buildings.show', $building) }}" class="pm-search-field" style="margin-bottom:8px;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" name="unit_search" value="{{ $unitSearch }}" placeholder="Search unit number or occupant" oninput="mDebounceSubmit(this)">
+            @if($unitFilter !== 'all')<input type="hidden" name="unit_filter" value="{{ $unitFilter }}">@endif
+        </form>
+
+        <div class="pm-chip-row" style="margin-bottom:12px;">
+            @foreach($mobileUnitFilters as $f)
+                <a href="{{ route('buildings.show', array_merge(['building' => $building], array_filter(['unit_search' => $unitSearch, 'unit_filter' => $f['id'] === 'all' ? null : $f['id']]))) }}"
+                   class="pm-chip {{ $unitFilter === $f['id'] ? 'active' : '' }}">{{ $f['label'] }}</a>
+            @endforeach
+        </div>
+
+        @if($floors->count() > 6)
+        <div class="pm-chip-row" style="margin-bottom:12px;">
+            @foreach($floors as $jf)
+                <a href="#pm-floor-{{ $jf->id }}" class="pm-chip" style="min-width:34px;text-align:center;">{{ $jf->floor_name }}</a>
+            @endforeach
+        </div>
+        @endif
+
+        <div class="pm-floor-card">
+            @forelse($floorGroups as $group)
+                @php
+                    $isOpen = $loop->first || $unitSearch !== '' || $unitFilter !== 'all';
+                    $rows = $group['rows'];
+                    $capped = !$isOpen ? false : ($rows->count() > 8 && $showAllFloorId !== $group['id']);
+                    $visibleRows = $capped ? $rows->take(8) : $rows;
+                @endphp
+                <div id="pm-floor-{{ $group['id'] }}" style="border-bottom:1px solid var(--pm-border);">
+                    <button type="button" class="pm-floor-row {{ $isOpen ? 'is-open' : '' }}" onclick="pmToggleFloor({{ $group['id'] }})" data-floor-toggle="{{ $group['id'] }}">
+                        <i class="fa-solid fa-layer-group" style="color:var(--pm-gold);font-size:13px;width:16px;text-align:center;"></i>
+                        <div style="flex:1;min-width:0;">
+                            <div class="pm-floor-name">{{ $group['name'] }}</div>
+                            <div class="pm-floor-meta">{{ $rows->count() }} units &middot; {{ $group['letCount'] }} let</div>
+                        </div>
+                        <i class="fa-solid fa-chevron-{{ $isOpen ? 'up' : 'down' }}" style="color:var(--pm-border-strong);font-size:12px;" data-floor-chevron="{{ $group['id'] }}"></i>
+                    </button>
+                    <div data-floor-body="{{ $group['id'] }}" style="{{ $isOpen ? '' : 'display:none;' }}padding-bottom:6px;">
+                        @foreach($visibleRows as $row)
+                            @php
+                                $meta = $mobileStatusMeta[$row['status']];
+                                $unitHref = $row['status'] === 'vacant' ? null : ($row['unit']->activeContract?->tenant_id ? route('tenants.show', $row['unit']->activeContract->tenant_id) : null);
+                            @endphp
+                            @if($unitHref)
+                            <a href="{{ $unitHref }}" class="pm-unit-row">
+                            @else
+                            <div class="pm-unit-row" title="Unit {{ $row['unit']->unit_name }} is vacant">
+                            @endif
+                                <div class="pm-unit-tile {{ $row['status'] === 'vacant' ? 'is-vacant' : 'is-let' }}">{{ $row['unit']->unit_name }}</div>
+                                <div style="flex:1;min-width:0;">
+                                    <div class="pm-unit-name">{{ $row['occupant'] ?? 'No tenant' }}</div>
+                                    @if(!is_null($row['rent']))
+                                        <div class="pm-unit-rent">BHD {{ number_format($row['rent'], 0) }} / mo</div>
+                                    @endif
+                                </div>
+                                <span class="pm-unit-badge" style="background:{{ $meta['tint'] }};color:{{ $meta['tone'] }};">{{ $meta['label'] }}</span>
+                            @if($unitHref)
+                            </a>
+                            @else
+                            </div>
+                            @endif
+                        @endforeach
+                        @if($capped)
+                            <a href="{{ route('buildings.show', array_merge(['building' => $building], array_filter(['unit_search' => $unitSearch, 'unit_filter' => $unitFilter !== 'all' ? $unitFilter : null]), ['show_all_floor' => $group['id']])) }}"
+                               style="display:block;text-align:center;padding:11px 0;border-top:1px solid var(--pm-border);color:var(--pm-gold-dark);font-size:12.5px;font-weight:700;text-decoration:none;">
+                                Show all {{ $rows->count() }} units
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="pm-empty">No units match this search.</div>
+            @endforelse
+        </div>
+    </div>
+
+    <button type="button" class="pm-fab" style="position:fixed;border:0;" onclick="openExpenseSheet()" title="Record expense"><i class="fa-solid fa-plus"></i></button>
+</div>
+
+@include('components.expense-sheet', ['presetBuildingId' => $building->id])
+
+<script>
+function pmToggleFloor(id) {
+    document.querySelectorAll('[data-floor-body]').forEach(function (el) {
+        if (Number(el.dataset.floorBody) !== id) {
+            el.style.display = 'none';
+            document.querySelector('[data-floor-toggle="' + el.dataset.floorBody + '"]')?.classList.remove('is-open');
+            const chev = document.querySelector('[data-floor-chevron="' + el.dataset.floorBody + '"]');
+            if (chev) chev.className = 'fa-solid fa-chevron-down';
+        }
+    });
+    const body = document.querySelector('[data-floor-body="' + id + '"]');
+    const chevron = document.querySelector('[data-floor-chevron="' + id + '"]');
+    const isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : '';
+    document.querySelector('[data-floor-toggle="' + id + '"]').classList.toggle('is-open', !isOpen);
+    if (chevron) chevron.className = isOpen ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-up';
+}
+</script>
+
+<div class="container-fluid px-0 m-hide-desktop-index">
 
     {{-- PAGE HEADER --}}
     <div class="page-header">

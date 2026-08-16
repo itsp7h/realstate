@@ -253,44 +253,84 @@
 </div>
 
 
-{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+{{-- ═══════════════════════ MOBILE SCREEN (Miknas Property Manager design) ═══════════════════════ --}}
 <div class="m-screen">
-    <form method="GET" action="{{ route('tenants.index') }}">
-        <input type="text" class="m-search-input" name="search" value="{{ request('search') }}"
-               placeholder="Search tenants…" oninput="mDebounceSubmit(this)">
-    </form>
-    <div class="m-row-list">
+    <div style="display:flex;align-items:center;gap:9px;background:var(--pm-surface);border:1px solid var(--pm-border-strong);border-radius:8px;padding:10px 12px;">
+        <i class="fa-solid fa-magnifying-glass" style="color:var(--pm-text-3);font-size:13px;"></i>
+        <form method="GET" action="{{ route('tenants.index') }}" style="flex:1;">
+            @if(request('status'))<input type="hidden" name="status" value="{{ request('status') }}">@endif
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search tenants or units"
+                   style="width:100%;border:0;outline:none;font-size:13.5px;color:var(--pm-text);background:transparent;font-family:'Plus Jakarta Sans',sans-serif;"
+                   oninput="mDebounceSubmit(this)">
+        </form>
+    </div>
+
+    @php
+        $tenantFilters = [
+            ['id' => null,      'label' => 'All'],
+            ['id' => 'paid',    'label' => 'Paid'],
+            ['id' => 'overdue', 'label' => 'Overdue'],
+        ];
+        $activeStatus = request('status');
+    @endphp
+    <div style="display:flex;gap:7px;">
+        @foreach($tenantFilters as $f)
+            @php $isActive = $activeStatus === $f['id']; @endphp
+            <a href="{{ route('tenants.index', array_filter(['search' => request('search'), 'status' => $f['id']])) }}"
+               style="padding:7px 13px;border-radius:9999px;font-size:12px;font-weight:600;text-decoration:none;
+                      border:1px solid {{ $isActive ? 'var(--pm-navy)' : 'var(--pm-border)' }};
+                      background:{{ $isActive ? 'var(--pm-navy)' : 'var(--pm-surface)' }};
+                      color:{{ $isActive ? '#fff' : 'var(--pm-text-2)' }};">
+                {{ $f['label'] }}
+            </a>
+        @endforeach
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="pm-section-label" style="margin-bottom:0;">LEASES</div>
+        <div style="font-size:11px;font-weight:600;color:var(--pm-text-3);">{{ $tenants->total() }}</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;">
         @forelse($tenants as $tenant)
             @php
-                $avatarColors = ['#D99A3D','#17A96C','#4A7DF0','#7A5AF8','#D64545'];
-                $avColor = $avatarColors[$tenant->id % count($avatarColors)];
                 $lease = $tenant->activeLease;
+                $statusMeta = match ($tenant->rentStatus) {
+                    'paid'    => ['label' => 'Paid',    'tone' => 'var(--pm-green-text)'],
+                    'overdue' => ['label' => 'Overdue', 'tone' => 'var(--pm-red)'],
+                    default   => null,
+                };
             @endphp
-            <div class="m-row-card" style="cursor:pointer;" onclick="openTenantProfileModal('{{ route('tenants.show', $tenant) }}')">
-                <div class="m-row-icon" style="background:{{ $avColor }};color:#fff;font-weight:700;font-size:14px;border-radius:50%;">
+            <a href="{{ route('tenants.show', $tenant) }}" class="pm-action-row" style="text-decoration:none;">
+                <div style="flex:none;width:38px;height:38px;border-radius:9999px;background:var(--pm-page);color:var(--pm-text-2);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">
                     {{ strtoupper(substr($tenant->name, 0, 2)) }}
                 </div>
                 <div style="flex:1;min-width:0;">
-                    <div class="m-row-title">{{ $tenant->name }}</div>
-                    <div class="m-row-sub">{{ $lease?->unit?->unit_name ?? '—' }}{{ $lease?->property_code ? ' · '.$lease->property_code : '' }}</div>
+                    <div class="pm-action-title">{{ $tenant->name }}</div>
+                    <div class="pm-action-sub">{{ $lease?->property_code ?? '—' }}{{ $lease?->unit ? ' · '.$lease->unit : '' }}</div>
                 </div>
-                <div style="display:flex;gap:8px;" onclick="event.stopPropagation()">
-                    @if($tenant->phone)
-                    <a href="tel:{{ $tenant->phone }}" style="width:40px;height:40px;border-radius:12px;background:var(--m-green-tint);display:flex;align-items:center;justify-content:center;color:var(--m-green);text-decoration:none;"><i class="fa-solid fa-phone"></i></a>
-                    @endif
-                    @if($tenant->email)
-                    <a href="mailto:{{ $tenant->email }}" style="width:40px;height:40px;border-radius:12px;background:var(--m-blue-tint);display:flex;align-items:center;justify-content:center;color:var(--m-blue);text-decoration:none;"><i class="fa-regular fa-envelope"></i></a>
-                    @endif
-                </div>
-            </div>
+                @if($lease?->rent_per_month)
+                    <div style="text-align:right;flex-shrink:0;">
+                        <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;color:var(--pm-text);">BHD {{ number_format($lease->rent_per_month, 0) }}</div>
+                        @if($statusMeta)
+                            <div style="font-size:10px;font-weight:700;color:{{ $statusMeta['tone'] }};">{{ $statusMeta['label'] }}</div>
+                        @endif
+                    </div>
+                @endif
+            </a>
         @empty
-            <div class="m-empty">
-                <div class="m-empty-icon"><i class="fa-solid fa-users"></i></div>
-                <div class="m-empty-title">No tenants found</div>
-                <div class="m-empty-sub">Try adjusting your search or add a new tenant.</div>
+            <div class="pm-empty">
+                @if($activeStatus)
+                    No tenants match this filter.
+                @else
+                    <div style="font-size:14px;font-weight:700;color:var(--pm-text);margin-bottom:4px;">No tenants found</div>
+                    <div>Try adjusting your search or add a new tenant.</div>
+                @endif
             </div>
         @endforelse
     </div>
+
+    <button type="button" class="pm-fab" style="position:fixed;border:0;" onclick="openTenantModal()" title="Add a tenant"><i class="fa-solid fa-plus"></i></button>
 </div>
 
 {{-- STATS --}}

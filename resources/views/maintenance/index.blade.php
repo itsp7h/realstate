@@ -345,7 +345,8 @@
             </div>
         @endforelse
     </div>
-    <button type="button" class="m-action-btn primary" style="width:100%;height:50px;" onclick="openMaintenanceModal()">+ New Request</button>
+
+    <button type="button" class="pm-fab" style="position:fixed;border:0;" onclick="openMaintenanceModal()" title="New request"><i class="fa-solid fa-plus"></i></button>
 </div>
 
 {{-- STATS --}}

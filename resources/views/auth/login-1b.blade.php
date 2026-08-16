@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Preview 1b — Photo hero + dark sheet</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,12 +25,13 @@
         position: relative;
         width: 100%;
         height: 100vh;
+        height: 100dvh;
         overflow: hidden;
         background: #0a0f18;
     }
     .photo {
         position: absolute; top: 0; left: 0; width: 100%; height: 430px;
-        background: url('{{ asset('images/login-building.jpg') }}') 55% 25% / cover no-repeat;
+        background: url('{{ asset('images/login-building.jpg') }}') 50% 18% / cover no-repeat;
     }
     .photo-scrim {
         position: absolute; top: 0; left: 0; right: 0; height: 430px;
@@ -40,7 +43,7 @@
         letter-spacing: -6px; color: transparent; -webkit-text-stroke: 1.5px rgba(252,176,23,.5);
         pointer-events: none; user-select: none;
     }
-    .hero-top { position: absolute; top: 0; left: 0; right: 0; padding: 24px 24px 0; }
+    .hero-top { position: absolute; top: 0; left: 0; right: 0; padding: calc(24px + env(safe-area-inset-top)) 24px 0; }
     .brand-row { display: flex; align-items: center; gap: 11px; margin-top: 16px; }
     .brand-row img { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
     .brand-title { font-weight: 700; font-size: 14.5px; line-height: 1.1; color: #fff; }
@@ -49,10 +52,11 @@
     .sheet {
         position: absolute; left: 0; right: 0; bottom: 0; top: 342px;
         background: #0b1220; border-radius: 34px 34px 0 0; border-top: 1px solid rgba(255,255,255,.09);
-        padding: 30px 26px 0; display: flex; flex-direction: column;
+        padding: 26px 26px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column;
         box-shadow: 0 -26px 60px rgba(0,0,0,.55);
         overflow-y: auto;
     }
+    .sheet-inner { margin: auto 0; width: 100%; }
     h1 { margin: 0 0 8px; font-weight: 700; font-size: 30px; line-height: 1.12; color: #fff; letter-spacing: -.6px; }
     .subcopy { margin: 0 0 24px; font-size: 14px; line-height: 1.5; color: rgba(255,255,255,.55); }
 
@@ -69,7 +73,7 @@
     }
     .field-wrap i { font-size: 15px; color: rgba(255,255,255,.5); flex-shrink: 0; }
     .field-wrap input {
-        flex: 1; background: none; border: none; outline: none; color: #fff; font-size: 15px;
+        flex: 1; background: none; border: none; outline: none; color: #fff; font-size: 16px;
         font-family: 'Figtree', sans-serif; min-width: 0;
     }
     .field-wrap input::placeholder { color: rgba(255,255,255,.38); }
@@ -105,8 +109,7 @@
     }
     .btn-social svg { width: 17px; height: 17px; flex-shrink: 0; }
 
-    .sheet-spacer { flex: 1; min-height: 20px; }
-    .legal { margin: 0 0 12px; text-align: center; font-size: 11.5px; line-height: 1.5; color: rgba(255,255,255,.38); }
+    .legal { margin: 18px 0 12px; text-align: center; font-size: 11.5px; line-height: 1.5; color: rgba(255,255,255,.38); }
     .legal span { color: #6FA8F5; }
     .home-indicator { height: 5px; width: 134px; border-radius: 3px; background: rgba(255,255,255,.25); margin: 0 auto 10px; }
 
@@ -135,6 +138,7 @@
     </div>
 
     <div class="sheet">
+        <div class="sheet-inner">
         <h1>Welcome back.</h1>
         <p class="subcopy">Buildings, leases, invoices and reports — all in one place.</p>
 
@@ -183,9 +187,9 @@
             </button>
         </div>
 
-        <div class="sheet-spacer"></div>
         <p class="legal">By signing in you agree to our <span>Terms</span> and <span>Privacy Policy</span>.</p>
         <div class="home-indicator"></div>
+        </div>
     </div>
 </div>
 
