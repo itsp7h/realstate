@@ -951,7 +951,12 @@
                  matching the Lease Contracts / Payments mobile screens, and
                  a flat native row-card list) rather than a website's cropped
                  photo + boxed accordion table. ── */
-            .pm-hero-wrap { position: relative; margin: -18px -18px 0; }
+            /* Horizontal-only bleed: cancels .m-screen's 18px side padding so the
+               hero photo spans edge-to-edge, but keeps the top margin at 0 so the
+               hero starts exactly at .m-screen's own top padding (see the
+               `.m-screen` top padding left in place in buildings/show.blade.php)
+               instead of being pulled up on top of the pm-push-header above it. */
+            .pm-hero-wrap { position: relative; margin: 0 -18px 0; }
             .pm-hero-photo {
                 position: relative; height: 232px; background: var(--pm-navy-800);
                 background-size: cover; background-position: center;

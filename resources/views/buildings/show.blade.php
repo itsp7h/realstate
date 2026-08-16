@@ -253,8 +253,11 @@
     <div class="pm-avatar" style="font-size:14px;">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
 </div>
 
-{{-- MOBILE: property detail (native app-style hero + row-card floors/units) --}}
-<div class="m-screen" style="padding-top:0;">
+{{-- MOBILE: property detail (native app-style hero + row-card floors/units).
+     `.m-screen`'s default 18px top padding is kept here (not zeroed) so there's
+     breathing room between the pm-push-header above and the hero photo below —
+     `.pm-hero-wrap` no longer pulls itself up on top of it (see admin.blade.php). --}}
+<div class="m-screen">
     <div class="pm-hero-wrap">
         <div class="pm-hero-photo" @if($mobilePhoto) style="background-image:url('{{ $mobilePhoto }}')" @endif>
             @unless($mobilePhoto)
