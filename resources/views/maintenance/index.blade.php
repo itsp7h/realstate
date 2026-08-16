@@ -308,8 +308,48 @@
     </div>
 </div>
 
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+@php
+    $mntStatusLabels = ['waiting_supervisor' => 'Pending Assessment','waiting_approval' => 'Pending Approval','approved' => 'Approved','in_progress' => 'In Progress','completed' => 'Completed','cancelled' => 'Cancelled'];
+    $mntBadgeColors = [
+        'orange' => ['#FBF3E4', '#C08A2D'], 'purple' => ['#EFEBFD', '#7A5AF8'], 'green' => ['#E6F6EE', '#17A96C'],
+        'blue' => ['#E9F0FD', '#4A7DF0'], 'teal' => ['#E6F6EE', '#0F8A6E'], 'red' => ['#FCEBEB', '#D64545'], 'gray' => ['#F1F3F8', '#6B7688'],
+    ];
+@endphp
+<div class="m-screen">
+    <div class="m-chip-row no-sb">
+        <a href="{{ route('maintenance.index') }}" class="m-chip {{ !request('status') ? 'active' : '' }}">All</a>
+        @foreach($mntStatusLabels as $val => $label)
+            <a href="{{ route('maintenance.index', ['status' => $val]) }}" class="m-chip {{ request('status') === $val ? 'active' : '' }}">{{ $label }}</a>
+        @endforeach
+    </div>
+    <div class="m-row-list">
+        @forelse($requests as $req)
+            @php [$bg, $fg] = $mntBadgeColors[$req->status_color] ?? ['#F1F3F8', '#6B7688']; @endphp
+            <a href="{{ route('maintenance.show', $req) }}" class="m-row-card" style="flex-direction:column;align-items:stretch;gap:9px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="m-row-title" style="flex:1;">{{ $req->job_order ?? 'Request #'.$req->id }}</div>
+                    <span class="m-row-badge" style="background:{{ $bg }};color:{{ $fg }};">{{ $req->status_label }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--m-muted);flex-wrap:wrap;">
+                    @if($req->flat)<span class="m-row-chip" style="font-size:10px;">{{ $req->flat }}</span>@endif
+                    <span>{{ $req->property }}</span>
+                    <span>{{ optional($req->date)->format('M j') }}</span>
+                </div>
+            </a>
+        @empty
+            <div class="m-empty">
+                <div class="m-empty-icon"><i class="fa-solid fa-wrench"></i></div>
+                <div class="m-empty-title">No maintenance requests found</div>
+                <div class="m-empty-sub">Try adjusting your filters or add a new request.</div>
+            </div>
+        @endforelse
+    </div>
+    <button type="button" class="m-action-btn primary" style="width:100%;height:50px;" onclick="openMaintenanceModal()">+ New Request</button>
+</div>
+
 {{-- STATS --}}
-<div class="maint-stats">
+<div class="maint-stats m-hide-desktop-index">
     <div class="maint-stat">
         <div class="maint-stat-icon gray"><i class="fa-solid fa-clipboard-list"></i></div>
         <div>
@@ -355,7 +395,7 @@
 </div>
 
 {{-- FILTERS --}}
-<form method="GET" action="{{ route('maintenance.index') }}" class="filter-bar">
+<form method="GET" action="{{ route('maintenance.index') }}" class="filter-bar m-hide-desktop-index">
     <input type="search" name="search" value="{{ request('search') }}" placeholder="Search job order, property, tenant…">
     <select name="status" onchange="this.form.submit()">
         <option value="">All Statuses</option>
@@ -372,7 +412,7 @@
 </form>
 
 {{-- TABLE --}}
-<div class="table-card">
+<div class="table-card m-hide-desktop-index">
     @if($requests->isEmpty())
     <div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
         <i class="fa-solid fa-wrench" style="font-size:36px;display:block;margin-bottom:12px;opacity:0.3"></i>

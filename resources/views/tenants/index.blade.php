@@ -253,6 +253,46 @@
 </div>
 
 
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+<div class="m-screen">
+    <form method="GET" action="{{ route('tenants.index') }}">
+        <input type="text" class="m-search-input" name="search" value="{{ request('search') }}"
+               placeholder="Search tenants…" oninput="mDebounceSubmit(this)">
+    </form>
+    <div class="m-row-list">
+        @forelse($tenants as $tenant)
+            @php
+                $avatarColors = ['#D99A3D','#17A96C','#4A7DF0','#7A5AF8','#D64545'];
+                $avColor = $avatarColors[$tenant->id % count($avatarColors)];
+                $lease = $tenant->activeLease;
+            @endphp
+            <div class="m-row-card" style="cursor:pointer;" onclick="openTenantProfileModal('{{ route('tenants.show', $tenant) }}')">
+                <div class="m-row-icon" style="background:{{ $avColor }};color:#fff;font-weight:700;font-size:14px;border-radius:50%;">
+                    {{ strtoupper(substr($tenant->name, 0, 2)) }}
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div class="m-row-title">{{ $tenant->name }}</div>
+                    <div class="m-row-sub">{{ $lease?->unit?->unit_name ?? '—' }}{{ $lease?->property_code ? ' · '.$lease->property_code : '' }}</div>
+                </div>
+                <div style="display:flex;gap:8px;" onclick="event.stopPropagation()">
+                    @if($tenant->phone)
+                    <a href="tel:{{ $tenant->phone }}" style="width:40px;height:40px;border-radius:12px;background:var(--m-green-tint);display:flex;align-items:center;justify-content:center;color:var(--m-green);text-decoration:none;"><i class="fa-solid fa-phone"></i></a>
+                    @endif
+                    @if($tenant->email)
+                    <a href="mailto:{{ $tenant->email }}" style="width:40px;height:40px;border-radius:12px;background:var(--m-blue-tint);display:flex;align-items:center;justify-content:center;color:var(--m-blue);text-decoration:none;"><i class="fa-regular fa-envelope"></i></a>
+                    @endif
+                </div>
+            </div>
+        @empty
+            <div class="m-empty">
+                <div class="m-empty-icon"><i class="fa-solid fa-users"></i></div>
+                <div class="m-empty-title">No tenants found</div>
+                <div class="m-empty-sub">Try adjusting your search or add a new tenant.</div>
+            </div>
+        @endforelse
+    </div>
+</div>
+
 {{-- STATS --}}
 <div class="stats-grid">
     <div class="stat-card">
@@ -270,7 +310,7 @@
 </div>
 
 {{-- TABLE CARD --}}
-<div class="card" style="overflow:hidden;">
+<div class="card m-hide-desktop-index" style="overflow:hidden;">
 
     <form method="GET" action="{{ route('tenants.index') }}" id="filterForm">
         <div class="filter-bar">

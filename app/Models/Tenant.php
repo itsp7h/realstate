@@ -47,6 +47,14 @@ class Tenant extends Model
         return $this->hasMany(LeaseContract::class);
     }
 
+    public function activeLease(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        $today = \Carbon\Carbon::today()->toDateString();
+        return $this->hasOne(LeaseContract::class)
+            ->whereDate('lease_start_date', '<=', $today)
+            ->whereDate('lease_end_date', '>=', $today);
+    }
+
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);

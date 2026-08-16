@@ -183,6 +183,54 @@
     </div>
 </div>
 
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+<div class="m-screen">
+    <div class="m-action-row">
+        <a href="{{ route('export.units', request()->only(['search','property_code','unit_type','unit_condition'])) }}" class="m-action-btn green-outline">Export</a>
+        <button type="button" class="m-action-btn outline" onclick="openImport_units()">Import</button>
+        <button type="button" class="m-action-btn primary" onclick="openUnitModal()">+ Add Unit</button>
+    </div>
+    <div class="m-chip-row no-sb">
+        <div class="m-mini-stat" style="min-width:86px;"><span class="v">{{ $stats['total'] ?? 0 }}</span><span class="l">Total Units</span></div>
+        <div class="m-mini-stat" style="min-width:86px;"><span class="v" style="color:var(--m-green);">{{ $stats['furnished'] ?? 0 }}</span><span class="l">Furnished</span></div>
+        <div class="m-mini-stat" style="min-width:86px;"><span class="v" style="color:var(--m-blue);">{{ $stats['fitted'] ?? 0 }}</span><span class="l">Fitted</span></div>
+        <div class="m-mini-stat" style="min-width:86px;"><span class="v" style="color:var(--m-purple);">{{ $stats['occupied'] ?? 0 }}</span><span class="l">Occupied</span></div>
+    </div>
+    <form method="GET" action="{{ route('property-units.index') }}">
+        <input type="text" class="m-search-input" name="search" value="{{ request('search') }}"
+               placeholder="Unit name, description…" oninput="mDebounceSubmit(this)">
+    </form>
+    <div class="m-chip-row no-sb">
+        <a href="{{ route('property-units.index') }}" class="m-chip {{ !request('occupancy') ? 'active' : '' }}">All</a>
+        <a href="{{ route('property-units.index', ['occupancy' => 'occupied']) }}" class="m-chip {{ request('occupancy') === 'occupied' ? 'active' : '' }}">Occupied</a>
+        <a href="{{ route('property-units.index', ['occupancy' => 'vacant']) }}" class="m-chip {{ request('occupancy') === 'vacant' ? 'active' : '' }}">Vacant</a>
+    </div>
+    <div class="m-row-list">
+        @forelse($units as $unit)
+            @php $occupied = $unit->activeContract !== null; @endphp
+            <a href="{{ route('property-units.show', $unit) }}" class="m-row-card">
+                <div class="m-row-icon" style="background:{{ $occupied ? 'var(--m-green-tint)' : 'var(--m-line)' }};color:{{ $occupied ? 'var(--m-green)' : 'var(--m-muted)' }};">
+                    <i class="fa-solid fa-door-open"></i>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div class="m-row-title">{{ $unit->unit_name }}</div>
+                    <div class="m-row-sub">{{ $unit->property_code }}{{ optional($unit->floor)->floor_name ? ' · '.$unit->floor->floor_name : '' }}{{ optional($unit->floor)->block_name ? ' · '.$unit->floor->block_name : '' }}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                    <span class="m-row-badge" style="background:{{ $occupied ? 'var(--m-green-tint)' : 'var(--m-red-tint)' }};color:{{ $occupied ? 'var(--m-green)' : 'var(--m-red)' }};">{{ $occupied ? 'Occupied' : 'Vacant' }}</span>
+                    <span style="font-size:10px;color:var(--m-faint);">{{ $unit->unit_condition ?: '—' }}</span>
+                </div>
+            </a>
+        @empty
+            <div class="m-empty">
+                <div class="m-empty-icon"><i class="fa-solid fa-door-open"></i></div>
+                <div class="m-empty-title">No units found</div>
+                <div class="m-empty-sub">Try adjusting your search or filters.</div>
+            </div>
+        @endforelse
+    </div>
+</div>
+
 @include('components.import-modal', [
     'type'        => 'units',
     'label'       => 'Units',
@@ -223,7 +271,7 @@
 </div>
 
 {{-- FILTER + TABLE --}}
-<div class="card" style="overflow:hidden;">
+<div class="card m-hide-desktop-index" style="overflow:hidden;">
 
     <form method="GET" action="{{ route('property-units.index') }}" id="filterForm">
         <div class="filter-bar">
