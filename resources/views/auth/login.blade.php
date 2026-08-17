@@ -70,7 +70,12 @@
 
     .brand-panel {
         flex: 0 0 42%;
-        background: var(--sidebar-bg);
+        /* Same Promoseven building photo used on the mobile hero, scrimmed
+           dark so the white brand lockup/headline stay legible over it. */
+        background:
+            linear-gradient(180deg, rgba(11,17,32,.55) 0%, rgba(11,17,32,.7) 55%, rgba(11,17,32,.9) 100%),
+            url('{{ asset('images/login-building.jpg') }}') 50% 30% / cover no-repeat,
+            var(--sidebar-bg);
         position: relative;
         overflow: hidden;
         display: flex;
