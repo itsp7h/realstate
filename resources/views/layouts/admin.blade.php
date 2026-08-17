@@ -895,7 +895,7 @@
                 box-shadow: 0 0 0 3px var(--pm-gold-glow);
             }
 
-            .pm-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+            .pm-scroll { position: relative; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
             .pm-bottom-space { height: calc(96px + env(safe-area-inset-bottom)); }
             .pm-section-label { font-size: 10px; font-weight: 700; letter-spacing: .7px; color: var(--pm-text-3); margin-bottom: 8px; }
             .pm-empty { padding: 24px 16px; text-align: center; font-size: 12px; color: var(--pm-text-3); }
@@ -971,6 +971,7 @@
             .pm-hero-photo {
                 position: relative; height: 232px; background: var(--pm-navy-800);
                 background-size: cover; background-position: center;
+                overflow: hidden;
             }
             .pm-hero-scrim {
                 position: absolute; inset: 0;
@@ -1026,6 +1027,152 @@
                 display: block; text-align: center; padding: 11px 0; margin-top: 2px;
                 color: var(--pm-gold-dark); font-size: 12.5px; font-weight: 700; text-decoration: none;
                 background: var(--pm-page-alt); border-radius: 12px;
+            }
+
+            /* ═══════════════════════════════════════════════════════════
+               EXPERIMENT: "Depth & Motion" mobile layer (native-feel v2)
+               ───────────────────────────────────────────────────────────
+               Additive, opt-in only — every rule below is either a brand
+               new class/selector, or gated behind a modifier class
+               (`.is-*`) that must be added explicitly in markup. Nothing
+               here changes the default `.pm-*` / `.m-*` base rules above,
+               so screens that don't opt in (tenants.show, property-units,
+               floors, invoices, payments, lease-contracts, maintenance,
+               reports) render pixel-identical to before. Scoped to
+               Dashboard + Buildings (index/show) for this proof of
+               concept. Direction: two-layer "tonal" elevation (Material 3
+               surface + shadow) combined with iOS-style large titles,
+               spring-eased collapsing headers, a true sliding segmented
+               control, Material ripple feedback, and a hero parallax —
+               reading as native on both platforms rather than leaning
+               hard into one. ═══════════════════════════════════════════ */
+
+            /* Two-layer elevation: a soft ambient shadow + a tighter key
+               shadow, the way Material 3 composes elevation instead of a
+               single flat rgba blur. Reused directly on pm-property-card /
+               pm-kpi-card / pm-unit-card since those three are exclusive
+               to the screens in scope. */
+            :root {
+                --pm-elev-1: 0 1px 2px rgba(23,32,58,.06), 0 4px 12px rgba(23,32,58,.05);
+                --pm-elev-2: 0 2px 4px rgba(23,32,58,.08), 0 12px 28px rgba(23,32,58,.10);
+                --pm-elev-3: 0 4px 10px rgba(23,32,58,.12), 0 20px 44px rgba(23,32,58,.16);
+            }
+            :root[data-theme="dark"] {
+                --pm-elev-1: 0 1px 2px rgba(0,0,0,.35), 0 4px 14px rgba(0,0,0,.30);
+                --pm-elev-2: 0 2px 5px rgba(0,0,0,.40), 0 14px 32px rgba(0,0,0,.38);
+                --pm-elev-3: 0 4px 12px rgba(0,0,0,.45), 0 22px 48px rgba(0,0,0,.48);
+            }
+            .pm-property-card { box-shadow: var(--pm-elev-2); transition: box-shadow .18s ease, transform .12s ease; }
+            .pm-kpi-card { box-shadow: var(--pm-elev-1); transition: box-shadow .18s ease, transform .12s ease; }
+            .pm-unit-card { box-shadow: var(--pm-elev-1); }
+
+            /* Material-style ripple: opt in per element with class
+               `pm-ripple`. JS (below) spawns a `.pm-ripple-wave` span at
+               the touch point on pointerdown; this alone provides the
+               expanding-circle feedback, layered on top of the existing
+               scale-press so it reads as one native system rather than
+               two competing effects. */
+            .pm-ripple { position: relative; overflow: hidden; }
+            .pm-ripple-wave {
+                position: absolute; border-radius: 50%; pointer-events: none;
+                background: radial-gradient(circle, rgba(232,184,109,.35) 0%, rgba(232,184,109,0) 72%);
+                transform: scale(0); opacity: .9;
+                animation: pm-ripple-expand .5s cubic-bezier(.22,.72,.24,1) forwards;
+            }
+            @keyframes pm-ripple-expand {
+                to { transform: scale(1); opacity: 0; }
+            }
+
+            /* Large title + collapsing header, opt-in via `.pm-title.is-lg`
+               and `.pm-header.is-collapsible`. JS toggles `.is-collapsed`
+               on the header once the scroll container passes a threshold,
+               shrinking the title and fading in a solid header background
+               — the same "large title deflates into a compact bar" motion
+               as iOS navigation bars / Android's collapsing toolbar. */
+            .pm-title.is-lg {
+                font-size: 28px; font-weight: 800; letter-spacing: -.4px;
+                transition: font-size .28s var(--ease-spring);
+            }
+            .pm-header.is-collapsible {
+                transition: box-shadow .22s ease, background-color .22s ease;
+            }
+            .pm-header.is-collapsible.is-collapsed .pm-title.is-lg { font-size: 17px; }
+            .pm-greeting {
+                font-size: 12.5px; font-weight: 600; color: var(--pm-text-3);
+                margin-bottom: 2px; transition: opacity .2s ease, max-height .2s ease;
+            }
+            .pm-header.is-collapsible.is-collapsed .pm-greeting { opacity: 0; max-height: 0; margin: 0; overflow: hidden; }
+
+            /* Sliding-pill segmented control — a real thumb element that
+               animates position/width via spring easing, instead of just
+               toggling each button's own background. Dashboard-only
+               (`#pmSegment` doesn't exist elsewhere). */
+            .pm-segment { position: relative; }
+            .pm-segment-thumb {
+                position: absolute; top: 4px; bottom: 4px; left: 4px;
+                background: var(--pm-surface); border-radius: 7px;
+                box-shadow: 0 1px 3px rgba(0,0,0,.06);
+                transition: transform .32s var(--ease-spring), width .32s var(--ease-spring);
+                will-change: transform;
+            }
+            .pm-seg-btn { position: relative; z-index: 1; transition: color .18s ease; }
+
+            /* Tonal KPI stat chip — a small icon badge + trend row that
+               gives the flat KPI numbers below in dashboard.blade.php more
+               visual hierarchy than plain stacked text. */
+            .pm-kpi-icon {
+                width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+                display: flex; align-items: center; justify-content: center; font-size: 11px;
+            }
+            .pm-kpi-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+            /* Pull-to-refresh affordance — opt in with `data-pull-refresh`
+               on a `.pm-scroll` container. Pure CSS visual; JS below
+               drives the translateY/opacity via inline style + triggers
+               a real navigation refresh once the threshold is crossed. */
+            .pm-ptr-indicator {
+                position: absolute; top: 0; left: 0; right: 0; height: 64px;
+                display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px;
+                pointer-events: none; opacity: 0; transform: translateY(-100%);
+                z-index: 5;
+            }
+            .pm-ptr-spinner {
+                width: 26px; height: 26px; border-radius: 50%;
+                border: 2.5px solid var(--pm-border); border-top-color: var(--pm-gold);
+                transition: transform .1s linear;
+            }
+            .pm-ptr-spinner.is-loading { animation: pm-ptr-spin .6s linear infinite; }
+            @keyframes pm-ptr-spin { to { transform: rotate(360deg); } }
+
+            /* Pill-shaped iOS-style search field — opt in with
+               `.pm-search-field.is-pill` (buildings index only; the
+               default `.pm-search-field` used elsewhere is untouched). */
+            .pm-search-field.is-pill {
+                background: var(--pm-page); border: 1px solid transparent; border-radius: 12px;
+                padding: 11px 14px; box-shadow: inset 0 0 0 1px rgba(15,23,42,.04);
+            }
+            :root[data-theme="dark"] .pm-search-field.is-pill { box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); }
+
+            /* Roomier "big" empty state — opt in with `.pm-empty.is-lg`
+               (used only where explicitly added below). */
+            .pm-empty.is-lg { padding: 48px 24px; }
+            .pm-empty-icon-lg {
+                width: 60px; height: 60px; border-radius: 18px; margin: 0 auto 14px;
+                background: var(--pm-gold-tint); color: var(--pm-gold-dark);
+                display: flex; align-items: center; justify-content: center; font-size: 22px;
+            }
+
+            /* Hero parallax (Buildings detail) — the cover image lives in
+               its own layer (`.pm-hero-photo-img`) so the translate/scale
+               only ever moves pixels, never the topbar/scrim overlay
+               siblings sitting on top of it. Opt in with `.has-parallax`;
+               JS drives `--pm-parallax`. */
+            .pm-hero-photo-img {
+                position: absolute; inset: -20% 0; background-size: cover; background-position: center;
+            }
+            .pm-hero-photo-img.has-parallax {
+                transform: translateY(calc(var(--pm-parallax, 0) * 1px));
+                transition: transform .05s linear;
             }
 
             /* ── Bottom sheet (shared by modals + the More menu) ────── */
@@ -1141,6 +1288,138 @@
     $isPushedScreen = request()->routeIs($pushedScreenRoutes);
 @endphp
 <body class="{{ request()->routeIs('dashboard') ? 'is-dashboard' : '' }} {{ $isMobileScreen ? 'is-mobile-screen' : '' }} {{ $isPushedScreen ? 'is-pushed-screen' : '' }}">
+
+{{-- ── EXPERIMENT: "Depth & Motion" shared helpers ─────────────────────
+     Declared immediately after <body> opens (before @yield('content')
+     renders) so any per-page script calling these — e.g. buildings/show
+     wiring up pmInitHeroParallax — always finds them already defined.
+     All opt-in: each helper only touches elements that carry the
+     relevant marker class/attribute, so pages that don't use them are
+     unaffected. ── --}}
+<script>
+(function () {
+    /* Material-style ripple on any `.pm-ripple` element. */
+    document.addEventListener('pointerdown', function (e) {
+        const el = e.target.closest('.pm-ripple');
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height) * 1.6;
+        const wave = document.createElement('span');
+        wave.className = 'pm-ripple-wave';
+        wave.style.width = wave.style.height = size + 'px';
+        wave.style.left = (e.clientX - rect.left - size / 2) + 'px';
+        wave.style.top = (e.clientY - rect.top - size / 2) + 'px';
+        el.appendChild(wave);
+        wave.addEventListener('animationend', () => wave.remove());
+    });
+
+    /* Collapsing large-title header: pass the header element, its
+       scroll container, and the pixel threshold to shrink at. */
+    window.pmInitCollapsingHeader = function (header, scroller, threshold) {
+        if (!header || !scroller) return;
+        threshold = threshold || 36;
+        const read = () => (scroller === window ? window.scrollY : scroller.scrollTop);
+        let ticking = false;
+        function update() {
+            header.classList.toggle('is-collapsed', read() > threshold);
+            ticking = false;
+        }
+        (scroller === window ? window : scroller).addEventListener('scroll', function () {
+            if (!ticking) { requestAnimationFrame(update); ticking = true; }
+        }, { passive: true });
+        update();
+    };
+
+    /* Hero parallax: pass the photo element + its scroll source (window
+       for normal-flow "pushed" screens like Building detail). */
+    window.pmInitHeroParallax = function (photo, scroller) {
+        if (!photo) return;
+        scroller = scroller || window;
+        let ticking = false;
+        function update() {
+            const y = scroller === window ? window.scrollY : scroller.scrollTop;
+            const clamped = Math.max(0, Math.min(y, 160));
+            photo.style.setProperty('--pm-parallax', (clamped * 0.35).toFixed(1));
+            ticking = false;
+        }
+        (scroller === window ? window : scroller).addEventListener('scroll', function () {
+            if (!ticking) { requestAnimationFrame(update); ticking = true; }
+        }, { passive: true });
+        update();
+    };
+
+    /* True sliding-pill segmented control. Pass the `.pm-segment`
+       wrapper; positions/sizes a `.pm-segment-thumb` under whichever
+       button carries `.active`, and keeps it in sync on click/resize. */
+    window.pmInitSegmentThumb = function (segment) {
+        if (!segment) return;
+        let thumb = segment.querySelector('.pm-segment-thumb');
+        if (!thumb) {
+            thumb = document.createElement('div');
+            thumb.className = 'pm-segment-thumb';
+            segment.prepend(thumb);
+        }
+        function place() {
+            const active = segment.querySelector('.pm-seg-btn.active');
+            if (!active) return;
+            thumb.style.width = active.offsetWidth + 'px';
+            thumb.style.transform = 'translateX(' + active.offsetLeft + 'px)';
+        }
+        segment.querySelectorAll('.pm-seg-btn').forEach((btn) => {
+            btn.addEventListener('click', () => requestAnimationFrame(place));
+        });
+        window.addEventListener('resize', place);
+        requestAnimationFrame(place);
+    };
+
+    /* Pull-to-refresh: attach to a `.pm-scroll` container. Only arms
+       when the container is already scrolled to the very top, so it
+       never fights normal scrolling. */
+    window.pmInitPullToRefresh = function (container) {
+        if (!container) return;
+        const indicator = document.createElement('div');
+        indicator.className = 'pm-ptr-indicator';
+        indicator.innerHTML = '<div class="pm-ptr-spinner"></div>';
+        container.prepend(indicator);
+        const spinner = indicator.querySelector('.pm-ptr-spinner');
+
+        let startY = null, pulling = false;
+        const threshold = 68;
+
+        container.addEventListener('touchstart', (e) => {
+            if (container.scrollTop > 0) { startY = null; return; }
+            startY = e.touches[0].clientY;
+            pulling = true;
+        }, { passive: true });
+
+        container.addEventListener('touchmove', (e) => {
+            if (!pulling || startY === null) return;
+            const dy = e.touches[0].clientY - startY;
+            if (dy <= 0) return;
+            const progress = Math.min(1, dy / threshold);
+            indicator.style.opacity = progress;
+            indicator.style.transform = 'translateY(' + (progress * 64 - 64) + '%)';
+            spinner.style.transform = 'rotate(' + (progress * 280) + 'deg)';
+        }, { passive: true });
+
+        container.addEventListener('touchend', (e) => {
+            if (!pulling || startY === null) return;
+            pulling = false;
+            const dy = (e.changedTouches[0].clientY - startY);
+            if (dy > threshold) {
+                spinner.classList.add('is-loading');
+                indicator.style.opacity = 1;
+                indicator.style.transform = 'translateY(0)';
+                window.location.reload();
+            } else {
+                indicator.style.opacity = 0;
+                indicator.style.transform = 'translateY(-100%)';
+            }
+            startY = null;
+        });
+    };
+})();
+</script>
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">

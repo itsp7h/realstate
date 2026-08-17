@@ -535,8 +535,8 @@
 
 {{-- ═══════════════════════ MOBILE SCREEN (Miknas Property Manager design) ═══════════════════════ --}}
 <div class="m-screen">
-    <div style="display:flex;align-items:center;gap:9px;background:var(--pm-surface);border:1px solid var(--pm-border-strong);border-radius:8px;padding:10px 12px;">
-        <i class="fa-solid fa-magnifying-glass" style="color:var(--pm-text-3);font-size:13px;"></i>
+    <div class="pm-search-field is-pill">
+        <i class="fa-solid fa-magnifying-glass"></i>
         <form method="GET" action="{{ route('buildings.index') }}" style="flex:1;">
             <input type="text" name="search" value="{{ request('search') }}" placeholder="Search property name or code"
                    style="width:100%;border:0;outline:none;font-size:13.5px;color:var(--pm-text);background:transparent;font-family:'Plus Jakarta Sans',sans-serif;"
@@ -553,7 +553,7 @@
                 $photo = $building->images->first()?->url;
                 $netColor = ($fin && $fin['net_income'] < 0) ? 'var(--pm-red)' : 'var(--pm-text)';
             @endphp
-            <a href="{{ route('buildings.show', $building) }}" class="pm-property-card">
+            <a href="{{ route('buildings.show', $building) }}" class="pm-property-card pm-ripple">
                 <div style="display:flex;align-items:stretch;gap:12px;padding:14px;">
                     <div style="flex:none;width:96px;height:112px;border-radius:10px;overflow:hidden;background:var(--pm-border);@if($photo) background-image:url('{{ $photo }}');background-size:cover;background-position:center; @endif">
                         @unless($photo)
@@ -575,9 +575,13 @@
                 @endif
             </a>
         @empty
-            <div class="pm-empty">
-                <div style="font-size:14px;font-weight:700;color:var(--pm-text);margin-bottom:4px;">No buildings found</div>
-                <div>Try adjusting your search or add a new building.</div>
+            <div class="pm-empty is-lg">
+                <div class="pm-empty-icon-lg"><i class="fa-solid fa-building-circle-exclamation"></i></div>
+                <div style="font-size:14.5px;font-weight:700;color:var(--pm-text);margin-bottom:4px;">No buildings found</div>
+                <div style="margin-bottom:16px;">Try adjusting your search or add a new building.</div>
+                <button type="button" onclick="openBuildingModal()" class="pm-ripple" style="border:0;border-radius:12px;background:var(--pm-navy);color:#fff;font-weight:700;font-size:13px;padding:12px 20px;font-family:'Plus Jakarta Sans',sans-serif;">
+                    <i class="fa-solid fa-plus" style="margin-right:7px;color:var(--pm-gold);"></i>Add a property
+                </button>
             </div>
         @endforelse
 

@@ -259,7 +259,8 @@
      `.pm-hero-wrap` no longer pulls itself up on top of it (see admin.blade.php). --}}
 <div class="m-screen">
     <div class="pm-hero-wrap">
-        <div class="pm-hero-photo" @if($mobilePhoto) style="background-image:url('{{ $mobilePhoto }}')" @endif>
+        <div class="pm-hero-photo" id="pmHeroPhoto">
+            <div class="pm-hero-photo-img has-parallax" id="pmHeroPhotoImg" @if($mobilePhoto) style="background-image:url('{{ $mobilePhoto }}')" @endif></div>
             @unless($mobilePhoto)
                 <div class="pm-property-photo-fallback"><i class="fa-solid fa-building"></i></div>
             @endunless
@@ -327,7 +328,7 @@
                     $visibleRows = $capped ? $rows->take(8) : $rows;
                 @endphp
                 <div id="pm-floor-{{ $group['id'] }}" class="pm-floor-section">
-                    <button type="button" class="pm-floor-row {{ $isOpen ? 'is-open' : '' }}" onclick="pmToggleFloor({{ $group['id'] }})" data-floor-toggle="{{ $group['id'] }}">
+                    <button type="button" class="pm-floor-row pm-ripple {{ $isOpen ? 'is-open' : '' }}" onclick="pmToggleFloor({{ $group['id'] }})" data-floor-toggle="{{ $group['id'] }}">
                         <i class="fa-solid fa-layer-group" style="color:var(--pm-gold);font-size:13px;width:16px;text-align:center;"></i>
                         <div style="flex:1;min-width:0;">
                             <div class="pm-floor-name">{{ $group['name'] }}</div>
@@ -342,7 +343,7 @@
                                 $unitHref = $row['status'] === 'vacant' ? null : ($row['unit']->activeContract?->tenant_id ? route('tenants.show', $row['unit']->activeContract->tenant_id) : null);
                             @endphp
                             @if($unitHref)
-                            <a href="{{ $unitHref }}" class="pm-unit-card">
+                            <a href="{{ $unitHref }}" class="pm-unit-card pm-ripple">
                             @else
                             <div class="pm-unit-card" title="Unit {{ $row['unit']->unit_name }} is vacant">
                             @endif
@@ -395,6 +396,10 @@ function pmToggleFloor(id) {
     body.style.display = isOpen ? 'none' : '';
     document.querySelector('[data-floor-toggle="' + id + '"]').classList.toggle('is-open', !isOpen);
     if (chevron) chevron.className = isOpen ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-up';
+}
+
+if (window.pmInitHeroParallax) {
+    window.pmInitHeroParallax(document.getElementById('pmHeroPhotoImg'), window);
 }
 </script>
 
