@@ -70,18 +70,28 @@
 
     .brand-panel {
         flex: 0 0 42%;
-        /* Same Promoseven building photo used on the mobile hero, scrimmed
-           dark so the white brand lockup/headline stay legible over it. */
-        background:
-            linear-gradient(180deg, rgba(11,17,32,.55) 0%, rgba(11,17,32,.7) 55%, rgba(11,17,32,.9) 100%),
-            url('{{ asset('images/login-building.jpg') }}') 50% 30% / cover no-repeat,
-            var(--sidebar-bg);
+        background: var(--sidebar-bg);
         position: relative;
         overflow: hidden;
         display: flex;
         flex-direction: column;
         justify-content: center;
         padding: 60px;
+    }
+    /* Same Promoseven building photo as the mobile hero, on its own layer
+       so it can carry the mobile light-mode's brightened/desaturated
+       filter without washing out the text stacked above it. */
+    .brand-panel-photo {
+        position: absolute; inset: 0;
+        background: url('{{ asset('images/login-building.jpg') }}') 50% 30% / cover no-repeat;
+        filter: brightness(1.18) saturate(.8) contrast(.95);
+    }
+    .brand-panel-scrim {
+        position: absolute; inset: 0;
+        /* Noticeably lighter than the first pass — more photo shows
+           through — while staying dark enough at the logo/headline band
+           for white text to hold contrast without relying on text-shadow. */
+        background: linear-gradient(180deg, rgba(11,17,32,.62) 0%, rgba(11,17,32,.4) 45%, rgba(11,17,32,.58) 100%);
     }
     .brand-panel::before {
         content: '';
@@ -90,16 +100,17 @@
         width: 480px; height: 480px;
         background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
         pointer-events: none;
+        z-index: 1;
     }
     .brand-logo {
         display: flex;
         align-items: center;
         gap: 14px;
         position: relative;
-        z-index: 1;
+        z-index: 2;
     }
     .brand-logo img { width: 46px; height: 46px; border-radius: 10px; }
-    .brand-logo-text { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: #FFFFFF; line-height: 1.3; }
+    .brand-logo-text { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: #FFFFFF; line-height: 1.3; text-shadow: 0 1px 8px rgba(11,17,32,.4); }
     .brand-logo-text span { display: block; font-size: 11px; font-weight: 500; color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
 
     .brand-headline {
@@ -110,8 +121,9 @@
         line-height: 1.25;
         margin-top: 48px;
         position: relative;
-        z-index: 1;
+        z-index: 2;
         max-width: 420px;
+        text-shadow: 0 2px 12px rgba(11,17,32,.4);
     }
     .brand-headline em {
         font-style: normal;
@@ -120,19 +132,21 @@
     .brand-sub {
         margin-top: 16px;
         font-size: 14px;
-        color: #8A9BBE;
+        color: #E4E9F4;
         line-height: 1.7;
         max-width: 380px;
         position: relative;
-        z-index: 1;
+        z-index: 2;
+        text-shadow: 0 1px 8px rgba(11,17,32,.4);
     }
 
     .brand-footer {
         position: relative;
-        z-index: 1;
+        z-index: 2;
         margin-top: 64px;
         font-size: 12px;
-        color: #5B6B8C;
+        color: #C7CEDD;
+        text-shadow: 0 1px 6px rgba(11,17,32,.35);
     }
 
     .form-panel {
@@ -450,6 +464,8 @@
 
 <div class="desktop-shell">
     <div class="brand-panel">
+        <div class="brand-panel-photo"></div>
+        <div class="brand-panel-scrim"></div>
         <div class="brand-logo">
             <img src="{{ asset('logo/promoseven-logo.png') }}" alt="Promoseven Holdings">
             <div class="brand-logo-text">
