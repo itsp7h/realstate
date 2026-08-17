@@ -665,6 +665,16 @@ document.querySelectorAll('.property-carousel').forEach(function (carousel) {
     });
 
     show(localStorage.getItem(STORAGE_KEY) || 'cards');
+
+    if (window.pmInitSegmentThumb) window.pmInitSegmentThumb(segment);
+})();
+
+/* ── MOBILE DASHBOARD: collapsing large title + pull-to-refresh ──── */
+(function () {
+    const header = document.getElementById('pmDashHeader');
+    const scroll = document.getElementById('pmDashScroll');
+    if (window.pmInitCollapsingHeader) window.pmInitCollapsingHeader(header, scroll, 24);
+    if (window.pmInitPullToRefresh) window.pmInitPullToRefresh(scroll);
 })();
 </script>
 @endpush
@@ -709,10 +719,15 @@ document.querySelectorAll('.property-carousel').forEach(function (carousel) {
 @endphp
 
 {{-- ═══════════════════════════════ MOBILE DASHBOARD ═══════════════════════════════ --}}
+@php
+    $mHour = (int) now()->format('G');
+    $mGreeting = $mHour < 12 ? 'Good morning' : ($mHour < 17 ? 'Good afternoon' : 'Good evening');
+@endphp
 <div class="m-dash">
-    <div class="pm-header">
+    <div class="pm-header is-collapsible" id="pmDashHeader">
         <div class="pm-header-text">
-            <div class="pm-title">Dashboard</div>
+            <div class="pm-greeting">{{ $mGreeting }}, {{ explode(' ', auth()->user()->name ?? 'there')[0] }}</div>
+            <div class="pm-title is-lg" id="pmDashTitle">Dashboard</div>
             <div class="pm-subtitle">{{ now()->format('F Y') }} &middot; {{ $stats['buildings'] }} {{ \Illuminate\Support\Str::plural('property', $stats['buildings']) }}</div>
         </div>
         <button type="button" class="pm-icon-btn theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode"><i class="fa-solid fa-moon"></i></button>
@@ -728,7 +743,7 @@ document.querySelectorAll('.property-carousel').forEach(function (carousel) {
         </form>
     </div>
 
-    <div class="pm-scroll">
+    <div class="pm-scroll" id="pmDashScroll">
         <div class="pm-segment-wrap">
             <div class="pm-segment" id="pmSegment">
                 <button type="button" class="pm-seg-btn active" data-seg="cards">Portfolio</button>
@@ -741,12 +756,18 @@ document.querySelectorAll('.property-carousel').forEach(function (carousel) {
         <div class="pm-dash-layout" data-layout="cards">
             <div class="pm-kpi-grid">
                 <div class="pm-kpi-card">
-                    <div class="pm-kpi-label">COLLECTED &mdash; {{ now()->format('M') }}</div>
+                    <div class="pm-kpi-top">
+                        <div class="pm-kpi-label">COLLECTED &mdash; {{ now()->format('M') }}</div>
+                        <div class="pm-kpi-icon" style="background:var(--pm-green-tint);color:var(--pm-green-text);"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                    </div>
                     <div class="pm-kpi-value">BHD {{ number_format($portfolioMetrics['collected'], 0) }}</div>
                     <div class="pm-kpi-sub is-green"><i class="fa-solid fa-arrow-up"></i> of BHD {{ number_format($portfolioMetrics['billed'], 0) }} billed</div>
                 </div>
                 <div class="pm-kpi-card">
-                    <div class="pm-kpi-label">OUTSTANDING</div>
+                    <div class="pm-kpi-top">
+                        <div class="pm-kpi-label">OUTSTANDING</div>
+                        <div class="pm-kpi-icon" style="background:var(--pm-red-tint);color:var(--pm-red);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    </div>
                     <div class="pm-kpi-value" style="color:var(--pm-red);">BHD {{ number_format($portfolioMetrics['outstanding'], 0) }}</div>
                     <div class="pm-kpi-sub">{{ $portfolioMetrics['overdueCount'] }} {{ \Illuminate\Support\Str::plural('tenant', $portfolioMetrics['overdueCount']) }} overdue</div>
                 </div>
@@ -759,7 +780,7 @@ document.querySelectorAll('.property-carousel').forEach(function (carousel) {
                     $address = trim(implode(', ', array_filter([$b->area, $b->city])));
                     $netColor = $perf['net_income'] >= 0 ? 'var(--pm-text)' : 'var(--pm-red)';
                 @endphp
-                <a href="{{ route('buildings.show', $b) }}" class="pm-property-card">
+                <a href="{{ route('buildings.show', $b) }}" class="pm-property-card pm-ripple">
                     <div class="pm-property-photo" @if($photo) style="background-image:url('{{ $photo }}')" @endif>
                         @unless($photo)
                             <div class="pm-property-photo-fallback"><i class="fa-solid fa-building"></i></div>
