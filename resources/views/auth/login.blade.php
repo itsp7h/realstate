@@ -266,29 +266,33 @@
         --m-home-indicator:rgba(255,255,255,.25);
     }
     :root[data-theme="light"] {
-        --m-body-bg:       #E4DAC5;
-        --m-sheet-bg:      #ECE3CF;
-        --m-sheet-border:  #DBCEB2;
-        --m-sheet-shadow:  rgba(28,22,10,.18);
-        --m-heading:       #0F172A;
-        --m-subcopy:       #6B6558;
-        --m-field-bg:      #EFEBE2;
-        --m-field-border:  #E0D9CA;
-        --m-field-icon:    #9C9384;
-        --m-field-text:    #0F172A;
-        --m-field-placeholder: #9C9384;
+        /* "2b" design handoff — frosted-glass card over the building photo,
+           rather than a flat card, so the hero photo stays visible/blurred
+           behind the sheet instead of being covered by an opaque panel. */
+        --m-body-bg:       #F6F4F0;
+        --m-sheet-bg:      rgba(255,255,255,.4);
+        --m-sheet-border:  rgba(255,255,255,.65);
+        --m-sheet-shadow:  rgba(14,20,32,.18);
+        --m-heading:       #0E1420;
+        --m-subcopy:       rgba(14,20,32,.66);
+        --m-field-bg:      rgba(255,255,255,.62);
+        --m-field-border:  rgba(255,255,255,.7);
+        --m-field-icon:    rgba(14,20,32,.42);
+        --m-field-text:    #0E1420;
+        --m-field-placeholder: rgba(14,20,32,.42);
         --m-field-error:   #DC2626;
         --m-error-bg:      #FEF2F2;
         --m-error-border:  #FECACA;
         --m-error-text:    #991B1B;
-        --m-link:          #2F6FEB;
-        --m-divider-line:  #E0D9CA;
-        --m-divider-label: #9C9384;
-        --m-social-bg:     #EFEBE2;
-        --m-social-border: #E0D9CA;
-        --m-social-text:   #0F172A;
-        --m-legal:         #9C9384;
-        --m-home-indicator:#DAD3C3;
+        --m-link:          #1B62C4;
+        --m-divider-line:  rgba(14,20,32,.14);
+        --m-divider-label: rgba(14,20,32,.42);
+        --m-social-bg:     rgba(255,255,255,.5);
+        --m-social-border: rgba(255,255,255,.7);
+        --m-social-text:   #0E1420;
+        --m-legal:         rgba(14,20,32,.42);
+        --m-home-indicator:rgba(14,20,32,.2);
+        --m-toggle-pw:     #B87A05;
     }
 
     @media (max-width: 768px) {
@@ -363,7 +367,8 @@
         .field-wrap:focus-within { border-color: rgba(252,176,23,.4); }
         .toggle-pw {
             background: none; border: none; cursor: pointer; padding: 6px;
-            font-family: 'Figtree', sans-serif; font-weight: 600; font-size: 11.5px; letter-spacing: .6px; color: #FCB017;
+            font-family: 'Figtree', sans-serif; font-weight: 600; font-size: 11.5px; letter-spacing: .6px;
+            color: var(--m-toggle-pw, #FCB017);
         }
         .sheet .field-error { color: var(--m-field-error); font-size: 12px; margin: -7px 0 13px; }
 
@@ -395,6 +400,44 @@
         .legal { margin: 18px 0 12px; text-align: center; font-size: 11.5px; line-height: 1.5; color: var(--m-legal); }
         .legal span { color: var(--m-link); }
         .home-indicator { height: 5px; width: 134px; border-radius: 3px; background: var(--m-home-indicator); margin: 0 auto 10px; }
+
+        /* ── LIGHT MODE — "2b" design handoff: frosted-glass card floating
+             over the building photo, instead of dark mode's opaque navy
+             sheet. Every rule below is scoped to [data-theme="light"] so
+             dark mode (the original, unaffected) keeps its own look. ── */
+        .photo-behind {
+            position: absolute; left: 0; right: 0; top: 342px; bottom: 0; overflow: hidden;
+            display: none; pointer-events: none;
+        }
+        :root[data-theme="light"] .photo-behind { display: block; }
+        :root[data-theme="light"] .photo-behind::before {
+            content: ''; position: absolute; left: 0; top: -114px; width: 100%; height: 520px;
+            background: url('{{ asset('images/login-building.jpg') }}') 50% 78% / cover no-repeat;
+            filter: brightness(1.25) saturate(.6) contrast(.9); opacity: .55;
+        }
+        :root[data-theme="light"] .photo-behind::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(180deg, rgba(246,244,240,.15), rgba(246,244,240,.5));
+        }
+        :root[data-theme="light"] .photo {
+            filter: brightness(1.22) saturate(.72) contrast(.92);
+        }
+        :root[data-theme="light"] .photo-scrim {
+            background: linear-gradient(180deg,
+                rgba(14,20,32,.42) 0%, rgba(14,20,32,.06) 30%,
+                rgba(246,244,240,.06) 55%, rgba(246,244,240,.35) 100%);
+        }
+        :root[data-theme="light"] .watermark { display: none; }
+        :root[data-theme="light"] .sheet {
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        }
+        /* Backdrop-filter fallback — where unsupported, a sharp photo behind
+           unblurred glass is unreadable, so raise the fill instead of losing
+           the blur silently. */
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            :root[data-theme="light"] .sheet { --m-sheet-bg: rgba(255,255,255,.82); }
+        }
+        :root[data-theme="light"] .field-wrap:focus-within { background: rgba(255,255,255,.78); }
     }
 </style>
 </head>
@@ -481,6 +524,8 @@
             </div>
             <button type="button" class="theme-toggle-btn" id="loginThemeToggle" title="Switch theme" aria-label="Switch to light mode"><i class="fa-solid fa-sun"></i></button>
         </div>
+
+        <div class="photo-behind"></div>
 
         <div class="sheet">
             <div class="sheet-inner">
