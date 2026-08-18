@@ -24,27 +24,11 @@
 .exp-stat-val { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1; }
 .exp-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-.filter-bar {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 14px 18px;
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px;
-}
-.filter-bar input, .filter-bar select {
-    padding: 8px 12px; font-size: 13px;
-    border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-    background: var(--input-bg); color: var(--text-primary); outline: none;
-    transition: border-color 0.18s;
-}
-.filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
-.filter-bar input[type="search"] { flex: 1; min-width: 180px; }
-.filter-bar input[type="date"]   { min-width: 140px; }
-
 .category-badge {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
     background: #FEF2F2; color: #DC2626;
 }
-.table-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden; }
 </style>
 @endpush
 
@@ -77,29 +61,47 @@
     </div>
 </div>
 
-<form method="GET" action="{{ route('expenses.index') }}" class="filter-bar">
-    <input type="search" name="search" value="{{ request('search') }}" placeholder="Search description, vendor…">
-    <select name="building_id">
-        <option value="">All Buildings</option>
-        @foreach($buildings as $b)
-        <option value="{{ $b->id }}" {{ (string) request('building_id') === (string) $b->id ? 'selected' : '' }}>{{ $b->property_name }}</option>
-        @endforeach
-    </select>
-    <select name="category">
-        <option value="">All Categories</option>
-        @foreach($categories as $val => $label)
-        <option value="{{ $val }}" {{ request('category') === $val ? 'selected' : '' }}>{{ $label }}</option>
-        @endforeach
-    </select>
-    <input type="date" name="date_from" value="{{ request('date_from') }}" title="From date">
-    <input type="date" name="date_to"   value="{{ request('date_to') }}"   title="To date">
-    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-    @if(request()->hasAny(['search','building_id','category','date_from','date_to']))
-    <a href="{{ route('expenses.index') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
-    @endif
-</form>
-
 <div class="table-card">
+    <form method="GET" action="{{ route('expenses.index') }}">
+        <div class="filter-bar">
+            <div class="filter-group is-search">
+                <label for="f_search">Search</label>
+                <input type="search" id="f_search" name="search" value="{{ request('search') }}" placeholder="Search description, vendor…">
+            </div>
+            <div class="filter-group">
+                <label for="f_building_id">Building</label>
+                <select id="f_building_id" name="building_id">
+                    <option value="">All Buildings</option>
+                    @foreach($buildings as $b)
+                    <option value="{{ $b->id }}" {{ (string) request('building_id') === (string) $b->id ? 'selected' : '' }}>{{ $b->property_name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="f_category">Category</label>
+                <select id="f_category" name="category">
+                    <option value="">All Categories</option>
+                    @foreach($categories as $val => $label)
+                    <option value="{{ $val }}" {{ request('category') === $val ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="f_date_from">From</label>
+                <input type="date" id="f_date_from" name="date_from" value="{{ request('date_from') }}">
+            </div>
+            <div class="filter-group">
+                <label for="f_date_to">To</label>
+                <input type="date" id="f_date_to" name="date_to" value="{{ request('date_to') }}">
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                @if(request()->hasAny(['search','building_id','category','date_from','date_to']))
+                <a href="{{ route('expenses.index') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
+                @endif
+            </div>
+        </div>
+    </form>
     @if($expenses->isEmpty())
     <div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
         <i class="fa-solid fa-receipt" style="font-size:36px;display:block;margin-bottom:12px;opacity:0.3"></i>

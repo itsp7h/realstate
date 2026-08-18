@@ -5,20 +5,7 @@
 
 @push('styles')
 <style>
-.form-card {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 28px 32px; margin-bottom: 20px;
-}
-.form-card-title {
-    font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700;
-    color: var(--text-primary); margin-bottom: 20px; padding-bottom: 14px;
-    border-bottom: 1px solid var(--card-border); display: flex; align-items: center; gap: 8px;
-}
-.form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
-.form-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
-.form-grid.cols-1 { grid-template-columns: 1fr; }
-.form-group { display: flex; flex-direction: column; gap: 6px; }
-.form-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
 .form-label .required { color: #DC2626; margin-left: 2px; }
 .form-control {
     padding: 9px 13px; font-size: 13px;
@@ -29,7 +16,6 @@
 }
 .form-control:focus { border-color: var(--accent); }
 .form-control.is-invalid { border-color: #DC2626; }
-.invalid-feedback { font-size: 11px; color: #DC2626; margin-top: 3px; display: none; }
 .form-control.is-invalid ~ .invalid-feedback,
 .is-invalid + .invalid-feedback { display: block; }
 textarea.form-control { resize: vertical; min-height: 80px; }
@@ -207,209 +193,222 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     @if($record) @method('PUT') @endif
 
     {{-- TENANT --}}
-    <div class="form-card">
-        <div class="form-card-title">
-            <i class="fa-solid fa-user" style="color:var(--accent)"></i> Tenant
+    <div class="card is-roomy">
+        <div class="card-header">
+            <div class="card-header-icon"><i class="fa-solid fa-user"></i></div>
+            <div class="card-header-text">
+                <h3 class="card-title">Tenant</h3>
+            </div>
         </div>
+        <div class="card-body">
+            <div class="form-group">
+                <label class="form-label">Tenant <span class="required">*</span></label>
 
-        <div class="form-group">
-            <label class="form-label">Tenant <span class="required">*</span></label>
+                <input type="hidden" name="tenant_id" id="tenantId"
+                       value="{{ old('tenant_id', $record?->tenant_id) }}">
 
-            <input type="hidden" name="tenant_id" id="tenantId"
-                   value="{{ old('tenant_id', $record?->tenant_id) }}">
-
-            @if($record)
-                <div class="contract-selected show" id="tenantSelected">
-                    <div class="contract-selected-header">
-                        <span><i class="fa-solid fa-circle-check"></i> Tenant Selected</span>
-                    </div>
-                    <div class="contract-selected-body">
-                        <div class="cs-item"><span>Name</span><strong>{{ $record->tenant_name }}</strong></div>
-                        <div class="cs-item"><span>Code</span><strong>{{ $record->tenant_code ?: '—' }}</strong></div>
-                        <div class="cs-item"><span>Address</span><strong>{{ $record->tenant_address ?: '—' }}</strong></div>
-                    </div>
-                </div>
-            @else
-                <div class="contract-combobox" id="tenantCombobox">
-                    <div class="cbox-trigger" id="cboxTrigger">
-                        <input type="text" id="cboxSearch" class="cbox-search"
-                               placeholder="Type tenant name or code…"
-                               autocomplete="off" spellcheck="false">
-                        <span class="cbox-spinner" id="cboxSpinner"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
-                        <button type="button" class="cbox-clear" id="cboxClear" tabindex="-1">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                    <div class="cbox-dropdown" id="cboxDropdown">
-                        <div class="cbox-hint">
-                            <span><i class="fa-solid fa-magnifying-glass" style="margin-right:4px"></i>Type to search tenants</span>
-                            <span id="cboxCount"></span>
+                @if($record)
+                    <div class="contract-selected show" id="tenantSelected">
+                        <div class="contract-selected-header">
+                            <span><i class="fa-solid fa-circle-check"></i> Tenant Selected</span>
                         </div>
-                        <div id="cboxList"></div>
+                        <div class="contract-selected-body">
+                            <div class="cs-item"><span>Name</span><strong>{{ $record->tenant_name }}</strong></div>
+                            <div class="cs-item"><span>Code</span><strong>{{ $record->tenant_code ?: '—' }}</strong></div>
+                            <div class="cs-item"><span>Address</span><strong>{{ $record->tenant_address ?: '—' }}</strong></div>
+                        </div>
                     </div>
-                </div>
-
-                <div class="contract-selected" id="tenantSelected">
-                    <div class="contract-selected-header">
-                        <span><i class="fa-solid fa-circle-check"></i> Tenant Selected</span>
-                        <button type="button" class="contract-selected-change" id="cboxChangeBtn">
-                            <i class="fa-solid fa-pen"></i> Change
-                        </button>
+                @else
+                    <div class="contract-combobox" id="tenantCombobox">
+                        <div class="cbox-trigger" id="cboxTrigger">
+                            <input type="text" id="cboxSearch" class="cbox-search"
+                                   placeholder="Type tenant name or code…"
+                                   autocomplete="off" spellcheck="false">
+                            <span class="cbox-spinner" id="cboxSpinner"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+                            <button type="button" class="cbox-clear" id="cboxClear" tabindex="-1">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div class="cbox-dropdown" id="cboxDropdown">
+                            <div class="cbox-hint">
+                                <span><i class="fa-solid fa-magnifying-glass" style="margin-right:4px"></i>Type to search tenants</span>
+                                <span id="cboxCount"></span>
+                            </div>
+                            <div id="cboxList"></div>
+                        </div>
                     </div>
-                    <div class="contract-selected-body" id="tenantPreviewBody"></div>
-                </div>
 
-                @error('tenant_id')
-                <div class="invalid-feedback" style="display:block">{{ $message }}</div>
-                @enderror
-            @endif
+                    <div class="contract-selected" id="tenantSelected">
+                        <div class="contract-selected-header">
+                            <span><i class="fa-solid fa-circle-check"></i> Tenant Selected</span>
+                            <button type="button" class="contract-selected-change" id="cboxChangeBtn">
+                                <i class="fa-solid fa-pen"></i> Change
+                            </button>
+                        </div>
+                        <div class="contract-selected-body" id="tenantPreviewBody"></div>
+                    </div>
+
+                    @error('tenant_id')
+                    <div class="invalid-feedback" style="display:block">{{ $message }}</div>
+                    @enderror
+                @endif
+            </div>
         </div>
     </div>
 
     {{-- INVOICE DETAILS --}}
-    <div class="form-card">
-        <div class="form-card-title">
-            <i class="fa-solid fa-file-invoice-dollar" style="color:var(--accent)"></i> Invoice Details
+    <div class="card is-roomy">
+        <div class="card-header">
+            <div class="card-header-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+            <div class="card-header-text">
+                <h3 class="card-title">Invoice Details</h3>
+            </div>
         </div>
-
-        <div class="form-grid" style="margin-bottom:18px">
-            <div class="form-group" style="grid-column:span 2">
-                <label class="form-label">Type <span class="required">*</span></label>
-                <div class="type-pills" id="typePills">
-                    @foreach(['rent' => ['Rent','fa-house','selected-rent'], 'utilities' => ['Utilities','fa-bolt','selected-utilities'], 'other' => ['Other','fa-tag','selected-other']] as $val => [$lbl,$icon,$cls])
-                    <label class="type-pill {{ old('type', $record?->type ?? 'rent') === $val ? $cls : '' }}" data-type="{{ $val }}">
-                        <input type="radio" name="type" value="{{ $val }}" {{ old('type', $record?->type ?? 'rent') === $val ? 'checked' : '' }} required>
-                        <i class="fa-solid {{ $icon }}"></i> {{ $lbl }}
-                    </label>
-                    @endforeach
+        <div class="card-body">
+            <div class="form-grid cols-2" style="margin-bottom:18px">
+                <div class="form-group" style="grid-column:span 2">
+                    <label class="form-label">Type <span class="required">*</span></label>
+                    <div class="type-pills" id="typePills">
+                        @foreach(['rent' => ['Rent','fa-house','selected-rent'], 'utilities' => ['Utilities','fa-bolt','selected-utilities'], 'other' => ['Other','fa-tag','selected-other']] as $val => [$lbl,$icon,$cls])
+                        <label class="type-pill {{ old('type', $record?->type ?? 'rent') === $val ? $cls : '' }}" data-type="{{ $val }}">
+                            <input type="radio" name="type" value="{{ $val }}" {{ old('type', $record?->type ?? 'rent') === $val ? 'checked' : '' }} required>
+                            <i class="fa-solid {{ $icon }}"></i> {{ $lbl }}
+                        </label>
+                        @endforeach
+                    </div>
+                    @error('type')<div style="font-size:11px;color:#DC2626;margin-top:4px">{{ $message }}</div>@enderror
                 </div>
-                @error('type')<div style="font-size:11px;color:#DC2626;margin-top:4px">{{ $message }}</div>@enderror
             </div>
+
+            <div class="form-grid cols-2" style="margin-bottom:18px">
+                <div class="form-group">
+                    <label class="form-label">VAT Rate (%)</label>
+                    <input type="number" name="vat_rate" id="vatRateInput"
+                           class="form-control {{ $errors->has('vat_rate') ? 'is-invalid' : '' }}"
+                           value="{{ old('vat_rate', $record?->vat_rate ?? 0) }}"
+                           min="0" max="100" step="0.01" placeholder="0.00">
+                    <div class="invalid-feedback">{{ $errors->first('vat_rate') }}</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Invoice Date <span class="required">*</span></label>
+                    <input type="date" name="invoice_date"
+                           class="form-control {{ $errors->has('invoice_date') ? 'is-invalid' : '' }}"
+                           value="{{ old('invoice_date', $record?->invoice_date?->format('Y-m-d')) }}"
+                           id="invoiceDate" required>
+                    <div class="invalid-feedback">{{ $errors->first('invoice_date') }}</div>
+                </div>
+            </div>
+
+            <div class="form-grid cols-1">
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea name="description" class="form-control {{ $errors->has('description') ? 'is-invalid' : '' }}"
+                              placeholder="What this invoice is for…" rows="2">{{ old('description', $record?->description) }}</textarea>
+                    <div class="invalid-feedback">{{ $errors->first('description') }}</div>
+                </div>
+
+                <div class="form-group" style="margin-top:2px">
+                    <label class="form-label">Internal Notes</label>
+                    <textarea name="notes" class="form-control {{ $errors->has('notes') ? 'is-invalid' : '' }}"
+                              placeholder="Private notes (not shown on invoice)…" rows="2">{{ old('notes', $record?->notes) }}</textarea>
+                    <div class="invalid-feedback">{{ $errors->first('notes') }}</div>
+                </div>
+
+                <div class="form-group" style="margin-top:2px">
+                    <label class="form-label">Remarks</label>
+                    <textarea name="remarks" class="form-control {{ $errors->has('remarks') ? 'is-invalid' : '' }}"
+                              placeholder="Printed on the invoice…" rows="2" maxlength="500">{{ old('remarks', $record?->remarks) }}</textarea>
+                    <div class="invalid-feedback">{{ $errors->first('remarks') }}</div>
+                </div>
+            </div>
+
+            @if($record)
+            <div class="form-grid cols-2" style="margin-top:18px">
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-control {{ $errors->has('status') ? 'is-invalid' : '' }}">
+                        @foreach(['draft'=>'Draft','issued'=>'Issued','partially_paid'=>'Partially Paid','paid'=>'Paid','overdue'=>'Overdue','cancelled'=>'Cancelled'] as $v => $l)
+                        <option value="{{ $v }}" {{ old('status', $record->status) === $v ? 'selected' : '' }}>{{ $l }}</option>
+                        @endforeach
+                    </select>
+                    <div class="invalid-feedback">{{ $errors->first('status') }}</div>
+                </div>
+            </div>
+            @endif
         </div>
-
-        <div class="form-grid" style="margin-bottom:18px">
-            <div class="form-group">
-                <label class="form-label">VAT Rate (%)</label>
-                <input type="number" name="vat_rate" id="vatRateInput"
-                       class="form-control {{ $errors->has('vat_rate') ? 'is-invalid' : '' }}"
-                       value="{{ old('vat_rate', $record?->vat_rate ?? 0) }}"
-                       min="0" max="100" step="0.01" placeholder="0.00">
-                <div class="invalid-feedback">{{ $errors->first('vat_rate') }}</div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Invoice Date <span class="required">*</span></label>
-                <input type="date" name="invoice_date"
-                       class="form-control {{ $errors->has('invoice_date') ? 'is-invalid' : '' }}"
-                       value="{{ old('invoice_date', $record?->invoice_date?->format('Y-m-d')) }}"
-                       id="invoiceDate" required>
-                <div class="invalid-feedback">{{ $errors->first('invoice_date') }}</div>
-            </div>
-        </div>
-
-        <div class="form-grid cols-1">
-            <div class="form-group">
-                <label class="form-label">Description</label>
-                <textarea name="description" class="form-control {{ $errors->has('description') ? 'is-invalid' : '' }}"
-                          placeholder="What this invoice is for…" rows="2">{{ old('description', $record?->description) }}</textarea>
-                <div class="invalid-feedback">{{ $errors->first('description') }}</div>
-            </div>
-
-            <div class="form-group" style="margin-top:2px">
-                <label class="form-label">Internal Notes</label>
-                <textarea name="notes" class="form-control {{ $errors->has('notes') ? 'is-invalid' : '' }}"
-                          placeholder="Private notes (not shown on invoice)…" rows="2">{{ old('notes', $record?->notes) }}</textarea>
-                <div class="invalid-feedback">{{ $errors->first('notes') }}</div>
-            </div>
-
-            <div class="form-group" style="margin-top:2px">
-                <label class="form-label">Remarks</label>
-                <textarea name="remarks" class="form-control {{ $errors->has('remarks') ? 'is-invalid' : '' }}"
-                          placeholder="Printed on the invoice…" rows="2" maxlength="500">{{ old('remarks', $record?->remarks) }}</textarea>
-                <div class="invalid-feedback">{{ $errors->first('remarks') }}</div>
-            </div>
-        </div>
-
-        @if($record)
-        <div class="form-grid" style="margin-top:18px">
-            <div class="form-group">
-                <label class="form-label">Status</label>
-                <select name="status" class="form-control {{ $errors->has('status') ? 'is-invalid' : '' }}">
-                    @foreach(['draft'=>'Draft','issued'=>'Issued','partially_paid'=>'Partially Paid','paid'=>'Paid','overdue'=>'Overdue','cancelled'=>'Cancelled'] as $v => $l)
-                    <option value="{{ $v }}" {{ old('status', $record->status) === $v ? 'selected' : '' }}>{{ $l }}</option>
-                    @endforeach
-                </select>
-                <div class="invalid-feedback">{{ $errors->first('status') }}</div>
-            </div>
-        </div>
-        @endif
     </div>
 
     {{-- RENTAL LINES --}}
-    <div class="form-card">
-        <div class="form-card-title">
-            <i class="fa-solid fa-table-list" style="color:var(--accent)"></i> Rental Lines
+    <div class="card is-roomy">
+        <div class="card-header">
+            <div class="card-header-icon"><i class="fa-solid fa-table-list"></i></div>
+            <div class="card-header-text">
+                <h3 class="card-title">Rental Lines</h3>
+            </div>
         </div>
-        @error('lines')<div style="font-size:12px;color:#DC2626;margin-bottom:10px">{{ $message }}</div>@enderror
+        <div class="card-body">
+            @error('lines')<div style="font-size:12px;color:#DC2626;margin-bottom:10px">{{ $message }}</div>@enderror
 
-        <table class="lines-table">
-            <thead>
-                <tr>
-                    <th style="width:22%">Property</th>
-                    <th style="width:12%">Unit No.</th>
-                    <th style="width:14%">Lease No.</th>
-                    <th style="width:14%">Period Start</th>
-                    <th style="width:14%">Period End</th>
-                    <th style="width:14%">Rent (BHD)</th>
-                    <th style="width:28px"></th>
-                </tr>
-            </thead>
-            <tbody id="linesBody">
-                @foreach($existingLines as $i => $line)
-                <tr class="line-row">
-                    <td>
-                        <input type="hidden" name="lines[{{ $i }}][lease_contract_id]" class="line-lease-id" value="{{ $line['lease_contract_id'] ?? '' }}">
-                        <div class="line-combo-wrap">
-                            <input type="text" name="lines[{{ $i }}][property_name]" class="line-property-input"
-                                   value="{{ $line['property_name'] ?? '' }}" placeholder="Select a tenant first" autocomplete="off" required>
-                            <div class="line-combo-dropdown"></div>
-                        </div>
-                    </td>
-                    <td><input type="text" name="lines[{{ $i }}][unit]" class="line-unit-input" value="{{ $line['unit'] ?? '' }}" placeholder="Flat 22"></td>
-                    <td><input type="text" name="lines[{{ $i }}][lease_agreement_no]" class="line-lease-no-input" value="{{ $line['lease_agreement_no'] ?? '' }}" placeholder="LA/001"></td>
-                    <td><input type="date" name="lines[{{ $i }}][rental_period_start]" class="line-period-start" value="{{ $line['rental_period_start'] ?? '' }}"></td>
-                    <td><input type="date" name="lines[{{ $i }}][rental_period_end]" class="line-period-end" value="{{ $line['rental_period_end'] ?? '' }}"></td>
-                    <td class="amount-col"><input type="number" name="lines[{{ $i }}][amount]" class="line-amount" value="{{ $line['amount'] ?? '' }}" step="0.001" min="0.001" placeholder="0.000" required></td>
-                    <td><button type="button" class="line-remove-btn" title="Remove line"><i class="fa-solid fa-trash-can"></i></button></td>
-                </tr>
-                @endforeach
-            </tbody>
-            <tfoot>
-                <tr class="lines-total-row">
-                    <td colspan="5" style="text-align:right">Subtotal (Excl. VAT)</td>
-                    <td id="subtotalDisplay" style="font-family:'Outfit',sans-serif">0.000</td>
-                    <td></td>
-                </tr>
-                <tr class="lines-total-row">
-                    <td colspan="5" style="text-align:right">VAT</td>
-                    <td id="vatDisplay" style="font-family:'Outfit',sans-serif">0.000</td>
-                    <td></td>
-                </tr>
-                <tr class="lines-total-row">
-                    <td colspan="5" style="text-align:right">Total (Incl. VAT)</td>
-                    <td id="totalDisplay" style="font-family:'Outfit',sans-serif;color:var(--accent)">0.000</td>
-                    <td></td>
-                </tr>
-            </tfoot>
-        </table>
+            <table class="lines-table">
+                <thead>
+                    <tr>
+                        <th style="width:22%">Property</th>
+                        <th style="width:12%">Unit No.</th>
+                        <th style="width:14%">Lease No.</th>
+                        <th style="width:14%">Period Start</th>
+                        <th style="width:14%">Period End</th>
+                        <th style="width:14%">Rent (BHD)</th>
+                        <th style="width:28px"></th>
+                    </tr>
+                </thead>
+                <tbody id="linesBody">
+                    @foreach($existingLines as $i => $line)
+                    <tr class="line-row">
+                        <td>
+                            <input type="hidden" name="lines[{{ $i }}][lease_contract_id]" class="line-lease-id" value="{{ $line['lease_contract_id'] ?? '' }}">
+                            <div class="line-combo-wrap">
+                                <input type="text" name="lines[{{ $i }}][property_name]" class="line-property-input"
+                                       value="{{ $line['property_name'] ?? '' }}" placeholder="Select a tenant first" autocomplete="off" required>
+                                <div class="line-combo-dropdown"></div>
+                            </div>
+                        </td>
+                        <td><input type="text" name="lines[{{ $i }}][unit]" class="line-unit-input" value="{{ $line['unit'] ?? '' }}" placeholder="Flat 22"></td>
+                        <td><input type="text" name="lines[{{ $i }}][lease_agreement_no]" class="line-lease-no-input" value="{{ $line['lease_agreement_no'] ?? '' }}" placeholder="LA/001"></td>
+                        <td><input type="date" name="lines[{{ $i }}][rental_period_start]" class="line-period-start" value="{{ $line['rental_period_start'] ?? '' }}"></td>
+                        <td><input type="date" name="lines[{{ $i }}][rental_period_end]" class="line-period-end" value="{{ $line['rental_period_end'] ?? '' }}"></td>
+                        <td class="amount-col"><input type="number" name="lines[{{ $i }}][amount]" class="line-amount" value="{{ $line['amount'] ?? '' }}" step="0.001" min="0.001" placeholder="0.000" required></td>
+                        <td><button type="button" class="line-remove-btn" title="Remove line"><i class="fa-solid fa-trash-can"></i></button></td>
+                    </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr class="lines-total-row">
+                        <td colspan="5" style="text-align:right">Subtotal (Excl. VAT)</td>
+                        <td id="subtotalDisplay" style="font-family:'Outfit',sans-serif">0.000</td>
+                        <td></td>
+                    </tr>
+                    <tr class="lines-total-row">
+                        <td colspan="5" style="text-align:right">VAT</td>
+                        <td id="vatDisplay" style="font-family:'Outfit',sans-serif">0.000</td>
+                        <td></td>
+                    </tr>
+                    <tr class="lines-total-row">
+                        <td colspan="5" style="text-align:right">Total (Incl. VAT)</td>
+                        <td id="totalDisplay" style="font-family:'Outfit',sans-serif;color:var(--accent)">0.000</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
 
-        <div class="lines-actions">
-            <button type="button" class="btn btn-outline btn-sm" id="addLineBtn">
-                <i class="fa-solid fa-plus"></i> Add Line
-            </button>
-            <button type="button" class="btn btn-outline btn-sm" id="loadActiveLeasesBtn" style="display:none">
-                <i class="fa-solid fa-file-import"></i> Load Tenant's Active Leases
-            </button>
+            <div class="lines-actions">
+                <button type="button" class="btn btn-outline btn-sm" id="addLineBtn">
+                    <i class="fa-solid fa-plus"></i> Add Line
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" id="loadActiveLeasesBtn" style="display:none">
+                    <i class="fa-solid fa-file-import"></i> Load Tenant's Active Leases
+                </button>
+            </div>
         </div>
     </div>
 

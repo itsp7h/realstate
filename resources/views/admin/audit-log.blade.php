@@ -25,24 +25,6 @@
 }
 .audit-stat-lbl { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
 
-.filter-bar {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius);
-    padding: 14px 18px;
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
-    margin-bottom: 18px;
-}
-.filter-bar input, .filter-bar select {
-    padding: 8px 12px; font-size: 13px;
-    border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-    background: var(--input-bg); color: var(--text-primary);
-    outline: none; transition: border-color 0.18s;
-}
-.filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
-.filter-bar input[type="search"] { flex: 1; min-width: 200px; }
-.filter-bar select { min-width: 130px; }
-
 .audit-table-wrap {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
@@ -91,12 +73,6 @@
 
 .time-cell { white-space: nowrap; font-size: 12px; color: var(--text-muted); }
 .time-cell strong { display: block; font-size: 13px; color: var(--text-primary); }
-
-.empty-state {
-    text-align: center; padding: 60px 20px;
-    color: var(--text-muted); font-size: 13px;
-}
-.empty-state i { font-size: 36px; display: block; margin-bottom: 12px; opacity: 0.4; }
 
 .pagination-wrap {
     display: flex; align-items: center; justify-content: space-between;
@@ -149,28 +125,41 @@
 </div>
 
 {{-- FILTERS --}}
-<form method="GET" action="{{ route('admin.audit-log') }}" class="filter-bar">
-    <input type="search" name="search" value="{{ request('search') }}" placeholder="Search entity name or IP…">
-    <select name="action" onchange="this.form.submit()">
-        <option value="">All Actions</option>
-        @foreach(['created','updated','deleted','imported'] as $a)
-        <option value="{{ $a }}" {{ request('action') === $a ? 'selected' : '' }}>{{ ucfirst($a) }}</option>
-        @endforeach
-    </select>
-    <select name="entity_type" onchange="this.form.submit()">
-        <option value="">All Entities</option>
-        @foreach($entityTypes as $et)
-        <option value="{{ $et }}" {{ request('entity_type') === $et ? 'selected' : '' }}>{{ $et }}</option>
-        @endforeach
-    </select>
-    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-    @if(request()->hasAny(['search','action','entity_type']))
-    <a href="{{ route('admin.audit-log') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
-    @endif
-</form>
 
 {{-- TABLE --}}
-<div class="audit-table-wrap">
+<div class="table-card">
+    <form method="GET" action="{{ route('admin.audit-log') }}">
+        <div class="filter-bar">
+            <div class="filter-group is-search">
+                <label for="f_search">Search</label>
+                <input type="search" id="f_search" name="search" value="{{ request('search') }}" placeholder="Search entity name or IP…">
+            </div>
+            <div class="filter-group">
+                <label for="f_action">Action</label>
+                <select id="f_action" name="action" onchange="this.form.submit()">
+                    <option value="">All Actions</option>
+                    @foreach(['created','updated','deleted','imported'] as $a)
+                    <option value="{{ $a }}" {{ request('action') === $a ? 'selected' : '' }}>{{ ucfirst($a) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="f_entity_type">Entity</label>
+                <select id="f_entity_type" name="entity_type" onchange="this.form.submit()">
+                    <option value="">All Entities</option>
+                    @foreach($entityTypes as $et)
+                    <option value="{{ $et }}" {{ request('entity_type') === $et ? 'selected' : '' }}>{{ $et }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                @if(request()->hasAny(['search','action','entity_type']))
+                <a href="{{ route('admin.audit-log') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
+                @endif
+            </div>
+        </div>
+    </form>
     @if($logs->isEmpty())
     <div class="empty-state">
         <i class="fa-solid fa-clock-rotate-left"></i>

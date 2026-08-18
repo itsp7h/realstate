@@ -36,29 +36,13 @@
     border-radius: var(--radius); padding: 14px 18px;
     display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px;
 }
-.filter-bar input, .filter-bar select {
-    padding: 8px 12px; font-size: 13px;
-    border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-    background: var(--input-bg); color: var(--text-primary); outline: none;
-    transition: border-color 0.18s;
-}
-.filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
-.filter-bar input[type="search"] { flex: 1; min-width: 180px; }
-.filter-bar input[type="date"]   { min-width: 140px; }
 
 /* ── STATUS BADGES ──────────────────────────────────────── */
 .status-badge {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
 }
-.status-badge.waiting_supervisor { background: #FFF7ED; color: #EA580C; }
-.status-badge.waiting_approval   { background: #F5F3FF; color: #7C3AED; }
-.status-badge.approved           { background: #ECFDF5; color: #059669; }
-.status-badge.in_progress        { background: #EFF6FF; color: #2563EB; }
-.status-badge.completed          { background: #F0FDFA; color: #0D9488; }
-.status-badge.cancelled          { background: #FEF2F2; color: #DC2626; }
 
-.table-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden; }
 .actions-cell { display: flex; gap: 6px; align-items: center; }
 
 /* ── MODAL ──────────────────────────────────────────────── */
@@ -396,24 +380,40 @@
 </div>
 
 {{-- FILTERS --}}
-<form method="GET" action="{{ route('maintenance.index') }}" class="filter-bar m-hide-desktop-index">
-    <input type="search" name="search" value="{{ request('search') }}" placeholder="Search job order, property, tenant…">
-    <select name="status" onchange="this.form.submit()">
-        <option value="">All Statuses</option>
-        @foreach(['waiting_supervisor' => 'Pending Assessment','waiting_approval' => 'Pending Approval','approved' => 'Approved','in_progress' => 'In Progress','completed' => 'Completed','cancelled' => 'Cancelled'] as $val => $label)
-        <option value="{{ $val }}" {{ request('status') === $val ? 'selected' : '' }}>{{ $label }}</option>
-        @endforeach
-    </select>
-    <input type="date" name="date_from" value="{{ request('date_from') }}" title="From date">
-    <input type="date" name="date_to"   value="{{ request('date_to') }}"   title="To date">
-    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-    @if(request()->hasAny(['search','status','date_from','date_to']))
-    <a href="{{ route('maintenance.index') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
-    @endif
-</form>
 
 {{-- TABLE --}}
 <div class="table-card m-hide-desktop-index">
+    <form method="GET" action="{{ route('maintenance.index') }}">
+        <div class="filter-bar">
+            <div class="filter-group is-search">
+                <label for="f_search">Search</label>
+                <input type="search" id="f_search" name="search" value="{{ request('search') }}" placeholder="Search job order, property, tenant…">
+            </div>
+            <div class="filter-group">
+                <label for="f_status">Status</label>
+                <select id="f_status" name="status" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    @foreach(['waiting_supervisor' => 'Pending Assessment','waiting_approval' => 'Pending Approval','approved' => 'Approved','in_progress' => 'In Progress','completed' => 'Completed','cancelled' => 'Cancelled'] as $val => $label)
+                    <option value="{{ $val }}" {{ request('status') === $val ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="f_date_from">From</label>
+                <input type="date" id="f_date_from" name="date_from" value="{{ request('date_from') }}">
+            </div>
+            <div class="filter-group">
+                <label for="f_date_to">To</label>
+                <input type="date" id="f_date_to" name="date_to" value="{{ request('date_to') }}">
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                @if(request()->hasAny(['search','status','date_from','date_to']))
+                <a href="{{ route('maintenance.index') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
+                @endif
+            </div>
+        </div>
+    </form>
     @if($requests->isEmpty())
     <div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
         <i class="fa-solid fa-wrench" style="font-size:36px;display:block;margin-bottom:12px;opacity:0.3"></i>
@@ -1407,7 +1407,6 @@ function addModalJobLine() {
     document.getElementById('modalJobLinesBody').appendChild(row);
     row.querySelector('input').focus();
 }
-
 
 function removeModalJobLine(btn) {
     const row = btn.closest('tr');

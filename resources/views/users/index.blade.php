@@ -5,26 +5,6 @@
 
 @push('styles')
 <style>
-.filter-bar {
-    display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;
-    padding: 16px 20px;
-    background: var(--page-bg);
-    border-bottom: 1px solid var(--card-border);
-}
-.filter-group { display: flex; flex-direction: column; gap: 5px; min-width: 170px; }
-.filter-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.filter-group input, .filter-group select {
-    padding: 8px 12px; font-size: 13px;
-    border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-    background: var(--card-bg); color: var(--text-primary);
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    outline: none;
-}
-.filter-group input:focus, .filter-group select:focus { border-color: var(--accent); }
-.filter-actions { margin-left: auto; }
-
-.action-btns { display: flex; gap: 6px; }
-
 .role-badge {
     display: inline-flex; align-items: center; gap: 5px;
     font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
@@ -33,9 +13,6 @@
 .role-badge.admin       { background: var(--accent-dim); color: var(--accent); }
 .role-badge.user        { background: #EFF6FF; color: var(--info); }
 .role-badge.maintenance { background: var(--page-bg); color: var(--text-muted); border: 1px solid var(--card-border); }
-
-.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
-.empty-state i { font-size: 32px; display: block; margin-bottom: 10px; opacity: 0.3; }
 </style>
 @endpush
 

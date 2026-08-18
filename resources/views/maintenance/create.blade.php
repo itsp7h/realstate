@@ -32,13 +32,12 @@
 .maint-section-body { padding: 20px; }
 
 /* ── FORM GRID ───────────────────────────────────────────── */
-.form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+
 @media (max-width: 900px) {
-    .form-grid-3 { grid-template-columns: repeat(2, 1fr); }
+
 }
 @media (max-width: 600px) {
-    .form-grid-3, .form-grid-2 { grid-template-columns: 1fr; }
+
 }
 .span-2 { grid-column: span 2; }
 .span-3 { grid-column: span 3; }
@@ -171,7 +170,7 @@
             @endif
         </div>
         <div class="maint-section-body">
-            <div class="form-grid-3">
+            <div class="form-grid cols-3">
                 <div class="form-group">
                     <label>Date <span class="required">*</span></label>
                     <input type="date" name="date" value="{{ old('date', $record?->date?->format('Y-m-d') ?? today()->format('Y-m-d')) }}" required class="{{ $errors->has('date') ? 'error' : '' }}">
@@ -276,7 +275,7 @@
             <div class="maint-section-title">Supervisor</div>
         </div>
         <div class="maint-section-body">
-            <div class="form-grid-2">
+            <div class="form-grid cols-2">
                 <div class="form-group">
                     <label>Supervisor Name</label>
                     <input type="text" name="supervisor_name" value="{{ old('supervisor_name', $record?->supervisor_name) }}" placeholder="Full name">
@@ -303,7 +302,7 @@
                 <label>Job Assessment</label>
                 <textarea name="job_assessment" rows="3" placeholder="Assessment notes and findings…">{{ old('job_assessment', $record?->job_assessment) }}</textarea>
             </div>
-            <div class="form-grid-3" style="margin-bottom:16px">
+            <div class="form-grid cols-3" style="margin-bottom:16px">
                 @foreach([1,2,3] as $n)
                 @php $fileField = "quotation_{$n}_file"; $existingFile = $record?->$fileField; @endphp
                 <div class="form-group">
@@ -354,7 +353,7 @@
             <div class="maint-section-title">Approval</div>
         </div>
         <div class="maint-section-body">
-            <div class="form-grid-2">
+            <div class="form-grid cols-2">
                 <div class="form-group">
                     <label>Approved by Supervisor</label>
                     <input type="text" name="approved_supervisor" value="{{ old('approved_supervisor', $record?->approved_supervisor) }}" placeholder="Supervisor name / signature">

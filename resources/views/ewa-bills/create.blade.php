@@ -5,22 +5,7 @@
 
 @push('styles')
 <style>
-.form-card {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 28px 32px; margin-bottom: 20px;
-}
-.form-card-title {
-    font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700;
-    color: var(--text-primary); margin-bottom: 20px; padding-bottom: 14px;
-    border-bottom: 1px solid var(--card-border); display: flex; align-items: center; gap: 8px;
-}
-.form-card-title.ewa { color: #0D9488; }
-.form-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 18px; }
-.form-grid.cols-3 { grid-template-columns: repeat(3,1fr); }
-.form-grid.cols-4 { grid-template-columns: repeat(4,1fr); }
-.form-grid.cols-1 { grid-template-columns: 1fr; }
-.form-group { display: flex; flex-direction: column; gap: 6px; }
-.form-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
 .form-label .required { color: #DC2626; margin-left: 2px; }
 .form-label .unit-tag { color: var(--accent); font-size: 10px; margin-left: 4px; background: var(--accent-dim); padding: 1px 6px; border-radius: 4px; }
 .form-control {
@@ -32,7 +17,6 @@
 }
 .form-control:focus { border-color: var(--accent); }
 .form-control.is-invalid { border-color: #DC2626; }
-.invalid-feedback { font-size: 11px; color: #DC2626; margin-top: 3px; display: none; }
 .form-control.is-invalid ~ .invalid-feedback { display: block; }
 textarea.form-control { resize: vertical; min-height: 80px; }
 
@@ -246,148 +230,162 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     @if($record) @method('PUT') @endif
 
     {{-- CUSTOMER / PROPERTY --}}
-    <div class="form-card">
-        <div class="form-card-title ewa">
-            <i class="fa-solid fa-droplet"></i> Customer &amp; Property
-        </div>
-
-        {{-- Contract combobox --}}
-        <div class="form-group" style="margin-bottom:18px">
-            <label class="form-label">Link to Lease Contract <span style="font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none">(optional)</span></label>
-            <input type="hidden" name="lease_contract_id" id="contractId" value="{{ old('lease_contract_id', $record?->lease_contract_id) }}">
-
-            @if($record && $record->lease_contract_id)
-                <div class="contract-selected show">
-                    <div class="contract-selected-header">
-                        <span><i class="fa-solid fa-circle-check"></i> Linked Contract</span>
-                    </div>
-                    <div class="contract-selected-body">
-                        <div class="cs-item"><span>Tenant</span><strong>{{ $record->tenant_name }}</strong></div>
-                        <div class="cs-item"><span>Property</span><strong>{{ $record->property_name }}</strong></div>
-                        <div class="cs-item"><span>Unit</span><strong>{{ $record->unit ?: '—' }}</strong></div>
-                    </div>
-                </div>
-            @else
-                <div class="contract-combobox" id="contractCombobox">
-                    <div class="cbox-trigger" id="cboxTrigger">
-                        <input type="text" id="cboxSearch" class="cbox-search"
-                               placeholder="Search tenant, property… (optional)" autocomplete="off">
-                        <span class="cbox-spinner" id="cboxSpinner"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
-                        <button type="button" class="cbox-clear" id="cboxClear" tabindex="-1"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                    <div class="cbox-dropdown" id="cboxDropdown">
-                        <div class="cbox-hint">Type to search lease contracts</div>
-                        <div id="cboxList"></div>
-                    </div>
-                </div>
-                <div class="contract-selected" id="contractSelected">
-                    <div class="contract-selected-header">
-                        <span><i class="fa-solid fa-circle-check"></i> Contract Linked</span>
-                        <button type="button" class="contract-selected-change" id="cboxChangeBtn"><i class="fa-solid fa-pen"></i> Change</button>
-                    </div>
-                    <div class="contract-selected-body" id="contractPreviewBody"></div>
-                </div>
-            @endif
-        </div>
-
-        <div class="form-grid cols-3">
-            <div class="form-group">
-                <label class="form-label">Tenant Name <span class="required">*</span></label>
-                <input type="text" name="tenant_name" id="tenantNameInput"
-                       class="form-control {{ $errors->has('tenant_name') ? 'is-invalid' : '' }}"
-                       value="{{ old('tenant_name', $record?->tenant_name) }}" maxlength="255" required>
-                <div class="invalid-feedback">{{ $errors->first('tenant_name') }}</div>
+    <div class="card is-roomy">
+        <div class="card-header">
+            <div class="card-header-icon is-info"><i class="fa-solid fa-droplet"></i></div>
+            <div class="card-header-text">
+                <h3 class="card-title">Customer &amp; Property</h3>
             </div>
-            <div class="form-group">
-                <label class="form-label">Property</label>
-                <input type="text" name="property_name" id="propertyNameInput"
-                       class="form-control {{ $errors->has('property_name') ? 'is-invalid' : '' }}"
-                       value="{{ old('property_name', $record?->property_name) }}" maxlength="255">
-                <div class="invalid-feedback">{{ $errors->first('property_name') }}</div>
+        </div>
+        <div class="card-body">
+            {{-- Contract combobox --}}
+            <div class="form-group" style="margin-bottom:18px">
+                <label class="form-label">Link to Lease Contract <span style="font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none">(optional)</span></label>
+                <input type="hidden" name="lease_contract_id" id="contractId" value="{{ old('lease_contract_id', $record?->lease_contract_id) }}">
+
+                @if($record && $record->lease_contract_id)
+                    <div class="contract-selected show">
+                        <div class="contract-selected-header">
+                            <span><i class="fa-solid fa-circle-check"></i> Linked Contract</span>
+                        </div>
+                        <div class="contract-selected-body">
+                            <div class="cs-item"><span>Tenant</span><strong>{{ $record->tenant_name }}</strong></div>
+                            <div class="cs-item"><span>Property</span><strong>{{ $record->property_name }}</strong></div>
+                            <div class="cs-item"><span>Unit</span><strong>{{ $record->unit ?: '—' }}</strong></div>
+                        </div>
+                    </div>
+                @else
+                    <div class="contract-combobox" id="contractCombobox">
+                        <div class="cbox-trigger" id="cboxTrigger">
+                            <input type="text" id="cboxSearch" class="cbox-search"
+                                   placeholder="Search tenant, property… (optional)" autocomplete="off">
+                            <span class="cbox-spinner" id="cboxSpinner"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+                            <button type="button" class="cbox-clear" id="cboxClear" tabindex="-1"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="cbox-dropdown" id="cboxDropdown">
+                            <div class="cbox-hint">Type to search lease contracts</div>
+                            <div id="cboxList"></div>
+                        </div>
+                    </div>
+                    <div class="contract-selected" id="contractSelected">
+                        <div class="contract-selected-header">
+                            <span><i class="fa-solid fa-circle-check"></i> Contract Linked</span>
+                            <button type="button" class="contract-selected-change" id="cboxChangeBtn"><i class="fa-solid fa-pen"></i> Change</button>
+                        </div>
+                        <div class="contract-selected-body" id="contractPreviewBody"></div>
+                    </div>
+                @endif
             </div>
-            <div class="form-group">
-                <label class="form-label">Unit</label>
-                <input type="text" name="unit" id="unitInput"
-                       class="form-control {{ $errors->has('unit') ? 'is-invalid' : '' }}"
-                       value="{{ old('unit', $record?->unit) }}" maxlength="100">
-                <div class="invalid-feedback">{{ $errors->first('unit') }}</div>
+
+            <div class="form-grid cols-3">
+                <div class="form-group">
+                    <label class="form-label">Tenant Name <span class="required">*</span></label>
+                    <input type="text" name="tenant_name" id="tenantNameInput"
+                           class="form-control {{ $errors->has('tenant_name') ? 'is-invalid' : '' }}"
+                           value="{{ old('tenant_name', $record?->tenant_name) }}" maxlength="255" required>
+                    <div class="invalid-feedback">{{ $errors->first('tenant_name') }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Property</label>
+                    <input type="text" name="property_name" id="propertyNameInput"
+                           class="form-control {{ $errors->has('property_name') ? 'is-invalid' : '' }}"
+                           value="{{ old('property_name', $record?->property_name) }}" maxlength="255">
+                    <div class="invalid-feedback">{{ $errors->first('property_name') }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Unit</label>
+                    <input type="text" name="unit" id="unitInput"
+                           class="form-control {{ $errors->has('unit') ? 'is-invalid' : '' }}"
+                           value="{{ old('unit', $record?->unit) }}" maxlength="100">
+                    <div class="invalid-feedback">{{ $errors->first('unit') }}</div>
+                </div>
             </div>
         </div>
     </div>
 
     {{-- BILL INFO --}}
-    <div class="form-card">
-        <div class="form-card-title ewa">
-            <i class="fa-solid fa-file-invoice"></i> Bill Information
+    <div class="card is-roomy">
+        <div class="card-header">
+            <div class="card-header-icon is-info"><i class="fa-solid fa-file-invoice"></i></div>
+            <div class="card-header-text">
+                <h3 class="card-title">Bill Information</h3>
+            </div>
         </div>
-        <div class="form-grid cols-4">
-            <div class="form-group">
-                <label class="form-label">EWA Account No.</label>
-                <input type="text" name="ewa_account_number"
-                       class="form-control {{ $errors->has('ewa_account_number') ? 'is-invalid' : '' }}"
-                       value="{{ old('ewa_account_number', $record?->ewa_account_number) }}" maxlength="50"
-                       placeholder="e.g. 12345678">
-                <div class="invalid-feedback">{{ $errors->first('ewa_account_number') }}</div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Billing Period <span class="required">*</span></label>
-                <input type="text" name="billing_period"
-                       class="form-control {{ $errors->has('billing_period') ? 'is-invalid' : '' }}"
-                       value="{{ old('billing_period', $record?->billing_period) }}" maxlength="30"
-                       placeholder="e.g. April 2024" required>
-                <div class="invalid-feedback">{{ $errors->first('billing_period') }}</div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Reading Date</label>
-                <input type="date" name="reading_date"
-                       class="form-control {{ $errors->has('reading_date') ? 'is-invalid' : '' }}"
-                       value="{{ old('reading_date', $record?->reading_date?->format('Y-m-d')) }}">
-                <div class="invalid-feedback">{{ $errors->first('reading_date') }}</div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Reading Type <span class="required">*</span></label>
-                <select name="reading_type" class="form-control {{ $errors->has('reading_type') ? 'is-invalid' : '' }}">
-                    <option value="actual"    {{ old('reading_type', $record?->reading_type ?? 'actual') === 'actual'    ? 'selected' : '' }}>Actual (A)</option>
-                    <option value="estimated" {{ old('reading_type', $record?->reading_type) === 'estimated' ? 'selected' : '' }}>Estimated (E)</option>
-                </select>
-                <div class="invalid-feedback">{{ $errors->first('reading_type') }}</div>
+        <div class="card-body">
+            <div class="form-grid cols-4">
+                <div class="form-group">
+                    <label class="form-label">EWA Account No.</label>
+                    <input type="text" name="ewa_account_number"
+                           class="form-control {{ $errors->has('ewa_account_number') ? 'is-invalid' : '' }}"
+                           value="{{ old('ewa_account_number', $record?->ewa_account_number) }}" maxlength="50"
+                           placeholder="e.g. 12345678">
+                    <div class="invalid-feedback">{{ $errors->first('ewa_account_number') }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Billing Period <span class="required">*</span></label>
+                    <input type="text" name="billing_period"
+                           class="form-control {{ $errors->has('billing_period') ? 'is-invalid' : '' }}"
+                           value="{{ old('billing_period', $record?->billing_period) }}" maxlength="30"
+                           placeholder="e.g. April 2024" required>
+                    <div class="invalid-feedback">{{ $errors->first('billing_period') }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reading Date</label>
+                    <input type="date" name="reading_date"
+                           class="form-control {{ $errors->has('reading_date') ? 'is-invalid' : '' }}"
+                           value="{{ old('reading_date', $record?->reading_date?->format('Y-m-d')) }}">
+                    <div class="invalid-feedback">{{ $errors->first('reading_date') }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reading Type <span class="required">*</span></label>
+                    <select name="reading_type" class="form-control {{ $errors->has('reading_type') ? 'is-invalid' : '' }}">
+                        <option value="actual"    {{ old('reading_type', $record?->reading_type ?? 'actual') === 'actual'    ? 'selected' : '' }}>Actual (A)</option>
+                        <option value="estimated" {{ old('reading_type', $record?->reading_type) === 'estimated' ? 'selected' : '' }}>Estimated (E)</option>
+                    </select>
+                    <div class="invalid-feedback">{{ $errors->first('reading_type') }}</div>
+                </div>
             </div>
         </div>
     </div>
 
     {{-- ELECTRICITY --}}
-    <div class="form-card">
-        <div class="form-card-title ewa">
-            <i class="fa-solid fa-bolt"></i> Electricity
-        </div>
-        <div class="meter-row">
-            <div class="meter-row-header">
-                <span class="meter-badge elec">kWh</span>
-                Meter Readings
+    <div class="card is-roomy">
+        <div class="card-header">
+            <div class="card-header-icon is-info"><i class="fa-solid fa-bolt"></i></div>
+            <div class="card-header-text">
+                <h3 class="card-title">Electricity</h3>
             </div>
-            <div class="form-grid cols-4">
-                <div class="form-group">
-                    <label class="form-label">Previous Reading</label>
-                    <input type="number" name="elec_prev_reading" id="elecPrev" step="1" min="0"
-                           class="form-control" value="{{ old('elec_prev_reading', $record?->elec_prev_reading) }}"
-                           placeholder="0">
+        </div>
+        <div class="card-body">
+            <div class="meter-row">
+                <div class="meter-row-header">
+                    <span class="meter-badge elec">kWh</span>
+                    Meter Readings
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Current Reading</label>
-                    <input type="number" name="elec_curr_reading" id="elecCurr" step="1" min="0"
-                           class="form-control" value="{{ old('elec_curr_reading', $record?->elec_curr_reading) }}"
-                           placeholder="0">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Consumption <span class="unit-tag">kWh</span></label>
-                    <div class="computed-field" id="elecConsumption">—</div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Electricity Charges <span class="unit-tag">BHD</span></label>
-                    <div class="amount-wrap">
-                        <input type="number" name="elec_charges" id="elecCharges" step="0.001" min="0"
-                               class="form-control" value="{{ old('elec_charges', $record?->elec_charges) }}"
-                               placeholder="0.000">
+                <div class="form-grid cols-4">
+                    <div class="form-group">
+                        <label class="form-label">Previous Reading</label>
+                        <input type="number" name="elec_prev_reading" id="elecPrev" step="1" min="0"
+                               class="form-control" value="{{ old('elec_prev_reading', $record?->elec_prev_reading) }}"
+                               placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Current Reading</label>
+                        <input type="number" name="elec_curr_reading" id="elecCurr" step="1" min="0"
+                               class="form-control" value="{{ old('elec_curr_reading', $record?->elec_curr_reading) }}"
+                               placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Consumption <span class="unit-tag">kWh</span></label>
+                        <div class="computed-field" id="elecConsumption">—</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Electricity Charges <span class="unit-tag">BHD</span></label>
+                        <div class="amount-wrap">
+                            <input type="number" name="elec_charges" id="elecCharges" step="0.001" min="0"
+                                   class="form-control" value="{{ old('elec_charges', $record?->elec_charges) }}"
+                                   placeholder="0.000">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -395,38 +393,43 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     </div>
 
     {{-- WATER --}}
-    <div class="form-card">
-        <div class="form-card-title ewa">
-            <i class="fa-solid fa-droplet"></i> Water
-        </div>
-        <div class="meter-row">
-            <div class="meter-row-header">
-                <span class="meter-badge water">m³</span>
-                Meter Readings
+    <div class="card is-roomy">
+        <div class="card-header">
+            <div class="card-header-icon is-info"><i class="fa-solid fa-droplet"></i></div>
+            <div class="card-header-text">
+                <h3 class="card-title">Water</h3>
             </div>
-            <div class="form-grid cols-4">
-                <div class="form-group">
-                    <label class="form-label">Previous Reading</label>
-                    <input type="number" name="water_prev_reading" id="waterPrev" step="0.001" min="0"
-                           class="form-control" value="{{ old('water_prev_reading', $record?->water_prev_reading) }}"
-                           placeholder="0.000">
+        </div>
+        <div class="card-body">
+            <div class="meter-row">
+                <div class="meter-row-header">
+                    <span class="meter-badge water">m³</span>
+                    Meter Readings
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Current Reading</label>
-                    <input type="number" name="water_curr_reading" id="waterCurr" step="0.001" min="0"
-                           class="form-control" value="{{ old('water_curr_reading', $record?->water_curr_reading) }}"
-                           placeholder="0.000">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Consumption <span class="unit-tag">m³</span></label>
-                    <div class="computed-field" id="waterConsumption">—</div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Water Charges <span class="unit-tag">BHD</span></label>
-                    <div class="amount-wrap">
-                        <input type="number" name="water_charges" id="waterCharges" step="0.001" min="0"
-                               class="form-control" value="{{ old('water_charges', $record?->water_charges) }}"
+                <div class="form-grid cols-4">
+                    <div class="form-group">
+                        <label class="form-label">Previous Reading</label>
+                        <input type="number" name="water_prev_reading" id="waterPrev" step="0.001" min="0"
+                               class="form-control" value="{{ old('water_prev_reading', $record?->water_prev_reading) }}"
                                placeholder="0.000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Current Reading</label>
+                        <input type="number" name="water_curr_reading" id="waterCurr" step="0.001" min="0"
+                               class="form-control" value="{{ old('water_curr_reading', $record?->water_curr_reading) }}"
+                               placeholder="0.000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Consumption <span class="unit-tag">m³</span></label>
+                        <div class="computed-field" id="waterConsumption">—</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Water Charges <span class="unit-tag">BHD</span></label>
+                        <div class="amount-wrap">
+                            <input type="number" name="water_charges" id="waterCharges" step="0.001" min="0"
+                                   class="form-control" value="{{ old('water_charges', $record?->water_charges) }}"
+                                   placeholder="0.000">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -434,84 +437,88 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     </div>
 
     {{-- TOTAL --}}
-    <div class="form-card">
-        <div class="form-card-title ewa">
-            <i class="fa-solid fa-calculator"></i> Total
-        </div>
-
-        <div class="total-summary">
-            <div class="lbl">Total Bill (EWA)</div>
-            <div><span class="val" id="totalDisplay">0.000</span><span class="cur">BHD</span></div>
-        </div>
-
-        {{-- CAP & SPLIT --}}
-        <div class="cap-section">
-            <div class="cap-row">
-                <span class="cap-label">EWA Cap</span>
-                <div class="amount-wrap" style="flex:1;max-width:260px">
-                    <input type="number" name="ewa_cap" id="ewaCap" step="0.001" min="0"
-                           class="form-control {{ $errors->has('ewa_cap') ? 'is-invalid' : '' }}"
-                           value="{{ old('ewa_cap', $record?->ewa_cap) }}"
-                           placeholder="0.000 — no cap">
-                </div>
-                <span id="capSourceBadge" class="cap-source-badge" style="display:none">
-                    <i class="fa-solid fa-link"></i> from contract
-                </span>
+    <div class="card is-roomy">
+        <div class="card-header">
+            <div class="card-header-icon is-info"><i class="fa-solid fa-calculator"></i></div>
+            <div class="card-header-text">
+                <h3 class="card-title">Total</h3>
             </div>
-            <div style="font-size:11px;color:var(--text-muted);margin-left:90px;margin-top:-6px">
-                Landlord covers up to this amount per bill. Tenant pays the overage.
+        </div>
+        <div class="card-body">
+            <div class="total-summary">
+                <div class="lbl">Total Bill (EWA)</div>
+                <div><span class="val" id="totalDisplay">0.000</span><span class="cur">BHD</span></div>
             </div>
 
-            <div class="split-preview" id="splitPreview">
-                <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Bill split</div>
-                <div class="split-bar">
-                    <div class="split-bar-landlord" id="splitBarLandlord" style="width:50%"></div>
-                    <div class="split-bar-tenant"   id="splitBarTenant"   style="width:50%"></div>
-                </div>
-                <div class="split-amounts">
-                    <div class="split-cell landlord">
-                        <div class="split-cell-lbl"><i class="fa-solid fa-shield-halved"></i> Landlord covers</div>
-                        <div class="split-cell-val"><span id="landlordDisplay">0.000</span> <span style="font-size:12px;font-weight:600">BHD</span></div>
+            {{-- CAP & SPLIT --}}
+            <div class="cap-section">
+                <div class="cap-row">
+                    <span class="cap-label">EWA Cap</span>
+                    <div class="amount-wrap" style="flex:1;max-width:260px">
+                        <input type="number" name="ewa_cap" id="ewaCap" step="0.001" min="0"
+                               class="form-control {{ $errors->has('ewa_cap') ? 'is-invalid' : '' }}"
+                               value="{{ old('ewa_cap', $record?->ewa_cap) }}"
+                               placeholder="0.000 — no cap">
                     </div>
-                    <div class="split-cell tenant">
-                        <div class="split-cell-lbl"><i class="fa-solid fa-user"></i> Tenant owes</div>
-                        <div class="split-cell-val"><span id="tenantDisplay">0.000</span> <span style="font-size:12px;font-weight:600">BHD</span></div>
+                    <span id="capSourceBadge" class="cap-source-badge" style="display:none">
+                        <i class="fa-solid fa-link"></i> from contract
+                    </span>
+                </div>
+                <div style="font-size:11px;color:var(--text-muted);margin-left:90px;margin-top:-6px">
+                    Landlord covers up to this amount per bill. Tenant pays the overage.
+                </div>
+
+                <div class="split-preview" id="splitPreview">
+                    <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Bill split</div>
+                    <div class="split-bar">
+                        <div class="split-bar-landlord" id="splitBarLandlord" style="width:50%"></div>
+                        <div class="split-bar-tenant"   id="splitBarTenant"   style="width:50%"></div>
+                    </div>
+                    <div class="split-amounts">
+                        <div class="split-cell landlord">
+                            <div class="split-cell-lbl"><i class="fa-solid fa-shield-halved"></i> Landlord covers</div>
+                            <div class="split-cell-val"><span id="landlordDisplay">0.000</span> <span style="font-size:12px;font-weight:600">BHD</span></div>
+                        </div>
+                        <div class="split-cell tenant">
+                            <div class="split-cell-lbl"><i class="fa-solid fa-user"></i> Tenant owes</div>
+                            <div class="split-cell-val"><span id="tenantDisplay">0.000</span> <span style="font-size:12px;font-weight:600">BHD</span></div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="form-grid" style="margin-top:18px">
-            <div class="form-group">
-                <label class="form-label">Due Date <span class="required">*</span></label>
-                <input type="date" name="due_date"
-                       class="form-control {{ $errors->has('due_date') ? 'is-invalid' : '' }}"
-                       value="{{ old('due_date', $record?->due_date?->format('Y-m-d')) }}" required>
-                <div class="invalid-feedback">{{ $errors->first('due_date') }}</div>
+            <div class="form-grid cols-2" style="margin-top:18px">
+                <div class="form-group">
+                    <label class="form-label">Due Date <span class="required">*</span></label>
+                    <input type="date" name="due_date"
+                           class="form-control {{ $errors->has('due_date') ? 'is-invalid' : '' }}"
+                           value="{{ old('due_date', $record?->due_date?->format('Y-m-d')) }}" required>
+                    <div class="invalid-feedback">{{ $errors->first('due_date') }}</div>
+                </div>
+                @if($record)
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-control">
+                        @foreach(['draft'=>'Draft','issued'=>'Issued','partially_paid'=>'Partially Paid','paid'=>'Paid','overdue'=>'Overdue','cancelled'=>'Cancelled'] as $v=>$l)
+                        <option value="{{ $v }}" {{ old('status', $record->status) === $v ? 'selected' : '' }}>{{ $l }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
             </div>
-            @if($record)
-            <div class="form-group">
-                <label class="form-label">Status</label>
-                <select name="status" class="form-control">
-                    @foreach(['draft'=>'Draft','issued'=>'Issued','partially_paid'=>'Partially Paid','paid'=>'Paid','overdue'=>'Overdue','cancelled'=>'Cancelled'] as $v=>$l)
-                    <option value="{{ $v }}" {{ old('status', $record->status) === $v ? 'selected' : '' }}>{{ $l }}</option>
-                    @endforeach
-                </select>
+
+            <div class="form-group" style="margin-top:16px">
+                <label class="form-label">Notes</label>
+                <textarea name="notes" class="form-control" rows="2"
+                          placeholder="Internal notes…">{{ old('notes', $record?->notes) }}</textarea>
             </div>
-            @endif
-        </div>
 
-        <div class="form-group" style="margin-top:16px">
-            <label class="form-label">Notes</label>
-            <textarea name="notes" class="form-control" rows="2"
-                      placeholder="Internal notes…">{{ old('notes', $record?->notes) }}</textarea>
-        </div>
-
-        <div class="form-group" style="margin-top:16px">
-            <label class="form-label">Remarks</label>
-            <textarea name="remarks" class="form-control {{ $errors->has('remarks') ? 'is-invalid' : '' }}" rows="2" maxlength="500"
-                      placeholder="Printed on the invoice…">{{ old('remarks', $record?->remarks) }}</textarea>
-            <div class="invalid-feedback">{{ $errors->first('remarks') }}</div>
+            <div class="form-group" style="margin-top:16px">
+                <label class="form-label">Remarks</label>
+                <textarea name="remarks" class="form-control {{ $errors->has('remarks') ? 'is-invalid' : '' }}" rows="2" maxlength="500"
+                          placeholder="Printed on the invoice…">{{ old('remarks', $record?->remarks) }}</textarea>
+                <div class="invalid-feedback">{{ $errors->first('remarks') }}</div>
+            </div>
         </div>
     </div>
 

@@ -780,6 +780,15 @@ textarea:focus-visible {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 18px;
 }
+/* Fixed column counts, for a form where an explicit pairing is part of the
+   design (a create form reads better as two deliberate columns than as
+   auto-fill, which spreads a label away from its field on a wide screen).
+   Replaces .form-grid.cols-N and .form-grid-N being redefined per page. */
+.form-grid.cols-1 { grid-template-columns: 1fr; }
+.form-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.form-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.form-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
 .form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .form-group.col-span-2 { grid-column: span 2; }
 .form-group.col-span-full { grid-column: 1 / -1; }
@@ -920,54 +929,277 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
 }
 
 
-/* ── §4.3  Cards ────────────────────────────────────────────────────────── */
+/* ── §4.3  CARDS ────────────────────────────────────────────────────────────
+     ONE card system for the whole application.
+
+     Audit that produced it: 49 selectors across the app painted their own card
+     chrome, between them using 13 different padding values (12px 14px, 12px
+     16px, 13px, 14px, 14px 16px, 16px 18px, 16px 20px, 18px 16px, 18px 20px,
+     20px 22px, 24px, 28px, 28px 32px), 9 radii (8, 12, 14, 15, 16, 22px, 0,
+     --radius, --radius-sm), 6 shadow treatments and 3 border widths — and 18
+     separately-named implementations of "header + title + subtitle + body"
+     (.bldg-card-head, .dash-card-head, .data-panel-head, .detail-card-header,
+     .fc-card-header, .finance-card-head, .maint-section-header,
+     .section-card-header, .section-panel-header, .u-section-header,
+     .pay-form-header, .contract-selected-header, .step-panel-heading, ...).
+
+     ── ANATOMY ───────────────────────────────────────────────────────────────
+       .card
+         .card-header        icon · title · subtitle · actions
+         .card-body          content
+         .card-footer        actions, right-aligned
+     Header, body and footer share horizontal padding, so an icon, a paragraph
+     and a button all sit on the same left edge down the card.
+
+     ── THE STANDARD ──────────────────────────────────────────────────────────
+       background   --card-bg, always
+       border       1px solid --card-border, always (no 1.5px variants)
+       radius       --radius (12px). Nested cards --radius-sm. Modals only
+                    --radius-lg, sheets --sheet-radius.
+       shadow       --shadow-sm on a top-level card, none on a nested one —
+                    a shadow inside a shadow reads as noise, not depth.
+       padding      three steps, not thirteen: --card-pad-sm / --card-pad /
+                    --card-pad-lg, chosen by density, set via .is-compact /
+                    default / .is-roomy.
+       hover        only a card that is actually a link or button
+                    (.is-interactive). A static readout must not lift under
+                    the cursor — it promises a click that isn't there.
+
+     ── SIZE / TYPE MATRIX ────────────────────────────────────────────────────
+       basic, dashboard, information   .card
+       KPI, statistic, metric          .stat-card  (§4.4)
+       summary                         .stat-tile  (§4.4)
+       action (clickable)              .card.is-interactive on an <a>/<button>
+       profile / hero                  .card.is-hero
+       list                            .table-card (§4.6) — a .card owning a table
+       nested                          .card.is-nested
+       alert                           .alert (§4.9) — a message, not a card
+       modal                           .modal-box (§4.11) — a card in an overlay
+
+     Adding a card means picking from that matrix. It does not mean a new
+     class with its own padding. */
+
+:root {
+    --card-pad-sm: 14px 16px;
+    --card-pad:    18px 20px;
+    --card-pad-lg: 24px 28px;
+    /* Horizontal padding on its own, so header/body/footer can share an edge
+       while using different vertical rhythm. */
+    --card-pad-x:    20px;
+    --card-pad-x-sm: 16px;
+    --card-pad-x-lg: 28px;
+}
+
 .card {
+    display: flex;
+    flex-direction: column;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
-    min-width: 0;
+    min-width: 0;          /* lets a card shrink in a grid instead of overflowing */
 }
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
 .card-header {
-    padding: 18px 22px;
-    border-bottom: 1px solid var(--card-border);
     display: flex;
     align-items: center;
     gap: var(--sp-3);
     flex-wrap: wrap;
+    padding: var(--card-pad);
+    border-bottom: 1px solid var(--card-border);
+    flex: none;
 }
+/* Icon: always leading, always the same box, tone-tinted. Accent by default;
+   add a tone class for a status-carrying card. */
 .card-header-icon {
     width: 34px; height: 34px;
     border-radius: var(--radius-sm);
-    background: var(--accent-dim);
     display: flex; align-items: center; justify-content: center;
-    color: var(--tone-accent-fg);
     font-size: var(--fs-md);
-    flex-shrink: 0;
+    flex: none;
+    background: var(--tone-accent-bg);
+    color: var(--tone-accent-fg);
 }
-:root[data-theme="dark"] .card-header-icon { color: var(--accent); }
-.card-header h3 {
+.card-header-icon.is-success { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.card-header-icon.is-danger  { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+.card-header-icon.is-warning { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.card-header-icon.is-info    { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.card-header-icon.is-neutral { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+
+/* Title block. The text takes the free space so actions land on the trailing
+   edge; min-width:0 is what lets a long title wrap or ellipsis instead of
+   pushing the actions out of the card. */
+.card-header-text { flex: 1; min-width: 0; }
+.card-title,
+.card-header h2,
+.card-header h3,
+.card-header h4 {
     font-family: var(--font-display);
     font-size: var(--fs-md);
     font-weight: 700;
+    line-height: var(--lh-snug);
     color: var(--text-primary);
+    overflow-wrap: break-word;
 }
+.card-subtitle,
 .card-header p {
     font-size: var(--fs-sm);
+    line-height: var(--lh-snug);
     color: var(--text-muted);
     margin-top: 1px;
+    max-width: 68ch;        /* a subtitle is a line of prose, not a paragraph */
 }
-.card-header-actions { margin-left: auto; display: flex; gap: var(--sp-2); flex-wrap: wrap; }
-.card-body { padding: 22px; }
+/* Single-line title where the card is in a tight grid. */
+.card-title.is-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.card-header-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+}
 
+/* ── Body ───────────────────────────────────────────────────────────────── */
+.card-body {
+    padding: var(--card-pad-lg);
+    flex: 1;                /* footers line up across cards in a row */
+    min-width: 0;
+}
+/* A card that is only a body needs the body to carry the card's own rhythm. */
+.card > .card-body:only-child { padding: var(--card-pad-lg); }
+/* Body content that must run to the card's edge — a table, a full-bleed image. */
+.card-body.is-flush { padding: 0; }
+
+/* ── Footer ─────────────────────────────────────────────────────────────── */
+.card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: var(--sp-3) var(--card-pad-x);
+    border-top: 1px solid var(--card-border);
+    background: var(--page-bg-alt);
+    flex: none;
+}
+/* Footer carrying a caption on the left and actions on the right. */
+.card-footer.is-split { justify-content: space-between; }
+.card-footer-note { font-size: var(--fs-sm); color: var(--text-muted); }
+
+/* ── Density ────────────────────────────────────────────────────────────────
+     Three steps replacing thirteen ad-hoc paddings. Pick by how much content
+     the card holds, not by which page it is on. */
+.card.is-compact { --card-pad: var(--card-pad-sm); --card-pad-x: var(--card-pad-x-sm); }
+.card.is-compact > .card-body { padding: var(--card-pad-sm); }
+.card.is-roomy   { --card-pad: var(--card-pad-lg); --card-pad-x: var(--card-pad-x-lg); }
+.card.is-roomy   > .card-body { padding: var(--sp-7) var(--card-pad-x-lg); }
+
+/* ── Nested cards ───────────────────────────────────────────────────────────
+     A card inside a card steps down: smaller radius, no shadow, and the
+     recessed ground rather than the raised one. Two elevated surfaces stacked
+     on each other read as a mistake. */
+.card.is-nested,
+.card .card {
+    border-radius: var(--radius-sm);
+    box-shadow: none;
+    background: var(--page-bg-alt);
+}
+.card.is-nested > .card-body { padding: var(--card-pad-sm); }
+
+/* ── Interactive cards ──────────────────────────────────────────────────────
+     Only for a card that really is a link or a button. Border and elevation
+     respond; the card does not move. */
+.card.is-interactive {
+    text-decoration: none;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--dur-base) ease, box-shadow var(--dur-base) ease;
+}
+.card.is-interactive:hover {
+    border-color: var(--input-border);
+    box-shadow: var(--shadow-md);
+}
+.card.is-interactive:focus-visible { outline: var(--focus-outline); outline-offset: 2px; }
+.card.is-interactive:active { box-shadow: var(--shadow-sm); }
+/* Accent-led action card — picking a report to run, choosing an import target. */
+.card.is-interactive.is-accent:hover { border-color: var(--accent); }
+/* Trailing chevron on a card that navigates somewhere. */
+.card-chevron { color: var(--text-muted); font-size: var(--fs-sm); flex: none; }
+
+/* ── Hero card ──────────────────────────────────────────────────────────────
+     The identity block at the top of a detail page (a tenant's profile, a
+     lease contract). Roomier, and its title steps up to page-title scale
+     because on that screen it IS the page's subject. */
+.card.is-hero { padding: var(--sp-7) var(--card-pad-x-lg); }
+.card.is-hero .card-title { font-size: var(--fs-xl); font-weight: 800; letter-spacing: -0.01em; }
+.card.is-hero .card-subtitle { font-size: 13px; }
+
+/* A short form has no business stretching to a 1600px viewport — the eye
+   loses the label/field relationship. Caps the measure instead of each page
+   inventing its own max-width. */
+.card.is-narrow { max-width: 560px; }
+.card.is-medium { max-width: 860px; }
+
+/* Tone accent on a card's leading edge, for a card that carries a status. */
+.card.has-rail { border-left: 3px solid var(--card-rail, var(--card-border)); }
+.card.has-rail.is-success { --card-rail: var(--success); }
+.card.has-rail.is-danger  { --card-rail: var(--danger); }
+.card.has-rail.is-warning { --card-rail: var(--warning); }
+.card.has-rail.is-info    { --card-rail: var(--info); }
+.card.has-rail.is-accent  { --card-rail: var(--accent); }
+
+/* Stacked sibling cards get their rhythm from the system, so a page never has
+   to add its own margin-bottom (which is how .form-card, .fc-card,
+   .detail-card and .maint-section each ended up with a different gap).
+   Reset inside any container that already spaces its children. */
+.card + .card { margin-top: var(--sp-5); }
+.card-grid > .card + .card,
+.stats-grid > .card + .card,
+.section-stack > .card + .card { margin-top: 0; }
+
+/* ── Card grid ──────────────────────────────────────────────────────────────
+     Equal-height columns by default, because a row of cards with ragged
+     bottoms is the most common way a card layout looks unfinished. Cards are
+     flex columns and .card-body flexes, so footers align across the row. */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--sp-4);
+    align-items: stretch;
+}
+.card-grid.is-2 { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+.card-grid.is-3 { grid-template-columns: repeat(3, 1fr); }
+/* A card row that should NOT equalise heights (cards of genuinely different
+   length, where stretching leaves dead space). */
+.card-grid.is-natural { align-items: start; }
+
+/* ── Empty state inside a card ─────────────────────────────────────────────
+     A card with nothing in it still needs to say so. §4.7's .empty-state drops
+     straight into a .card-body. */
+.card-body > .empty-state:only-child { padding: var(--sp-10) var(--sp-5); }
 
 /* ── §4.4  Stat cards ───────────────────────────────────────────────────────
      Was nine separate components (.stat-card, .pay-stat, .exp-stat,
      .inv-stat, .rev-stat, .ewa-stat, .dash-stat, .pl-stat, .bldg-stat) that
      all rendered the same thing. §6 aliases the old names onto this one.
 
-     No hover lift: these are readouts, not controls — a card that rises
-     under the cursor promises a click that isn't there. */
+     These are cards and take §4.3's standard exactly: --card-bg, 1px
+     --card-border, --radius, --shadow-sm, --card-pad. Before this they were
+     elevated on Buildings / Tenants / Units / Floors / Leases and flat on
+     Invoices / Payments / Expenses / Revenue / EWA / Maintenance / audit /
+     error — the same component reading as two different components depending
+     on which page you were on.
+
+     No hover: these are readouts, not controls. .stat-card:hover used to lift
+     2px and deepen its shadow on five pages, promising a click that was never
+     wired up. A KPI card that navigates somewhere should be a
+     .card.is-interactive instead. */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -978,7 +1210,7 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: var(--radius);
-    padding: 18px var(--sp-5);
+    padding: var(--card-pad);
     display: flex;
     align-items: center;
     gap: 14px;
@@ -1018,6 +1250,28 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
     margin-top: 3px;
 }
 
+/* Figure-first variant: no icon, the number leads and an uppercase caption
+   sits beneath it. For dense rows of counts (the audit and error logs) where
+   an icon per card added noise without adding meaning. */
+.stat-card.is-figure {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-1);
+    padding: var(--sp-4) 18px;
+}
+.stat-card.is-figure .stat-val { font-size: 28px; }
+.stat-card.is-figure .stat-lbl {
+    margin-top: 0;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.stat-card.is-figure.is-danger  .stat-val { color: var(--tone-danger-fg); }
+.stat-card.is-figure.is-warning .stat-val { color: var(--tone-warning-fg); }
+.stat-card.is-figure.is-info    .stat-val { color: var(--tone-info-fg); }
+.stat-card.is-figure.is-success .stat-val { color: var(--tone-success-fg); }
+
 /* Stat tile — the label-above-figure variant, with a leading rail carrying
    the tone. For a small set of headline figures that are being compared
    against each other (the P&L's revenue / expenses / net), where the figure
@@ -1028,7 +1282,8 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
     border: 1px solid var(--card-border);
     border-left: 3px solid var(--tile-rail, var(--card-border));
     border-radius: var(--radius);
-    padding: var(--sp-5) 22px;
+    box-shadow: var(--shadow-sm);
+    padding: var(--card-pad);
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -1251,6 +1506,23 @@ tr[data-href]:focus-visible { outline: var(--focus-outline); outline-offset: -2p
     color: var(--text-primary);
 }
 
+/* Code / stack-trace block. */
+.code-block {
+    margin: 0;
+    font-family: 'Fira Code', ui-monospace, 'Courier New', monospace;
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    background: var(--page-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: var(--sp-3) 14px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    max-height: 400px;
+    overflow: auto;
+}
+
 /* Cell utilities. Deliberately a short list — anything longer belongs as a
    component, not as a utility. */
 .nowrap { white-space: nowrap; }
@@ -1382,41 +1654,71 @@ td.col-actions .action-btns { justify-content: flex-end; }
 .badge-amber, .tone-warning { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
 .badge-gray,  .tone-neutral { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
 
-/* Domain status names, in use across invoices, EWA bills, leases,
-   maintenance, payments and the audit log. */
+/* ── Domain status vocabulary ────────────────────────────────────────────────
+     The badge class comes straight off the model's status value
+     (class="status-badge {{ $invoice->status }}"), so this list has to cover
+     every status the domain can produce. Values below are taken from the
+     migrations and models: invoices and EWA bills (draft / issued /
+     partially_paid / paid / overdue / cancelled), maintenance requests (open /
+     waiting_supervisor / waiting_approval / approved / in_progress /
+     completed / cancelled), leases (active / expiring / expired / upcoming),
+     rent schedule (paid / partial / unpaid / not_invoiced), and the audit and
+     error logs (created / updated / deleted / imported, error / warning /
+     info / debug).
+
+     Add a new status here, next to the others that mean the same thing —
+     never as a one-off rule on a page. If a status has no obvious tone, the
+     unmodified .status-badge is neutral and is a correct answer. */
+
+/* Settled, done, approved. */
 .status-badge.paid,
 .status-badge.active,
 .status-badge.completed,
 .status-badge.approved,
 .status-badge.collected,
-.status-badge.created      { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.status-badge.created       { background: var(--tone-success-bg); color: var(--tone-success-fg); }
 
+/* Needs attention, or failed. */
 .status-badge.overdue,
 .status-badge.unpaid,
-.status-badge.failed,
 .status-badge.rejected,
-.status-badge.urgent       { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+.status-badge.failed,
+.status-badge.error,
+.status-badge.deleted,
+.status-badge.urgent        { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
 
+/* In flight — started, not finished. */
 .status-badge.partially_paid,
 .status-badge.partially,
 .status-badge.partial,
 .status-badge.expiring,
 .status-badge.waiting,
+.status-badge.waiting_supervisor,
+.status-badge.waiting_approval,
 .status-badge.pending,
+.status-badge.open,
+.status-badge.warning,
 .status-badge.in_progress,
-.status-badge.in           { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.status-badge.in            { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
 
+/* Live and informational — issued, sent, coming up. */
 .status-badge.issued,
 .status-badge.upcoming,
 .status-badge.updated,
-.status-badge.sent         { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.status-badge.sent,
+.status-badge.info          { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
 
+/* Bulk / system origin. */
+.status-badge.imported      { background: var(--tone-accent-bg);  color: var(--tone-accent-fg); }
+
+/* Inert — never started, or over. */
 .status-badge.draft,
 .status-badge.not_invoiced,
 .status-badge.cancelled,
 .status-badge.expired,
 .status-badge.closed,
-.status-badge.deleted      { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+.status-badge.vacant,
+.status-badge.debug         { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
 
 /* Outlined variant, for a badge sitting on an already-tinted surface. */
 .badge-outline { background: transparent; border: 1px solid currentColor; }
@@ -1633,7 +1935,13 @@ td.col-actions .action-btns { justify-content: flex-end; }
 @media (max-width: 900px) {
     .page-content { padding: var(--sp-5); }
     .stats-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--sp-3); }
-    .card-body { padding: 18px; }
+    /* Cards step down one density level and grids relax to two across. */
+    .card-body { padding: var(--card-pad); }
+    .card.is-roomy > .card-body { padding: var(--card-pad); }
+    .card.is-hero { padding: var(--sp-5) var(--card-pad-x); }
+    .card-grid, .card-grid.is-2 { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+    .card-grid.is-3 { grid-template-columns: repeat(2, 1fr); }
+    .form-grid.cols-3, .form-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
     .filter-bar { padding: var(--sp-3) var(--sp-4); }
     /* Two filters per row rather than a ragged wrap. */
     .filter-group { min-width: calc(50% - var(--sp-2)); }
@@ -1666,6 +1974,8 @@ td.col-actions .action-btns { justify-content: flex-end; }
     /* Forms go single-column; a two-column span has nothing to span. */
     .form-grid { grid-template-columns: 1fr; gap: var(--sp-4); }
     .form-group.col-span-2 { grid-column: span 1; }
+    .form-grid.cols-1, .form-grid.cols-2,
+    .form-grid.cols-3, .form-grid.cols-4 { grid-template-columns: 1fr; }
     .form-actions { padding: var(--sp-4); }
     .form-actions > .btn { flex: 1; }
 
@@ -1793,8 +2103,35 @@ td.col-actions .action-btns { justify-content: flex-end; }
     .modal-body   { padding: var(--sp-4) 18px; }
     .modal-footer { padding: var(--sp-3) 18px calc(var(--sp-3) + env(safe-area-inset-bottom)); }
     .modal-footer > .btn { flex: 1; }
-    .card-header  { padding: var(--sp-4) 18px; }
-    .card-body    { padding: 18px; }
+
+    /* ── Cards on mobile ────────────────────────────────────────────────────
+         Every grid becomes a single column, cards take the compact padding,
+         and the header reflows: icon and title stay on the first line, actions
+         drop to a full-width row beneath so a long title never squeezes a
+         button down to an unreadable sliver. */
+    .card-grid, .card-grid.is-2, .card-grid.is-3 { grid-template-columns: 1fr; gap: var(--sp-3); }
+
+    .card { --card-pad: var(--card-pad-sm); --card-pad-x: var(--card-pad-x-sm); }
+    .card-header { padding: var(--card-pad-sm); gap: 10px; }
+    .card-body,
+    .card > .card-body:only-child,
+    .card.is-roomy > .card-body { padding: var(--card-pad-sm); }
+    .card.is-hero { padding: var(--sp-5) var(--card-pad-x-sm); }
+    .card-footer { padding: var(--sp-3) var(--card-pad-x-sm); }
+    .card-footer > .btn { flex: 1; }
+
+    .card-header-actions { margin-left: 0; width: 100%; }
+    .card-header-actions > .btn { flex: 1; }
+    /* A header with only an icon button (a close, a menu) keeps it inline
+       rather than stretching it across the card. */
+    .card-header-actions:has(> .btn-icon:only-child),
+    .card-header-actions:has(> .topbar-icon-btn:only-child) { width: auto; margin-left: auto; }
+
+    .card.is-hero .card-title { font-size: var(--fs-lg); }
+    .card-title { font-size: 14px; }
+    /* Truncation is a desktop-grid concern; on one column let the title wrap. */
+    .card-title.is-truncate { white-space: normal; overflow: visible; }
+
     .empty-state  { padding: var(--sp-10) 18px; }
     .tab-btn      { padding: 11px var(--sp-4); }
 }
@@ -1802,6 +2139,10 @@ td.col-actions .action-btns { justify-content: flex-end; }
 /* ── Small phone ────────────────────────────────────────────────────────── */
 @media (max-width: 430px) {
     .stats-grid { grid-template-columns: 1fr 1fr; }
+    /* Below this width a two-across figure starts truncating, so stat cards
+       go full width and lay the icon beside the figure again. */
+    .stat-card { flex-direction: row; align-items: center; }
+    .stat-card.is-figure { flex-direction: column; align-items: flex-start; }
     .page-header-actions { flex-direction: column; }
     .page-header-actions > .btn { width: 100%; }
     .table-wrap.is-scroll table { min-width: 560px; }
@@ -1843,7 +2184,7 @@ td.col-actions .action-btns { justify-content: flex-end; }
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: var(--radius);
-    padding: 18px var(--sp-5);
+    padding: var(--card-pad);
     display: flex;
     align-items: center;
     gap: 14px;

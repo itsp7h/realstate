@@ -33,29 +33,13 @@
     border-radius: var(--radius); padding: 14px 18px;
     display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px;
 }
-.filter-bar input, .filter-bar select {
-    padding: 8px 12px; font-size: 13px;
-    border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-    background: var(--input-bg); color: var(--text-primary); outline: none;
-    transition: border-color 0.18s; font-family: 'Plus Jakarta Sans', sans-serif;
-}
-.filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
-.filter-bar input[type="search"] { flex: 1; min-width: 200px; }
 
 /* ── STATUS BADGES ─────────────────────────────────────────── */
 .status-badge {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
 }
-.status-badge.issued         { background: #EFF6FF; color: #2563EB; }
-.status-badge.partially_paid { background: #FFFBEB; color: #D97706; }
-.status-badge.paid           { background: #ECFDF5; color: #059669; }
-.status-badge.overdue        { background: #FEF2F2; color: #DC2626; }
-.status-badge.cancelled      { background: #F8FAFC; color: #94A3B8; }
-.status-badge.draft          { background: #F1F5F9; color: #64748B; }
 
-.table-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden; }
-.amount-col { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 13px; }
 .overdue-row td { background: #FFF8F8; }
 .actions-cell { display: flex; gap: 6px; align-items: center; }
 
@@ -90,14 +74,6 @@
 
 /* ── TABS ──────────────────────────────────────────────────── */
 .tab-bar { display: flex; gap: 4px; border-bottom: 2px solid var(--card-border); margin-bottom: 20px; }
-.tab-btn {
-    padding: 11px 22px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13.5px; font-weight: 600;
-    color: var(--text-muted); border: none; background: none; cursor: pointer;
-    border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.18s, border-color 0.18s;
-    display: flex; align-items: center; gap: 8px; text-decoration: none;
-}
-.tab-btn:hover { color: var(--text-primary); }
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
 /* EWA header strip */
 .ewa-header-strip {
@@ -168,23 +144,36 @@
 </div>
 
 {{-- FILTERS --}}
-<form method="GET" action="{{ route('ewa-bills.index') }}" class="filter-bar">
-    <input type="search" name="search" value="{{ request('search') }}" placeholder="Search bill no., tenant, account…">
-    <input type="text"   name="period" value="{{ request('period') }}" placeholder="Billing period…" style="min-width:140px">
-    <select name="status" onchange="this.form.submit()">
-        <option value="">All Statuses</option>
-        @foreach(['issued'=>'Issued','partially_paid'=>'Partially Paid','paid'=>'Paid','overdue'=>'Overdue','cancelled'=>'Cancelled','draft'=>'Draft'] as $v => $l)
-        <option value="{{ $v }}" {{ request('status') === $v ? 'selected' : '' }}>{{ $l }}</option>
-        @endforeach
-    </select>
-    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-    @if(request()->hasAny(['search','status','period']))
-    <a href="{{ route('ewa-bills.index') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
-    @endif
-</form>
 
 {{-- TABLE --}}
 <div class="table-card">
+    <form method="GET" action="{{ route('ewa-bills.index') }}">
+        <div class="filter-bar">
+            <div class="filter-group is-search">
+                <label for="f_search">Search</label>
+                <input type="search" id="f_search" name="search" value="{{ request('search') }}" placeholder="Search bill no., tenant, account…">
+            </div>
+            <div class="filter-group">
+                <label for="f_period">Billing period</label>
+                <input type="text" id="f_period" name="period" value="{{ request('period') }}" placeholder="Billing period…">
+            </div>
+            <div class="filter-group">
+                <label for="f_status">Status</label>
+                <select id="f_status" name="status" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    @foreach(['issued'=>'Issued','partially_paid'=>'Partially Paid','paid'=>'Paid','overdue'=>'Overdue','cancelled'=>'Cancelled','draft'=>'Draft'] as $v => $l)
+                    <option value="{{ $v }}" {{ request('status') === $v ? 'selected' : '' }}>{{ $l }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                @if(request()->hasAny(['search','status','period']))
+                <a href="{{ route('ewa-bills.index') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
+                @endif
+            </div>
+        </div>
+    </form>
     @if($bills->isEmpty())
     <div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
         <i class="fa-solid fa-droplet" style="font-size:36px;display:block;margin-bottom:12px;opacity:0.3"></i>
