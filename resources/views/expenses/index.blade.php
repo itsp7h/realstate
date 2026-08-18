@@ -28,7 +28,70 @@
     </div>
 </div>
 
-<div class="stats-grid">
+
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
+     Same .m-screen / .m-row-card architecture as Payments, Invoices and
+     Lease Contracts. Every value carries a visible label so nothing
+     renders as a bare figure. ── --}}
+<div class="m-screen">
+    <div class="m-mini-row">
+        <div class="m-mini-stat">
+            <div class="v">{{ $stats['total'] }}</div>
+            <div class="l">Entries</div>
+        </div>
+        <div class="m-mini-stat">
+            <div class="v">{{ number_format($stats['total_amount'], 0) }}</div>
+            <div class="l">Total (BHD)</div>
+        </div>
+        <div class="m-mini-stat">
+            <div class="v">{{ number_format($stats['this_month'], 0) }}</div>
+            <div class="l">This Month (BHD)</div>
+        </div>
+    </div>
+
+    <div class="m-chip-row no-sb">
+        <a href="{{ route('expenses.index') }}" class="m-chip {{ !request('category') ? 'active' : '' }}">All</a>
+        @foreach($categories as $val => $label)
+            <a href="{{ route('expenses.index', ['category' => $val]) }}"
+               class="m-chip {{ request('category') === $val ? 'active' : '' }}">{{ $label }}</a>
+        @endforeach
+    </div>
+
+    <div class="m-row-list">
+        @forelse($expenses as $expense)
+            <a href="{{ route('expenses.edit', $expense) }}" class="m-row-card">
+                <div class="m-row-icon" style="background:var(--tone-danger-bg);color:var(--tone-danger-fg);">
+                    <i class="fa-solid fa-receipt"></i>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div class="m-row-title">{{ $expense->description ?: $expense->category_label }}</div>
+                    <div class="m-row-sub">
+                        {{ $expense->building->property_name ?? 'No building' }}@if($expense->unit) &middot; Unit {{ $expense->unit->unit_name }}@endif
+                    </div>
+                    <div class="m-row-sub">
+                        Dated {{ $expense->expense_date->format('d M Y') }}@if($expense->vendor_name) &middot; Vendor {{ $expense->vendor_name }}@endif
+                    </div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                    <div style="font-family:'Outfit',sans-serif;font-size:13.5px;font-weight:800;color:var(--tone-danger-fg);">
+                        BHD {{ number_format($expense->amount, 3) }}
+                    </div>
+                    <span class="m-row-badge" style="background:var(--tone-danger-bg);color:var(--tone-danger-fg);">
+                        {{ $expense->category_label }}
+                    </span>
+                </div>
+            </a>
+        @empty
+            <div class="m-empty">
+                <div class="m-empty-icon"><i class="fa-solid fa-receipt"></i></div>
+                <div class="m-empty-title">No expenses recorded yet</div>
+                <div class="m-empty-sub">Try adjusting your filters.</div>
+            </div>
+        @endforelse
+    </div>
+</div>
+
+<div class="stats-grid m-hide-desktop-index">
     <div class="stat-card">
         <div class="stat-icon gray"><i class="fa-solid fa-receipt"></i></div>
         <div><div class="stat-val">{{ $stats['total'] }}</div><div class="stat-lbl">Total Entries</div></div>
@@ -43,7 +106,7 @@
     </div>
 </div>
 
-<div class="table-card">
+<div class="table-card m-hide-desktop-index">
     <form method="GET" action="{{ route('expenses.index') }}">
         <div class="filter-bar">
             <div class="filter-group is-search">

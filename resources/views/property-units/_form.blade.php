@@ -35,7 +35,7 @@
     position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
     color: var(--text-muted); font-size: 12px; pointer-events: none; transition: color 0.2s;
 }
-.u-has-icon input, .u-has-icon select { padding-left: 36px !important; }
+.u-has-icon input, .u-has-icon select { padding-left: 36px; }
 .u-field-wrap:focus-within .u-field-icon { color: var(--accent); }
 
 .u-input, .u-select, .u-textarea {
@@ -67,16 +67,19 @@
 }
 .u-field-error i { font-size: 10px; }
 
-/* ── BUILDING-LOCKED STATE ─────────────────────────────── */
-.u-locked-section { position: relative; }
+/* ── BUILDING-LOCKED STATE ─────────────────────────────────
+   These fields mirror the selected building and cannot be edited here. No
+   !important needed: the selector is (0,3,1), which already outranks the
+   design system's `input` and `input:focus`. */
 .u-locked-section .u-input[readonly],
 .u-locked-section .u-select[readonly] {
-    background: var(--page-bg) !important;
-    color: var(--text-muted) !important;
+    background: var(--page-bg);
+    color: var(--text-muted);
     cursor: not-allowed;
-    border-color: var(--card-border) !important;
-    box-shadow: none !important;
+    border-color: var(--card-border);
+    box-shadow: none;
 }
+.u-locked-section { position: relative; }
 .u-lock-hint {
     display: none; align-items: center; gap: 4px;
     font-size: 10.5px; color: var(--text-muted); margin-top: 5px;

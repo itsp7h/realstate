@@ -11,7 +11,7 @@
     padding: 3px 10px; border-radius: 20px;
 }
 .role-badge.admin       { background: var(--accent-dim); color: var(--accent); }
-.role-badge.user        { background: var(--tone-info-bg); color: var(--info); }
+.role-badge.user        { background: var(--tone-info-bg); color:var(--tone-info-fg); }
 .role-badge.maintenance { background: var(--page-bg); color: var(--text-muted); border: 1px solid var(--card-border); }
 </style>
 @endpush

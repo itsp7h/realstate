@@ -54,7 +54,7 @@
 .mfield-label .req { color: var(--danger); font-size: 13px; line-height: 1; }
 .mfield-wrap { position: relative; }
 .mfield-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 11px; pointer-events: none; transition: color 0.2s; }
-.mhas-icon input, .mhas-icon select { padding-left: 32px !important; }
+.mhas-icon input, .mhas-icon select { padding-left: 32px; }
 .mfield-wrap:focus-within .mfield-icon { color: var(--accent); }
 .minput, .mselect {
     width: 100%; padding: 9px 12px;

@@ -20,8 +20,8 @@
         font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700;
         flex-shrink: 0;
     }
-    .tenant-avatar.individual { background: var(--tone-success-bg); color: var(--success); }
-    .tenant-avatar.company    { background: var(--tone-info-bg); color: var(--info); }
+    .tenant-avatar.individual { background: var(--tone-success-bg); color:var(--tone-success-fg); }
+    .tenant-avatar.company    { background: var(--tone-info-bg); color:var(--tone-info-fg); }
     .tenant-name { font-weight: 600; font-size: 13.5px; color: var(--text-primary); }
     .tenant-sub  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 

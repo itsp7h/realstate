@@ -15,18 +15,18 @@
     .agr-no { font-family:'Outfit',sans-serif;font-weight:700;font-size:13px;color:var(--text-primary); }
     .tenant-cell { display:flex;align-items:center;gap:9px; }
     .tenant-av { width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;flex-shrink:0; }
-    .tenant-av.individual { background:var(--tone-success-bg);color:var(--success); }
-    .tenant-av.company    { background:var(--tone-info-bg);color:var(--info); }
+    .tenant-av.individual { background:var(--tone-success-bg);color:var(--tone-success-fg); }
+    .tenant-av.company    { background:var(--tone-info-bg);color:var(--tone-info-fg); }
     .cell-main { font-size:13.5px;font-weight:600;color:var(--text-primary); }
     .cell-sub  { font-size:11px;color:var(--text-muted);margin-top:2px; }
     .period-bar { height:4px;border-radius:4px;background:var(--card-border);margin-top:5px;position:relative;overflow:hidden; }
     .period-fill { height:100%;border-radius:4px;background:var(--accent); }
 
     /* ── STATUS BADGES ──────────────────────────────────────── */
-    .status-active   { background:var(--tone-success-bg);color:var(--success);border:1px solid var(--tone-success-border); }
-    .status-expiring { background:var(--tone-warning-bg);color:var(--warning);border:1px solid var(--tone-warning-border); }
+    .status-active   { background:var(--tone-success-bg);color:var(--tone-success-fg);border:1px solid var(--tone-success-border); }
+    .status-expiring { background:var(--tone-warning-bg);color:var(--tone-warning-fg);border:1px solid var(--tone-warning-border); }
     .status-expired  { background:var(--tone-neutral-bg);color:var(--text-muted);border:1px solid var(--card-border); }
-    .status-upcoming { background:var(--tone-info-bg);color:var(--info);border:1px solid var(--tone-info-border); }
+    .status-upcoming { background:var(--tone-info-bg);color:var(--tone-info-fg);border:1px solid var(--tone-info-border); }
 
     /* ── FOOTER / PAGINATION ────────────────────────────────── */
     .table-footer { padding:14px 20px;border-top:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px; }

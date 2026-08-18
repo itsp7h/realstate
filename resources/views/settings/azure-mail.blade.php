@@ -23,7 +23,7 @@
     font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 20px;
     margin-bottom: 18px;
 }
-.status-pill.configured   { background: var(--tone-success-bg); color: var(--success); }
+.status-pill.configured   { background: var(--tone-success-bg); color:var(--tone-success-fg); }
 .status-pill.unconfigured { background: var(--tone-neutral-bg); color: var(--text-muted); }
 </style>
 @endpush

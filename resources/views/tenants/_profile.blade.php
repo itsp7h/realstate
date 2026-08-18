@@ -108,8 +108,8 @@
         flex-shrink: 0;
         border: 3px solid var(--card-border);
     }
-    .profile-avatar.individual { background: var(--tone-success-bg); color: var(--success); border-color: var(--tone-success-border); }
-    .profile-avatar.company    { background: var(--tone-info-bg); color: var(--info);    border-color: var(--tone-info-border); }
+    .profile-avatar.individual { background: var(--tone-success-bg); color:var(--tone-success-fg); border-color: var(--tone-success-border); }
+    .profile-avatar.company    { background: var(--tone-info-bg); color:var(--tone-info-fg);    border-color: var(--tone-info-border); }
     .profile-name { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; color: var(--text-primary); line-height: 1.2; }
     .profile-meta { display: flex; align-items: center; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
     .profile-actions { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }

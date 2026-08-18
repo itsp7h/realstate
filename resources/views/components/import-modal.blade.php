@@ -69,7 +69,7 @@
 
 {{-- ── IMPORT MODAL ─────────────────────────────────────────── --}}
 <div class="modal-overlay" id="{{ $modalId }}" onclick="if(event.target===this){{ $closeFn }}()">
-    <div class="modal-box import-modal-box" style="--modal-w:680px">
+    <div class="modal-box import-modal-box" style="--modal-w:560px">
 
         {{-- Header --}}
         <div class="modal-header">
@@ -257,11 +257,6 @@
     transition: color 0.15s;
 }
 .import-banner-close:hover { color: var(--text-primary); }
-
-/* ── IMPORT MODAL BOX ────────────────────────────────────── */
-.import-modal-box {
-    max-width: 560px !important;
-}
 
 /* ── TEMPLATE BAR ────────────────────────────────────────── */
 .import-template-bar {
