@@ -6,53 +6,12 @@
 @push('styles')
 <style>
 /* ── SECTION CARDS ─────────────────────────────────────── */
-.u-section-stack { display: flex; flex-direction: column; gap: 20px; }
 
-.u-section-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-    opacity: 0;
-    transform: translateY(16px);
-    animation: uCardReveal 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-.u-section-card:nth-child(1) { animation-delay: 0.04s; }
-.u-section-card:nth-child(2) { animation-delay: 0.10s; }
-.u-section-card:nth-child(3) { animation-delay: 0.16s; }
-.u-section-card:nth-child(4) { animation-delay: 0.22s; }
-.u-section-card:nth-child(5) { animation-delay: 0.28s; }
-.u-section-card:nth-child(6) { animation-delay: 0.34s; }
-.u-section-card:nth-child(7) { animation-delay: 0.40s; }
-.u-section-card:nth-child(8) { animation-delay: 0.46s; }
 
 @keyframes uCardReveal {
     to { opacity: 1; transform: translateY(0); }
 }
 
-.u-section-header {
-    padding: 16px 22px;
-    border-bottom: 1px solid var(--card-border);
-    display: flex; align-items: center; gap: 12px;
-    background: linear-gradient(to right, rgba(232,184,109,0.04), transparent);
-}
-.u-section-icon {
-    width: 38px; height: 38px; border-radius: 9px;
-    background: var(--accent-dim); border: 1px solid rgba(232,184,109,0.2);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--accent); font-size: 15px; flex-shrink: 0;
-}
-.u-section-meta { flex: 1; }
-.u-section-title { font-family: 'Outfit', sans-serif; font-size: 14.5px; font-weight: 700; color: var(--text-primary); line-height: 1; }
-.u-section-sub   { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
-.u-step-badge {
-    width: 24px; height: 24px; border-radius: 50%;
-    background: var(--accent); color: #0B1120;
-    font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 800;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.u-section-body { padding: 22px; }
 
 /* ── FIELD GRID ────────────────────────────────────────── */
 .u-field-grid {
@@ -162,22 +121,10 @@
 .u-sub-divider::after { content: ''; flex: 1; height: 1px; background: var(--card-border); }
 
 /* ── STICKY ACTIONS ────────────────────────────────────── */
-.u-actions-bar {
-    position: sticky; bottom: 0;
-    background: var(--card-bg); border-top: 1px solid var(--card-border);
-    padding: 14px 22px;
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    z-index: 50; margin-top: 20px;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
-}
-.u-actions-hint { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
-.u-actions-hint i { color: var(--accent); }
-.u-actions-right { display: flex; gap: 10px; }
 
 @media (max-width: 768px) {
     .u-field-grid { grid-template-columns: 1fr; }
     .u-field-grid .u-span-2 { grid-column: span 1; }
-    .u-actions-hint { display: none; }
 }
 </style>
 @endpush
@@ -197,18 +144,18 @@
     @csrf
     @if($method === 'PUT') @method('PUT') @endif
 
-    <div class="u-section-stack">
+    <div class="section-stack card-reveal">
 
         {{-- ── BUILDING & FLOOR ───────────────────────────────── --}}
-        <div class="u-section-card">
-            <div class="u-section-header">
-                <div class="u-section-icon"><i class="fa-solid fa-link"></i></div>
-                <div class="u-section-meta">
-                    <div class="u-section-title">Building & Floor</div>
-                    <div class="u-section-sub">Property-level fields auto-fill from the selected building</div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon"><i class="fa-solid fa-link"></i></div>
+                <div class="card-header-text">
+                    <div class="card-title">Building & Floor</div>
+                    <div class="card-subtitle">Property-level fields auto-fill from the selected building</div>
                 </div>
             </div>
-            <div class="u-section-body">
+            <div class="card-body">
                 <div class="u-field-grid">
                     <div class="u-field-group u-span-full">
                         <label class="u-field-label">Building</label>
@@ -256,16 +203,16 @@
         {{-- ── PROPERTY INFORMATION ────────────────────────────── --}}
         @php $showPropSection = $showAll || count(array_intersect(['property_name','property_code','type_of_ownership','property_type','land_lord_name'], $visibleFields)) > 0; @endphp
         @if($showPropSection)
-        <div class="u-section-card" id="property-section">
-            <div class="u-section-header">
-                <div class="u-section-icon"><i class="fa-solid fa-building"></i></div>
-                <div class="u-section-meta">
-                    <div class="u-section-title">Property Information</div>
-                    <div class="u-section-sub">Auto-filled when a building is selected above</div>
+        <div class="card" id="property-section">
+            <div class="card-header">
+                <div class="card-header-icon"><i class="fa-solid fa-building"></i></div>
+                <div class="card-header-text">
+                    <div class="card-title">Property Information</div>
+                    <div class="card-subtitle">Auto-filled when a building is selected above</div>
                 </div>
-                <div class="u-step-badge">1</div>
+                <div class="card-step-badge">1</div>
             </div>
-            <div class="u-section-body u-locked-section" id="propSectionInner">
+            <div class="card-body u-locked-section" id="propSectionInner">
                 <div class="u-field-grid">
                     @if($ushow('property_name'))
                     <div class="u-field-group">
@@ -352,16 +299,16 @@
         {{-- ── ADDRESS ─────────────────────────────────────────── --}}
         @php $showAddrSection = $showAll || count(array_intersect(['building_no','road','block','area','city'], $visibleFields)) > 0; @endphp
         @if($showAddrSection)
-        <div class="u-section-card">
-            <div class="u-section-header">
-                <div class="u-section-icon"><i class="fa-solid fa-location-dot"></i></div>
-                <div class="u-section-meta">
-                    <div class="u-section-title">Address</div>
-                    <div class="u-section-sub">Physical location — auto-filled from building</div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon"><i class="fa-solid fa-location-dot"></i></div>
+                <div class="card-header-text">
+                    <div class="card-title">Address</div>
+                    <div class="card-subtitle">Physical location — auto-filled from building</div>
                 </div>
-                <div class="u-step-badge">2</div>
+                <div class="card-step-badge">2</div>
             </div>
-            <div class="u-section-body u-locked-section" id="addrSectionInner">
+            <div class="card-body u-locked-section" id="addrSectionInner">
                 <div class="u-field-grid">
                     @if($ushow('building_no'))
                     <div class="u-field-group">
@@ -440,16 +387,16 @@
         {{-- ── UNIT DETAILS ────────────────────────────────────── --}}
         @php $showUnitSection = $showAll || count(array_intersect(['unit_name','description','unit_type','creation_date','unit_condition','view','no_of_parkings_foc'], $visibleFields)) > 0; @endphp
         @if($showUnitSection)
-        <div class="u-section-card">
-            <div class="u-section-header">
-                <div class="u-section-icon"><i class="fa-solid fa-door-open"></i></div>
-                <div class="u-section-meta">
-                    <div class="u-section-title">Unit Details</div>
-                    <div class="u-section-sub">Individual unit configuration and attributes</div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon"><i class="fa-solid fa-door-open"></i></div>
+                <div class="card-header-text">
+                    <div class="card-title">Unit Details</div>
+                    <div class="card-subtitle">Individual unit configuration and attributes</div>
                 </div>
-                <div class="u-step-badge">3</div>
+                <div class="card-step-badge">3</div>
             </div>
-            <div class="u-section-body">
+            <div class="card-body">
                 <div class="u-field-grid">
                     @if($ushow('unit_name'))
                     <div class="u-field-group">
@@ -553,16 +500,16 @@
         {{-- ── AREA & PRICING ──────────────────────────────────── --}}
         @php $showPriceSection = $showAll || count(array_intersect(['area_unit','area_inside','area_terrace','rate_per_area_unit','rent_per_month','security_deposit_amount'], $visibleFields)) > 0; @endphp
         @if($showPriceSection)
-        <div class="u-section-card">
-            <div class="u-section-header">
-                <div class="u-section-icon"><i class="fa-solid fa-coins"></i></div>
-                <div class="u-section-meta">
-                    <div class="u-section-title">Area &amp; Pricing</div>
-                    <div class="u-section-sub">Size measurements and financial details</div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon"><i class="fa-solid fa-coins"></i></div>
+                <div class="card-header-text">
+                    <div class="card-title">Area &amp; Pricing</div>
+                    <div class="card-subtitle">Size measurements and financial details</div>
                 </div>
-                <div class="u-step-badge">4</div>
+                <div class="card-step-badge">4</div>
             </div>
-            <div class="u-section-body">
+            <div class="card-body">
                 <div class="u-field-grid">
                     @if($ushow('area_unit'))
                     <div class="u-field-group">
@@ -649,16 +596,16 @@
         @endif
 
         {{-- ── LEGAL & UTILITIES ───────────────────────────────── --}}
-        <div class="u-section-card">
-            <div class="u-section-header">
-                <div class="u-section-icon"><i class="fa-solid fa-bolt"></i></div>
-                <div class="u-section-meta">
-                    <div class="u-section-title">Legal &amp; Utilities</div>
-                    <div class="u-section-sub">Municipality reference and meter information</div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon"><i class="fa-solid fa-bolt"></i></div>
+                <div class="card-header-text">
+                    <div class="card-title">Legal &amp; Utilities</div>
+                    <div class="card-subtitle">Municipality reference and meter information</div>
                 </div>
-                <div class="u-step-badge">5</div>
+                <div class="card-step-badge">5</div>
             </div>
-            <div class="u-section-body">
+            <div class="card-body">
 
                 @if($ushow('municipality_nos'))
                 <div class="u-sub-divider"><i class="fa-solid fa-scale-balanced" style="font-size:9px;"></i> Legal</div>
@@ -754,15 +701,15 @@
 
         {{-- ── CUSTOM FIELDS ──────────────────────────────────── --}}
         @if(count($customFieldDefs ?? []) > 0)
-        <div class="u-section-card">
-            <div class="u-section-header">
-                <div class="u-section-icon"><i class="fa-solid fa-puzzle-piece"></i></div>
-                <div class="u-section-meta">
-                    <div class="u-section-title">Custom Fields</div>
-                    <div class="u-section-sub">Additional fields configured for this form</div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon"><i class="fa-solid fa-puzzle-piece"></i></div>
+                <div class="card-header-text">
+                    <div class="card-title">Custom Fields</div>
+                    <div class="card-subtitle">Additional fields configured for this form</div>
                 </div>
             </div>
-            <div class="u-section-body">
+            <div class="card-body">
                 <div class="u-field-grid">
                     @foreach($customFieldDefs as $def)
                         @if($showAll || in_array($def->name, $visibleFields))
@@ -801,15 +748,15 @@
         </div>
         @endif
 
-    </div>{{-- /u-section-stack --}}
+    </div>{{-- /section-stack --}}
 
     {{-- STICKY ACTIONS BAR --}}
-    <div class="u-actions-bar">
-        <div class="u-actions-hint">
+    <div class="form-sticky-actions">
+        <div class="form-sticky-actions-hint">
             <i class="fa-solid fa-circle-info"></i>
             Fields marked <span style="color:var(--danger);font-weight:700;margin:0 2px;">*</span> are required
         </div>
-        <div class="u-actions-right">
+        <div class="action-btns">
             <a href="{{ route('property-units.index') }}" class="btn btn-outline">
                 <i class="fa-solid fa-xmark"></i> Cancel
             </a>

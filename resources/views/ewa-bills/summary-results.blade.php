@@ -5,56 +5,18 @@
 
 @push('styles')
 <style>
-.ewa-stats {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
-    gap: 14px; margin-bottom: 24px;
-}
-.ewa-stat {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 16px 20px;
-    display: flex; align-items: center; gap: 14px;
-}
-.ewa-stat-icon {
-    width: 40px; height: 40px; border-radius: var(--radius-sm);
-    display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
-}
-.ewa-stat-icon.teal  { background: #F0FDFA; color: #0D9488; }
-.ewa-stat-icon.green { background: #ECFDF5; color: #059669; }
-.ewa-stat-icon.red   { background: #FEF2F2; color: #DC2626; }
-.ewa-stat-val { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-.ewa-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-
-.table-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden; }
-.amount-col { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 13px; white-space: nowrap; }
-
-.status-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap;
-}
-.status-badge.created { background: #ECFDF5; color: #059669; }
-.status-badge.updated { background: #EFF6FF; color: #2563EB; }
-.status-badge.failed  { background: #FEF2F2; color: #DC2626; }
-
 .rt-badge {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap;
 }
-.rt-badge.actual    { background: #ECFDF5; color: #059669; }
-.rt-badge.estimated { background: #FFFBEB; color: #D97706; }
+.rt-badge.actual    { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.rt-badge.estimated { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
 
 .remark-note { font-size: 11px; color: var(--text-muted); margin-top: 3px; max-width: 220px; }
-.error-note  { font-size: 11px; color: #DC2626; margin-top: 3px; max-width: 220px; }
+.error-note  { font-size: 11px; color: var(--tone-danger-fg); margin-top: 3px; max-width: 220px; }
 
 /* ── TABS ──────────────────────────────────────────────────── */
 .tab-bar { display: flex; gap: 4px; border-bottom: 2px solid var(--card-border); margin-bottom: 20px; }
-.tab-btn {
-    padding: 11px 22px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13.5px; font-weight: 600;
-    color: var(--text-muted); border: none; background: none; cursor: pointer;
-    border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.18s, border-color 0.18s;
-    display: flex; align-items: center; gap: 8px; text-decoration: none;
-}
-.tab-btn:hover { color: var(--text-primary); }
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 </style>
 @endpush
 
@@ -77,18 +39,18 @@
 
 @include('ewa-bills._tabs')
 
-<div class="ewa-stats">
-    <div class="ewa-stat">
-        <div class="ewa-stat-icon teal"><i class="fa-solid fa-file-invoice"></i></div>
-        <div><div class="ewa-stat-val">{{ count($rows) }}</div><div class="ewa-stat-lbl">Total Files</div></div>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon teal"><i class="fa-solid fa-file-invoice"></i></div>
+        <div><div class="stat-val">{{ count($rows) }}</div><div class="stat-lbl">Total Files</div></div>
     </div>
-    <div class="ewa-stat">
-        <div class="ewa-stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
-        <div><div class="ewa-stat-val">{{ $succeeded }}</div><div class="ewa-stat-lbl">Saved</div></div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+        <div><div class="stat-val">{{ $succeeded }}</div><div class="stat-lbl">Saved</div></div>
     </div>
-    <div class="ewa-stat">
-        <div class="ewa-stat-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
-        <div><div class="ewa-stat-val">{{ $failed }}</div><div class="ewa-stat-lbl">Failed</div></div>
+    <div class="stat-card">
+        <div class="stat-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
+        <div><div class="stat-val">{{ $failed }}</div><div class="stat-lbl">Failed</div></div>
     </div>
 </div>
 

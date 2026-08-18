@@ -5,36 +5,6 @@
 
 @push('styles')
 <style>
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-    .stat-card {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius);
-        padding: 18px 20px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        box-shadow: var(--shadow-sm);
-        transition: box-shadow 0.2s, transform 0.2s;
-    }
-    .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-    .stat-icon {
-        width: 44px; height: 44px;
-        border-radius: var(--radius-sm);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 18px; flex-shrink: 0;
-    }
-    .stat-icon.gold  { background: var(--accent-dim); color: var(--accent); }
-    .stat-icon.green { background: #ECFDF5; color: var(--success); }
-    .stat-icon.blue  { background: #EFF6FF; color: var(--info); }
-    .stat-val { font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-    .stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
-
     /* ── FILTER BAR ─────────────────────────────────────── */
     .filter-bar {
         display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;
@@ -42,22 +12,6 @@
         background: var(--page-bg);
         border-bottom: 1px solid var(--card-border);
     }
-    .filter-group { display: flex; flex-direction: column; gap: 5px; min-width: 150px; }
-    .filter-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .filter-group input, .filter-group select {
-        padding: 8px 12px; font-size: 13px;
-        border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-        background: var(--card-bg); color: var(--text-primary);
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        outline: none; appearance: none; -webkit-appearance: none;
-        transition: border-color 0.18s, box-shadow 0.18s;
-    }
-    .filter-group input:focus, .filter-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
-    .filter-group select {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px;
-    }
-    .filter-actions { display: flex; gap: 8px; align-items: flex-end; margin-left: auto; }
 
     /* ── TABLE ──────────────────────────────────────────── */
     .tenant-avatar {
@@ -66,78 +20,18 @@
         font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700;
         flex-shrink: 0;
     }
-    .tenant-avatar.individual { background: #ECFDF5; color: var(--success); }
-    .tenant-avatar.company    { background: #EFF6FF; color: var(--info); }
+    .tenant-avatar.individual { background: var(--tone-success-bg); color: var(--success); }
+    .tenant-avatar.company    { background: var(--tone-info-bg); color: var(--info); }
     .tenant-name { font-weight: 600; font-size: 13.5px; color: var(--text-primary); }
     .tenant-sub  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    .action-btns { display: flex; gap: 6px; }
 
     /* ── TABLE FOOTER ───────────────────────────────────── */
     .table-footer {
         padding: 14px 20px; border-top: 1px solid var(--card-border);
         display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
     }
-    .pagination { display: flex; gap: 4px; align-items: center; }
-    .page-btn {
-        width: 32px; height: 32px; border: 1.5px solid var(--card-border);
-        background: var(--card-bg); border-radius: var(--radius-sm);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 12px; font-weight: 600; color: var(--text-secondary);
-        cursor: pointer; text-decoration: none; transition: all 0.15s;
-    }
-    .page-btn:hover { background: var(--page-bg); color: var(--text-primary); }
-    .page-btn.active { background: var(--accent); border-color: var(--accent); color: #0B1120; }
-    .result-count { font-size: 13px; color: var(--text-muted); }
-    .result-count strong { color: var(--text-primary); }
-    .empty-state { text-align: center; padding: 60px 20px; }
-    .empty-icon { width: 64px; height: 64px; background: var(--page-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--text-muted); margin: 0 auto 16px; }
-    .empty-state h4 { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
-    .empty-state p { font-size: 13px; color: var(--text-muted); }
 
     /* ── MODAL ──────────────────────────────────────────── */
-    .modal-overlay {
-        position: fixed; inset: 0; z-index: 1000;
-        background: rgba(11,17,32,0.55); backdrop-filter: blur(4px);
-        display: flex; align-items: center; justify-content: center; padding: 20px;
-        opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
-    }
-    .modal-overlay.open { opacity: 1; pointer-events: all; }
-    .modal-box {
-        background: var(--card-bg); border: 1px solid var(--card-border);
-        border-radius: 16px;
-        box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.10);
-        width: 100%; max-width: 560px; max-height: 90vh;
-        display: flex; flex-direction: column;
-        transform: translateY(20px) scale(0.98);
-        transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);
-        overflow: hidden;
-    }
-    .modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
-    .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--card-border); flex-shrink: 0; }
-    .modal-header-top { display: flex; align-items: center; gap: 12px; }
-    .modal-header-icon {
-        width: 40px; height: 40px; border-radius: 10px;
-        background: var(--accent-dim); border: 1px solid rgba(232,184,109,0.25);
-        display: flex; align-items: center; justify-content: center;
-        color: var(--accent); font-size: 16px; flex-shrink: 0;
-    }
-    .modal-header-title { font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 800; color: var(--text-primary); }
-    .modal-header-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    .modal-close-btn {
-        margin-left: auto; width: 32px; height: 32px; border-radius: var(--radius-sm);
-        border: 1.5px solid var(--card-border); background: transparent;
-        cursor: pointer; display: flex; align-items: center; justify-content: center;
-        color: var(--text-muted); font-size: 13px; transition: all 0.15s;
-    }
-    .modal-close-btn:hover { background: var(--page-bg); color: var(--text-primary); }
-    .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
-    .modal-body::-webkit-scrollbar { width: 4px; }
-    .modal-body::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
-    .modal-footer {
-        padding: 16px 24px; border-top: 1px solid var(--card-border);
-        display: flex; align-items: center; justify-content: flex-end; gap: 10px;
-        flex-shrink: 0;
-    }
 
     /* ── MODAL FIELDS ───────────────────────────────────── */
     .mfield-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px 20px; }
@@ -175,31 +69,10 @@
     .mfield-error { display: flex; align-items: center; gap: 4px; margin-top: 5px; font-size: 11px; color: var(--danger); font-weight: 500; }
 
     /* ── TYPE TOGGLE ────────────────────────────────────── */
-    .type-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
-    .type-option { position: relative; }
-    .type-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
-    .type-option label {
-        display: flex; align-items: center; gap: 10px;
-        padding: 12px 14px; border-radius: var(--radius-sm);
-        border: 1.5px solid var(--card-border); cursor: pointer;
-        font-size: 13px; font-weight: 600; color: var(--text-secondary);
-        transition: all 0.18s; background: var(--page-bg);
-        text-transform: none; letter-spacing: 0;
-    }
-    .type-option label .ti { font-size: 16px; }
-    .type-option input:checked + label {
-        border-color: var(--accent); background: var(--accent-dim);
-        color: var(--text-primary);
-        box-shadow: 0 0 0 3px var(--accent-dim);
-    }
-    .type-option label:hover { border-color: #B0BCCF; background: #F8FAFC; }
 
     @media (max-width: 600px) {
-        .modal-box { max-height: 100vh; border-radius: 0; max-width: 100%; }
-        .modal-overlay { padding: 0; align-items: flex-end; }
         .mfield-grid { grid-template-columns: 1fr; }
         .mfield-grid .span-full { grid-column: span 1; }
-        .type-toggle { grid-template-columns: 1fr; }
     }
 
     /* ── TENANT PROFILE MODAL ───────────────────────────── */
@@ -209,12 +82,6 @@
         align-items: center; justify-content: center; padding: 24px;
     }
     .profile-modal-overlay.open { display: flex; }
-    .profile-modal-box {
-        width: 100%; max-width: 1100px; max-height: 90vh;
-        background: var(--card-bg); border-radius: var(--radius);
-        display: flex; flex-direction: column; overflow: hidden;
-        box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-    }
     .profile-modal-header {
         padding: 10px 16px; background: var(--page-bg); border-bottom: 1px solid var(--card-border);
         display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0;
@@ -251,7 +118,6 @@
         </button>
     </div>
 </div>
-
 
 {{-- ═══════════════════════ MOBILE SCREEN (Miknas Property Manager design) ═══════════════════════ --}}
 <div class="m-screen">
@@ -521,7 +387,7 @@
      ADD TENANT MODAL
 ═══════════════════════════════════════════════════════ --}}
 <div class="modal-overlay" id="tenantModal" role="dialog" aria-modal="true" aria-labelledby="tenantModalTitle">
-    <div class="modal-box">
+    <div class="modal-box" style="--modal-w:560px">
 
         <div class="modal-header">
             <div class="modal-header-top">
@@ -543,19 +409,19 @@
                 {{-- TENANT TYPE --}}
                 <div style="margin-bottom:20px;">
                     <div class="mfield-label" style="margin-bottom:10px;">Tenant Type <span class="req">*</span></div>
-                    <div class="type-toggle">
-                        <div class="type-option">
+                    <div class="option-grid">
+                        <div class="option-group">
                             <input type="radio" name="tenant_type" id="type_individual" value="individual"
                                 {{ old('tenant_type', 'individual') === 'individual' ? 'checked' : '' }} required>
-                            <label for="type_individual">
+                            <label for="type_individual" class="option-card">
                                 <i class="fa-solid fa-user ti" style="color:var(--success);"></i>
                                 Individual
                             </label>
                         </div>
-                        <div class="type-option">
+                        <div class="option-group">
                             <input type="radio" name="tenant_type" id="type_company" value="company"
                                 {{ old('tenant_type') === 'company' ? 'checked' : '' }}>
-                            <label for="type_company">
+                            <label for="type_company" class="option-card">
                                 <i class="fa-solid fa-building-user ti" style="color:var(--info);"></i>
                                 Company
                             </label>
@@ -679,7 +545,7 @@
      TENANT PROFILE MODAL
 ═══════════════════════════════════════════════════════ --}}
 <div class="profile-modal-overlay" id="tenantProfileModal" onclick="closeTenantProfileModal(event)">
-    <div class="profile-modal-box" onclick="event.stopPropagation()">
+    <div class="modal-box" style="--modal-w:1100px" onclick="event.stopPropagation()">
         <div class="profile-modal-header">
             <button type="button" class="btn btn-outline btn-sm" onclick="closeTenantProfileModal()">
                 <i class="fa-solid fa-xmark"></i> Close

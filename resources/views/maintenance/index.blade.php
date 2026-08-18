@@ -6,29 +6,6 @@
 @push('styles')
 <style>
 /* ── STATS ─────────────────────────────────────────────── */
-.maint-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 14px; margin-bottom: 24px;
-}
-.maint-stat {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 16px 20px;
-    display: flex; align-items: center; gap: 14px;
-}
-.maint-stat-icon {
-    width: 40px; height: 40px; border-radius: var(--radius-sm);
-    display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
-}
-.maint-stat-icon.blue   { background: #EFF6FF; color: #2563EB; }
-.maint-stat-icon.orange { background: #FFF7ED; color: #EA580C; }
-.maint-stat-icon.purple { background: #F5F3FF; color: #7C3AED; }
-.maint-stat-icon.gold   { background: var(--accent-dim); color: var(--accent); }
-.maint-stat-icon.green  { background: #ECFDF5; color: #059669; }
-.maint-stat-icon.teal   { background: #F0FDFA; color: #0D9488; }
-.maint-stat-icon.gray   { background: #F1F5F9; color: #64748B; }
-.maint-stat-val { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-.maint-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
 /* ── FILTER BAR ─────────────────────────────────────────── */
 .filter-bar {
@@ -46,40 +23,6 @@
 .actions-cell { display: flex; gap: 6px; align-items: center; }
 
 /* ── MODAL ──────────────────────────────────────────────── */
-.modal-overlay {
-    position:fixed;inset:0;z-index:1000;
-    background:rgba(11,17,32,.55);backdrop-filter:blur(4px);
-    display:flex;align-items:center;justify-content:center;padding:20px;
-    opacity:0;pointer-events:none;transition:opacity .25s ease;
-}
-.modal-overlay.open { opacity:1;pointer-events:all; }
-.modal-box {
-    background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;
-    box-shadow:0 24px 60px rgba(0,0,0,.18),0 8px 24px rgba(0,0,0,.10);
-    width:100%;max-width:820px;max-height:92vh;
-    display:flex;flex-direction:column;
-    transform:translateY(20px) scale(.98);
-    transition:transform .3s cubic-bezier(.22,1,.36,1);
-    overflow:hidden;
-}
-.modal-overlay.open .modal-box { transform:translateY(0) scale(1); }
-.modal-header { padding:18px 24px 0;border-bottom:1px solid var(--card-border);flex-shrink:0; }
-.modal-header-top { display:flex;align-items:center;gap:12px;padding-bottom:14px; }
-.modal-header-icon {
-    width:40px;height:40px;border-radius:10px;
-    background:var(--accent-dim);border:1px solid rgba(232,184,109,.25);
-    display:flex;align-items:center;justify-content:center;
-    color:var(--accent);font-size:16px;flex-shrink:0;
-}
-.modal-header-title { font-family:'Outfit',sans-serif;font-size:17px;font-weight:800;color:var(--text-primary); }
-.modal-header-sub { font-size:12px;color:var(--text-muted);margin-top:2px; }
-.modal-close-btn {
-    margin-left:auto;width:32px;height:32px;border-radius:var(--radius-sm);
-    border:1.5px solid var(--card-border);background:transparent;
-    cursor:pointer;display:flex;align-items:center;justify-content:center;
-    color:var(--text-muted);font-size:13px;transition:all .15s;
-}
-.modal-close-btn:hover { background:var(--page-bg);color:var(--text-primary); }
 
 /* ── MODAL TABS ─────────────────────────────────────────── */
 .modal-tabs { display:flex;gap:0;overflow-x:auto; }
@@ -100,18 +43,9 @@
 }
 .mtab-btn .err-dot.show { display:inline-block; }
 
-.modal-body { padding:20px 24px;overflow-y:auto;flex:1; }
-.modal-body::-webkit-scrollbar { width:4px; }
-.modal-body::-webkit-scrollbar-thumb { background:#CBD5E1;border-radius:10px; }
-
 .mtab-panel { display:none; }
 .mtab-panel.active { display:block; }
 
-.modal-footer {
-    padding:14px 24px;border-top:1px solid var(--card-border);
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-    flex-shrink:0;
-}
 .modal-footer-nav { display:flex;gap:8px; }
 
 /* ── MODAL FIELDS ───────────────────────────────────────── */
@@ -149,7 +83,7 @@
     letter-spacing:.06em;color:var(--text-muted);background:var(--page-bg);
     border-bottom:1px solid var(--card-border);text-align:left;
 }
-.modal-job-lines-table td { padding:6px 4px;border-bottom:1px solid #F1F5F9;vertical-align:top; }
+.modal-job-lines-table td { padding:6px 4px;border-bottom:1px solid var(--tone-neutral-border);vertical-align:top; }
 .modal-job-lines-table tr:last-child td { border-bottom:none; }
 .modal-job-lines-table input,.modal-job-lines-table textarea {
     width:100%;padding:7px 9px;font-size:13px;
@@ -160,7 +94,7 @@
 .modal-job-lines-table input:focus,.modal-job-lines-table textarea:focus { border-color:var(--accent); }
 .modal-job-lines-table textarea { resize:vertical;min-height:54px; }
 .modal-remove-line-btn {
-    background:none;border:none;color:#DC2626;cursor:pointer;
+    background:none;border:none;color:var(--tone-danger-fg);cursor:pointer;
     font-size:13px;padding:5px;border-radius:6px;transition:background .15s;
 }
 .modal-remove-line-btn:hover { background:#FEF2F2; }
@@ -193,22 +127,6 @@
 .mquot-pill button:hover { opacity:1; }
 
 /* ── QUOTATION RADIO CARDS ──────────────────────────────── */
-.quot-radio-card {
-    display:flex;align-items:center;gap:12px;
-    padding:12px 16px;border:2px solid var(--card-border);
-    border-radius:var(--radius-sm);cursor:pointer;
-    background:var(--card-bg);transition:border-color .15s,background .15s;
-}
-.quot-radio-card:hover { border-color:#7C3AED;background:var(--page-bg); }
-.quot-radio-card.selected { border-color:#7C3AED;background:#F5F3FF; }
-.quot-radio-card.selected .quot-radio-num { background:#7C3AED;border-color:#7C3AED;color:#fff; }
-.quot-radio-check {
-    width:22px;height:22px;border-radius:50%;
-    background:var(--page-bg);border:2px solid var(--card-border);
-    display:flex;align-items:center;justify-content:center;
-    font-size:10px;color:transparent;flex-shrink:0;transition:all .15s;
-}
-.quot-radio-card.selected .quot-radio-check { background:#7C3AED;border-color:#7C3AED;color:#fff; }
 
 /* ── SIGNATURE PAD ──────────────────────────────────────── */
 .sig-pad-wrap {
@@ -270,8 +188,6 @@
 .prop-no-results { padding:12px; font-size:12px; color:var(--text-muted); text-align:center; display:none; }
 
 @media (max-width:600px) {
-    .modal-box { max-height:100vh;border-radius:0;max-width:100%; }
-    .modal-overlay { padding:0;align-items:flex-end; }
     .mfield-grid { grid-template-columns:1fr; }
     .mfield-grid .span-full,.mfield-grid .span-2 { grid-column:span 1; }
 }
@@ -334,47 +250,47 @@
 </div>
 
 {{-- STATS --}}
-<div class="maint-stats m-hide-desktop-index">
-    <div class="maint-stat">
-        <div class="maint-stat-icon gray"><i class="fa-solid fa-clipboard-list"></i></div>
+<div class="stats-grid m-hide-desktop-index">
+    <div class="stat-card">
+        <div class="stat-icon gray"><i class="fa-solid fa-clipboard-list"></i></div>
         <div>
-            <div class="maint-stat-val">{{ $stats['total'] }}</div>
-            <div class="maint-stat-lbl">Total</div>
+            <div class="stat-val">{{ $stats['total'] }}</div>
+            <div class="stat-lbl">Total</div>
         </div>
     </div>
-    <div class="maint-stat">
-        <div class="maint-stat-icon orange"><i class="fa-solid fa-user-clock"></i></div>
+    <div class="stat-card">
+        <div class="stat-icon amber"><i class="fa-solid fa-user-clock"></i></div>
         <div>
-            <div class="maint-stat-val">{{ $stats['waiting_supervisor'] }}</div>
-            <div class="maint-stat-lbl">Pending Assessment</div>
+            <div class="stat-val">{{ $stats['waiting_supervisor'] }}</div>
+            <div class="stat-lbl">Pending Assessment</div>
         </div>
     </div>
-    <div class="maint-stat">
-        <div class="maint-stat-icon purple"><i class="fa-solid fa-stamp"></i></div>
+    <div class="stat-card">
+        <div class="stat-icon purple"><i class="fa-solid fa-stamp"></i></div>
         <div>
-            <div class="maint-stat-val">{{ $stats['waiting_approval'] }}</div>
-            <div class="maint-stat-lbl">Pending Approval</div>
+            <div class="stat-val">{{ $stats['waiting_approval'] }}</div>
+            <div class="stat-lbl">Pending Approval</div>
         </div>
     </div>
-    <div class="maint-stat">
-        <div class="maint-stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
         <div>
-            <div class="maint-stat-val">{{ $stats['approved'] }}</div>
-            <div class="maint-stat-lbl">Approved</div>
+            <div class="stat-val">{{ $stats['approved'] }}</div>
+            <div class="stat-lbl">Approved</div>
         </div>
     </div>
-    <div class="maint-stat">
-        <div class="maint-stat-icon blue"><i class="fa-solid fa-rotate"></i></div>
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="fa-solid fa-rotate"></i></div>
         <div>
-            <div class="maint-stat-val">{{ $stats['in_progress'] }}</div>
-            <div class="maint-stat-lbl">In Progress</div>
+            <div class="stat-val">{{ $stats['in_progress'] }}</div>
+            <div class="stat-lbl">In Progress</div>
         </div>
     </div>
-    <div class="maint-stat">
-        <div class="maint-stat-icon teal"><i class="fa-solid fa-flag-checkered"></i></div>
+    <div class="stat-card">
+        <div class="stat-icon teal"><i class="fa-solid fa-flag-checkered"></i></div>
         <div>
-            <div class="maint-stat-val">{{ $stats['completed'] }}</div>
-            <div class="maint-stat-lbl">Completed</div>
+            <div class="stat-val">{{ $stats['completed'] }}</div>
+            <div class="stat-lbl">Completed</div>
         </div>
     </div>
 </div>
@@ -505,7 +421,7 @@
      NEW MAINTENANCE REQUEST MODAL
 ═══════════════════════════════════════════════════════ --}}
 <div class="modal-overlay" id="maintenanceModal" role="dialog" aria-modal="true" aria-labelledby="maintenanceModalTitle">
-    <div class="modal-box">
+    <div class="modal-box" style="--modal-w:820px">
 
         <div class="modal-header">
             <div class="modal-header-top">
@@ -521,15 +437,15 @@
 
             <div class="modal-tabs">
                 <button type="button" class="mtab-btn active" data-tab="mm-details" onclick="switchMMTab('mm-details')">
-                    <i class="fa-solid fa-clipboard" style="color:#C2410C;font-size:11px;"></i> Details
+                    <i class="fa-solid fa-clipboard" style="color:var(--tone-warning-fg);font-size:11px;"></i> Details
                     <span class="err-dot" id="dot-mm-details"></span>
                 </button>
                 <button type="button" class="mtab-btn" data-tab="mm-joblines" onclick="switchMMTab('mm-joblines')">
-                    <i class="fa-solid fa-list-check" style="color:#1D4ED8;font-size:11px;"></i> Job Lines
+                    <i class="fa-solid fa-list-check" style="color:var(--tone-info-fg);font-size:11px;"></i> Job Lines
                     <span class="err-dot" id="dot-mm-joblines"></span>
                 </button>
                 <button type="button" class="mtab-btn" data-tab="mm-quotations" onclick="switchMMTab('mm-quotations')">
-                    <i class="fa-solid fa-file-invoice-dollar" style="color:#059669;font-size:11px;"></i> Quotations
+                    <i class="fa-solid fa-file-invoice-dollar" style="color:var(--tone-success-fg);font-size:11px;"></i> Quotations
                     <span class="err-dot" id="dot-mm-quotations"></span>
                 </button>
             </div>
@@ -787,10 +703,10 @@
      SUPERVISOR ASSESSMENT MODAL
 ═══════════════════════════════════════════════════════ --}}
 <div class="modal-overlay" id="assessModal" role="dialog" aria-modal="true">
-    <div class="modal-box" style="max-width:680px">
+    <div class="modal-box" style="--modal-w:820px;">
         <div class="modal-header">
             <div class="modal-header-top">
-                <div class="modal-header-icon" style="background:#FFF7ED;color:#EA580C"><i class="fa-solid fa-user-clock"></i></div>
+                <div class="modal-header-icon" style="background:var(--tone-warning-bg);color:var(--tone-warning-fg)"><i class="fa-solid fa-user-clock"></i></div>
                 <div>
                     <div class="modal-header-title">Supervisor Assessment</div>
                     <div class="modal-header-sub" id="assessModalSub">Fill in the assessment and quotations</div>
@@ -829,16 +745,16 @@
                         <label class="mfield-label">Select Quotation <span class="req">*</span></label>
                         <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px" id="assessQuotCards">
                             @foreach([1,2,3] as $n)
-                            <label class="quot-radio-card" id="aq-card-{{ $n }}" style="display:none">
+                            <label class="option-card" id="aq-card-{{ $n }}" style="display:none">
                                 <input type="radio" name="selected_quotation" value="{{ $n }}" style="display:none" class="aq-radio-input">
                                 <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
-                                    <div style="width:28px;height:28px;border-radius:50%;background:var(--page-bg);border:2px solid var(--card-border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--text-muted);flex-shrink:0" class="quot-radio-num">{{ $n }}</div>
+                                    <div class="option-card-num">{{ $n }}</div>
                                     <div style="flex:1;min-width:0">
                                         <div style="font-size:15px;font-weight:800;font-family:'Outfit',sans-serif;color:var(--text-primary)" id="aq-amount-{{ $n }}">—</div>
                                         <div id="aq-file-{{ $n }}" style="font-size:11px;margin-top:2px"></div>
                                     </div>
                                 </div>
-                                <div class="quot-radio-check"><i class="fa-solid fa-check"></i></div>
+                                <div class="option-card-check"><i class="fa-solid fa-check"></i></div>
                             </label>
                             @endforeach
                             <div id="aq-no-quotations" style="display:none;font-size:12px;color:var(--text-muted);padding:12px 14px;background:var(--page-bg);border-radius:var(--radius-sm);border:1px dashed var(--card-border);text-align:center">
@@ -871,7 +787,7 @@
             <div></div>
             <div style="display:flex;gap:8px">
                 <button type="button" class="btn btn-outline" onclick="closeAssessModal()">Cancel</button>
-                <button type="submit" form="assessForm" class="btn btn-primary" onclick="handleAssessSubmit(this)" style="background:#EA580C;border-color:#EA580C">
+                <button type="submit" form="assessForm" class="btn btn-primary" onclick="handleAssessSubmit(this)" style="background:var(--tone-warning-border);border-color:var(--tone-warning-border)">
                     <i class="fa-solid fa-arrow-right"></i> Submit Assessment
                 </button>
             </div>
@@ -883,7 +799,7 @@
      DEPARTMENT HEAD APPROVAL MODAL
 ═══════════════════════════════════════════════════════ --}}
 <div class="modal-overlay" id="approveModal" role="dialog" aria-modal="true">
-    <div class="modal-box" style="max-width:560px">
+    <div class="modal-box" style="--modal-w:820px;">
         <div class="modal-header">
             <div class="modal-header-top">
                 <div class="modal-header-icon" style="background:#F5F3FF;color:#7C3AED"><i class="fa-solid fa-stamp"></i></div>
@@ -905,16 +821,16 @@
                     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:10px">Quotations <span style="text-transform:none;font-weight:600;color:var(--text-muted)">— supervisor's pick is highlighted</span></div>
                     <div style="display:flex;flex-direction:column;gap:8px" id="aprQuotCards">
                         @foreach([1,2,3] as $n)
-                        <div class="quot-radio-card" id="apr-card-{{ $n }}" style="display:none;cursor:default">
+                        <div class="option-card" id="apr-card-{{ $n }}" style="display:none;cursor:default">
                             <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
-                                <div style="width:28px;height:28px;border-radius:50%;background:var(--page-bg);border:2px solid var(--card-border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--text-muted);flex-shrink:0" class="quot-radio-num">{{ $n }}</div>
+                                <div class="option-card-num">{{ $n }}</div>
                                 <div style="flex:1;min-width:0">
                                     <div style="font-size:15px;font-weight:800;font-family:'Outfit',sans-serif;color:var(--text-primary)" id="apr-amount-{{ $n }}">—</div>
                                     <div id="apr-file-{{ $n }}" style="font-size:11px;margin-top:2px"></div>
                                 </div>
                             </div>
                             <div id="apr-badge-{{ $n }}" style="font-size:10px;font-weight:700;color:#7C3AED;text-transform:uppercase;letter-spacing:.04em;display:none">Selected</div>
-                            <div class="quot-radio-check"><i class="fa-solid fa-check"></i></div>
+                            <div class="option-card-check"><i class="fa-solid fa-check"></i></div>
                         </div>
                         @endforeach
                         <div id="apr-no-quotations" style="display:none;font-size:12px;color:var(--text-muted);padding:12px 14px;background:var(--page-bg);border-radius:var(--radius-sm);border:1px dashed var(--card-border);text-align:center">
@@ -1032,7 +948,7 @@ function openAssessModal(d) {
         const card  = document.getElementById('aq-card-'+n);
         const hasAmt = amt !== '' && amt !== null && amt !== undefined;
         card.style.display = hasAmt ? '' : 'none';
-        card.classList.remove('selected');
+        card.classList.remove('is-selected');
         card.querySelector('.aq-radio-input').checked = false;
         if (hasAmt) {
             visibleCount++;
@@ -1050,7 +966,7 @@ function closeAssessModal() {
     document.body.style.overflow = '';
     document.getElementById('assessForm').reset();
     document.querySelectorAll('.aq-radio-input').forEach(r => r.checked = false);
-    document.querySelectorAll('#assessQuotCards .quot-radio-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('#assessQuotCards .option-card').forEach(c => c.classList.remove('is-selected'));
     if (window.clearSignature) clearSignature();
 }
 document.getElementById('assessModal').addEventListener('click', function(e) {
@@ -1058,8 +974,8 @@ document.getElementById('assessModal').addEventListener('click', function(e) {
 });
 document.querySelectorAll('.aq-radio-input').forEach(radio => {
     radio.addEventListener('change', function() {
-        document.querySelectorAll('#assessQuotCards .quot-radio-card').forEach(c => c.classList.remove('selected'));
-        this.closest('.quot-radio-card').classList.add('selected');
+        document.querySelectorAll('#assessQuotCards .option-card').forEach(c => c.classList.remove('is-selected'));
+        this.closest('.option-card').classList.add('is-selected');
     });
 });
 function handleAssessSubmit(btn) {

@@ -51,7 +51,7 @@
 </style>
 
 <div class="modal-overlay" id="expenseModal" role="dialog" aria-modal="true" aria-labelledby="expenseModalTitle">
-    <div class="modal-box" style="max-width:480px;">
+    <div class="modal-box" style="--modal-w:480px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:20px 22px 0;">
             <div>
                 <div id="expenseModalTitle" style="font-family:'Outfit',sans-serif;font-weight:700;font-size:19px;color:var(--text-primary);">Record expense</div>

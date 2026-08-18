@@ -5,70 +5,6 @@
 
 @push('styles')
 <style>
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-    .stat-card {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius);
-        padding: 18px 20px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        box-shadow: var(--shadow-sm);
-    }
-    .stat-icon {
-        width: 44px; height: 44px;
-        border-radius: var(--radius-sm);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 18px;
-        flex-shrink: 0;
-    }
-    .stat-icon.gold   { background: var(--accent-dim); color: var(--accent); }
-    .stat-icon.blue   { background: #EFF6FF; color: var(--info); }
-    .stat-val {
-        font-family: 'Outfit', sans-serif;
-        font-size: 24px;
-        font-weight: 800;
-        color: var(--text-primary);
-        line-height: 1;
-    }
-    .stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
-
-    .filter-bar {
-        display: flex;
-        align-items: flex-end;
-        gap: 12px;
-        flex-wrap: wrap;
-        padding: 16px 20px;
-        border-bottom: 1px solid var(--card-border);
-    }
-    .filter-group { display: flex; flex-direction: column; gap: 5px; min-width: 180px; }
-    .filter-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .filter-group select {
-        padding: 8px 12px;
-        font-size: 13px;
-        border: 1.5px solid var(--input-border);
-        border-radius: var(--radius-sm);
-        background: var(--card-bg);
-        color: var(--text-primary);
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        outline: none;
-        appearance: none;
-        -webkit-appearance: none;
-        transition: border-color 0.18s;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 10px center;
-        padding-right: 32px;
-    }
-    .filter-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
-    .filter-actions { display: flex; gap: 8px; align-items: flex-end; margin-left: auto; }
-
     .bldg-pill {
         display: inline-flex;
         align-items: center;
@@ -80,106 +16,11 @@
         padding: 3px 8px;
         border-radius: 20px;
     }
-    .action-btns { display: flex; gap: 6px; justify-content: flex-end; }
-    .table-footer {
-        padding: 14px 20px;
-        border-top: 1px solid var(--card-border);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-    .pagination { display: flex; gap: 4px; }
-    .page-btn {
-        width: 32px; height: 32px;
-        border: 1.5px solid var(--card-border);
-        background: var(--card-bg);
-        border-radius: var(--radius-sm);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 12px; font-weight: 600;
-        color: var(--text-secondary);
-        cursor: pointer;
-        text-decoration: none;
-        transition: all 0.15s;
-    }
-    .page-btn:hover { background: var(--page-bg); color: var(--text-primary); }
-    .page-btn.active { background: var(--accent); border-color: var(--accent); color: #0B1120; }
-    .result-count { font-size: 13px; color: var(--text-muted); }
-    .result-count strong { color: var(--text-primary); }
-    .empty-state { text-align: center; padding: 60px 20px; }
-    .empty-icon {
-        width: 64px; height: 64px;
-        background: var(--page-bg);
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 24px; color: var(--text-muted);
-        margin: 0 auto 16px;
-    }
-    .empty-state h4 { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
-    .empty-state p { font-size: 13px; color: var(--text-muted); }
 
     /* Modal */
-    .modal-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.55);
-        z-index: 1000;
-        align-items: center;
-        justify-content: center;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-box {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow-lg);
-        width: 100%;
-        max-width: 560px;
-        max-height: 90vh;
-        overflow-y: auto;
-        animation: modalIn 0.18s ease;
-    }
     @keyframes modalIn {
         from { opacity: 0; transform: translateY(-12px) scale(0.98); }
         to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    .modal-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 18px 22px 14px;
-        border-bottom: 1px solid var(--card-border);
-    }
-    .modal-title {
-        font-family: 'Outfit', sans-serif;
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .modal-close {
-        width: 30px; height: 30px;
-        border-radius: var(--radius-sm);
-        border: 1.5px solid var(--card-border);
-        background: none;
-        cursor: pointer;
-        color: var(--text-muted);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 14px;
-        transition: background 0.15s, color 0.15s;
-    }
-    .modal-close:hover { background: var(--page-bg); color: var(--text-primary); }
-    .modal-body { padding: 20px 22px; }
-    .modal-footer {
-        padding: 14px 22px;
-        border-top: 1px solid var(--card-border);
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
     }
 </style>
 @endpush
@@ -419,13 +260,13 @@
 
 {{-- ADD FLOOR MODAL --}}
 <div class="modal-overlay" id="addFloorModal" onclick="closeOnOverlay(event)">
-    <div class="modal-box">
+    <div class="modal-box" style="--modal-w:560px">
         <div class="modal-header">
-            <div class="modal-title">
+            <div class="modal-header-title">
                 <i class="fa-solid fa-layer-group" style="color:var(--accent);"></i>
                 Add Floor
             </div>
-            <button class="modal-close" onclick="closeAddFloorModal()"><i class="fa-solid fa-xmark"></i></button>
+            <button class="modal-close-btn" onclick="closeAddFloorModal()"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
         <form method="POST" action="" id="addFloorForm" novalidate>

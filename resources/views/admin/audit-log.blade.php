@@ -5,32 +5,7 @@
 
 @push('styles')
 <style>
-.audit-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 14px;
-    margin-bottom: 24px;
-}
-.audit-stat {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius);
-    padding: 16px 18px;
-    display: flex; flex-direction: column; gap: 4px;
-}
-.audit-stat-val {
-    font-family: 'Outfit', sans-serif;
-    font-size: 28px; font-weight: 800;
-    color: var(--text-primary); line-height: 1;
-}
-.audit-stat-lbl { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
 
-.audit-table-wrap {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius);
-    overflow: hidden;
-}
 .audit-table { width: 100%; border-collapse: collapse; }
 .audit-table th {
     padding: 10px 16px; font-size: 11px; font-weight: 700;
@@ -40,21 +15,11 @@
 }
 .audit-table td {
     padding: 11px 16px; font-size: 13px;
-    color: var(--text-secondary); border-bottom: 1px solid #F1F5F9;
+    color: var(--text-secondary); border-bottom: 1px solid var(--row-border);
     vertical-align: middle;
 }
 .audit-table tr:last-child td { border-bottom: none; }
-.audit-table tr:hover td { background: #FAFBFC; }
-
-.action-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 3px 10px; border-radius: 20px;
-    font-size: 11px; font-weight: 700; text-transform: capitalize; white-space: nowrap;
-}
-.action-badge.created  { background: #ECFDF5; color: #059669; }
-.action-badge.updated  { background: #EFF6FF; color: #2563EB; }
-.action-badge.deleted  { background: #FEF2F2; color: #DC2626; }
-.action-badge.imported { background: var(--accent-dim); color: var(--accent); }
+.audit-table tr:hover td { background: var(--row-hover); }
 
 .entity-pill {
     display: inline-block;
@@ -101,26 +66,26 @@
 </div>
 
 {{-- STATS --}}
-<div class="audit-stats">
-    <div class="audit-stat">
-        <div class="audit-stat-val">{{ number_format($stats['total']) }}</div>
-        <div class="audit-stat-lbl">Total Events</div>
+<div class="stats-grid">
+    <div class="stat-card is-figure">
+        <div class="stat-val">{{ number_format($stats['total']) }}</div>
+        <div class="stat-lbl">Total Events</div>
     </div>
-    <div class="audit-stat">
-        <div class="audit-stat-val" style="color:#059669">{{ number_format($stats['created']) }}</div>
-        <div class="audit-stat-lbl">Created</div>
+    <div class="stat-card is-figure">
+        <div class="stat-val" style="color:var(--tone-success-fg)">{{ number_format($stats['created']) }}</div>
+        <div class="stat-lbl">Created</div>
     </div>
-    <div class="audit-stat">
-        <div class="audit-stat-val" style="color:#2563EB">{{ number_format($stats['updated']) }}</div>
-        <div class="audit-stat-lbl">Updated</div>
+    <div class="stat-card is-figure">
+        <div class="stat-val" style="color:var(--tone-info-fg)">{{ number_format($stats['updated']) }}</div>
+        <div class="stat-lbl">Updated</div>
     </div>
-    <div class="audit-stat">
-        <div class="audit-stat-val" style="color:#DC2626">{{ number_format($stats['deleted']) }}</div>
-        <div class="audit-stat-lbl">Deleted</div>
+    <div class="stat-card is-figure">
+        <div class="stat-val" style="color:var(--tone-danger-fg)">{{ number_format($stats['deleted']) }}</div>
+        <div class="stat-lbl">Deleted</div>
     </div>
-    <div class="audit-stat">
-        <div class="audit-stat-val" style="color:var(--accent)">{{ number_format($stats['imported']) }}</div>
-        <div class="audit-stat-lbl">Imported</div>
+    <div class="stat-card is-figure">
+        <div class="stat-val" style="color:var(--tone-accent-fg)">{{ number_format($stats['imported']) }}</div>
+        <div class="stat-lbl">Imported</div>
     </div>
 </div>
 
@@ -189,12 +154,12 @@
                         {{ $log->created_at->format('H:i:s') }}
                     </td>
                     <td>
-                        <span class="action-badge {{ $log->action }}">
+                        <span class="status-badge {{ $log->action }}">
                             @php
                                 $icons = ['created'=>'fa-plus','updated'=>'fa-pen','deleted'=>'fa-trash','imported'=>'fa-file-import'];
                             @endphp
                             <i class="fa-solid {{ $icons[$log->action] ?? 'fa-circle' }}"></i>
-                            {{ $log->action }}
+                            {{ ucfirst($log->action) }}
                         </span>
                     </td>
                     <td><span class="entity-pill">{{ $log->entity_type }}</span></td>
@@ -209,8 +174,8 @@
                         <div class="changes-preview" title="{{ json_encode($log->changes, JSON_PRETTY_PRINT) }}">
                             @foreach($log->changes as $field => $change)
                             <span style="color:var(--text-primary)">{{ $field }}</span>:
-                            <span style="color:#DC2626;text-decoration:line-through">{{ $change['from'] ?? '—' }}</span>
-                            → <span style="color:#059669">{{ $change['to'] ?? '—' }}</span>
+                            <span style="color:var(--tone-danger-fg);text-decoration:line-through">{{ $change['from'] ?? '—' }}</span>
+                            → <span style="color:var(--tone-success-fg)">{{ $change['to'] ?? '—' }}</span>
                             @if(!$loop->last) &nbsp;·&nbsp; @endif
                             @endforeach
                         </div>

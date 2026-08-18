@@ -1064,6 +1064,72 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
     flex-wrap: wrap;
 }
 
+/* Numbered step badge, for a header in a multi-step form. The number is real
+   information — which section of the form this is — so it stays; it is not
+   decoration. Replaces .section-step-badge and .u-step-badge. */
+.card-step-badge {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+}
+
+/* Staggered entrance for a stack of form section cards. Opt in by putting
+   .card-reveal on the container. Shared rather than duplicated, since
+   buildings/_form and property-units/_form each carried their own keyframes
+   and nth-child delay ladder. Respects prefers-reduced-motion via §1.4. */
+.card-reveal > .card {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: card-reveal 0.42s var(--ease-out) forwards;
+}
+@keyframes card-reveal { to { opacity: 1; transform: translateY(0); } }
+.card-reveal > .card:nth-child(1) { animation-delay: 0.04s; }
+.card-reveal > .card:nth-child(2) { animation-delay: 0.10s; }
+.card-reveal > .card:nth-child(3) { animation-delay: 0.16s; }
+.card-reveal > .card:nth-child(4) { animation-delay: 0.22s; }
+.card-reveal > .card:nth-child(5) { animation-delay: 0.28s; }
+.card-reveal > .card:nth-child(6) { animation-delay: 0.34s; }
+.card-reveal > .card:nth-child(7) { animation-delay: 0.40s; }
+.card-reveal > .card:nth-child(n+8) { animation-delay: 0.46s; }
+/* With motion reduced, §1.4 collapses the animation duration — which would
+   leave the card at opacity 0. Make the end state the start state instead. */
+@media (prefers-reduced-motion: reduce) {
+    .card-reveal > .card { opacity: 1; transform: none; animation: none; }
+}
+
+/* Sticky action bar at the foot of a long form. Same anatomy as .card-footer,
+   but pinned so Save stays reachable without scrolling to the bottom of a
+   40-field form. Replaces .u-actions-bar. */
+.form-sticky-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    margin-top: var(--sp-5);
+    padding: 14px var(--card-pad-x-lg);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+}
+.form-sticky-actions-hint {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.form-sticky-actions-hint i { color: var(--accent); }
+
 /* ── Body ───────────────────────────────────────────────────────────────── */
 .card-body {
     padding: var(--card-pad-lg);
@@ -1074,6 +1140,57 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
 .card > .card-body:only-child { padding: var(--card-pad-lg); }
 /* Body content that must run to the card's edge — a table, a full-bleed image. */
 .card-body.is-flush { padding: 0; }
+/* A body whose content stacks, so a trailing row can pin itself to the bottom
+   with margin-top:auto and line up across a grid of cards. */
+.card-body.is-stack { display: flex; flex-direction: column; gap: 10px; }
+
+/* ── Media ──────────────────────────────────────────────────────────────────
+     A card that leads with a photo — a property card, a unit card. The image
+     area sits above the header/body and bleeds to the card's edges (the card's
+     own overflow clips it to the radius). Height is a token so a grid of
+     property cards has one photo height instead of 185px here and 190px there.
+
+     A card with no photo still reserves the space and says so, rather than
+     collapsing and making that card shorter than its neighbours. */
+.card-media {
+    position: relative;
+    height: var(--card-media-h, 185px);
+    flex: none;
+    overflow: hidden;
+    background: var(--page-bg);
+}
+.card-media > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.card-media-empty {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-1);
+    color: var(--text-muted);
+    font-size: 11.5px;
+}
+.card-media-empty i { font-size: 26px; opacity: 0.45; }
+/* Thin tone bar across the top of the photo, carrying a category. */
+.card-media-bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; z-index: 3; }
+/* Overlay pill on the photo (a type, an occupancy figure). */
+.card-media-pill {
+    position: absolute;
+    top: 10px; right: 10px;
+    z-index: 3;
+    padding: 4px 9px;
+    border-radius: var(--radius-pill);
+    background: rgba(11,17,32,0.72);
+    color: var(--accent);
+    font-size: var(--fs-2xs);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
 
 /* ── Footer ─────────────────────────────────────────────────────────────── */
 .card-footer {
@@ -1132,6 +1249,103 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
 /* Trailing chevron on a card that navigates somewhere. */
 .card-chevron { color: var(--text-muted); font-size: var(--fs-sm); flex: none; }
 
+/* ── Option card ────────────────────────────────────────────────────────────
+     A card the user picks: a tenant type toggle, a quotation to approve. Was
+     two implementations — .type-option label (1.5px border, accent selection)
+     and .quot-radio-card (2px border, a hardcoded #7C3AED purple that appeared
+     nowhere else in the product).
+
+     Selection is carried by the accent, like every other "this one is chosen"
+     state in the app, and by a ring as well as a fill so it survives being read
+     without colour. Works with a real radio/checkbox (input:checked + label) or
+     with .is-selected toggled in JS. */
+.option-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: var(--sp-3) 14px;
+    border: var(--border-control) solid var(--card-border);
+    border-radius: var(--radius-sm);
+    background: var(--page-bg-alt);
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: 0;
+    transition: border-color var(--dur-base), background var(--dur-base),
+                color var(--dur-base), box-shadow var(--dur-base);
+}
+.option-card:hover { border-color: var(--input-border); background: var(--page-bg); }
+.option-card > i, .option-card .option-card-icon { font-size: 16px; flex: none; }
+
+/* The input itself is visually hidden but still focusable and still the thing
+   screen readers and the keyboard operate. */
+.option-group { position: relative; }
+.option-group input[type="radio"],
+.option-group input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0; height: 0;
+    margin: 0;
+}
+.option-group input:checked + .option-card,
+.option-card.is-selected {
+    border-color: var(--accent);
+    background: var(--tone-accent-bg);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+}
+/* Focus has to be visible on the card, since the input carrying focus is not. */
+.option-group input:focus-visible + .option-card {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+}
+/* Numbered badge inside an option card — which quotation this is. */
+.option-card-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--page-bg);
+    border: 2px solid var(--card-border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
+    font-weight: 800;
+    color: var(--text-muted);
+    flex: none;
+    transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+}
+.option-group input:checked + .option-card .option-card-num,
+.option-card.is-selected .option-card-num {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+}
+
+/* Radio/check indicator inside the card. */
+.option-card-check {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--page-bg);
+    border: 2px solid var(--card-border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    color: transparent;
+    flex: none;
+    transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+}
+.option-group input:checked + .option-card .option-card-check,
+.option-card.is-selected .option-card-check {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+}
+.option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 768px) {
+    .option-grid { grid-template-columns: 1fr; }
+    .option-card { min-height: var(--h-control-lg); }
+}
+
 /* ── Hero card ──────────────────────────────────────────────────────────────
      The identity block at the top of a detail page (a tenant's profile, a
      lease contract). Roomier, and its title steps up to page-title scale
@@ -1146,6 +1360,13 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
 .card.is-narrow { max-width: 560px; }
 .card.is-medium { max-width: 860px; }
 
+/* A card pinned beside a long scrolling column — the payment form on a bill
+   detail page stays in view while the reader scrolls the charges. */
+.card.is-sticky { position: sticky; top: var(--sp-5); }
+@media (max-width: 900px) {
+    /* Nothing to stay beside once the columns stack. */
+    .card.is-sticky { position: static; }
+}
 /* Tone accent on a card's leading edge, for a card that carries a status. */
 .card.has-rail { border-left: 3px solid var(--card-rail, var(--card-border)); }
 .card.has-rail.is-success { --card-rail: var(--success); }
@@ -1184,6 +1405,53 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
      straight into a .card-body. */
 .card-body > .empty-state:only-child { padding: var(--sp-10) var(--sp-5); }
 
+/* ── §4.3b  Detail list ─────────────────────────────────────────────────────
+     The label/value grid that fills a detail page's cards — a lease's terms, a
+     maintenance request's particulars, a tenant's contact record. Was defined
+     three times (lease-contracts/show, maintenance/show, tenants/_profile)
+     with the label at 11px/700/uppercase each time but the value at 14px/500
+     in one and 14px/600 in another.
+
+     Markup:  .detail-grid > .detail-item > .detail-label + .detail-value */
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--sp-4);
+}
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    min-width: 0;
+}
+/* An item that leads with an icon — the icon sits beside the pair, not above. */
+.detail-item.has-icon { flex-direction: row; align-items: flex-start; gap: 14px; }
+.detail-label {
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+.detail-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;   /* an email or IBAN must wrap, not widen the grid */
+}
+/* A value that is a figure. */
+.detail-value.is-num {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: var(--fs-md);
+}
+/* Nothing recorded — said plainly, and set apart from a real value so the two
+   are never confused at a glance. */
+.detail-value.is-empty { color: var(--text-muted); font-weight: 400; font-style: italic; }
+.detail-value a { color: var(--info); text-decoration: none; }
+.detail-value a:hover { text-decoration: underline; }
+
 /* ── §4.4  Stat cards ───────────────────────────────────────────────────────
      Was nine separate components (.stat-card, .pay-stat, .exp-stat,
      .inv-stat, .rev-stat, .ewa-stat, .dash-stat, .pl-stat, .bldg-stat) that
@@ -1206,6 +1474,11 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
     gap: var(--sp-4);
     margin-bottom: var(--sp-6);
 }
+/* A fixed count, where the figures are being read against each other and
+   auto-fill would let them drift apart on a wide screen (the P&L's
+   revenue / expenses / net). */
+.stats-grid.is-triple { grid-template-columns: repeat(3, 1fr); }
+.stats-grid.is-double { grid-template-columns: repeat(2, 1fr); }
 .stat-card {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
@@ -1249,6 +1522,82 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
     color: var(--text-muted);
     margin-top: 3px;
 }
+
+/* A stat card that really does navigate — the dashboard's figures link to the
+   list behind them. Same interactive treatment as .card.is-interactive, so a
+   clickable figure and a clickable card behave identically. */
+a.stat-card,
+button.stat-card {
+    text-decoration: none;
+    color: inherit;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+    transition: border-color var(--dur-base) ease, box-shadow var(--dur-base) ease;
+}
+a.stat-card:hover,
+button.stat-card:hover { border-color: var(--input-border); box-shadow: var(--shadow-md); }
+a.stat-card:focus-visible,
+button.stat-card:focus-visible { outline: var(--focus-outline); outline-offset: 2px; }
+
+/* Stat well — a nested figure block inside another card (the floors/units
+   counts on a building card). Recessed rather than raised, because it sits on
+   a surface that is already elevated. Replaces .bldg-stat-pill and is the
+   desktop counterpart of the mobile .pm-well. */
+.stat-well {
+    flex: 1;
+    min-width: 0;
+    background: var(--page-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: var(--sp-2) 10px;
+    text-align: center;
+}
+.stat-well-val {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--text-primary);
+    line-height: 1;
+}
+.stat-well-lbl {
+    font-size: var(--fs-2xs);
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+}
+.stat-well-row { display: flex; gap: var(--sp-2); }
+/* A well that leads with an icon. Same tinted-square treatment as
+   .card-header-icon, one step smaller because it sits inside a nested block. */
+.stat-well-icon {
+    width: 32px; height: 32px;
+    border-radius: var(--radius-sm);
+    background: var(--tone-accent-bg);
+    color: var(--tone-accent-fg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    flex: none;
+}
+/* Tone-carrying wells — a property card's income / net / occupancy figures.
+   Replaces .property-stat-box's hardcoded #ECFDF5 / #EFF6FF tints, which were
+   light-mode-only and so stayed near-white on a dark surface. */
+.stat-well.is-success { background: var(--tone-success-bg); border-color: var(--tone-success-border); }
+.stat-well.is-success .stat-well-val,
+.stat-well.is-success .stat-well-lbl { color: var(--tone-success-fg); }
+.stat-well.is-info    { background: var(--tone-info-bg);    border-color: var(--tone-info-border); }
+.stat-well.is-info .stat-well-val,
+.stat-well.is-info .stat-well-lbl    { color: var(--tone-info-fg); }
+.stat-well.is-warning { background: var(--tone-warning-bg); border-color: var(--tone-warning-border); }
+.stat-well.is-warning .stat-well-val,
+.stat-well.is-warning .stat-well-lbl { color: var(--tone-warning-fg); }
+.stat-well.is-danger  { background: var(--tone-danger-bg);  border-color: var(--tone-danger-border); }
+.stat-well.is-danger .stat-well-val,
+.stat-well.is-danger .stat-well-lbl  { color: var(--tone-danger-fg); }
+/* A well grid, when there are three or more figures to line up. */
+.stat-well-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-2); }
 
 /* Figure-first variant: no icon, the number leads and an uppercase caption
    sits beneath it. For dense rows of counts (the audit and error logs) where
@@ -1722,6 +2071,10 @@ td.col-actions .action-btns { justify-content: flex-end; }
 
 /* Outlined variant, for a badge sitting on an already-tinted surface. */
 .badge-outline { background: transparent; border: 1px solid currentColor; }
+/* Uppercase, for a badge acting as a section marker rather than a status. */
+.badge.is-caps { text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+/* Extra small, for a marker attached to a single field. */
+.badge.is-xs { padding: 2px 7px; font-size: var(--fs-2xs); gap: 3px; }
 
 
 /* ── §4.9  Alerts ───────────────────────────────────────────────────────── */
@@ -1824,6 +2177,9 @@ td.col-actions .action-btns { justify-content: flex-end; }
     flex-shrink: 0;
 }
 .modal-header-top { display: flex; align-items: center; gap: var(--sp-3); }
+/* Takes the free space so the close button lands on the trailing edge, and
+   min-width:0 lets a long title wrap instead of pushing it out. */
+.modal-header-text { flex: 1; min-width: 0; }
 .modal-header-icon {
     width: 40px; height: 40px;
     border-radius: 10px;
@@ -1871,7 +2227,142 @@ td.col-actions .action-btns { justify-content: flex-end; }
 }
 
 
-/* ── §4.12  Loading states ──────────────────────────────────────────────────
+/* ── §4.11b  Document viewer ────────────────────────────────────────────────
+     A PDF preview in an overlay: an invoice, a receipt, an EWA bill, a report.
+     Was five copies under two names (.pdf-modal-box and .pdf-modal) that
+     disagreed on chrome (#1E2433 vs #1E293B), scrim (0.85 vs 0.75) and layer
+     (1050 vs 2000).
+
+     Deliberately dark in both themes, and the one place in the system that does
+     not follow the theme: the thing inside is white paper, and a dark surround
+     is what keeps the document reading as the subject instead of the chrome. */
+.pdf-viewer-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-sheet);
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(3px);
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-4);
+}
+.pdf-viewer-overlay.open { display: flex; }
+.pdf-viewer {
+    width: 90vw;
+    max-width: var(--pdf-viewer-w, 1000px);
+    height: 90vh;
+    background: #1E2433;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.pdf-viewer-header {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3) 18px;
+    background: #151929;
+    border-bottom: 1px solid #2D3650;
+    flex: none;
+}
+.pdf-viewer-title {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    color: #E2E8F0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pdf-viewer-actions { display: flex; gap: var(--sp-2); flex: none; }
+/* Buttons in the dark header need their own treatment — .btn-outline's page-bg
+   hover would be invisible here. */
+.pdf-viewer-actions .btn-outline {
+    background: rgba(255,255,255,0.06);
+    border-color: #2D3650;
+    color: #CBD5E1;
+}
+.pdf-viewer-actions .btn-outline:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.pdf-viewer-frame { flex: 1; width: 100%; border: none; background: #fff; }
+
+@media (max-width: 768px) {
+    /* Full screen on a phone — a 90vw box inside a scrim wastes the only space
+       a document has to be readable in. */
+    .pdf-viewer-overlay { padding: 0; }
+    .pdf-viewer { width: 100vw; max-width: 100%; height: 100vh; border-radius: 0; }
+    .pdf-viewer-header { padding: calc(var(--sp-3) + env(safe-area-inset-top)) var(--sp-4) var(--sp-3); }
+}
+
+/* ── §4.12  Progress bar ────────────────────────────────────────────────────
+     One track/fill pair, replacing .lease-progress-*, .import-progress-bar*
+     and the mobile .pm-*-bar-fill variants. Height and tone are tokens so a
+     lease's elapsed term and an import's completion look like one component. */
+.progress {
+    height: var(--progress-h, 8px);
+    border-radius: var(--radius-pill);
+    background: var(--card-border);
+    overflow: hidden;
+    position: relative;
+}
+.progress-bar {
+    height: 100%;
+    width: 0;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    transition: width 0.4s var(--ease-out);
+}
+.progress.is-sm { --progress-h: 6px; }
+.progress-bar.is-success { background: var(--success); }
+.progress-bar.is-warning { background: var(--warning); }
+.progress-bar.is-danger  { background: var(--danger); }
+
+/* ── §4.12b  Divided figure grid ────────────────────────────────────────────
+     A row of totals separated by hairlines rather than gaps — an invoice's
+     subtotal / VAT / paid / balance. The 1px grid gap showing the border colour
+     through is what draws the rules, so the cells paint the surface. */
+.figure-split {
+    display: grid;
+    grid-template-columns: repeat(var(--figure-cols, 2), 1fr);
+    gap: 1px;
+    background: var(--card-border);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+.figure-split-cell {
+    background: var(--card-bg);
+    padding: 14px 18px;
+    text-align: center;
+    min-width: 0;
+}
+/* Caption above, figure below — the same pairing as .detail-label /
+   .detail-value, at the larger scale a headline total earns. */
+.figure-split-cell > span,
+.figure-split-label {
+    display: block;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin-bottom: var(--sp-1);
+}
+.figure-split-cell > strong,
+.figure-split-value {
+    display: block;
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+.figure-split-cell.is-success > strong { color: var(--tone-success-fg); }
+.figure-split-cell.is-danger  > strong { color: var(--tone-danger-fg); }
+
+/* ── §4.13  Loading states ──────────────────────────────────────────────────
      There was no shared loading pattern; pages either froze or showed
      nothing. A skeleton for content that is arriving, a spinner for an
      action in flight. */
@@ -2155,7 +2646,7 @@ td.col-actions .action-btns { justify-content: flex-end; }
     .main-wrap { margin-left: 0; }
     .page-content { padding: 0; }
     .card, .table-card, .stat-card { box-shadow: none; border-color: #CBD5E1; }
-    thead th { background: #F1F5F9; color: #475569; }
+    thead th { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
 }
 
 

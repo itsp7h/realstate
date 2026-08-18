@@ -15,35 +15,6 @@
 @media (max-width: 900px) { .data-grid { grid-template-columns: 1fr; } }
 
 /* ── PANEL CARD ────────────────────────────────────────── */
-.data-panel {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius);
-    overflow: hidden;
-}
-.data-panel-head {
-    padding: 20px 24px 16px;
-    border-bottom: 1px solid var(--card-border);
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-.data-panel-icon {
-    width: 44px; height: 44px;
-    border-radius: var(--radius-sm);
-    background: var(--accent-dim);
-    border: 1px solid rgba(232,184,109,0.25);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--accent); font-size: 18px; flex-shrink: 0;
-}
-.data-panel-icon.green { background: #ECFDF5; border-color: #A7F3D0; color: #059669; }
-.data-panel-title {
-    font-family: 'Outfit', sans-serif;
-    font-size: 16px; font-weight: 800;
-    color: var(--text-primary); line-height: 1;
-}
-.data-panel-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
-.data-panel-body { padding: 22px 24px; }
 
 /* ── FLOW STEPS ────────────────────────────────────────── */
 .flow-steps {
@@ -92,9 +63,9 @@
     font-size: 11px; font-weight: 700;
     border: 1px solid;
 }
-.section-band.blue   { background: #EFF6FF; border-color: #BFDBFE; color: #1D4ED8; }
-.section-band.green  { background: #ECFDF5; border-color: #A7F3D0; color: #059669; }
-.section-band.yellow { background: #FFFBEB; border-color: #FDE68A; color: #D97706; }
+.section-band.blue   { background: var(--tone-info-bg); border-color: var(--tone-info-border); color: var(--tone-info-fg); }
+.section-band.green  { background: var(--tone-success-bg); border-color: var(--tone-success-border); color: var(--tone-success-fg); }
+.section-band.yellow { background: var(--tone-warning-bg); border-color: var(--tone-warning-border); color: var(--tone-warning-fg); }
 .section-band i { font-size: 10px; }
 
 /* ── TEMPLATE DOWNLOAD ─────────────────────────────────── */
@@ -144,13 +115,13 @@
     animation: bannerIn 0.3s ease;
 }
 @keyframes bannerIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
-.result-banner.success { background: #ECFDF5; border-color: #6EE7B7; }
-.result-banner.partial  { background: #FFFBEB; border-color: #FCD34D; }
-.result-banner.error    { background: #FEF2F2; border-color: #FCA5A5; }
+.result-banner.success { background: var(--tone-success-bg); border-color: var(--tone-success-border); }
+.result-banner.partial  { background: var(--tone-warning-bg); border-color: var(--tone-warning-border); }
+.result-banner.error    { background: var(--tone-danger-bg); border-color: var(--tone-danger-border); }
 .result-counts { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
 .result-count-item { font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 5px; }
-.result-count-item i.ok   { color: #059669; }
-.result-count-item i.warn { color: #D97706; }
+.result-count-item i.ok   { color: var(--tone-success-fg); }
+.result-count-item i.warn { color: var(--tone-warning-fg); }
 .result-errors-toggle { font-size: 12px; color: var(--text-muted); cursor: pointer; }
 .result-errors-list { margin: 8px 0 0 0; padding: 0; font-size: 12px; color: var(--text-secondary); line-height: 1.8; list-style: disc; padding-left: 18px; }
 
@@ -211,7 +182,7 @@
             <div class="result-count-item"><i class="fa-solid fa-circle-check ok"></i> {{ $counts['units'] }} unit(s) imported</div>
         @endif
         @if($total === 0)
-            <div class="result-count-item"><i class="fa-solid fa-circle-xmark" style="color:#DC2626;"></i> Nothing was imported</div>
+            <div class="result-count-item"><i class="fa-solid fa-circle-xmark" style="color:var(--tone-danger-fg);"></i> Nothing was imported</div>
         @endif
         @if(count($errs) > 0)
             <div class="result-count-item"><i class="fa-solid fa-triangle-exclamation warn"></i> {{ count($errs) }} row(s) skipped</div>
@@ -230,7 +201,7 @@
 
 @if(session('import_error'))
 <div class="result-banner error" style="margin-bottom:20px;">
-    <i class="fa-solid fa-circle-xmark" style="color:#DC2626;margin-right:8px;"></i>
+    <i class="fa-solid fa-circle-xmark" style="color:var(--tone-danger-fg);margin-right:8px;"></i>
     {{ session('import_error') }}
 </div>
 @endif
@@ -238,17 +209,17 @@
 <div class="data-grid">
 
     {{-- ── IMPORT PANEL ─────────────────────────────────────── --}}
-    <div class="data-panel">
-        <div class="data-panel-head">
-            <div class="data-panel-icon">
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon">
                 <i class="fa-solid fa-file-import"></i>
             </div>
             <div>
-                <div class="data-panel-title">Import Data</div>
-                <div class="data-panel-sub">Upload a single CSV or XLSX file — rows are auto-routed</div>
+                <div class="card-title">Import Data</div>
+                <div class="card-subtitle">Upload a single CSV or XLSX file — rows are auto-routed</div>
             </div>
         </div>
-        <div class="data-panel-body">
+        <div class="card-body">
 
             {{-- How it works --}}
             <div class="flow-steps">
@@ -322,17 +293,17 @@
     </div>
 
     {{-- ── EXPORT PANEL ─────────────────────────────────────── --}}
-    <div class="data-panel">
-        <div class="data-panel-head">
-            <div class="data-panel-icon green">
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon green">
                 <i class="fa-solid fa-file-export"></i>
             </div>
             <div>
-                <div class="data-panel-title">Export Data</div>
-                <div class="data-panel-sub">Download all records as a multi-sheet XLSX file</div>
+                <div class="card-title">Export Data</div>
+                <div class="card-subtitle">Download all records as a multi-sheet XLSX file</div>
             </div>
         </div>
-        <div class="data-panel-body">
+        <div class="card-body">
 
             <div class="export-info">
                 <div class="export-sheets">

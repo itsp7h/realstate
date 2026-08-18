@@ -12,30 +12,6 @@
         gap: 16px;
         margin-bottom: 24px;
     }
-    .stat-card {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius);
-        padding: 18px 20px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        box-shadow: var(--shadow-sm);
-        transition: box-shadow 0.2s, transform 0.2s;
-    }
-    .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-    .stat-icon {
-        width: 44px; height: 44px;
-        border-radius: var(--radius-sm);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 18px;
-        flex-shrink: 0;
-    }
-    .stat-icon.gold   { background: var(--accent-dim); color: var(--accent); }
-    .stat-icon.green  { background: #ECFDF5; color: var(--success); }
-    .stat-icon.blue   { background: #EFF6FF; color: var(--info); }
-    .stat-val { font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-    .stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
 
     /* ── FILTER BAR ─────────────────────────────────────── */
     .filter-bar {
@@ -44,47 +20,10 @@
         background: var(--page-bg);
         border-bottom: 1px solid var(--card-border);
     }
-    .filter-group { display: flex; flex-direction: column; gap: 5px; min-width: 150px; }
-    .filter-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .filter-group input, .filter-group select {
-        padding: 8px 12px; font-size: 13px;
-        border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-        background: var(--card-bg); color: var(--text-primary);
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        outline: none; appearance: none; -webkit-appearance: none;
-        transition: border-color 0.18s, box-shadow 0.18s;
-    }
-    .filter-group input:focus, .filter-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
-    .filter-group select {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px;
-    }
-    .filter-actions { display: flex; gap: 8px; align-items: flex-end; margin-left: auto; }
 
     /* ── TABLE ──────────────────────────────────────────── */
     .bldg-code { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text-primary); font-size: 13.5px; }
     .bldg-sub  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    .action-btns { display: flex; gap: 6px; }
-    .table-footer {
-        padding: 14px 20px; border-top: 1px solid var(--card-border);
-        display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
-    }
-    .pagination { display: flex; gap: 4px; align-items: center; }
-    .page-btn {
-        width: 32px; height: 32px; border: 1.5px solid var(--card-border);
-        background: var(--card-bg); border-radius: var(--radius-sm);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 12px; font-weight: 600; color: var(--text-secondary);
-        cursor: pointer; text-decoration: none; transition: all 0.15s;
-    }
-    .page-btn:hover { background: var(--page-bg); color: var(--text-primary); }
-    .page-btn.active { background: var(--accent); border-color: var(--accent); color: #0B1120; }
-    .result-count { font-size: 13px; color: var(--text-muted); }
-    .result-count strong { color: var(--text-primary); }
-    .empty-state { text-align: center; padding: 60px 20px; }
-    .empty-icon { width: 64px; height: 64px; background: var(--page-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--text-muted); margin: 0 auto 16px; }
-    .empty-state h4 { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
-    .empty-state p { font-size: 13px; color: var(--text-muted); }
 
     /* ── VIEW TOGGLE ────────────────────────────────────── */
     .view-toggle {
@@ -119,34 +58,8 @@
         gap: 20px;
         padding: 20px;
     }
-    .bldg-card {
-        background: var(--card-bg);
-        border: 1.5px solid var(--card-border);
-        border-radius: 14px;
-        overflow: hidden;
-        cursor: pointer;
-        transition: box-shadow 0.22s, transform 0.22s, border-color 0.22s;
-        display: flex; flex-direction: column;
-        position: relative;
-    }
-    .bldg-card:hover {
-        box-shadow: 0 12px 36px rgba(0,0,0,0.13);
-        transform: translateY(-4px);
-        border-color: var(--accent);
-    }
 
     /* ── CARD PHOTO AREA ─────────────────────────────────── */
-    .bldg-card-photo {
-        position: relative;
-        height: 185px;
-        overflow: hidden;
-        background: var(--page-bg);
-        flex-shrink: 0;
-    }
-    .bldg-card-type-bar {
-        position: absolute; top: 0; left: 0; right: 0;
-        height: 3px; z-index: 3;
-    }
     /* Slides */
     .photo-slides { width: 100%; height: 100%; position: relative; }
     .photo-slide {
@@ -214,12 +127,14 @@
     .photo-placeholder span { font-size: 11px; color: var(--text-muted); font-weight: 500; }
 
     /* ── CARD BODY ───────────────────────────────────────── */
-    .bldg-card-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    /* Layout only — the card system owns this card's chrome, padding and
+       hover. .bldg-card-body is a column so .bldg-card-stats can pin itself to
+       the bottom with margin-top:auto, which is what keeps the floors/units row
+       on one line across a grid of cards with different title lengths. */
+    .bldg-card-body { gap: 10px; }
+    .bldg-card-stats { padding-top: 10px; border-top: 1px solid var(--card-border); margin-top: auto; }
+    .bldg-card-actions .btn { flex: 1; justify-content: center; font-size: 12px; }
     .bldg-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-    .bldg-card-title {
-        font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 15px;
-        color: var(--text-primary); line-height: 1.25; flex: 1;
-    }
     .bldg-card-badges { display: flex; flex-wrap: wrap; gap: 5px; }
     .bldg-card-meta { display: flex; flex-direction: column; gap: 4px; }
     .bldg-card-meta-row {
@@ -227,31 +142,6 @@
         font-size: 12px; color: var(--text-muted);
     }
     .bldg-card-meta-row i { width: 13px; text-align: center; opacity: 0.6; font-size: 11px; flex-shrink: 0; }
-    .bldg-card-stats {
-        display: flex; gap: 8px; padding-top: 10px;
-        border-top: 1px solid var(--card-border);
-        margin-top: auto;
-    }
-    .bldg-stat-pill {
-        flex: 1; background: var(--page-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 8px; padding: 8px 10px;
-        text-align: center;
-    }
-    .bldg-stat-pill-val {
-        font-family: 'Outfit', sans-serif; font-weight: 800;
-        font-size: 18px; color: var(--text-primary); line-height: 1;
-    }
-    .bldg-stat-pill-lbl {
-        font-size: 10px; color: var(--text-muted); font-weight: 600;
-        text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px;
-    }
-    .bldg-card-actions {
-        padding: 10px 16px 14px;
-        display: flex; gap: 6px;
-        border-top: 1px solid var(--card-border);
-    }
-    .bldg-card-actions .btn { flex: 1; justify-content: center; font-size: 12px; }
 
     @media (max-width: 768px) {
         .buildings-grid { grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px; }
@@ -261,62 +151,8 @@
     }
 
     /* ── MODAL OVERLAY ──────────────────────────────────── */
-    .modal-overlay {
-        position: fixed; inset: 0; z-index: 1000;
-        background: rgba(11, 17, 32, 0.55);
-        backdrop-filter: blur(4px);
-        display: flex; align-items: center; justify-content: center;
-        padding: 20px;
-        opacity: 0; pointer-events: none;
-        transition: opacity 0.25s ease;
-    }
-    .modal-overlay.open {
-        opacity: 1; pointer-events: all;
-    }
-    .modal-box {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 16px;
-        box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.10);
-        width: 100%; max-width: 680px;
-        max-height: 90vh;
-        display: flex; flex-direction: column;
-        transform: translateY(20px) scale(0.98);
-        transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-        overflow: hidden;
-    }
-    .modal-overlay.open .modal-box {
-        transform: translateY(0) scale(1);
-    }
 
     /* ── MODAL HEADER ───────────────────────────────────── */
-    .modal-header {
-        padding: 20px 24px 0;
-        flex-shrink: 0;
-    }
-    .modal-header-top {
-        display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
-    }
-    .modal-header-icon {
-        width: 40px; height: 40px; border-radius: 10px;
-        background: var(--accent-dim); border: 1px solid rgba(232,184,109,0.25);
-        display: flex; align-items: center; justify-content: center;
-        color: var(--accent); font-size: 16px; flex-shrink: 0;
-    }
-    .modal-header-text { flex: 1; }
-    .modal-header-title {
-        font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 800;
-        color: var(--text-primary); line-height: 1;
-    }
-    .modal-header-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
-    .modal-close-btn {
-        width: 32px; height: 32px; border-radius: var(--radius-sm);
-        border: 1.5px solid var(--card-border); background: transparent;
-        cursor: pointer; display: flex; align-items: center; justify-content: center;
-        color: var(--text-muted); font-size: 13px;
-        transition: all 0.15s; flex-shrink: 0;
-    }
-    .modal-close-btn:hover { background: var(--page-bg); color: var(--text-primary); border-color: #B0BCCF; }
 
     /* ── STEP PROGRESS ──────────────────────────────────── */
     .step-track {
@@ -375,13 +211,6 @@
     .step-item.done  .step-name { color: var(--text-secondary); }
 
     /* ── MODAL BODY ─────────────────────────────────────── */
-    .modal-body {
-        padding: 0 24px;
-        overflow-y: auto;
-        flex: 1;
-    }
-    .modal-body::-webkit-scrollbar { width: 4px; }
-    .modal-body::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
 
     /* ── STEP PANELS ────────────────────────────────────── */
     .step-panel { display: none; padding: 6px 0 16px; }
@@ -454,12 +283,6 @@
 
     /* ── CAPACITY TILES (modal) ─────────────────────────── */
     .capacity-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-    .cap-tile {
-        background: var(--page-bg); border: 1.5px solid var(--card-border);
-        border-radius: var(--radius-sm); padding: 16px 12px;
-        display: flex; flex-direction: column; align-items: center; gap: 8px;
-        text-align: center; transition: border-color 0.2s, box-shadow 0.2s;
-    }
     .cap-tile:focus-within {
         border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: #FFFDF8;
     }
@@ -468,7 +291,6 @@
         background: var(--accent-dim); display: flex; align-items: center; justify-content: center;
         color: var(--accent); font-size: 13px;
     }
-    .cap-tile-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
     .cap-tile input {
         width: 100%; border: none; background: transparent; text-align: center;
         font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 800;
@@ -480,13 +302,6 @@
     .cap-tile input::placeholder { color: var(--text-muted); font-weight: 400; font-size: 18px; }
 
     /* ── MODAL FOOTER ───────────────────────────────────── */
-    .modal-footer {
-        padding: 16px 24px;
-        border-top: 1px solid var(--card-border);
-        display: flex; align-items: center; justify-content: space-between; gap: 10px;
-        flex-shrink: 0;
-        background: var(--card-bg);
-    }
     .modal-footer-left { display: flex; align-items: center; gap: 8px; }
     .modal-footer-right { display: flex; align-items: center; gap: 8px; }
     .step-counter {
@@ -497,8 +312,6 @@
     .step-counter strong { color: var(--accent); }
 
     @media (max-width: 600px) {
-        .modal-box { max-height: 100vh; border-radius: 0; max-width: 100%; }
-        .modal-overlay { padding: 0; align-items: flex-end; }
         .mfield-grid { grid-template-columns: 1fr; }
         .mfield-grid .span-2 { grid-column: span 1; }
         .capacity-row { grid-template-columns: 1fr; }
@@ -735,7 +548,7 @@
                         @if($unitCount)
                             <div style="font-family:'Outfit',sans-serif;font-weight:700;">{{ $unitCount }}</div>
                             <div style="font-size:11px;margin-top:2px;">
-                                <span style="color:#059669;font-weight:600;">{{ $occupiedCount }} occupied</span>
+                                <span style="color:var(--tone-success-fg);font-weight:600;">{{ $occupiedCount }} occupied</span>
                                 @if($unitCount > 0)
                                 <span style="color:var(--text-muted);">/ {{ $unitCount - $occupiedCount }} vacant</span>
                                 @endif
@@ -790,7 +603,7 @@
             </p>
         </div>
         @else
-        <div class="buildings-grid">
+        <div class="card-grid buildings-grid">
             @foreach($buildings as $building)
             @php
                 $typeColors = [
@@ -807,11 +620,11 @@
                 $images        = $building->images ?? collect();
                 $cardId      = 'card-'.$building->id;
             @endphp
-            <div class="bldg-card" onclick="window.location='{{ route('buildings.show', $building) }}'">
+            <div class="card is-interactive bldg-card" onclick="window.location='{{ route('buildings.show', $building) }}'">
 
                 {{-- PHOTO AREA --}}
-                <div class="bldg-card-photo">
-                    <div class="bldg-card-type-bar" style="background: linear-gradient(90deg, {{ $accentColor }}, {{ $accentColor }}88);"></div>
+                <div class="card-media bldg-card-photo">
+                    <div class="card-media-bar" style="background: linear-gradient(90deg, {{ $accentColor }}, {{ $accentColor }}88);"></div>
 
                     @if($images->isNotEmpty())
                         <div class="photo-slides" id="{{ $cardId }}-slides">
@@ -849,11 +662,11 @@
                 </div>
 
                 {{-- CARD BODY --}}
-                <div class="bldg-card-body">
+                <div class="card-body is-stack bldg-card-body">
                     <div class="bldg-card-head">
                         <div>
                             <span class="badge badge-gold" style="font-size:11px;margin-bottom:6px;display:inline-block;">{{ $building->property_code }}</span>
-                            <div class="bldg-card-title">{{ $building->property_name }}</div>
+                            <div class="card-title">{{ $building->property_name }}</div>
                         </div>
                     </div>
                     <div class="bldg-card-badges">
@@ -884,17 +697,17 @@
                         </div>
                         @endif
                     </div>
-                    <div class="bldg-card-stats">
-                        <div class="bldg-stat-pill">
-                            <div class="bldg-stat-pill-val">{{ $floorCount ?: '—' }}</div>
-                            <div class="bldg-stat-pill-lbl">Floors</div>
+                    <div class="stat-well-row bldg-card-stats">
+                        <div class="stat-well">
+                            <div class="stat-well-val">{{ $floorCount ?: '—' }}</div>
+                            <div class="stat-well-lbl">Floors</div>
                         </div>
-                        <div class="bldg-stat-pill">
-                            <div class="bldg-stat-pill-val">{{ $unitCount ?: '—' }}</div>
-                            <div class="bldg-stat-pill-lbl">Units</div>
+                        <div class="stat-well">
+                            <div class="stat-well-val">{{ $unitCount ?: '—' }}</div>
+                            <div class="stat-well-lbl">Units</div>
                             @if($unitCount > 0)
                             <div style="font-size:10px;margin-top:3px;line-height:1.3;">
-                                <span style="color:#059669;font-weight:600;">{{ $occupiedCount }} occ</span>
+                                <span style="color:var(--tone-success-fg);font-weight:600;">{{ $occupiedCount }} occ</span>
                                 <span style="color:var(--text-muted);"> / {{ $unitCount - $occupiedCount }} vac</span>
                             </div>
                             @endif
@@ -903,7 +716,7 @@
                 </div>
 
                 {{-- ACTIONS --}}
-                <div class="bldg-card-actions" onclick="event.stopPropagation()">
+                <div class="card-footer bldg-card-actions" onclick="event.stopPropagation()">
                     <a href="{{ route('buildings.show', $building) }}?tab=floors" class="btn btn-outline btn-sm" title="Floors">
                         <i class="fa-solid fa-layer-group"></i>
                     </a>
@@ -965,7 +778,7 @@
 
 <div class="modal-overlay" id="buildingModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
 
-    <div class="modal-box">
+    <div class="modal-box" style="--modal-w:680px">
 
         {{-- HEADER --}}
         <div class="modal-header">
@@ -1206,9 +1019,9 @@
                     <div class="capacity-row">
 
                         @if($mshow('total_no_of_blocks'))
-                        <div class="cap-tile">
-                            <div class="cap-tile-icon"><i class="fa-solid fa-cubes-stacked"></i></div>
-                            <div class="cap-tile-label">Blocks</div>
+                        <div class="stat-well">
+                            <div class="stat-well-icon"><i class="fa-solid fa-cubes-stacked"></i></div>
+                            <div class="stat-well-lbl">Blocks</div>
                             <input type="number" name="total_no_of_blocks"
                                 value="{{ $mval('total_no_of_blocks') }}" placeholder="0" min="0">
                             @error('total_no_of_blocks')
@@ -1218,9 +1031,9 @@
                         @endif
 
                         @if($mshow('total_no_of_floors'))
-                        <div class="cap-tile">
-                            <div class="cap-tile-icon"><i class="fa-solid fa-layer-group"></i></div>
-                            <div class="cap-tile-label">Floors</div>
+                        <div class="stat-well">
+                            <div class="stat-well-icon"><i class="fa-solid fa-layer-group"></i></div>
+                            <div class="stat-well-lbl">Floors</div>
                             <input type="number" name="total_no_of_floors"
                                 value="{{ $mval('total_no_of_floors') }}" placeholder="0" min="0">
                             @error('total_no_of_floors')
@@ -1230,9 +1043,9 @@
                         @endif
 
                         @if($mshow('total_no_of_units'))
-                        <div class="cap-tile">
-                            <div class="cap-tile-icon"><i class="fa-solid fa-door-open"></i></div>
-                            <div class="cap-tile-label">Units</div>
+                        <div class="stat-well">
+                            <div class="stat-well-icon"><i class="fa-solid fa-door-open"></i></div>
+                            <div class="stat-well-lbl">Units</div>
                             <input type="number" name="total_no_of_units"
                                 value="{{ $mval('total_no_of_units') }}" placeholder="0" min="0">
                             @error('total_no_of_units')

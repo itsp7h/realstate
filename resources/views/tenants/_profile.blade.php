@@ -1,20 +1,4 @@
 <style>
-    .pdf-modal-overlay {
-        display: none; position: fixed; inset: 0; z-index: 1050;
-        background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
-    }
-    .pdf-modal-overlay.open { display: flex; }
-    .pdf-modal-box {
-        width: 90vw; height: 90vh; background: #1E2433; border-radius: var(--radius);
-        display: flex; flex-direction: column; overflow: hidden;
-        box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-    }
-    .pdf-modal-header {
-        padding: 12px 18px; background: #151929; border-bottom: 1px solid #2D3650;
-        display: flex; align-items: center; gap: 12px;
-    }
-    .pdf-modal-header span { flex: 1; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: #E2E8F0; }
-    .pdf-modal-iframe { flex: 1; border: none; width: 100%; background: #fff; }
 
     .tab-bar {
         display: flex;
@@ -54,7 +38,6 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    .table-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden; overflow-x: auto; }
     .tp-empty { text-align: center; padding: 50px 20px; color: var(--text-muted); }
     .tp-empty i { font-size: 32px; display: block; margin-bottom: 10px; opacity: 0.3; }
     .tp-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
@@ -72,32 +55,32 @@
         display: inline-flex; align-items: center; gap: 5px;
         padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700;
     }
-    .status-badge.draft          { background: #F1F5F9; color: #64748B; }
-    .status-badge.issued         { background: #EFF6FF; color: #2563EB; }
-    .status-badge.partially_paid { background: #FFFBEB; color: #D97706; }
-    .status-badge.paid           { background: #ECFDF5; color: #059669; }
-    .status-badge.overdue        { background: #FEF2F2; color: #DC2626; }
+    .status-badge.draft          { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+    .status-badge.issued         { background: var(--tone-info-bg); color: var(--tone-info-fg); }
+    .status-badge.partially_paid { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+    .status-badge.paid           { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+    .status-badge.overdue        { background: var(--tone-danger-bg); color: var(--tone-danger-fg); }
     .status-badge.cancelled      { background: #F8FAFC; color: #94A3B8; }
-    .status-badge.expired        { background: #FEF2F2; color: #DC2626; }
-    .status-badge.upcoming       { background: #EFF6FF; color: #2563EB; }
-    .status-badge.expiring       { background: #FFFBEB; color: #D97706; }
-    .status-badge.active         { background: #ECFDF5; color: #059669; }
+    .status-badge.expired        { background: var(--tone-danger-bg); color: var(--tone-danger-fg); }
+    .status-badge.upcoming       { background: var(--tone-info-bg); color: var(--tone-info-fg); }
+    .status-badge.expiring       { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+    .status-badge.active         { background: var(--tone-success-bg); color: var(--tone-success-fg); }
 
     .type-badge {
         display: inline-flex; align-items: center; gap: 4px;
         padding: 3px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 600;
     }
-    .type-badge.rent      { background: #EFF6FF; color: #2563EB; }
-    .type-badge.utilities { background: #FFF7ED; color: #EA580C; }
-    .type-badge.other     { background: #F1F5F9; color: #64748B; }
-    .type-badge.credit    { background: #ECFDF5; color: #059669; }
-    .type-badge.debit     { background: #FFFBEB; color: #D97706; }
+    .type-badge.rent      { background: var(--tone-info-bg); color: var(--tone-info-fg); }
+    .type-badge.utilities { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+    .type-badge.other     { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+    .type-badge.credit    { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+    .type-badge.debit     { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
 
     .rs-status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; }
-    .rs-status.paid          { background: #ECFDF5; color: #059669; }
-    .rs-status.partial       { background: #FFFBEB; color: #D97706; }
-    .rs-status.unpaid        { background: #FEF2F2; color: #DC2626; }
-    .rs-status.not_invoiced  { background: #F1F5F9; color: #64748B; }
+    .rs-status.paid          { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+    .rs-status.partial       { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+    .rs-status.unpaid        { background: var(--tone-danger-bg); color: var(--tone-danger-fg); }
+    .rs-status.not_invoiced  { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
 
     /* Credit/Debit note mini-stats + issue form */
     .note-mini-stat { font-size: 11px; color: var(--text-muted); }
@@ -114,21 +97,10 @@
         background: var(--input-bg); color: var(--text-primary); outline: none; width: 100%; box-sizing: border-box;
     }
     .note-form-control:focus { border-color: var(--accent); }
-    .note-form-control.is-invalid { border-color: #DC2626; }
-    .note-invalid-feedback { font-size: 11px; color: #DC2626; margin-top: 3px; }
+    .note-form-control.is-invalid { border-color: var(--tone-danger-border); }
+    .note-invalid-feedback { font-size: 11px; color: var(--tone-danger-fg); margin-top: 3px; }
 
-    .profile-hero {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow-sm);
-        padding: 28px;
-        display: flex;
-        align-items: center;
-        gap: 22px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-    }
+    .profile-hero { display: flex; align-items: center; gap: 22px; margin-bottom: 20px; flex-wrap: wrap; }
     .profile-avatar {
         width: 72px; height: 72px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
@@ -136,38 +108,18 @@
         flex-shrink: 0;
         border: 3px solid var(--card-border);
     }
-    .profile-avatar.individual { background: #ECFDF5; color: var(--success); border-color: #A7F3D0; }
-    .profile-avatar.company    { background: #EFF6FF; color: var(--info);    border-color: #BFDBFE; }
+    .profile-avatar.individual { background: var(--tone-success-bg); color: var(--success); border-color: var(--tone-success-border); }
+    .profile-avatar.company    { background: var(--tone-info-bg); color: var(--info);    border-color: var(--tone-info-border); }
     .profile-name { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; color: var(--text-primary); line-height: 1.2; }
     .profile-meta { display: flex; align-items: center; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
     .profile-actions { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
 
-    .detail-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 16px;
-    }
-    .detail-item {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius);
-        padding: 18px 20px;
-        box-shadow: var(--shadow-sm);
-        display: flex;
-        align-items: flex-start;
-        gap: 14px;
-    }
     .detail-icon {
         width: 38px; height: 38px; border-radius: var(--radius-sm);
         background: var(--accent-dim); color: var(--accent);
         display: flex; align-items: center; justify-content: center;
         font-size: 15px; flex-shrink: 0;
     }
-    .detail-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 4px; }
-    .detail-value { font-size: 14px; font-weight: 600; color: var(--text-primary); word-break: break-all; }
-    .detail-value.empty { color: var(--text-muted); font-weight: 400; font-style: italic; }
-    .detail-value a { color: var(--info); text-decoration: none; }
-    .detail-value a:hover { text-decoration: underline; }
 
     /* ── Mobile tenant hero (Miknas Property Manager design) ──────
          Shown only on mobile, above the same tabs/content desktop uses
@@ -190,10 +142,6 @@
         }
         .pm-tenant-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 19px; color: #fff; }
         .pm-tenant-meta { font-size: 12px; color: var(--pm-navy-text); margin-top: 1px; }
-        .pm-tenant-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .pm-tenant-kpi { background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; padding: 13px; }
-        .pm-tenant-kpi-label { font-size: 9.5px; font-weight: 700; letter-spacing: .6px; color: var(--pm-text-3); }
-        .pm-tenant-kpi-value { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 20px; color: var(--pm-text); margin-top: 4px; }
         .pm-tenant-actions { display: flex; gap: 9px; }
         .pm-tenant-actions .pm-btn-gold {
             flex: 1; padding: 13px 0; border: 0; border-radius: 8px; background: var(--pm-gold); color: var(--pm-navy);
@@ -223,7 +171,7 @@
 
 {{-- MOBILE TENANT HERO --}}
 <div class="pm-tenant-hero">
-    <div class="pm-tenant-card">
+    <div class="pm-tenant-card detail-item">
         <div class="pm-tenant-avatar">{{ strtoupper(substr($tenant->name, 0, 2)) }}</div>
         <div style="flex:1;min-width:0;">
             <div class="pm-tenant-name">{{ $tenant->name }}</div>
@@ -232,14 +180,14 @@
         <span style="padding:5px 10px;border-radius:9999px;font-size:10px;font-weight:700;background:{{ $mobileStatusMeta['tint'] }};color:{{ $mobileStatusMeta['tone'] }};flex-shrink:0;">{{ $mobileStatusMeta['label'] }}</span>
     </div>
 
-    <div class="pm-tenant-kpis">
-        <div class="pm-tenant-kpi">
-            <div class="pm-tenant-kpi-label">MONTHLY RENT</div>
-            <div class="pm-tenant-kpi-value">{{ $mobileLease?->rent_per_month ? 'BHD '.number_format($mobileLease->rent_per_month, 0) : '—' }}</div>
+    <div class="pm-kpi-grid">
+        <div class="pm-kpi-card">
+            <div class="pm-kpi-label">MONTHLY RENT</div>
+            <div class="pm-kpi-value">{{ $mobileLease?->rent_per_month ? 'BHD '.number_format($mobileLease->rent_per_month, 0) : '—' }}</div>
         </div>
-        <div class="pm-tenant-kpi">
-            <div class="pm-tenant-kpi-label">LEASE ENDS</div>
-            <div class="pm-tenant-kpi-value">{{ $mobileLease?->lease_end_date?->format('d M Y') ?? '—' }}</div>
+        <div class="pm-kpi-card">
+            <div class="pm-kpi-label">LEASE ENDS</div>
+            <div class="pm-kpi-value">{{ $mobileLease?->lease_end_date?->format('d M Y') ?? '—' }}</div>
         </div>
     </div>
 
@@ -281,7 +229,7 @@
 </div>
 
 {{-- PROFILE HERO --}}
-<div class="profile-hero">
+<div class="card is-hero profile-hero">
     <div class="profile-avatar {{ $tenant->tenant_type }}">
         {{ strtoupper(substr($tenant->name, 0, 1)) }}
     </div>
@@ -321,7 +269,7 @@
 {{-- TABS --}}
 <div class="tab-bar">
     <button class="tab-btn" id="tab-overview" onclick="switchTab('overview')">
-        <i class="fa-solid fa-address-card"></i> Overview
+        <i class="fa-solid fa-address-card detail-item"></i> Overview
     </button>
     <button class="tab-btn" id="tab-leases" onclick="switchTab('leases')">
         <i class="fa-solid fa-file-contract"></i> Lease Contracts
@@ -353,21 +301,21 @@
 <div class="tab-panel" id="panel-overview">
 <div class="detail-grid">
 
-    <div class="detail-item">
-        <div class="detail-icon"><i class="fa-solid fa-id-card"></i></div>
+    <div class="card detail-item">
+        <div class="detail-icon"><i class="fa-solid fa-id-card detail-item"></i></div>
         <div>
             <div class="detail-label">ID / CR Number</div>
-            <div class="detail-value {{ $tenant->id_cr_number ? '' : 'empty' }}">
+            <div class="detail-value {{ $tenant->id_cr_number ? '' : 'is-empty' }}">
                 {{ $tenant->id_cr_number ?? 'Not provided' }}
             </div>
         </div>
     </div>
 
-    <div class="detail-item">
+    <div class="card detail-item">
         <div class="detail-icon"><i class="fa-solid fa-phone"></i></div>
         <div>
             <div class="detail-label">Phone</div>
-            <div class="detail-value {{ $tenant->phone ? '' : 'empty' }}">
+            <div class="detail-value {{ $tenant->phone ? '' : 'is-empty' }}">
                 @if($tenant->phone)
                     <a href="tel:{{ $tenant->phone }}">{{ $tenant->phone }}</a>
                 @else
@@ -377,11 +325,11 @@
         </div>
     </div>
 
-    <div class="detail-item">
-        <div class="detail-icon" style="background:#EFF6FF;color:var(--info);"><i class="fa-solid fa-envelope"></i></div>
+    <div class="card detail-item">
+        <div class="detail-icon" style="background:var(--tone-info-bg);color:var(--info);"><i class="fa-solid fa-envelope"></i></div>
         <div>
             <div class="detail-label">Email Address</div>
-            <div class="detail-value {{ $tenant->email ? '' : 'empty' }}">
+            <div class="detail-value {{ $tenant->email ? '' : 'is-empty' }}">
                 @if($tenant->email)
                     <a href="mailto:{{ $tenant->email }}">{{ $tenant->email }}</a>
                 @else
@@ -391,27 +339,27 @@
         </div>
     </div>
 
-    <div class="detail-item">
-        <div class="detail-icon" style="background:#ECFDF5;color:var(--success);"><i class="fa-solid fa-earth-americas"></i></div>
+    <div class="card detail-item">
+        <div class="detail-icon" style="background:var(--tone-success-bg);color:var(--success);"><i class="fa-solid fa-earth-americas"></i></div>
         <div>
             <div class="detail-label">Nationality / Country</div>
-            <div class="detail-value {{ $tenant->nationality_country ? '' : 'empty' }}">
+            <div class="detail-value {{ $tenant->nationality_country ? '' : 'is-empty' }}">
                 {{ $tenant->nationality_country ?? 'Not provided' }}
             </div>
         </div>
     </div>
 
-    <div class="detail-item">
-        <div class="detail-icon" style="background:#FFF7ED;color:#EA580C;"><i class="fa-solid fa-location-dot"></i></div>
+    <div class="card detail-item">
+        <div class="detail-icon" style="background:var(--tone-warning-bg);color:var(--tone-warning-fg);"><i class="fa-solid fa-location-dot"></i></div>
         <div>
             <div class="detail-label">Address</div>
-            <div class="detail-value {{ $tenant->address ? '' : 'empty' }}">
+            <div class="detail-value {{ $tenant->address ? '' : 'is-empty' }}">
                 {{ $tenant->address ?? 'Not provided' }}
             </div>
         </div>
     </div>
 
-    <div class="detail-item">
+    <div class="card detail-item">
         <div class="detail-icon"><i class="fa-regular fa-calendar-plus"></i></div>
         <div>
             <div class="detail-label">Created At</div>
@@ -419,7 +367,7 @@
         </div>
     </div>
 
-    <div class="detail-item">
+    <div class="card detail-item">
         <div class="detail-icon"><i class="fa-regular fa-calendar-check"></i></div>
         <div>
             <div class="detail-label">Last Updated</div>
@@ -432,7 +380,7 @@
 
 {{-- ===================== LEASE CONTRACTS TAB ===================== --}}
 <div class="tab-panel" id="panel-leases">
-<div class="table-card">
+<div class="table-card detail-item">
     @if($tenant->leaseContracts->isEmpty())
     <div class="tp-empty"><i class="fa-solid fa-file-contract"></i>No lease contracts on file for this tenant.</div>
     @else
@@ -464,7 +412,7 @@
 
 {{-- ===================== INVOICES TAB ===================== --}}
 <div class="tab-panel" id="panel-invoices">
-<div class="table-card">
+<div class="table-card detail-item">
     @if($tenant->invoices->isEmpty())
     <div class="tp-empty"><i class="fa-solid fa-file-invoice"></i>No invoices raised for this tenant yet.</div>
     @else
@@ -500,7 +448,7 @@
 
 {{-- ===================== PAYMENTS & RECEIPTS TAB ===================== --}}
 <div class="tab-panel" id="panel-payments">
-<div class="table-card">
+<div class="table-card detail-item">
     @if($tenant->payments->isEmpty())
     <div class="tp-empty"><i class="fa-solid fa-money-bill-transfer"></i>No payments recorded for this tenant yet.</div>
     @else
@@ -527,7 +475,7 @@
                     —
                     @endif
                 </td>
-                <td class="right tp-money" style="color:#059669">{{ number_format($payment->amount, 3) }}</td>
+                <td class="right tp-money" style="color:var(--tone-success-fg)">{{ number_format($payment->amount, 3) }}</td>
                 <td>{{ $payment->method_label }}</td>
                 <td>
                     @if($payment->invoice)
@@ -554,7 +502,7 @@
 
 {{-- ===================== EWA BILLS TAB ===================== --}}
 <div class="tab-panel" id="panel-ewa">
-<div class="table-card">
+<div class="table-card detail-item">
     @if($tenant->ewaBills->isEmpty())
     <div class="tp-empty"><i class="fa-solid fa-bolt"></i>No EWA bills on file for this tenant.</div>
     @else
@@ -594,11 +542,11 @@
     $totalCredited = $tenant->invoiceNotes->where('type', 'credit')->sum('amount');
     $totalDebited  = $tenant->invoiceNotes->where('type', 'debit')->sum('amount');
 @endphp
-<div class="table-card">
+<div class="table-card detail-item">
     <div style="padding:14px 18px;border-bottom:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <div style="display:flex;align-items:center;gap:16px">
-            <div class="note-mini-stat">Total Credited <strong style="color:#059669">{{ number_format($totalCredited, 3) }}</strong></div>
-            <div class="note-mini-stat">Total Debited <strong style="color:#D97706">{{ number_format($totalDebited, 3) }}</strong></div>
+            <div class="note-mini-stat">Total Credited <strong style="color:var(--tone-success-fg)">{{ number_format($totalCredited, 3) }}</strong></div>
+            <div class="note-mini-stat">Total Debited <strong style="color:var(--tone-warning-fg)">{{ number_format($totalDebited, 3) }}</strong></div>
         </div>
         <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('tenantNoteFormCard').classList.toggle('open')">
             <i class="fa-solid fa-plus"></i> Issue Note
@@ -649,12 +597,12 @@
     </table>
     @endif
 
-    <div class="note-form-card {{ $errors->any() ? 'open' : '' }}" id="tenantNoteFormCard">
+    <div class="note-form-card detail-item {{ $errors->any() ? 'open' : '' }}" id="tenantNoteFormCard">
         <form method="POST" action="{{ route('tenants.notes.store', $tenant) }}" novalidate>
             @csrf
             <div class="note-form-grid">
                 <div class="form-group">
-                    <label class="note-form-label">Type <span style="color:#DC2626">*</span></label>
+                    <label class="note-form-label">Type <span style="color:var(--tone-danger-fg)">*</span></label>
                     <select name="type" class="note-form-control {{ $errors->has('type') ? 'is-invalid' : '' }}" required>
                         <option value="">— Select —</option>
                         <option value="credit" {{ old('type') === 'credit' ? 'selected' : '' }}>Credit Note (reduces balance)</option>
@@ -663,13 +611,13 @@
                     <div class="note-invalid-feedback">{{ $errors->first('type') }}</div>
                 </div>
                 <div class="form-group">
-                    <label class="note-form-label">Amount (BHD) <span style="color:#DC2626">*</span></label>
+                    <label class="note-form-label">Amount (BHD) <span style="color:var(--tone-danger-fg)">*</span></label>
                     <input type="number" name="amount" class="note-form-control {{ $errors->has('amount') ? 'is-invalid' : '' }}"
                            value="{{ old('amount') }}" min="0.001" step="0.001" placeholder="0.000" required>
                     <div class="note-invalid-feedback">{{ $errors->first('amount') }}</div>
                 </div>
                 <div class="form-group">
-                    <label class="note-form-label">Date <span style="color:#DC2626">*</span></label>
+                    <label class="note-form-label">Date <span style="color:var(--tone-danger-fg)">*</span></label>
                     <input type="date" name="note_date" class="note-form-control {{ $errors->has('note_date') ? 'is-invalid' : '' }}"
                            value="{{ old('note_date', now()->format('Y-m-d')) }}" max="{{ now()->format('Y-m-d') }}" required>
                     <div class="note-invalid-feedback">{{ $errors->first('note_date') }}</div>
@@ -680,7 +628,7 @@
                     </button>
                 </div>
                 <div class="form-group reason-group">
-                    <label class="note-form-label">Reason <span style="color:#DC2626">*</span></label>
+                    <label class="note-form-label">Reason <span style="color:var(--tone-danger-fg)">*</span></label>
                     <input type="text" name="reason" class="note-form-control {{ $errors->has('reason') ? 'is-invalid' : '' }}"
                            value="{{ old('reason') }}" maxlength="500" placeholder="Why is this being issued?" required>
                     <div class="note-invalid-feedback">{{ $errors->first('reason') }}</div>
@@ -693,7 +641,7 @@
 
 {{-- ===================== RENT LEDGER TAB ===================== --}}
 <div class="tab-panel" id="panel-ledger">
-<div class="table-card">
+<div class="table-card detail-item">
     @if($rentSchedule->isEmpty())
     <div class="tp-empty"><i class="fa-solid fa-calendar-check"></i>No rent-bearing lease contracts on file for this tenant.</div>
     @else
@@ -745,9 +693,9 @@
 </div>
 
 {{-- RECEIPT PREVIEW MODAL --}}
-<div class="pdf-modal-overlay" id="receiptPdfModal" onclick="closeReceiptPdf(event)">
-    <div class="pdf-modal-box" onclick="event.stopPropagation()">
-        <div class="pdf-modal-header">
+<div class="pdf-viewer-overlay" id="receiptPdfModal" onclick="closeReceiptPdf(event)">
+    <div class="pdf-viewer" onclick="event.stopPropagation()">
+        <div class="pdf-viewer-header">
             <i class="fa-solid fa-file-pdf" style="color:var(--accent);font-size:16px"></i>
             <span id="receiptPdfTitle"></span>
             <a id="receiptPdfDownloadLink" href="#" class="btn btn-outline btn-sm" download>
@@ -757,7 +705,7 @@
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
-        <iframe id="receiptPdfFrame" class="pdf-modal-iframe" src="about:blank"></iframe>
+        <iframe id="receiptPdfFrame" class="pdf-viewer-frame" src="about:blank"></iframe>
     </div>
 </div>
 

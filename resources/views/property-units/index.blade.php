@@ -7,71 +7,19 @@
 <style>
 /* ── STATS ─────────────────────────────────────────────── */
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-.stat-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 18px 20px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow-sm); transition: box-shadow 0.2s, transform 0.2s; }
-.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-.stat-icon { width: 44px; height: 44px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-.stat-icon.gold   { background: var(--accent-dim); color: var(--accent); }
-.stat-icon.green  { background: #ECFDF5; color: var(--success); }
-.stat-icon.blue   { background: #EFF6FF; color: var(--info); }
-.stat-icon.purple { background: #F5F3FF; color: #7C3AED; }
-.stat-val { font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-.stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
 
 /* ── FILTER BAR ─────────────────────────────────────────── */
 .filter-bar { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; padding: 16px 20px; background: var(--page-bg); border-bottom: 1px solid var(--card-border); }
-.filter-group { display: flex; flex-direction: column; gap: 5px; min-width: 140px; }
-.filter-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.filter-group input, .filter-group select { padding: 8px 12px; font-size: 13px; border: 1.5px solid var(--input-border); border-radius: var(--radius-sm); background: var(--card-bg); color: var(--text-primary); font-family: 'Plus Jakarta Sans', sans-serif; outline: none; appearance: none; -webkit-appearance: none; transition: border-color 0.18s, box-shadow 0.18s; }
-.filter-group input:focus, .filter-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
-.filter-group select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px; }
-.filter-actions { display: flex; gap: 8px; align-items: flex-end; margin-left: auto; }
 
 /* ── TABLE ──────────────────────────────────────────────── */
 .unit-code { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text-primary); font-size: 13.5px; }
 .unit-prop { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 .rent-val  { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text-primary); }
 .rent-per  { font-size: 11px; color: var(--text-muted); }
-.action-btns { display: flex; gap: 6px; }
-.table-footer { padding: 14px 20px; border-top: 1px solid var(--card-border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-.pagination { display: flex; gap: 4px; align-items: center; }
-.page-btn { width: 32px; height: 32px; border: 1.5px solid var(--card-border); background: var(--card-bg); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--text-secondary); cursor: pointer; text-decoration: none; transition: all 0.15s; }
-.page-btn:hover { background: var(--page-bg); color: var(--text-primary); }
-.page-btn.active { background: var(--accent); border-color: var(--accent); color: #0B1120; }
-.result-count { font-size: 13px; color: var(--text-muted); }
-.result-count strong { color: var(--text-primary); }
-.empty-state { text-align: center; padding: 60px 20px; }
-.empty-icon { width: 64px; height: 64px; background: var(--page-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--text-muted); margin: 0 auto 16px; }
-.empty-state h4 { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
-.empty-state p { font-size: 13px; color: var(--text-muted); }
 
 /* ── MODAL OVERLAY ──────────────────────────────────────── */
-.modal-overlay {
-    position: fixed; inset: 0; z-index: 1000;
-    background: rgba(11,17,32,0.55); backdrop-filter: blur(4px);
-    display: flex; align-items: center; justify-content: center; padding: 20px;
-    opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
-}
-.modal-overlay.open { opacity: 1; pointer-events: all; }
-.modal-box {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: 16px;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.10);
-    width: 100%; max-width: 700px; max-height: 90vh;
-    display: flex; flex-direction: column;
-    transform: translateY(20px) scale(0.98);
-    transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);
-    overflow: hidden;
-}
-.modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
 
 /* ── MODAL HEADER ───────────────────────────────────────── */
-.modal-header { padding: 20px 24px 0; flex-shrink: 0; }
-.modal-header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-.modal-header-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--accent-dim); border: 1px solid rgba(232,184,109,0.25); display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 16px; flex-shrink: 0; }
-.modal-header-title { font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-.modal-header-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
-.modal-close-btn { width: 32px; height: 32px; border-radius: var(--radius-sm); border: 1.5px solid var(--card-border); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 13px; transition: all 0.15s; margin-left: auto; flex-shrink: 0; }
-.modal-close-btn:hover { background: var(--page-bg); color: var(--text-primary); }
 
 /* ── STEP TRACK ─────────────────────────────────────────── */
 .step-track { display: flex; align-items: flex-start; margin-bottom: 20px; }
@@ -86,9 +34,6 @@
 .step-item.done   .step-name { color: var(--text-secondary); }
 
 /* ── MODAL BODY ─────────────────────────────────────────── */
-.modal-body { padding: 0 24px; overflow-y: auto; flex: 1; }
-.modal-body::-webkit-scrollbar { width: 4px; }
-.modal-body::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
 
 /* ── STEP PANELS ────────────────────────────────────────── */
 .step-panel { display: none; padding: 6px 0 16px; }
@@ -143,13 +88,10 @@
 .m-sub-divider::after { content: ''; flex: 1; height: 1px; background: var(--card-border); }
 
 /* ── MODAL FOOTER ───────────────────────────────────────── */
-.modal-footer { padding: 14px 24px; border-top: 1px solid var(--card-border); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-shrink: 0; background: var(--card-bg); }
 .step-counter { font-size: 11px; font-weight: 600; color: var(--text-muted); padding: 4px 10px; background: var(--page-bg); border-radius: 20px; border: 1px solid var(--card-border); }
 .step-counter strong { color: var(--accent); }
 
 @media (max-width: 620px) {
-    .modal-box { max-height: 100vh; border-radius: 0; }
-    .modal-overlay { padding: 0; align-items: flex-end; }
     .mfield-grid { grid-template-columns: 1fr; }
     .mfield-grid .mspan-2 { grid-column: span 1; }
     .step-name { display: none; }
@@ -255,9 +197,9 @@
         <div><div class="stat-val">{{ $stats['fitted'] ?? 0 }}</div><div class="stat-lbl">Fitted</div></div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon" style="background:#ECFDF5;color:#059669;"><i class="fa-solid fa-key"></i></div>
+        <div class="stat-icon" style="background:var(--tone-success-bg);color:var(--tone-success-fg);"><i class="fa-solid fa-key"></i></div>
         <div>
-            <div class="stat-val" style="color:#059669;">{{ $stats['occupied'] ?? 0 }}</div>
+            <div class="stat-val" style="color:var(--tone-success-fg);">{{ $stats['occupied'] ?? 0 }}</div>
             <div class="stat-lbl">Occupied</div>
             @if(($stats['total'] ?? 0) > 0)
             <div style="font-size:11px;color:var(--text-muted);margin-top:1px;">{{ $stats['total'] - ($stats['occupied'] ?? 0) }} vacant</div>
@@ -468,7 +410,7 @@
 
 <div class="modal-overlay" id="unitModal" role="dialog" aria-modal="true">
 
-    <div class="modal-box">
+    <div class="modal-box" style="--modal-w:700px">
 
         {{-- HEADER --}}
         <div class="modal-header">

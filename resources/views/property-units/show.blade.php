@@ -56,18 +56,6 @@
         border-bottom: 2px solid var(--card-border);
         margin-bottom: 24px;
     }
-    .tab-btn {
-        padding: 11px 22px;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 13.5px; font-weight: 600;
-        color: var(--text-muted);
-        border: none; background: none; cursor: pointer;
-        border-bottom: 2px solid transparent; margin-bottom: -2px;
-        transition: color 0.18s, border-color 0.18s;
-        display: flex; align-items: center; gap: 8px;
-    }
-    .tab-btn:hover { color: var(--text-primary); }
-    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
     .tab-badge {
         background: var(--accent-dim); color: var(--accent);
         font-size: 10px; font-weight: 700;
@@ -143,15 +131,12 @@
     .contract-table tr[data-href] { cursor: pointer; }
     .contract-table tr[data-href]:hover td { background: var(--page-bg); }
 
-    .empty-state { text-align: center; padding: 56px 20px; }
     .empty-state .empty-icon {
         width: 60px; height: 60px; border-radius: 50%;
         background: var(--page-bg);
         display: flex; align-items: center; justify-content: center;
         font-size: 22px; color: var(--text-muted); margin: 0 auto 14px;
     }
-    .empty-state h4 { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
-    .empty-state p { font-size: 13px; color: var(--text-muted); }
 
     @media (max-width: 640px) {
         .unit-hero { grid-template-columns: 1fr; }

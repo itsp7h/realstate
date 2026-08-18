@@ -5,54 +5,18 @@
 
 @push('styles')
 <style>
-.maint-section {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); overflow: hidden; margin-bottom: 20px;
-}
-.maint-section-header {
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px 20px; border-bottom: 1px solid var(--card-border);
-    border-left: 3px solid var(--accent);
-    background: linear-gradient(90deg, var(--accent-dim) 0%, transparent 60%);
-}
-.maint-section-icon {
-    width: 34px; height: 34px; border-radius: var(--radius-sm);
-    background: var(--accent-dim); color: var(--accent);
-    display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
-}
-.maint-section-title { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 800; color: var(--text-primary); }
-.maint-section-body  { padding: 20px; }
-
-.detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-.detail-item { min-width: 0; }
-.detail-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
-.detail-value { font-size: 14px; color: var(--text-primary); font-weight: 500; }
-.detail-value.mono { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 15px; }
-
-.status-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
-}
-.status-badge.waiting_supervisor { background: #FFF7ED; color: #EA580C; }
-.status-badge.waiting_approval   { background: #F5F3FF; color: #7C3AED; }
-.status-badge.approved           { background: #ECFDF5; color: #059669; }
-.status-badge.in_progress        { background: #EFF6FF; color: #2563EB; }
-.status-badge.completed          { background: #F0FDFA; color: #0D9488; }
-.status-badge.cancelled          { background: #FEF2F2; color: #DC2626; }
-
 .job-lines-table { width: 100%; border-collapse: collapse; }
 .job-lines-table th {
     padding: 9px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.06em; color: var(--text-muted); background: var(--page-bg);
     border-bottom: 1px solid var(--card-border); text-align: left;
 }
-.job-lines-table td { padding: 12px 14px; font-size: 13px; color: var(--text-secondary); border-bottom: 1px solid #F1F5F9; vertical-align: top; }
+.job-lines-table td { padding: 12px 14px; font-size: 13px; color: var(--text-secondary); border-bottom: 1px solid var(--tone-neutral-border); vertical-align: top; }
 .job-lines-table tr:last-child td { border-bottom: none; }
 
 @media print {
     .sidebar, .topbar, .page-header-actions, .no-print { display: none !important; }
     .main-wrap { margin-left: 0 !important; }
-    .maint-section { break-inside: avoid; }
     body { background: white; }
 }
 </style>
@@ -89,16 +53,16 @@
 </div>
 
 {{-- ── SECTION 1: REQUEST DETAILS ───────────────────────── --}}
-<div class="maint-section">
-    <div class="maint-section-header">
-        <div class="maint-section-icon"><i class="fa-solid fa-clipboard"></i></div>
-        <div class="maint-section-title">Request Details</div>
+<div class="card">
+    <div class="card-header">
+        <div class="card-header-icon"><i class="fa-solid fa-clipboard"></i></div>
+        <div class="card-title">Request Details</div>
     </div>
-    <div class="maint-section-body">
+    <div class="card-body">
         <div class="detail-grid">
             <div class="detail-item">
                 <div class="detail-label">Job Order</div>
-                <div class="detail-value mono">{{ $record->job_order ?? '—' }}</div>
+                <div class="detail-value is-num">{{ $record->job_order ?? '—' }}</div>
             </div>
             <div class="detail-item">
                 <div class="detail-label">Date</div>
@@ -118,7 +82,7 @@
             </div>
             <div class="detail-item">
                 <div class="detail-label">Flat / Unit</div>
-                <div class="detail-value mono">{{ $record->flat }}</div>
+                <div class="detail-value is-num">{{ $record->flat }}</div>
             </div>
             <div class="detail-item">
                 <div class="detail-label">Contact No.</div>
@@ -137,10 +101,10 @@
 </div>
 
 {{-- ── SECTION 2: JOB LINES ──────────────────────────────── --}}
-<div class="maint-section">
-    <div class="maint-section-header">
-        <div class="maint-section-icon"><i class="fa-solid fa-list-check"></i></div>
-        <div class="maint-section-title">Job Lines</div>
+<div class="card">
+    <div class="card-header">
+        <div class="card-header-icon"><i class="fa-solid fa-list-check"></i></div>
+        <div class="card-title">Job Lines</div>
     </div>
     @if($record->job_lines && count($record->job_lines) > 0)
     <div class="table-wrap">
@@ -168,17 +132,17 @@
         </table>
     </div>
     @else
-    <div class="maint-section-body" style="color:var(--text-muted);font-size:13px">No job lines recorded.</div>
+    <div class="card-body" style="color:var(--text-muted);font-size:13px">No job lines recorded.</div>
     @endif
 </div>
 
 {{-- ── SECTION 3: SUPERVISOR ────────────────────────────── --}}
-<div class="maint-section">
-    <div class="maint-section-header">
-        <div class="maint-section-icon"><i class="fa-solid fa-user-tie"></i></div>
-        <div class="maint-section-title">Supervisor</div>
+<div class="card">
+    <div class="card-header">
+        <div class="card-header-icon"><i class="fa-solid fa-user-tie"></i></div>
+        <div class="card-title">Supervisor</div>
     </div>
-    <div class="maint-section-body">
+    <div class="card-body">
         <div class="detail-grid">
             <div class="detail-item">
                 <div class="detail-label">Supervisor Name</div>
@@ -202,12 +166,12 @@
 </div>
 
 {{-- ── SECTION 4: MAINTENANCE USE ONLY ─────────────────── --}}
-<div class="maint-section">
-    <div class="maint-section-header">
-        <div class="maint-section-icon"><i class="fa-solid fa-wrench"></i></div>
-        <div class="maint-section-title">Maintenance Use Only</div>
+<div class="card">
+    <div class="card-header">
+        <div class="card-header-icon"><i class="fa-solid fa-wrench"></i></div>
+        <div class="card-title">Maintenance Use Only</div>
     </div>
-    <div class="maint-section-body">
+    <div class="card-body">
         @if($record->job_assessment)
         <div style="margin-bottom:18px">
             <div class="detail-label" style="margin-bottom:6px">Job Assessment</div>
@@ -219,7 +183,7 @@
             @php $fileField = "quotation_{$n}_file"; @endphp
             <div class="detail-item">
                 <div class="detail-label">Quotation {{ $n }}</div>
-                <div class="detail-value mono">{{ $record->{"quotation_{$n}"} ? 'BHD '.number_format($record->{"quotation_{$n}"}, 3) : '—' }}</div>
+                <div class="detail-value is-num">{{ $record->{"quotation_{$n}"} ? 'BHD '.number_format($record->{"quotation_{$n}"}, 3) : '—' }}</div>
                 @if($record->$fileField)
                 <div style="margin-top:6px;max-width:100%">
                     <a href="{{ Storage::url($record->$fileField) }}" target="_blank" title="{{ basename($record->$fileField) }}"
@@ -243,12 +207,12 @@
 </div>
 
 {{-- ── SECTION 5: APPROVAL ──────────────────────────────── --}}
-<div class="maint-section">
-    <div class="maint-section-header">
-        <div class="maint-section-icon"><i class="fa-solid fa-signature"></i></div>
-        <div class="maint-section-title">Approval</div>
+<div class="card">
+    <div class="card-header">
+        <div class="card-header-icon"><i class="fa-solid fa-signature"></i></div>
+        <div class="card-title">Approval</div>
     </div>
-    <div class="maint-section-body">
+    <div class="card-body">
         <div class="detail-grid">
             @if($record->selected_quotation)
             <div class="detail-item">

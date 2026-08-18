@@ -6,30 +6,6 @@
 @push('styles')
 <style>
 /* ── SECTION CARDS ───────────────────────────────────────── */
-.maint-section {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    margin-bottom: 20px;
-}
-.maint-section-header {
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px 20px;
-    border-bottom: 1px solid var(--card-border);
-    border-left: 3px solid var(--accent);
-    background: linear-gradient(90deg, var(--accent-dim) 0%, transparent 60%);
-}
-.maint-section-icon {
-    width: 34px; height: 34px; border-radius: var(--radius-sm);
-    background: var(--accent-dim); color: var(--accent);
-    display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
-}
-.maint-section-title {
-    font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 800;
-    color: var(--text-primary); letter-spacing: 0.02em;
-}
-.maint-section-body { padding: 20px; }
 
 /* ── FORM GRID ───────────────────────────────────────────── */
 
@@ -49,7 +25,7 @@
     letter-spacing: 0.06em; color: var(--text-muted); background: var(--page-bg);
     border-bottom: 1px solid var(--card-border); text-align: left;
 }
-.job-lines-table td { padding: 8px 6px; border-bottom: 1px solid #F1F5F9; vertical-align: top; }
+.job-lines-table td { padding: 8px 6px; border-bottom: 1px solid var(--tone-neutral-border); vertical-align: top; }
 .job-lines-table tr:last-child td { border-bottom: none; }
 .job-lines-table input, .job-lines-table textarea {
     width: 100%; padding: 7px 10px; font-size: 13px;
@@ -60,7 +36,7 @@
 .job-lines-table input:focus, .job-lines-table textarea:focus { border-color: var(--accent); }
 .job-lines-table textarea { resize: vertical; min-height: 60px; }
 .remove-line-btn {
-    background: none; border: none; color: #DC2626; cursor: pointer;
+    background: none; border: none; color: var(--tone-danger-fg); cursor: pointer;
     font-size: 14px; padding: 6px; border-radius: 6px; transition: background 0.15s;
 }
 .remove-line-btn:hover { background: #FEF2F2; }
@@ -100,7 +76,7 @@
 }
 .quot-existing-file a { color: var(--accent); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
 .quot-existing-file a:hover { text-decoration: underline; }
-.quot-remove-label { display: flex; align-items: center; gap: 4px; color: #DC2626; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+.quot-remove-label { display: flex; align-items: center; gap: 4px; color: var(--tone-danger-fg); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
 .quot-remove-label input { accent-color: #DC2626; }
 
 /* ── READONLY NOTE ───────────────────────────────────────── */
@@ -149,11 +125,11 @@
     @if($record) @method('PUT') @endif
 
     {{-- ── SECTION 1: REQUEST HEADER ─────────────────────── --}}
-    <div class="maint-section">
-        <div class="maint-section-header">
-            <div class="maint-section-icon"><i class="fa-solid fa-clipboard"></i></div>
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon"><i class="fa-solid fa-clipboard"></i></div>
             <div>
-                <div class="maint-section-title">Request Details</div>
+                <div class="card-title">Request Details</div>
             </div>
             @if($record)
             <div style="margin-left:auto">
@@ -169,7 +145,7 @@
             <input type="hidden" name="status" value="waiting_supervisor">
             @endif
         </div>
-        <div class="maint-section-body">
+        <div class="card-body">
             <div class="form-grid cols-3">
                 <div class="form-group">
                     <label>Date <span class="required">*</span></label>
@@ -229,15 +205,15 @@
     </div>
 
     {{-- ── SECTION 2: JOB LINES ──────────────────────────── --}}
-    <div class="maint-section">
-        <div class="maint-section-header">
-            <div class="maint-section-icon"><i class="fa-solid fa-list-check"></i></div>
-            <div class="maint-section-title">Job Lines</div>
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon"><i class="fa-solid fa-list-check"></i></div>
+            <div class="card-title">Job Lines</div>
             <button type="button" class="btn btn-outline btn-sm" style="margin-left:auto" onclick="addJobLine()">
                 <i class="fa-solid fa-plus"></i> Add Line
             </button>
         </div>
-        <div class="maint-section-body" style="padding:0">
+        <div class="card-body" style="padding:0">
             <div class="table-wrap">
                 <table class="job-lines-table">
                     <thead>
@@ -269,12 +245,12 @@
     </div>
 
     {{-- ── SECTION 3: SUPERVISOR ─────────────────────────── --}}
-    <div class="maint-section">
-        <div class="maint-section-header">
-            <div class="maint-section-icon"><i class="fa-solid fa-user-tie"></i></div>
-            <div class="maint-section-title">Supervisor</div>
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon"><i class="fa-solid fa-user-tie"></i></div>
+            <div class="card-title">Supervisor</div>
         </div>
-        <div class="maint-section-body">
+        <div class="card-body">
             <div class="form-grid cols-2">
                 <div class="form-group">
                     <label>Supervisor Name</label>
@@ -290,14 +266,14 @@
     </div>
 
     {{-- ── SECTION 4: MAINTENANCE USE ONLY ──────────────── --}}
-    <div class="maint-section">
-        <div class="maint-section-header">
-            <div class="maint-section-icon"><i class="fa-solid fa-wrench"></i></div>
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon"><i class="fa-solid fa-wrench"></i></div>
             <div>
-                <div class="maint-section-title">Maintenance Use Only</div>
+                <div class="card-title">Maintenance Use Only</div>
             </div>
         </div>
-        <div class="maint-section-body">
+        <div class="card-body">
             <div class="form-group" style="margin-bottom:16px">
                 <label>Job Assessment</label>
                 <textarea name="job_assessment" rows="3" placeholder="Assessment notes and findings…">{{ old('job_assessment', $record?->job_assessment) }}</textarea>
@@ -334,7 +310,7 @@
                         </button>
                     </div>
                     @error($fileField)
-                    <div style="font-size:12px;color:#DC2626;margin-top:4px"><i class="fa-solid fa-triangle-exclamation"></i> {{ $message }}</div>
+                    <div style="font-size:12px;color:var(--tone-danger-fg);margin-top:4px"><i class="fa-solid fa-triangle-exclamation"></i> {{ $message }}</div>
                     @enderror
                 </div>
                 @endforeach
@@ -347,12 +323,12 @@
     </div>
 
     {{-- ── SECTION 5: APPROVAL ──────────────────────────── --}}
-    <div class="maint-section">
-        <div class="maint-section-header">
-            <div class="maint-section-icon"><i class="fa-solid fa-signature"></i></div>
-            <div class="maint-section-title">Approval</div>
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon"><i class="fa-solid fa-signature"></i></div>
+            <div class="card-title">Approval</div>
         </div>
-        <div class="maint-section-body">
+        <div class="card-body">
             <div class="form-grid cols-2">
                 <div class="form-group">
                     <label>Approved by Supervisor</label>

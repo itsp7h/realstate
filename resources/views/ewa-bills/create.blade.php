@@ -6,7 +6,7 @@
 @push('styles')
 <style>
 
-.form-label .required { color: #DC2626; margin-left: 2px; }
+.form-label .required { color: var(--tone-danger-fg); margin-left: 2px; }
 .form-label .unit-tag { color: var(--accent); font-size: 10px; margin-left: 4px; background: var(--accent-dim); padding: 1px 6px; border-radius: 4px; }
 .form-control {
     padding: 9px 13px; font-size: 13px;
@@ -16,7 +16,7 @@
     font-family: 'Plus Jakarta Sans', sans-serif;
 }
 .form-control:focus { border-color: var(--accent); }
-.form-control.is-invalid { border-color: #DC2626; }
+.form-control.is-invalid { border-color: var(--tone-danger-border); }
 .form-control.is-invalid ~ .invalid-feedback { display: block; }
 textarea.form-control { resize: vertical; min-height: 80px; }
 
@@ -69,21 +69,21 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700;
     background: #F0FDFA; color: #0D9488; border: 1px solid #99F6E4;
 }
-.split-preview { display: none; margin-top: 12px; padding: 14px 16px; background: var(--page-bg); border: 1px solid var(--card-border); border-radius: var(--radius-sm); }
+.split-preview { display: none; margin-top: 12px; }
 .split-preview.show { display: block; }
 .split-bar { height: 8px; border-radius: 4px; overflow: hidden; display: flex; margin: 8px 0 12px; }
 .split-bar-landlord { background: #059669; transition: width 0.3s ease; }
 .split-bar-tenant   { background: #D97706; transition: width 0.3s ease; }
 .split-amounts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .split-cell { padding: 10px 14px; border-radius: var(--radius-sm); }
-.split-cell.landlord { background: #ECFDF5; border: 1px solid #BBF7D0; }
-.split-cell.tenant   { background: #FFFBEB; border: 1px solid #FDE68A; }
+.split-cell.landlord { background: var(--tone-success-bg); border: 1px solid var(--tone-success-border); }
+.split-cell.tenant   { background: var(--tone-warning-bg); border: 1px solid var(--tone-warning-border); }
 .split-cell-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
-.split-cell.landlord .split-cell-lbl { color: #059669; }
-.split-cell.tenant   .split-cell-lbl { color: #D97706; }
+.split-cell.landlord .split-cell-lbl { color: var(--tone-success-fg); }
+.split-cell.tenant   .split-cell-lbl { color: var(--tone-warning-fg); }
 .split-cell-val { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; }
-.split-cell.landlord .split-cell-val { color: #059669; }
-.split-cell.tenant   .split-cell-val { color: #D97706; }
+.split-cell.landlord .split-cell-val { color: var(--tone-success-fg); }
+.split-cell.tenant   .split-cell-val { color: var(--tone-warning-fg); }
 
 /* Combobox (reused from invoice) */
 .contract-combobox { position: relative; }
@@ -147,14 +147,8 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .import-zone-text p  { font-size: 12px; color: #0369A1; }
 .import-zone-btn { margin-left: auto; flex-shrink: 0; }
 
-.import-progress {
-    display: none; align-items: center; gap: 12px; padding: 14px 18px;
-    background: #F0FDFA; border: 1px solid #99F6E4; border-radius: var(--radius-sm);
-    margin-bottom: 8px;
-}
+.import-progress { display: none; align-items: center; }
 .import-progress.show { display: flex; }
-.import-progress-bar-wrap { flex: 1; height: 6px; background: #CCFBF1; border-radius: 3px; overflow: hidden; }
-.import-progress-bar { height: 100%; background: #0D9488; border-radius: 3px; transition: width 0.3s; width: 0%; }
 
 .import-result {
     display: none; padding: 14px 18px; border-radius: var(--radius-sm);
@@ -162,8 +156,8 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 }
 .import-result.show { display: flex; align-items: flex-start; gap: 12px; }
 .import-result.success { background: #F0FDFA; border: 1px solid #99F6E4; color: #0D9488; }
-.import-result.warning { background: #FFFBEB; border: 1px solid #FDE68A; color: #D97706; }
-.import-result.error   { background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626; }
+.import-result.warning { background: var(--tone-warning-bg); border: 1px solid var(--tone-warning-border); color: var(--tone-warning-fg); }
+.import-result.error   { background: var(--tone-danger-bg); border: 1px solid var(--tone-danger-border); color: var(--tone-danger-fg); }
 .import-result-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
 .import-result-body strong { display: block; font-weight: 700; margin-bottom: 4px; }
 .import-result-body ul { margin: 6px 0 0 16px; padding: 0; font-size: 12px; line-height: 1.6; }
@@ -211,10 +205,10 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     </div>
 </div>
 
-<div class="import-progress" id="importProgress">
-    <i class="fa-solid fa-circle-notch fa-spin" style="color:#0D9488;font-size:16px"></i>
-    <span style="font-size:13px;color:#0D9488;font-weight:600">Reading EWA bill…</span>
-    <div class="import-progress-bar-wrap"><div class="import-progress-bar" id="importBar"></div></div>
+<div class="alert alert-info import-progress" id="importProgress">
+    <i class="fa-solid fa-circle-notch fa-spin"></i>
+    <span style="font-weight:600">Reading EWA bill…</span>
+    <div class="progress is-sm"><div class="progress-bar" id="importBar"></div></div>
 </div>
 
 <div class="import-result" id="importResult">
@@ -468,7 +462,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
                     Landlord covers up to this amount per bill. Tenant pays the overage.
                 </div>
 
-                <div class="split-preview" id="splitPreview">
+                <div class="card is-nested is-compact split-preview" id="splitPreview">
                     <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Bill split</div>
                     <div class="split-bar">
                         <div class="split-bar-landlord" id="splitBarLandlord" style="width:50%"></div>

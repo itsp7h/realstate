@@ -5,24 +5,6 @@
 
 @push('styles')
 <style>
-.pay-stats {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 14px; margin-bottom: 24px;
-}
-.pay-stat {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 16px 20px;
-    display: flex; align-items: center; gap: 14px;
-}
-.pay-stat-icon {
-    width: 40px; height: 40px; border-radius: var(--radius-sm);
-    display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
-}
-.pay-stat-icon.green { background: #ECFDF5; color: #059669; }
-.pay-stat-icon.teal  { background: #F0FDFA; color: #0D9488; }
-.pay-stat-icon.blue  { background: #EFF6FF; color: #2563EB; }
-.pay-stat-val { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-.pay-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
 .method-badge {
     display: inline-flex; align-items: center; gap: 4px;
@@ -80,26 +62,26 @@
     </div>
 </div>
 
-<div class="pay-stats m-hide-desktop-index">
-    <div class="pay-stat">
-        <div class="pay-stat-icon green"><i class="fa-solid fa-coins"></i></div>
+<div class="stats-grid m-hide-desktop-index">
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-coins"></i></div>
         <div>
-            <div class="pay-stat-val">{{ number_format($stats['total_collected'], 3) }}</div>
-            <div class="pay-stat-lbl">Total Collected (BHD)</div>
+            <div class="stat-val">{{ number_format($stats['total_collected'], 3) }}</div>
+            <div class="stat-lbl">Total Collected (BHD)</div>
         </div>
     </div>
-    <div class="pay-stat">
-        <div class="pay-stat-icon teal"><i class="fa-solid fa-money-bill-transfer"></i></div>
+    <div class="stat-card">
+        <div class="stat-icon teal"><i class="fa-solid fa-money-bill-transfer"></i></div>
         <div>
-            <div class="pay-stat-val">{{ $stats['count'] }}</div>
-            <div class="pay-stat-lbl">Transactions</div>
+            <div class="stat-val">{{ $stats['count'] }}</div>
+            <div class="stat-lbl">Transactions</div>
         </div>
     </div>
-    <div class="pay-stat">
-        <div class="pay-stat-icon blue"><i class="fa-solid fa-calendar-check"></i></div>
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="fa-solid fa-calendar-check"></i></div>
         <div>
-            <div class="pay-stat-val">{{ number_format($stats['this_month'], 3) }}</div>
-            <div class="pay-stat-lbl">This Month (BHD)</div>
+            <div class="stat-val">{{ number_format($stats['this_month'], 3) }}</div>
+            <div class="stat-lbl">This Month (BHD)</div>
         </div>
     </div>
 </div>
@@ -175,7 +157,7 @@
                         <span style="color:var(--text-muted)">—</span>
                         @endif
                     </td>
-                    <td style="font-family:'Outfit',sans-serif;font-weight:700;color:#059669">
+                    <td style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--tone-success-fg)">
                         {{ number_format($pmt->amount, 3) }}
                     </td>
                     <td>

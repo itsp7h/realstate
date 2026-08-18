@@ -5,53 +5,16 @@
 
 @push('styles')
 <style>
-.inv-stats {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 14px; margin-bottom: 24px;
-}
-.inv-stat {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 16px 20px;
-    display: flex; align-items: center; gap: 14px;
-}
-.inv-stat-icon {
-    width: 40px; height: 40px; border-radius: var(--radius-sm);
-    display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
-}
-.inv-stat-icon.gray  { background: #F1F5F9; color: #64748B; }
-.inv-stat-icon.blue  { background: #EFF6FF; color: #2563EB; }
-.inv-stat-icon.amber { background: #FFFBEB; color: #D97706; }
-.inv-stat-icon.green { background: #ECFDF5; color: #059669; }
-.inv-stat-icon.red   { background: #FEF2F2; color: #DC2626; }
-.inv-stat-val { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-.inv-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
 .type-badge {
     display: inline-flex; align-items: center; gap: 4px;
     padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;
 }
-.type-badge.rent      { background: #EFF6FF; color: #2563EB; }
-.type-badge.utilities { background: #FFF7ED; color: #EA580C; }
-.type-badge.other     { background: #F1F5F9; color: #64748B; }
+.type-badge.rent      { background: var(--tone-info-bg); color: var(--tone-info-fg); }
+.type-badge.utilities { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.type-badge.other     { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
 
 .overdue-row td { background: #FFF8F8; }
-
-.pdf-modal-overlay {
-    display: none; position: fixed; inset: 0; z-index: 1050;
-    background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
-}
-.pdf-modal-overlay.open { display: flex; }
-.pdf-modal-box {
-    width: 90vw; height: 90vh; background: #1E2433; border-radius: var(--radius);
-    display: flex; flex-direction: column; overflow: hidden;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-}
-.pdf-modal-header {
-    padding: 12px 18px; background: #151929; border-bottom: 1px solid #2D3650;
-    display: flex; align-items: center; gap: 12px;
-}
-.pdf-modal-header span { flex: 1; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: #E2E8F0; }
-.pdf-modal-iframe { flex: 1; border: none; width: 100%; background: #fff; }
 
 /* GENERATE INVOICES MODAL */
 .gen-modal-overlay {
@@ -60,11 +23,6 @@
     align-items: center; justify-content: center; padding: 20px;
 }
 .gen-modal-overlay.open { display: flex; }
-.gen-modal-box {
-    width: 100%; max-width: 420px; background: var(--card-bg);
-    border-radius: var(--radius); box-shadow: 0 24px 60px rgba(0,0,0,0.25);
-    overflow: hidden;
-}
 .gen-modal-header {
     padding: 20px 24px 16px; display: flex; align-items: flex-start; gap: 14px;
     border-bottom: 1px solid var(--card-border);
@@ -166,26 +124,26 @@
     </div>
 </div>
 
-<div class="inv-stats m-hide-desktop-index">
-    <div class="inv-stat">
-        <div class="inv-stat-icon gray"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-        <div><div class="inv-stat-val">{{ $stats['total'] }}</div><div class="inv-stat-lbl">Total</div></div>
+<div class="stats-grid m-hide-desktop-index">
+    <div class="stat-card">
+        <div class="stat-icon gray"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+        <div><div class="stat-val">{{ $stats['total'] }}</div><div class="stat-lbl">Total</div></div>
     </div>
-    <div class="inv-stat">
-        <div class="inv-stat-icon blue"><i class="fa-solid fa-paper-plane"></i></div>
-        <div><div class="inv-stat-val">{{ $stats['issued'] }}</div><div class="inv-stat-lbl">Issued</div></div>
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="fa-solid fa-paper-plane"></i></div>
+        <div><div class="stat-val">{{ $stats['issued'] }}</div><div class="stat-lbl">Issued</div></div>
     </div>
-    <div class="inv-stat">
-        <div class="inv-stat-icon amber"><i class="fa-solid fa-circle-half-stroke"></i></div>
-        <div><div class="inv-stat-val">{{ $stats['partially_paid'] }}</div><div class="inv-stat-lbl">Partial</div></div>
+    <div class="stat-card">
+        <div class="stat-icon amber"><i class="fa-solid fa-circle-half-stroke"></i></div>
+        <div><div class="stat-val">{{ $stats['partially_paid'] }}</div><div class="stat-lbl">Partial</div></div>
     </div>
-    <div class="inv-stat">
-        <div class="inv-stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
-        <div><div class="inv-stat-val">{{ $stats['paid'] }}</div><div class="inv-stat-lbl">Paid</div></div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+        <div><div class="stat-val">{{ $stats['paid'] }}</div><div class="stat-lbl">Paid</div></div>
     </div>
-    <div class="inv-stat">
-        <div class="inv-stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <div><div class="inv-stat-val">{{ $stats['overdue'] }}</div><div class="inv-stat-lbl">Overdue</div></div>
+    <div class="stat-card">
+        <div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div><div class="stat-val">{{ $stats['overdue'] }}</div><div class="stat-lbl">Overdue</div></div>
     </div>
 </div>
 
@@ -270,7 +228,7 @@
                     </td>
                     <td><span class="type-badge {{ $inv->type }}">{{ $inv->type_label }}</span></td>
                     <td style="font-family:'Outfit',sans-serif;font-weight:700">{{ number_format($inv->amount, 3) }}</td>
-                    <td style="font-family:'Outfit',sans-serif;font-weight:700;{{ $inv->balance_due > 0 && $inv->status !== 'cancelled' ? 'color:#DC2626' : 'color:var(--text-muted)' }}">
+                    <td style="font-family:'Outfit',sans-serif;font-weight:700;{{ $inv->balance_due > 0 && $inv->status !== 'cancelled' ? 'color:var(--tone-danger-fg)' : 'color:var(--text-muted)' }}">
                         {{ number_format($inv->balance_due, 3) }}
                     </td>
                     <td>
@@ -315,9 +273,9 @@
 </div>
 
 {{-- PDF PREVIEW MODAL --}}
-<div class="pdf-modal-overlay" id="invPdfModal" onclick="closeInvPdf(event)">
-    <div class="pdf-modal-box" onclick="event.stopPropagation()">
-        <div class="pdf-modal-header">
+<div class="pdf-viewer-overlay" id="invPdfModal" onclick="closeInvPdf(event)">
+    <div class="pdf-viewer" onclick="event.stopPropagation()">
+        <div class="pdf-viewer-header">
             <i class="fa-solid fa-file-pdf" style="color:var(--accent);font-size:16px"></i>
             <span id="invPdfTitle">Invoice</span>
             <a id="invPdfDownload" href="#" class="btn btn-outline btn-sm" download>
@@ -327,13 +285,13 @@
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
-        <iframe id="invPdfFrame" class="pdf-modal-iframe" src="about:blank"></iframe>
+        <iframe id="invPdfFrame" class="pdf-viewer-frame" src="about:blank"></iframe>
     </div>
 </div>
 
 {{-- GENERATE INVOICES MODAL --}}
 <div class="gen-modal-overlay" id="genInvoicesModal" onclick="closeGenInvoicesModal(event)">
-    <div class="gen-modal-box" onclick="event.stopPropagation()">
+    <div class="modal-box" style="--modal-w:420px" onclick="event.stopPropagation()">
         <form method="POST" action="{{ route('invoices.generate-monthly') }}">
             @csrf
             <div class="gen-modal-header">

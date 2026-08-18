@@ -6,26 +6,6 @@
 @push('styles')
 <style>
 /* ── STATS ─────────────────────────────────────────────────── */
-.ewa-stats {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
-    gap: 14px; margin-bottom: 24px;
-}
-.ewa-stat {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 16px 20px;
-    display: flex; align-items: center; gap: 14px;
-}
-.ewa-stat-icon {
-    width: 40px; height: 40px; border-radius: var(--radius-sm);
-    display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
-}
-.ewa-stat-icon.teal  { background: #F0FDFA; color: #0D9488; }
-.ewa-stat-icon.blue  { background: #EFF6FF; color: #2563EB; }
-.ewa-stat-icon.amber { background: #FFFBEB; color: #D97706; }
-.ewa-stat-icon.green { background: #ECFDF5; color: #059669; }
-.ewa-stat-icon.red   { background: #FEF2F2; color: #DC2626; }
-.ewa-stat-val { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-.ewa-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
 /* ── FILTER ────────────────────────────────────────────────── */
 .filter-bar {
@@ -44,33 +24,6 @@
 .actions-cell { display: flex; gap: 6px; align-items: center; }
 
 /* ── PDF PREVIEW MODAL ───────────────────────────────────── */
-.pdf-modal-overlay {
-    display: none; position: fixed; inset: 0; z-index: 2000;
-    background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
-    align-items: center; justify-content: center;
-}
-.pdf-modal-overlay.open { display: flex; }
-.pdf-modal {
-    width: 90vw; max-width: 900px; height: 90vh;
-    background: #1E293B; border-radius: var(--radius);
-    display: flex; flex-direction: column; overflow: hidden;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
-}
-.pdf-modal-header {
-    padding: 14px 20px; background: #0F172A;
-    display: flex; align-items: center; gap: 12px; flex-shrink: 0;
-}
-.pdf-modal-title { font-family: 'Outfit',sans-serif; font-size: 14px; font-weight: 700; color: #fff; flex: 1; }
-.pdf-modal-actions { display: flex; gap: 8px; }
-.pdf-modal-btn {
-    padding: 6px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
-    cursor: pointer; border: none; display: flex; align-items: center; gap: 6px;
-    font-family: inherit; text-decoration: none; transition: opacity 0.15s;
-}
-.pdf-modal-btn:hover { opacity: 0.85; }
-.pdf-modal-btn.download { background: #0D9488; color: #fff; }
-.pdf-modal-btn.close    { background: #334155; color: #94A3B8; }
-.pdf-modal-frame { flex: 1; width: 100%; border: none; background: #fff; }
 
 /* ── TABS ──────────────────────────────────────────────────── */
 .tab-bar { display: flex; gap: 4px; border-bottom: 2px solid var(--card-border); margin-bottom: 20px; }
@@ -120,26 +73,26 @@
 </div>
 
 {{-- STATS --}}
-<div class="ewa-stats">
-    <div class="ewa-stat">
-        <div class="ewa-stat-icon teal"><i class="fa-solid fa-droplet"></i></div>
-        <div><div class="ewa-stat-val">{{ $stats['total'] }}</div><div class="ewa-stat-lbl">Total</div></div>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon teal"><i class="fa-solid fa-droplet"></i></div>
+        <div><div class="stat-val">{{ $stats['total'] }}</div><div class="stat-lbl">Total</div></div>
     </div>
-    <div class="ewa-stat">
-        <div class="ewa-stat-icon blue"><i class="fa-solid fa-paper-plane"></i></div>
-        <div><div class="ewa-stat-val">{{ $stats['issued'] }}</div><div class="ewa-stat-lbl">Issued</div></div>
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="fa-solid fa-paper-plane"></i></div>
+        <div><div class="stat-val">{{ $stats['issued'] }}</div><div class="stat-lbl">Issued</div></div>
     </div>
-    <div class="ewa-stat">
-        <div class="ewa-stat-icon amber"><i class="fa-solid fa-circle-half-stroke"></i></div>
-        <div><div class="ewa-stat-val">{{ $stats['partially_paid'] }}</div><div class="ewa-stat-lbl">Partial</div></div>
+    <div class="stat-card">
+        <div class="stat-icon amber"><i class="fa-solid fa-circle-half-stroke"></i></div>
+        <div><div class="stat-val">{{ $stats['partially_paid'] }}</div><div class="stat-lbl">Partial</div></div>
     </div>
-    <div class="ewa-stat">
-        <div class="ewa-stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
-        <div><div class="ewa-stat-val">{{ $stats['paid'] }}</div><div class="ewa-stat-lbl">Paid</div></div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+        <div><div class="stat-val">{{ $stats['paid'] }}</div><div class="stat-lbl">Paid</div></div>
     </div>
-    <div class="ewa-stat">
-        <div class="ewa-stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <div><div class="ewa-stat-val">{{ $stats['overdue'] }}</div><div class="ewa-stat-lbl">Overdue</div></div>
+    <div class="stat-card">
+        <div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div><div class="stat-val">{{ $stats['overdue'] }}</div><div class="stat-lbl">Overdue</div></div>
     </div>
 </div>
 
@@ -204,7 +157,7 @@
                         {{ $bill->bill_number }}
                     </td>
                     <td style="font-size:12px;white-space:nowrap">{{ $bill->billing_period }}</td>
-                    <td style="white-space:nowrap;font-size:12px;{{ $bill->status === 'overdue' ? 'color:#DC2626;font-weight:600' : '' }}">
+                    <td style="white-space:nowrap;font-size:12px;{{ $bill->status === 'overdue' ? 'color:var(--tone-danger-fg);font-weight:600' : '' }}">
                         {{ $bill->due_date->format('d M Y') }}
                     </td>
                     <td>{{ $bill->tenant_name }}</td>
@@ -215,7 +168,7 @@
                     <td style="font-size:12px;color:var(--text-muted)">{{ $bill->ewa_account_number ?: '—' }}</td>
                     <td class="amount-col">{{ number_format($bill->total_amount, 3) }}</td>
                     <td class="amount-col {{ $bill->balance_due > 0 && $bill->status !== 'cancelled' ? '' : '' }}"
-                        style="{{ $bill->balance_due > 0 && $bill->status !== 'cancelled' ? 'color:#DC2626' : 'color:var(--text-muted)' }}">
+                        style="{{ $bill->balance_due > 0 && $bill->status !== 'cancelled' ? 'color:var(--tone-danger-fg)' : 'color:var(--text-muted)' }}">
                         {{ number_format($bill->balance_due, 3) }}
                     </td>
                     <td>
@@ -260,23 +213,23 @@
 </div>
 
 {{-- PDF PREVIEW MODAL --}}
-<div class="pdf-modal-overlay" id="pdfModalOverlay">
-    <div class="pdf-modal">
-        <div class="pdf-modal-header">
-            <div class="pdf-modal-title" id="pdfModalTitle">
+<div class="pdf-viewer-overlay" id="pdfModalOverlay">
+    <div class="pdf-viewer">
+        <div class="pdf-viewer-header">
+            <div class="pdf-viewer-title" id="pdfModalTitle">
                 <i class="fa-solid fa-file-invoice" style="color:#0D9488;margin-right:6px"></i>
                 EWA Bill
             </div>
-            <div class="pdf-modal-actions">
-                <a href="#" id="pdfDownloadBtn" class="pdf-modal-btn download">
+            <div class="pdf-viewer-actions">
+                <a href="#" id="pdfDownloadBtn" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-file-arrow-down"></i> Download
                 </a>
-                <button type="button" class="pdf-modal-btn close" onclick="closePdfPreview()">
+                <button type="button" class="btn btn-outline btn-sm" onclick="closePdfPreview()">
                     <i class="fa-solid fa-xmark"></i> Close
                 </button>
             </div>
         </div>
-        <iframe id="pdfFrame" class="pdf-modal-frame" src="" title="EWA Bill Preview"></iframe>
+        <iframe id="pdfFrame" class="pdf-viewer-frame" src="" title="EWA Bill Preview"></iframe>
     </div>
 </div>
 

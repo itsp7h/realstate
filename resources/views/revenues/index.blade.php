@@ -5,29 +5,11 @@
 
 @push('styles')
 <style>
-.rev-stats {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 14px; margin-bottom: 24px;
-}
-.rev-stat {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 16px 20px;
-    display: flex; align-items: center; gap: 14px;
-}
-.rev-stat-icon {
-    width: 40px; height: 40px; border-radius: var(--radius-sm);
-    display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
-}
-.rev-stat-icon.green { background: #ECFDF5; color: #059669; }
-.rev-stat-icon.gray  { background: #F1F5F9; color: #64748B; }
-.rev-stat-icon.amber { background: #FFFBEB; color: #D97706; }
-.rev-stat-val { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-.rev-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
 .category-badge {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
-    background: #ECFDF5; color: #059669;
+    background: var(--tone-success-bg); color: var(--tone-success-fg);
 }
 </style>
 @endpush
@@ -46,18 +28,18 @@
     </div>
 </div>
 
-<div class="rev-stats">
-    <div class="rev-stat">
-        <div class="rev-stat-icon gray"><i class="fa-solid fa-receipt"></i></div>
-        <div><div class="rev-stat-val">{{ $stats['total'] }}</div><div class="rev-stat-lbl">Total Entries</div></div>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon gray"><i class="fa-solid fa-receipt"></i></div>
+        <div><div class="stat-val">{{ $stats['total'] }}</div><div class="stat-lbl">Total Entries</div></div>
     </div>
-    <div class="rev-stat">
-        <div class="rev-stat-icon green"><i class="fa-solid fa-sack-dollar"></i></div>
-        <div><div class="rev-stat-val">{{ number_format($stats['total_amount'], 3) }}</div><div class="rev-stat-lbl">Total (BHD)</div></div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-sack-dollar"></i></div>
+        <div><div class="stat-val">{{ number_format($stats['total_amount'], 3) }}</div><div class="stat-lbl">Total (BHD)</div></div>
     </div>
-    <div class="rev-stat">
-        <div class="rev-stat-icon amber"><i class="fa-solid fa-calendar-days"></i></div>
-        <div><div class="rev-stat-val">{{ number_format($stats['this_month'], 3) }}</div><div class="rev-stat-lbl">This Month (BHD)</div></div>
+    <div class="stat-card">
+        <div class="stat-icon amber"><i class="fa-solid fa-calendar-days"></i></div>
+        <div><div class="stat-val">{{ number_format($stats['this_month'], 3) }}</div><div class="stat-lbl">This Month (BHD)</div></div>
     </div>
 </div>
 
@@ -140,7 +122,7 @@
                             <form method="POST" action="{{ route('revenues.destroy', $revenue) }}"
                                   onsubmit="return confirm('Delete this revenue entry?')">
                                 @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-outline btn-sm" title="Delete" style="color:#DC2626">
+                                <button type="submit" class="btn btn-outline btn-sm" title="Delete" style="color:var(--tone-danger-fg)">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </form>

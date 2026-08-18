@@ -3,23 +3,6 @@
 @section('title', 'New Lease Contract')
 @section('topbar-title', 'New Lease Contract')
 
-@push('styles')
-<style>
-.section-stack { display:flex;flex-direction:column;gap:16px; }
-.section-badge {
-    display:inline-flex;align-items:center;gap:6px;
-    padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;
-    text-transform:uppercase;letter-spacing:.06em;
-}
-.badge-contract  { background:#FFF7ED;color:#C2410C; }
-.badge-location  { background:#F0FDF4;color:#15803D; }
-.badge-lease     { background:#EFF6FF;color:#1D4ED8; }
-.badge-rent      { background:#FFF1F2;color:#BE123C; }
-.badge-service   { background:#F5F3FF;color:#6D28D9; }
-.badge-financial { background:var(--accent-dim);color:#92400E; }
-</style>
-@endpush
-
 @section('content')
 
 <div class="page-header">
@@ -49,9 +32,9 @@
     {{-- ── 1. CONTRACT INFO ──────────────────────────────────── --}}
     <div class="card">
         <div class="card-header">
-            <div class="card-header-icon" style="background:#FFF7ED;color:#C2410C;"><i class="fa-solid fa-file-contract"></i></div>
+            <div class="card-header-icon" style="background:var(--tone-warning-bg);color:var(--tone-warning-fg);"><i class="fa-solid fa-file-contract"></i></div>
             <div>
-                <h3>Contract Info <span class="section-badge badge-contract">Required</span></h3>
+                <h3>Contract Info <span class="badge badge-gold is-caps">Required</span></h3>
                 <p>Core agreement details and tenant identification</p>
             </div>
         </div>
@@ -107,9 +90,9 @@
     {{-- ── 2. PROPERTY LOCATION ──────────────────────────────── --}}
     <div class="card">
         <div class="card-header">
-            <div class="card-header-icon" style="background:#F0FDF4;color:#15803D;"><i class="fa-solid fa-location-dot"></i></div>
+            <div class="card-header-icon" style="background:var(--tone-success-bg);color:var(--tone-success-fg);"><i class="fa-solid fa-location-dot"></i></div>
             <div>
-                <h3>Property Location <span class="section-badge badge-location">Location</span></h3>
+                <h3>Property Location <span class="badge is-caps">Location</span></h3>
                 <p>Property, block, floor, and unit details</p>
             </div>
         </div>
@@ -200,9 +183,9 @@
     {{-- ── 3. LEASE TERM ─────────────────────────────────────── --}}
     <div class="card">
         <div class="card-header">
-            <div class="card-header-icon" style="background:#EFF6FF;color:#1D4ED8;"><i class="fa-solid fa-calendar-days"></i></div>
+            <div class="card-header-icon" style="background:var(--tone-info-bg);color:var(--tone-info-fg);"><i class="fa-solid fa-calendar-days"></i></div>
             <div>
-                <h3>Lease Term <span class="section-badge badge-lease">Dates</span></h3>
+                <h3>Lease Term <span class="badge is-caps">Dates</span></h3>
                 <p>Lease period, break clause, and notice period</p>
             </div>
         </div>
@@ -249,9 +232,9 @@
     {{-- ── 4. RENT COMPONENT ─────────────────────────────────── --}}
     <div class="card">
         <div class="card-header">
-            <div class="card-header-icon" style="background:#FFF1F2;color:#BE123C;"><i class="fa-solid fa-coins"></i></div>
+            <div class="card-header-icon" style="background:var(--tone-danger-bg);color:var(--tone-danger-fg);"><i class="fa-solid fa-coins"></i></div>
             <div>
-                <h3>Rent Component <span class="section-badge badge-rent">Financials</span></h3>
+                <h3>Rent Component <span class="badge is-caps">Financials</span></h3>
                 <p>Rental frequency, period, and monthly amount</p>
             </div>
         </div>
@@ -318,7 +301,7 @@
         <div class="card-header">
             <div class="card-header-icon" style="background:#F5F3FF;color:#6D28D9;"><i class="fa-solid fa-screwdriver-wrench"></i></div>
             <div>
-                <h3>Service Charge <span class="section-badge badge-service">Optional</span></h3>
+                <h3>Service Charge <span class="badge is-caps">Optional</span></h3>
                 <p>Service charge component details (BD excl. VAT)</p>
             </div>
         </div>
@@ -368,9 +351,9 @@
     {{-- ── 6. FINANCIAL ──────────────────────────────────────── --}}
     <div class="card">
         <div class="card-header">
-            <div class="card-header-icon" style="background:var(--accent-dim);color:#92400E;"><i class="fa-solid fa-landmark"></i></div>
+            <div class="card-header-icon" style="background:var(--accent-dim);color:var(--tone-accent-fg);"><i class="fa-solid fa-landmark"></i></div>
             <div>
-                <h3>Financial <span class="section-badge badge-financial">Optional</span></h3>
+                <h3>Financial <span class="badge is-caps">Optional</span></h3>
                 <p>Ledger reference, security deposit, and EWA cap</p>
             </div>
         </div>

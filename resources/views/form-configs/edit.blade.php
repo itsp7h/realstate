@@ -122,18 +122,6 @@
         padding: 2px 7px;
         flex-shrink: 0;
     }
-    .badge-required {
-        display: inline-flex;
-        align-items: center;
-        gap: 3px;
-        padding: 2px 7px;
-        border-radius: 20px;
-        font-size: 10px;
-        font-weight: 600;
-        background: #FEF2F2;
-        color: var(--danger);
-        flex-shrink: 0;
-    }
 
     /* Preview panel */
     .preview-card {
@@ -209,7 +197,7 @@
         height: 28px;
         border-radius: var(--radius-sm);
         border: 1px solid var(--danger);
-        background: #FEF2F2;
+        background: var(--tone-danger-bg);
         color: var(--danger);
         font-size: 11px;
         cursor: pointer;
@@ -232,82 +220,14 @@
         font-size: 10px;
         font-weight: 600;
         background: #FEF3C7;
-        color: #92400E;
+        color: var(--tone-accent-fg);
         flex-shrink: 0;
     }
 
     /* Modal overlay */
-    .cf-modal-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.55);
-        z-index: 9999;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-    }
-    .cf-modal-overlay.active {
-        display: flex;
-    }
-    .cf-modal {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius);
-        box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-        width: 100%;
-        max-width: 520px;
-        max-height: 90vh;
-        overflow-y: auto;
-        animation: cfModalIn 0.2s ease;
-    }
     @keyframes cfModalIn {
         from { opacity:0; transform: translateY(-16px) scale(0.97); }
         to   { opacity:1; transform: translateY(0) scale(1); }
-    }
-    .cf-modal-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 18px 22px 16px;
-        border-bottom: 1px solid var(--card-border);
-    }
-    .cf-modal-header-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: var(--radius-sm);
-        background: var(--accent-dim);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--accent);
-        font-size: 15px;
-        flex-shrink: 0;
-    }
-    .cf-modal-header h4 {
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin: 0 0 2px;
-    }
-    .cf-modal-header p {
-        font-size: 12px;
-        color: var(--text-muted);
-        margin: 0;
-    }
-    .cf-modal-body {
-        padding: 22px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-    .cf-modal-footer {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 10px;
-        padding: 14px 22px;
-        border-top: 1px solid var(--card-border);
     }
     .cf-form-group label {
         display: block;
@@ -401,8 +321,8 @@
         from { opacity:0; transform: translateY(12px); }
         to   { opacity:1; transform: translateY(0); }
     }
-    .cf-toast.success { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
-    .cf-toast.error   { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+    .cf-toast.success { background: var(--tone-success-bg); color: var(--tone-success-fg); border: 1px solid var(--tone-success-border); }
+    .cf-toast.error   { background: var(--tone-danger-bg); color: var(--tone-danger-fg); border: 1px solid var(--tone-danger-border); }
 </style>
 @endpush
 
@@ -508,7 +428,7 @@
                         @endif
 
                         @if(!empty($field['required']))
-                            <span class="badge-required"><i class="fa-solid fa-asterisk" style="font-size:8px;"></i> Required</span>
+                            <span class="badge badge-red is-xs"><i class="fa-solid fa-asterisk" style="font-size:8px;"></i> Required</span>
                         @endif
 
                         @if($isCustom && $customId)
@@ -621,19 +541,21 @@
 
 {{-- ADD NEW FIELD MODAL --}}
 @if($configType === 'form')
-<div class="cf-modal-overlay" id="addFieldModal" role="dialog" aria-modal="true" aria-labelledby="cfModalTitle">
-    <div class="cf-modal">
-        <div class="cf-modal-header">
-            <div class="cf-modal-header-icon"><i class="fa-solid fa-puzzle-piece"></i></div>
-            <div>
-                <h4 id="cfModalTitle">Add New Field</h4>
-                <p>Add a custom field to the <strong>{{ $formType }}</strong> form</p>
+<div class="modal-overlay" id="addFieldModal" role="dialog" aria-modal="true" aria-labelledby="cfModalTitle">
+    <div class="modal-box" style="--modal-w:520px">
+        <div class="modal-header">
+            <div class="modal-header-top">
+                <div class="modal-header-icon"><i class="fa-solid fa-puzzle-piece"></i></div>
+                <div class="card-header-text">
+                    <div class="modal-header-title" id="cfModalTitle">Add New Field</div>
+                    <div class="modal-header-sub">Add a custom field to the <strong>{{ $formType }}</strong> form</div>
+                </div>
+                <button type="button" class="modal-close-btn" id="closeAddFieldModal" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-            <button type="button" id="closeAddFieldModal" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:4px;">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
         </div>
-        <div class="cf-modal-body">
+        <div class="modal-body">
             <div class="cf-form-group">
                 <label for="cfLabel">Label <span style="color:var(--danger);">*</span></label>
                 <input type="text" id="cfLabel" placeholder="e.g. Parking Level" autocomplete="off" maxlength="255">
@@ -669,7 +591,7 @@
                 <label for="cfIsRequired">Required field</label>
             </div>
         </div>
-        <div class="cf-modal-footer">
+        <div class="modal-footer">
             <button type="button" class="btn btn-outline" id="cancelAddFieldModal">Cancel</button>
             <button type="button" class="btn btn-primary" id="submitAddField">
                 <i class="fa-solid fa-plus"></i> Add Field
@@ -843,11 +765,11 @@
                 <input type="text" placeholder="Option 1" class="cf-option-input">
                 <button type="button" class="cf-option-remove" title="Remove"><i class="fa-solid fa-minus"></i></button>
             </div>`;
-        modal.classList.add('active');
+        modal.classList.add('open');
         cfLabel.focus();
     }
     function closeModal() {
-        modal.classList.remove('active');
+        modal.classList.remove('open');
     }
 
     openBtn && openBtn.addEventListener('click', openModal);
@@ -988,7 +910,7 @@
             </div>
             <span class="field-section-tag">Custom Fields</span>
             <span class="badge-custom"><i class="fa-solid fa-puzzle-piece" style="font-size:8px;"></i> Custom</span>
-            ${required ? '<span class="badge-required"><i class="fa-solid fa-asterisk" style="font-size:8px;"></i> Required</span>' : ''}
+            ${required ? '<span class="badge badge-red is-xs"><i class="fa-solid fa-asterisk" style="font-size:8px;"></i> Required</span>' : ''}
             <button type="button" class="btn-delete-custom" data-custom-id="${id}" title="Remove this custom field">
                 <i class="fa-solid fa-trash"></i>
             </button>`;

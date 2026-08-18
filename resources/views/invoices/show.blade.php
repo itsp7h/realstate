@@ -5,20 +5,6 @@
 
 @push('styles')
 <style>
-.detail-card {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); overflow: hidden; margin-bottom: 18px;
-}
-.detail-card-header {
-    padding: 20px 24px; border-bottom: 1px solid var(--card-border);
-    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
-}
-.detail-card-title {
-    font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-primary);
-    display: flex; align-items: center; gap: 8px;
-}
-.detail-card-body { padding: 22px 24px; }
-
 .inv-number {
     font-family: 'Outfit', sans-serif; font-size: 28px; font-weight: 800;
     color: var(--accent); letter-spacing: -0.5px;
@@ -27,36 +13,15 @@
 .inv-meta-item span { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 3px; }
 .inv-meta-item strong { font-size: 14px; color: var(--text-primary); }
 
-.amount-summary {
-    display: grid; grid-template-columns: repeat(2,1fr); gap: 1px;
-    background: var(--card-border); border: 1px solid var(--card-border);
-    border-radius: var(--radius-sm); overflow: hidden; margin-top: 20px;
-}
-.amount-cell {
-    background: var(--card-bg); padding: 14px 18px; text-align: center;
-}
-.amount-cell span { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 4px; }
-.amount-cell strong { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; color: var(--text-primary); }
 .amount-cell.balance strong { color: {{ $invoice->balance_due > 0 && $invoice->status !== 'cancelled' ? '#DC2626' : '#059669' }}; }
-
-.status-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
-}
-.status-badge.draft          { background: #F1F5F9; color: #64748B; }
-.status-badge.issued         { background: #EFF6FF; color: #2563EB; }
-.status-badge.partially_paid { background: #FFFBEB; color: #D97706; }
-.status-badge.paid           { background: #ECFDF5; color: #059669; }
-.status-badge.overdue        { background: #FEF2F2; color: #DC2626; }
-.status-badge.cancelled      { background: #F8FAFC; color: #94A3B8; }
 
 .type-badge {
     display: inline-flex; align-items: center; gap: 4px;
     padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
 }
-.type-badge.rent      { background: #EFF6FF; color: #2563EB; }
-.type-badge.utilities { background: #FFF7ED; color: #EA580C; }
-.type-badge.other     { background: #F1F5F9; color: #64748B; }
+.type-badge.rent      { background: var(--tone-info-bg); color: var(--tone-info-fg); }
+.type-badge.utilities { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.type-badge.other     { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
 
 .notes-block {
     padding: 14px 18px; background: var(--page-bg);
@@ -68,18 +33,18 @@
 .note-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--card-border); }
 .note-row:last-child { border-bottom: none; }
 .note-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-.note-icon.credit { background: #ECFDF5; color: #059669; }
-.note-icon.debit  { background: #FFFBEB; color: #D97706; }
+.note-icon.credit { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.note-icon.debit  { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
 .note-info { flex: 1; min-width: 0; }
 .note-num { font-size: 13px; font-weight: 700; color: var(--text-primary); font-family: 'Outfit',sans-serif; }
 .note-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
 .note-amt { font-family: 'Outfit',sans-serif; font-size: 16px; font-weight: 800; white-space: nowrap; }
-.note-amt.credit { color: #059669; }
-.note-amt.debit  { color: #D97706; }
+.note-amt.credit { color: var(--tone-success-fg); }
+.note-amt.debit  { color: var(--tone-warning-fg); }
 .note-mini-stat { font-size: 11px; color: var(--text-muted); }
 .note-mini-stat strong { font-family: 'Outfit',sans-serif; font-weight: 700; }
 
-.note-form-card { background: var(--page-bg); border: 1px solid var(--card-border); border-radius: var(--radius-sm); padding: 16px 18px; margin-top: 4px; display: none; }
+.note-form-card { margin-top: 4px; display: none; }
 .note-form-card.open { display: block; }
 .note-form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: end; }
 @media (max-width: 820px) { .note-form-grid { grid-template-columns: 1fr; } }
@@ -91,37 +56,21 @@
     background: var(--input-bg); color: var(--text-primary); outline: none; width: 100%; box-sizing: border-box;
 }
 .note-form-control:focus { border-color: var(--accent); }
-.note-form-control.is-invalid { border-color: #DC2626; }
-.note-invalid-feedback { font-size: 11px; color: #DC2626; margin-top: 3px; }
+.note-form-control.is-invalid { border-color: var(--tone-danger-border); }
+.note-invalid-feedback { font-size: 11px; color: var(--tone-danger-fg); margin-top: 3px; }
 
 /* Payments */
 .payment-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--card-border); }
 .payment-row:last-child { border-bottom: none; }
-.payment-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); flex-shrink: 0; background: #ECFDF5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.payment-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); flex-shrink: 0; background: var(--tone-success-bg); color: var(--tone-success-fg); display: flex; align-items: center; justify-content: center; font-size: 14px; }
 .payment-info { flex: 1; min-width: 0; }
 .payment-num { font-size: 13px; font-weight: 700; color: var(--text-primary); font-family: 'Outfit',sans-serif; }
 .payment-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-.payment-amt { font-family: 'Outfit',sans-serif; font-size: 16px; font-weight: 800; color: #059669; white-space: nowrap; }
+.payment-amt { font-family: 'Outfit',sans-serif; font-size: 16px; font-weight: 800; color: var(--tone-success-fg); white-space: nowrap; }
 .pay-amount-wrap { position: relative; }
 .pay-amount-wrap input { padding-right: 46px; }
 .pay-amount-wrap::after { content: 'BHD'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 700; color: var(--text-muted); pointer-events: none; }
 
-.pdf-modal-overlay {
-    display: none; position: fixed; inset: 0; z-index: 1050;
-    background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
-}
-.pdf-modal-overlay.open { display: flex; }
-.pdf-modal-box {
-    width: 90vw; height: 90vh; background: #1E2433; border-radius: var(--radius);
-    display: flex; flex-direction: column; overflow: hidden;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-}
-.pdf-modal-header {
-    padding: 12px 18px; background: #151929; border-bottom: 1px solid #2D3650;
-    display: flex; align-items: center; gap: 12px;
-}
-.pdf-modal-header span { flex: 1; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: #E2E8F0; }
-.pdf-modal-iframe { flex: 1; border: none; width: 100%; background: #fff; }
 </style>
 @endpush
 
@@ -160,8 +109,8 @@
     </div>
 </div>
 
-<div class="detail-card">
-    <div class="detail-card-header">
+<div class="card">
+    <div class="card-header">
         <div>
             <div class="inv-number">{{ $invoice->invoice_number }}</div>
             <div style="margin-top:4px;display:flex;gap:8px;align-items:center">
@@ -175,11 +124,11 @@
         <div style="text-align:right;font-size:12px;color:var(--text-muted)">
             <div>Invoice Date <strong style="color:var(--text-primary)">{{ $invoice->invoice_date->format('d M Y') }}</strong></div>
             @if($invoice->status === 'overdue')
-            <div style="margin-top:4px"><span style="font-size:11px;color:#DC2626;font-weight:600">Overdue</span></div>
+            <div style="margin-top:4px"><span style="font-size:11px;color:var(--tone-danger-fg);font-weight:600">Overdue</span></div>
             @endif
         </div>
     </div>
-    <div class="detail-card-body">
+    <div class="card-body">
         <div class="inv-meta">
             <div class="inv-meta-item">
                 <span>Tenant</span>
@@ -195,20 +144,20 @@
             <div class="inv-meta-item"><span>Rental Lines</span><strong>{{ $invoice->line_count }}</strong></div>
         </div>
 
-        <div class="amount-summary" style="grid-template-columns:repeat(4,1fr)">
-            <div class="amount-cell">
+        <div class="figure-split" style="--figure-cols:4">
+            <div class="figure-split-cell">
                 <span>Subtotal (Excl. VAT)</span>
                 <strong>{{ number_format($invoice->amount, 3) }}</strong>
             </div>
-            <div class="amount-cell">
+            <div class="figure-split-cell">
                 <span>VAT ({{ number_format($invoice->vat_rate, 2) }}%)</span>
                 <strong>{{ number_format($invoice->vat_amount, 3) }}</strong>
             </div>
-            <div class="amount-cell">
+            <div class="figure-split-cell">
                 <span>Total (Incl. VAT)</span>
                 <strong>{{ number_format($invoice->total_incl_vat, 3) }}</strong>
             </div>
-            <div class="amount-cell balance">
+            <div class="figure-split-cell {{ $invoice->balance_due > 0 && $invoice->status !== 'cancelled' ? 'is-danger' : 'is-success' }}">
                 <span>Balance Due</span>
                 <strong>{{ number_format($invoice->balance_due, 3) }}</strong>
             </div>
@@ -271,9 +220,9 @@
     </div>
 </div>
 
-<div class="detail-card">
-    <div class="detail-card-header">
-        <div class="detail-card-title">
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">
             <i class="fa-solid fa-money-bill-transfer" style="color:var(--accent)"></i>
             Payments
             <span style="font-size:12px;font-weight:600;color:var(--text-muted);background:var(--page-bg);padding:2px 8px;border-radius:20px">{{ $invoice->payments->count() }}</span>
@@ -284,7 +233,7 @@
         </button>
         @endif
     </div>
-    <div class="detail-card-body" style="padding-top:6px;padding-bottom:6px">
+    <div class="card-body" style="padding-top:6px;padding-bottom:6px">
         @forelse($invoice->payments as $pmt)
         <div class="payment-row">
             <div class="payment-icon"><i class="fa-solid fa-circle-check"></i></div>
@@ -318,12 +267,12 @@
         @endforelse
 
         @if($invoice->balance_due > 0.001 && $invoice->status !== 'cancelled')
-        <div class="note-form-card {{ $errors->any() ? 'open' : '' }}" id="payFormCard">
+        <div class="card is-nested is-compact note-form-card {{ $errors->any() ? 'open' : '' }}" id="payFormCard">
             <form method="POST" action="{{ route('invoices.payments.store', $invoice) }}" novalidate>
                 @csrf
                 <div class="note-form-grid">
                     <div class="form-group">
-                        <label class="note-form-label">Amount (BHD) <span style="color:#DC2626">*</span></label>
+                        <label class="note-form-label">Amount (BHD) <span style="color:var(--tone-danger-fg)">*</span></label>
                         <div class="pay-amount-wrap">
                             <input type="number" name="amount" class="note-form-control {{ $errors->has('amount') ? 'is-invalid' : '' }}"
                                    value="{{ old('amount', number_format($invoice->balance_due, 3)) }}" min="0.001" step="0.001" placeholder="0.000" required>
@@ -331,13 +280,13 @@
                         <div class="note-invalid-feedback">{{ $errors->first('amount') }}</div>
                     </div>
                     <div class="form-group">
-                        <label class="note-form-label">Payment Date <span style="color:#DC2626">*</span></label>
+                        <label class="note-form-label">Payment Date <span style="color:var(--tone-danger-fg)">*</span></label>
                         <input type="date" name="payment_date" class="note-form-control {{ $errors->has('payment_date') ? 'is-invalid' : '' }}"
                                value="{{ old('payment_date', now()->format('Y-m-d')) }}" required>
                         <div class="note-invalid-feedback">{{ $errors->first('payment_date') }}</div>
                     </div>
                     <div class="form-group">
-                        <label class="note-form-label">Method <span style="color:#DC2626">*</span></label>
+                        <label class="note-form-label">Method <span style="color:var(--tone-danger-fg)">*</span></label>
                         <select name="method" class="note-form-control {{ $errors->has('method') ? 'is-invalid' : '' }}" required>
                             <option value="">— Select —</option>
                             @foreach(['cash'=>'Cash','bank_transfer'=>'Bank Transfer','cheque'=>'Cheque','online_card'=>'Online / Card'] as $v => $l)
@@ -356,13 +305,13 @@
                         <input type="text" name="reference" class="note-form-control" value="{{ old('reference') }}" maxlength="255" placeholder="Transaction ID…">
                     </div>
                     <div class="form-group reason-group pay-cheque-field" style="display:{{ old('method') === 'cheque' ? 'block' : 'none' }}">
-                        <label class="note-form-label">Cheque No <span style="color:#DC2626">*</span></label>
+                        <label class="note-form-label">Cheque No <span style="color:var(--tone-danger-fg)">*</span></label>
                         <input type="text" name="cheque_number" class="note-form-control {{ $errors->has('cheque_number') ? 'is-invalid' : '' }}"
                                value="{{ old('cheque_number') }}" maxlength="50" placeholder="Cheque number">
                         <div class="note-invalid-feedback">{{ $errors->first('cheque_number') }}</div>
                     </div>
                     <div class="form-group reason-group pay-cheque-field" style="display:{{ old('method') === 'cheque' ? 'block' : 'none' }}">
-                        <label class="note-form-label">Cheque Date <span style="color:#DC2626">*</span></label>
+                        <label class="note-form-label">Cheque Date <span style="color:var(--tone-danger-fg)">*</span></label>
                         <input type="date" name="cheque_date" class="note-form-control {{ $errors->has('cheque_date') ? 'is-invalid' : '' }}"
                                value="{{ old('cheque_date') }}">
                         <div class="note-invalid-feedback">{{ $errors->first('cheque_date') }}</div>
@@ -389,16 +338,16 @@
     </div>
 </div>
 
-<div class="detail-card">
-    <div class="detail-card-header">
-        <div class="detail-card-title">
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">
             <i class="fa-solid fa-file-invoice-dollar" style="color:var(--accent)"></i>
             Credit &amp; Debit Notes
             <span style="font-size:12px;font-weight:600;color:var(--text-muted);background:var(--page-bg);padding:2px 8px;border-radius:20px">{{ $invoice->invoiceNotes->count() }}</span>
         </div>
         <div style="display:flex;align-items:center;gap:16px">
-            <div class="note-mini-stat">Total Credited <strong style="color:#059669">{{ number_format($invoice->total_credit_notes, 3) }}</strong></div>
-            <div class="note-mini-stat">Total Debited <strong style="color:#D97706">{{ number_format($invoice->total_debit_notes, 3) }}</strong></div>
+            <div class="note-mini-stat">Total Credited <strong style="color:var(--tone-success-fg)">{{ number_format($invoice->total_credit_notes, 3) }}</strong></div>
+            <div class="note-mini-stat">Total Debited <strong style="color:var(--tone-warning-fg)">{{ number_format($invoice->total_debit_notes, 3) }}</strong></div>
             @if($invoice->status !== 'cancelled')
             <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('noteFormCard').classList.toggle('open')">
                 <i class="fa-solid fa-plus"></i> Issue Note
@@ -406,7 +355,7 @@
             @endif
         </div>
     </div>
-    <div class="detail-card-body" style="padding-top:6px;padding-bottom:6px">
+    <div class="card-body" style="padding-top:6px;padding-bottom:6px">
         @forelse($invoice->invoiceNotes as $note)
         <div class="note-row">
             <div class="note-icon {{ $note->type }}"><i class="fa-solid {{ $note->type === 'credit' ? 'fa-minus' : 'fa-plus' }}"></i></div>
@@ -433,12 +382,12 @@
         @endforelse
 
         @if($invoice->status !== 'cancelled')
-        <div class="note-form-card {{ $errors->any() ? 'open' : '' }}" id="noteFormCard">
+        <div class="card is-nested is-compact note-form-card {{ $errors->any() ? 'open' : '' }}" id="noteFormCard">
             <form method="POST" action="{{ route('invoices.notes.store', $invoice) }}" novalidate>
                 @csrf
                 <div class="note-form-grid">
                     <div class="form-group">
-                        <label class="note-form-label">Type <span style="color:#DC2626">*</span></label>
+                        <label class="note-form-label">Type <span style="color:var(--tone-danger-fg)">*</span></label>
                         <select name="type" class="note-form-control {{ $errors->has('type') ? 'is-invalid' : '' }}" required>
                             <option value="">— Select —</option>
                             <option value="credit" {{ old('type') === 'credit' ? 'selected' : '' }}>Credit Note (reduces balance)</option>
@@ -447,13 +396,13 @@
                         <div class="note-invalid-feedback">{{ $errors->first('type') }}</div>
                     </div>
                     <div class="form-group">
-                        <label class="note-form-label">Amount (BHD) <span style="color:#DC2626">*</span></label>
+                        <label class="note-form-label">Amount (BHD) <span style="color:var(--tone-danger-fg)">*</span></label>
                         <input type="number" name="amount" class="note-form-control {{ $errors->has('amount') ? 'is-invalid' : '' }}"
                                value="{{ old('amount') }}" min="0.001" step="0.001" placeholder="0.000" required>
                         <div class="note-invalid-feedback">{{ $errors->first('amount') }}</div>
                     </div>
                     <div class="form-group">
-                        <label class="note-form-label">Date <span style="color:#DC2626">*</span></label>
+                        <label class="note-form-label">Date <span style="color:var(--tone-danger-fg)">*</span></label>
                         <input type="date" name="note_date" class="note-form-control {{ $errors->has('note_date') ? 'is-invalid' : '' }}"
                                value="{{ old('note_date', now()->format('Y-m-d')) }}" max="{{ now()->format('Y-m-d') }}" required>
                         <div class="note-invalid-feedback">{{ $errors->first('note_date') }}</div>
@@ -464,7 +413,7 @@
                         </button>
                     </div>
                     <div class="form-group reason-group">
-                        <label class="note-form-label">Reason <span style="color:#DC2626">*</span></label>
+                        <label class="note-form-label">Reason <span style="color:var(--tone-danger-fg)">*</span></label>
                         <input type="text" name="reason" class="note-form-control {{ $errors->has('reason') ? 'is-invalid' : '' }}"
                                value="{{ old('reason') }}" maxlength="500" placeholder="Why is this being issued?" required>
                         <div class="note-invalid-feedback">{{ $errors->first('reason') }}</div>
@@ -477,9 +426,9 @@
 </div>
 
 {{-- PDF PREVIEW MODAL --}}
-<div class="pdf-modal-overlay" id="invPdfModal" onclick="closeInvPdf(event)">
-    <div class="pdf-modal-box" onclick="event.stopPropagation()">
-        <div class="pdf-modal-header">
+<div class="pdf-viewer-overlay" id="invPdfModal" onclick="closeInvPdf(event)">
+    <div class="pdf-viewer" onclick="event.stopPropagation()">
+        <div class="pdf-viewer-header">
             <i class="fa-solid fa-file-pdf" style="color:var(--accent);font-size:16px"></i>
             <span id="invPdfTitle">{{ $invoice->invoice_number }}</span>
             <a id="invPdfDownloadLink" href="{{ route('invoices.pdf', $invoice) }}" class="btn btn-outline btn-sm" download>
@@ -489,7 +438,7 @@
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
-        <iframe id="invPdfFrame" class="pdf-modal-iframe" src="about:blank"></iframe>
+        <iframe id="invPdfFrame" class="pdf-viewer-frame" src="about:blank"></iframe>
     </div>
 </div>
 

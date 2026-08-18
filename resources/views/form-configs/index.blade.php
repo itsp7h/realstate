@@ -5,33 +5,6 @@
 
 @push('styles')
 <style>
-    .tab-bar {
-        display: flex;
-        gap: 4px;
-        border-bottom: 2px solid var(--card-border);
-        margin-bottom: 24px;
-    }
-    .tab-btn {
-        padding: 11px 22px;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 13.5px;
-        font-weight: 600;
-        color: var(--text-muted);
-        border: none;
-        background: none;
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-        margin-bottom: -2px;
-        transition: color 0.18s, border-color 0.18s;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .tab-btn:hover { color: var(--text-primary); }
-    .tab-btn.active {
-        color: var(--accent);
-        border-bottom-color: var(--accent);
-    }
     .tab-btn .tab-count {
         background: var(--accent-dim);
         color: var(--accent);
@@ -43,52 +16,8 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    .fc-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 20px;
-    }
-    .fc-card {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow-sm);
-        display: flex;
-        flex-direction: column;
-        transition: box-shadow 0.2s, transform 0.2s;
-        overflow: hidden;
-    }
-    .fc-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-    .fc-card-header {
-        padding: 20px 22px 16px;
-        display: flex;
-        align-items: flex-start;
-        gap: 14px;
-        border-bottom: 1px solid var(--card-border);
-    }
-    .fc-icon {
-        width: 44px; height: 44px;
-        border-radius: var(--radius-sm);
-        background: var(--accent-dim);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 18px;
-        color: var(--accent);
-        flex-shrink: 0;
-    }
-    .fc-icon.tpl { background: #EFF6FF; color: var(--info); }
-    .fc-title { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-primary); }
-    .fc-desc { font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
-    .fc-card-body { padding: 16px 22px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
     .fc-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
     .fc-meta i { width: 16px; text-align: center; color: var(--text-muted); font-size: 12px; }
-    .fc-card-footer {
-        padding: 14px 22px;
-        border-top: 1px solid var(--card-border);
-        background: var(--page-bg);
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-    }
 </style>
 @endpush
 
@@ -122,7 +51,7 @@
 
 {{-- FORMS PANEL --}}
 <div class="tab-panel" id="panel-forms">
-    <div class="fc-grid">
+    <div class="card-grid is-2">
 
         @php
             $bFormFields = $configs['building']['form'];
@@ -132,15 +61,15 @@
         @endphp
 
         {{-- Building Form --}}
-        <div class="fc-card">
-            <div class="fc-card-header">
-                <div class="fc-icon"><i class="fa-solid fa-building"></i></div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon"><i class="fa-solid fa-building"></i></div>
                 <div>
-                    <div class="fc-title">Building Form</div>
-                    <div class="fc-desc">Controls which fields appear in the add/edit building form</div>
+                    <div class="card-title">Building Form</div>
+                    <div class="card-subtitle">Controls which fields appear in the add/edit building form</div>
                 </div>
             </div>
-            <div class="fc-card-body">
+            <div class="card-body">
                 <div class="fc-meta">
                     <i class="fa-solid fa-circle-dot"></i>
                     <span>Status:</span>
@@ -157,7 +86,7 @@
                 </div>
                 @endif
             </div>
-            <div class="fc-card-footer">
+            <div class="card-footer">
                 <a href="{{ route('form-configs.edit', ['building', 'form']) }}" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-pen-to-square"></i> Edit Configuration
                 </a>
@@ -165,15 +94,15 @@
         </div>
 
         {{-- Unit Form --}}
-        <div class="fc-card">
-            <div class="fc-card-header">
-                <div class="fc-icon"><i class="fa-solid fa-door-open"></i></div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon"><i class="fa-solid fa-door-open"></i></div>
                 <div>
-                    <div class="fc-title">Unit Form</div>
-                    <div class="fc-desc">Controls which fields appear in the add/edit unit form</div>
+                    <div class="card-title">Unit Form</div>
+                    <div class="card-subtitle">Controls which fields appear in the add/edit unit form</div>
                 </div>
             </div>
-            <div class="fc-card-body">
+            <div class="card-body">
                 <div class="fc-meta">
                     <i class="fa-solid fa-circle-dot"></i>
                     <span>Status:</span>
@@ -190,7 +119,7 @@
                 </div>
                 @endif
             </div>
-            <div class="fc-card-footer">
+            <div class="card-footer">
                 <a href="{{ route('form-configs.edit', ['unit', 'form']) }}" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-pen-to-square"></i> Edit Configuration
                 </a>
@@ -198,15 +127,15 @@
         </div>
 
         {{-- Lease Contract Form --}}
-        <div class="fc-card">
-            <div class="fc-card-header">
-                <div class="fc-icon"><i class="fa-solid fa-file-contract"></i></div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon"><i class="fa-solid fa-file-contract"></i></div>
                 <div>
-                    <div class="fc-title">Lease Contract Form</div>
-                    <div class="fc-desc">6-section form: Contract Info, Location, Lease Term, Rent, Service Charge, Financial</div>
+                    <div class="card-title">Lease Contract Form</div>
+                    <div class="card-subtitle">6-section form: Contract Info, Location, Lease Term, Rent, Service Charge, Financial</div>
                 </div>
             </div>
-            <div class="fc-card-body">
+            <div class="card-body">
                 <div class="fc-meta">
                     <i class="fa-solid fa-circle-dot"></i>
                     <span>Status:</span>
@@ -217,7 +146,7 @@
                     <span>26 fields across 6 sections</span>
                 </div>
             </div>
-            <div class="fc-card-footer">
+            <div class="card-footer">
                 <a href="{{ route('lease-contracts.create') }}" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-plus"></i> New Contract
                 </a>
@@ -228,15 +157,15 @@
         </div>
 
         {{-- Invoice Form --}}
-        <div class="fc-card">
-            <div class="fc-card-header">
-                <div class="fc-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
                 <div>
-                    <div class="fc-title">Invoice Form</div>
-                    <div class="fc-desc">Lease contract, type (rent/utilities/other), amount, dates, description, notes</div>
+                    <div class="card-title">Invoice Form</div>
+                    <div class="card-subtitle">Lease contract, type (rent/utilities/other), amount, dates, description, notes</div>
                 </div>
             </div>
-            <div class="fc-card-body">
+            <div class="card-body">
                 <div class="fc-meta">
                     <i class="fa-solid fa-circle-dot"></i>
                     <span>Status:</span>
@@ -247,7 +176,7 @@
                     <span>7 fields — Contract, Type, Amount, Issue Date, Due Date, Description, Notes</span>
                 </div>
             </div>
-            <div class="fc-card-footer">
+            <div class="card-footer">
                 <a href="{{ route('invoices.create') }}" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-plus"></i> New Invoice
                 </a>
@@ -258,15 +187,15 @@
         </div>
 
         {{-- Expense Form --}}
-        <div class="fc-card">
-            <div class="fc-card-header">
-                <div class="fc-icon"><i class="fa-solid fa-receipt"></i></div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon"><i class="fa-solid fa-receipt"></i></div>
                 <div>
-                    <div class="fc-title">Expense Form</div>
-                    <div class="fc-desc">Building/unit, category, date, amount, vendor, description</div>
+                    <div class="card-title">Expense Form</div>
+                    <div class="card-subtitle">Building/unit, category, date, amount, vendor, description</div>
                 </div>
             </div>
-            <div class="fc-card-body">
+            <div class="card-body">
                 <div class="fc-meta">
                     <i class="fa-solid fa-circle-dot"></i>
                     <span>Status:</span>
@@ -277,7 +206,7 @@
                     <span>7 fields — Building, Unit, Category, Date, Amount, Vendor, Description</span>
                 </div>
             </div>
-            <div class="fc-card-footer">
+            <div class="card-footer">
                 <a href="{{ route('expenses.create') }}" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-plus"></i> New Expense
                 </a>
@@ -288,15 +217,15 @@
         </div>
 
         {{-- Revenue Form --}}
-        <div class="fc-card">
-            <div class="fc-card-header">
-                <div class="fc-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon"><i class="fa-solid fa-sack-dollar"></i></div>
                 <div>
-                    <div class="fc-title">Revenue Form</div>
-                    <div class="fc-desc">Building/unit, category, date, amount, source, description</div>
+                    <div class="card-title">Revenue Form</div>
+                    <div class="card-subtitle">Building/unit, category, date, amount, source, description</div>
                 </div>
             </div>
-            <div class="fc-card-body">
+            <div class="card-body">
                 <div class="fc-meta">
                     <i class="fa-solid fa-circle-dot"></i>
                     <span>Status:</span>
@@ -307,7 +236,7 @@
                     <span>7 fields — Building, Unit, Category, Date, Amount, Source, Description</span>
                 </div>
             </div>
-            <div class="fc-card-footer">
+            <div class="card-footer">
                 <a href="{{ route('revenues.create') }}" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-plus"></i> New Revenue
                 </a>
@@ -322,7 +251,7 @@
 
 {{-- TEMPLATES PANEL --}}
 <div class="tab-panel" id="panel-templates">
-    <div class="fc-grid">
+    <div class="card-grid is-2">
 
         @php
             $bTplFields = $configs['building']['template'];
@@ -332,15 +261,15 @@
         @endphp
 
         {{-- Building Template --}}
-        <div class="fc-card">
-            <div class="fc-card-header">
-                <div class="fc-icon tpl"><i class="fa-solid fa-file-export"></i></div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon is-info"><i class="fa-solid fa-file-export"></i></div>
                 <div>
-                    <div class="fc-title">Building Template</div>
-                    <div class="fc-desc">Defines columns used for building import &amp; export</div>
+                    <div class="card-title">Building Template</div>
+                    <div class="card-subtitle">Defines columns used for building import &amp; export</div>
                 </div>
             </div>
-            <div class="fc-card-body">
+            <div class="card-body">
                 <div class="fc-meta">
                     <i class="fa-solid fa-circle-dot"></i>
                     <span>Status:</span>
@@ -357,7 +286,7 @@
                 </div>
                 @endif
             </div>
-            <div class="fc-card-footer">
+            <div class="card-footer">
                 <a href="{{ route('form-configs.edit', ['building', 'template']) }}" class="btn btn-outline btn-sm">
                     <i class="fa-solid fa-pen-to-square"></i> Edit Configuration
                 </a>
@@ -365,15 +294,15 @@
         </div>
 
         {{-- Unit Template --}}
-        <div class="fc-card">
-            <div class="fc-card-header">
-                <div class="fc-icon tpl"><i class="fa-solid fa-file-export"></i></div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon is-info"><i class="fa-solid fa-file-export"></i></div>
                 <div>
-                    <div class="fc-title">Unit Template</div>
-                    <div class="fc-desc">Defines columns used for unit import &amp; export</div>
+                    <div class="card-title">Unit Template</div>
+                    <div class="card-subtitle">Defines columns used for unit import &amp; export</div>
                 </div>
             </div>
-            <div class="fc-card-body">
+            <div class="card-body">
                 <div class="fc-meta">
                     <i class="fa-solid fa-circle-dot"></i>
                     <span>Status:</span>
@@ -390,7 +319,7 @@
                 </div>
                 @endif
             </div>
-            <div class="fc-card-footer">
+            <div class="card-footer">
                 <a href="{{ route('form-configs.edit', ['unit', 'template']) }}" class="btn btn-outline btn-sm">
                     <i class="fa-solid fa-pen-to-square"></i> Edit Configuration
                 </a>
@@ -398,15 +327,15 @@
         </div>
 
         {{-- Tenant Template --}}
-        <div class="fc-card">
-            <div class="fc-card-header">
-                <div class="fc-icon tpl"><i class="fa-solid fa-users"></i></div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon is-info"><i class="fa-solid fa-users"></i></div>
                 <div>
-                    <div class="fc-title">Tenant Template</div>
-                    <div class="fc-desc">Bulk-import tenant profiles — 6 columns covering name, type, contact details</div>
+                    <div class="card-title">Tenant Template</div>
+                    <div class="card-subtitle">Bulk-import tenant profiles — 6 columns covering name, type, contact details</div>
                 </div>
             </div>
-            <div class="fc-card-body">
+            <div class="card-body">
                 <div class="fc-meta">
                     <i class="fa-solid fa-table-columns"></i>
                     <span>6 columns — Name (required), Type, ID/CR Number, Phone, Email, Nationality</span>
@@ -424,7 +353,7 @@
                     </a>
                 </div>
             </div>
-            <div class="fc-card-footer">
+            <div class="card-footer">
                 <button type="button" class="btn btn-primary btn-sm" onclick="openImport_tenants()">
                     <i class="fa-solid fa-file-import"></i> Import Tenants
                 </button>
@@ -432,15 +361,15 @@
         </div>
 
         {{-- Lease Contracts Template --}}
-        <div class="fc-card">
-            <div class="fc-card-header">
-                <div class="fc-icon tpl"><i class="fa-solid fa-file-contract"></i></div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon is-info"><i class="fa-solid fa-file-contract"></i></div>
                 <div>
-                    <div class="fc-title">Lease Contracts Template</div>
-                    <div class="fc-desc">Import opening lease contracts — 26 columns matching the standard Tally sheet format</div>
+                    <div class="card-title">Lease Contracts Template</div>
+                    <div class="card-subtitle">Import opening lease contracts — 26 columns matching the standard Tally sheet format</div>
                 </div>
             </div>
-            <div class="fc-card-body">
+            <div class="card-body">
                 <div class="fc-meta">
                     <i class="fa-solid fa-table-columns"></i>
                     <span>26 columns — Agreement No, Tenant, Dates, Rent, Service Charge, and more</span>
@@ -458,7 +387,7 @@
                     </a>
                 </div>
             </div>
-            <div class="fc-card-footer">
+            <div class="card-footer">
                 <button type="button" class="btn btn-primary btn-sm" onclick="openImport_contracts()">
                     <i class="fa-solid fa-file-import"></i> Import Contracts
                 </button>
@@ -466,15 +395,15 @@
         </div>
 
         {{-- EWA Bills Template --}}
-        <div class="fc-card">
-            <div class="fc-card-header">
-                <div class="fc-icon tpl"><i class="fa-solid fa-file-pdf"></i></div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon is-info"><i class="fa-solid fa-file-pdf"></i></div>
                 <div>
-                    <div class="fc-title">EWA Bills Template</div>
-                    <div class="fc-desc">Bulk-import EWA electricity &amp; water bills — upload one or more bill PDFs and they're parsed automatically</div>
+                    <div class="card-title">EWA Bills Template</div>
+                    <div class="card-subtitle">Bulk-import EWA electricity &amp; water bills — upload one or more bill PDFs and they're parsed automatically</div>
                 </div>
             </div>
-            <div class="fc-card-body">
+            <div class="card-body">
                 <div class="fc-meta">
                     <i class="fa-solid fa-file-pdf"></i>
                     <span>No spreadsheet template — accepts EWA bill PDFs directly (up to 10 MB each)</span>
@@ -484,7 +413,7 @@
                     <span>Matches each bill to its EWA account and existing tenant/property automatically</span>
                 </div>
             </div>
-            <div class="fc-card-footer">
+            <div class="card-footer">
                 <a href="{{ route('ewa-bills.summary.create') }}" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-file-import"></i> Import EWA Bills
                 </a>

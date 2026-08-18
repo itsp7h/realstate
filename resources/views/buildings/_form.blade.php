@@ -83,83 +83,13 @@
 .progress-step.active .step-label { color: var(--accent); }
 
 /* ── SECTION CARDS ─────────────────────────────────────── */
-.form-section-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
 
-.section-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-    opacity: 0;
-    transform: translateY(18px);
-    animation: cardReveal 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-.section-card:nth-child(1) { animation-delay: 0.05s; }
-.section-card:nth-child(2) { animation-delay: 0.15s; }
-.section-card:nth-child(3) { animation-delay: 0.25s; }
-.section-card:nth-child(4) { animation-delay: 0.35s; }
 
 @keyframes cardReveal {
     to { opacity: 1; transform: translateY(0); }
 }
 
-.section-card-header {
-    padding: 18px 24px;
-    border-bottom: 1px solid var(--card-border);
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    background: linear-gradient(to right, rgba(232,184,109,0.04), transparent);
-}
-.section-icon-wrap {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    background: var(--accent-dim);
-    border: 1px solid rgba(232,184,109,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent);
-    font-size: 16px;
-    flex-shrink: 0;
-}
-.section-header-text { flex: 1; }
-.section-title {
-    font-family: 'Outfit', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1;
-}
-.section-subtitle {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 3px;
-}
-.section-step-badge {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: #0B1120;
-    font-family: 'Outfit', sans-serif;
-    font-size: 11px;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
 
-.section-card-body {
-    padding: 24px;
-}
 
 /* ── FIELD GRID ────────────────────────────────────────── */
 .field-grid {
@@ -285,19 +215,7 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
 }
-.capacity-item {
-    background: var(--page-bg);
-    border: 1.5px solid var(--card-border);
-    border-radius: var(--radius-sm);
-    padding: 18px 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    text-align: center;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    cursor: default;
-}
+.capacity-item { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; transition: border-color 0.2s, box-shadow 0.2s; cursor: default; }
 .capacity-item:focus-within {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-dim);
@@ -397,7 +315,6 @@
     .actions-hint { display: none; }
 }
 @media (max-width: 520px) {
-    .section-card-body { padding: 16px; }
 }
 </style>
 @endpush
@@ -443,21 +360,21 @@
     @csrf
     @if($method === 'PUT') @method('PUT') @endif
 
-    <div class="form-section-stack">
+    <div class="section-stack card-reveal">
 
         {{-- ── SECTION 1: PROPERTY INFORMATION ──────────────── --}}
-        <div class="section-card">
-            <div class="section-card-header">
-                <div class="section-icon-wrap">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon">
                     <i class="fa-solid fa-building"></i>
                 </div>
-                <div class="section-header-text">
-                    <div class="section-title">Property Information</div>
-                    <div class="section-subtitle">Core identity and ownership details</div>
+                <div class="card-header-text">
+                    <div class="card-title">Property Information</div>
+                    <div class="card-subtitle">Core identity and ownership details</div>
                 </div>
-                <div class="section-step-badge">1</div>
+                <div class="card-step-badge">1</div>
             </div>
-            <div class="section-card-body">
+            <div class="card-body">
                 <div class="field-grid">
 
                     @if($show('property_name'))
@@ -567,18 +484,18 @@
             $anyAddress = $show('building_no') || $show('road') || $show('block') || $show('area') || $show('city');
         @endphp
         @if($anyAddress)
-        <div class="section-card">
-            <div class="section-card-header">
-                <div class="section-icon-wrap">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon">
                     <i class="fa-solid fa-location-dot"></i>
                 </div>
-                <div class="section-header-text">
-                    <div class="section-title">Address</div>
-                    <div class="section-subtitle">Physical location of the building</div>
+                <div class="card-header-text">
+                    <div class="card-title">Address</div>
+                    <div class="card-subtitle">Physical location of the building</div>
                 </div>
-                <div class="section-step-badge">2</div>
+                <div class="card-step-badge">2</div>
             </div>
-            <div class="section-card-body">
+            <div class="card-body">
                 <div class="field-grid">
 
                     @if($show('building_no'))
@@ -686,22 +603,22 @@
             $anyCapacity = $show('total_no_of_blocks') || $show('total_no_of_floors') || $show('total_no_of_units');
         @endphp
         @if($anyCapacity)
-        <div class="section-card">
-            <div class="section-card-header">
-                <div class="section-icon-wrap">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon">
                     <i class="fa-solid fa-layer-group"></i>
                 </div>
-                <div class="section-header-text">
-                    <div class="section-title">Capacity</div>
-                    <div class="section-subtitle">Building size — enter 0 if not applicable</div>
+                <div class="card-header-text">
+                    <div class="card-title">Capacity</div>
+                    <div class="card-subtitle">Building size — enter 0 if not applicable</div>
                 </div>
-                <div class="section-step-badge">3</div>
+                <div class="card-step-badge">3</div>
             </div>
-            <div class="section-card-body">
+            <div class="card-body">
                 <div class="capacity-grid">
 
                     @if($show('total_no_of_blocks'))
-                    <div class="capacity-item {{ $errors->has('total_no_of_blocks') ? 'is-invalid' : '' }}">
+                    <div class="card is-nested capacity-item {{ $errors->has('total_no_of_blocks') ? 'is-invalid' : '' }}">
                         <div class="capacity-icon"><i class="fa-solid fa-cubes-stacked"></i></div>
                         <div class="capacity-label">Blocks</div>
                         <input
@@ -717,7 +634,7 @@
                     @endif
 
                     @if($show('total_no_of_floors'))
-                    <div class="capacity-item {{ $errors->has('total_no_of_floors') ? 'is-invalid' : '' }}">
+                    <div class="card is-nested capacity-item {{ $errors->has('total_no_of_floors') ? 'is-invalid' : '' }}">
                         <div class="capacity-icon"><i class="fa-solid fa-layer-group"></i></div>
                         <div class="capacity-label">Floors</div>
                         <input
@@ -733,7 +650,7 @@
                     @endif
 
                     @if($show('total_no_of_units'))
-                    <div class="capacity-item {{ $errors->has('total_no_of_units') ? 'is-invalid' : '' }}">
+                    <div class="card is-nested capacity-item {{ $errors->has('total_no_of_units') ? 'is-invalid' : '' }}">
                         <div class="capacity-icon"><i class="fa-solid fa-door-open"></i></div>
                         <div class="capacity-label">Units</div>
                         <input
@@ -755,17 +672,17 @@
 
         {{-- ── CUSTOM FIELDS ──────────────────────────────────── --}}
         @if(count($customFieldDefs ?? []) > 0)
-        <div class="section-card">
-            <div class="section-card-header">
-                <div class="section-icon-wrap">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon">
                     <i class="fa-solid fa-puzzle-piece"></i>
                 </div>
-                <div class="section-header-text">
-                    <div class="section-title">Custom Fields</div>
-                    <div class="section-subtitle">Additional fields configured for this form</div>
+                <div class="card-header-text">
+                    <div class="card-title">Custom Fields</div>
+                    <div class="card-subtitle">Additional fields configured for this form</div>
                 </div>
             </div>
-            <div class="section-card-body">
+            <div class="card-body">
                 <div class="field-grid">
                     @foreach($customFieldDefs as $def)
                         @if($showAll || in_array($def->name, $visibleFields))
@@ -804,7 +721,7 @@
         </div>
         @endif
 
-    </div>{{-- /form-section-stack --}}
+    </div>{{-- /section-stack --}}
 
     {{-- STICKY ACTIONS BAR --}}
     <div class="form-actions-bar">

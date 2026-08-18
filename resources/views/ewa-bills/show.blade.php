@@ -8,11 +8,6 @@
 .inv-layout { display: grid; grid-template-columns: 1fr 360px; gap: 20px; align-items: start; }
 @media (max-width: 1100px) { .inv-layout { grid-template-columns: 1fr; } }
 
-.detail-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden; margin-bottom: 18px; }
-.detail-card-header { padding: 18px 22px; border-bottom: 1px solid var(--card-border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-.detail-card-title { font-family: 'Outfit',sans-serif; font-size: 15px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
-.detail-card-body  { padding: 20px 22px; }
-
 /* EWA header */
 .ewa-bill-header {
     background: linear-gradient(135deg, #0D9488 0%, #0369A1 100%);
@@ -22,11 +17,11 @@
 .ewa-bill-period { font-size: 13px; color: rgba(255,255,255,0.85); margin-top: 3px; }
 .ewa-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
 .ewa-badge.issued         { background: rgba(255,255,255,0.2); color: #fff; }
-.ewa-badge.partially_paid { background: #FFFBEB; color: #D97706; }
-.ewa-badge.paid           { background: #ECFDF5; color: #059669; }
-.ewa-badge.overdue        { background: #FEF2F2; color: #DC2626; }
+.ewa-badge.partially_paid { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.ewa-badge.paid           { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.ewa-badge.overdue        { background: var(--tone-danger-bg); color: var(--tone-danger-fg); }
 .ewa-badge.cancelled      { background: #F8FAFC; color: #94A3B8; }
-.ewa-badge.draft          { background: #F1F5F9; color: #64748B; }
+.ewa-badge.draft          { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
 
 /* Meta grid */
 .meta-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px 18px; margin-bottom: 18px; }
@@ -49,15 +44,15 @@
 .charges-table tr:last-child td { border-bottom: none; }
 .charges-table .lbl { color: var(--text-secondary); }
 .charges-table .amt { text-align: right; font-family: 'Outfit',sans-serif; font-weight: 700; }
-.charges-table .subsidy-row .amt { color: #059669; }
+.charges-table .subsidy-row .amt { color: var(--tone-success-fg); }
 .charges-table .total-row td { background: var(--page-bg); font-weight: 700; font-size: 14px; }
 .charges-table .total-row .amt { font-family: 'Outfit',sans-serif; font-size: 20px; font-weight: 800; color: #0D9488; }
 .charges-table .cap-divider td { padding: 0; border-bottom: 2px dashed var(--card-border); background: transparent; }
 .charges-table .cap-row td { background: transparent; }
-.charges-table .landlord-row td { background: #F0FDF4; }
-.charges-table .landlord-row .amt { color: #059669; }
-.charges-table .tenant-row td { background: #FFFBEB; font-weight: 700; }
-.charges-table .tenant-row .amt { font-family: 'Outfit',sans-serif; font-size: 16px; font-weight: 800; color: #D97706; }
+.charges-table .landlord-row td { background: var(--tone-success-bg); }
+.charges-table .landlord-row .amt { color: var(--tone-success-fg); }
+.charges-table .tenant-row td { background: var(--tone-warning-bg); font-weight: 700; }
+.charges-table .tenant-row .amt { font-family: 'Outfit',sans-serif; font-size: 16px; font-weight: 800; color: var(--tone-warning-fg); }
 
 /* Split bar on show page */
 .show-split-bar { height: 6px; border-radius: 3px; overflow: hidden; display: flex; margin: 10px 16px 4px; }
@@ -71,65 +66,32 @@
 .balance-cell strong { font-family: 'Outfit',sans-serif; font-size: 20px; font-weight: 800; color: var(--text-primary); }
 
 /* Payment form card */
-.pay-form-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden; position: sticky; top: 20px; }
-.pay-form-header { padding: 14px 18px; background: #ECFDF5; border-bottom: 1px solid #BBF7D0; display: flex; align-items: center; gap: 8px; }
-.pay-form-header span { font-family: 'Outfit',sans-serif; font-size: 14px; font-weight: 700; color: #059669; }
-.pay-form-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
 .form-group { display: flex; flex-direction: column; gap: 5px; }
-.form-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
-.form-label .required { color: #DC2626; }
+.form-label .required { color: var(--tone-danger-fg); }
 .form-control { padding: 8px 12px; font-size: 13px; border: 1.5px solid var(--input-border); border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text-primary); outline: none; transition: border-color 0.18s; width: 100%; box-sizing: border-box; font-family: 'Plus Jakarta Sans',sans-serif; }
 .form-control:focus { border-color: var(--accent); }
-.form-control.is-invalid { border-color: #DC2626; }
-.invalid-feedback { font-size: 11px; color: #DC2626; display: none; }
+.form-control.is-invalid { border-color: var(--tone-danger-border); }
 .form-control.is-invalid ~ .invalid-feedback { display: block; }
 .amount-wrap { position: relative; }
 .amount-wrap input { padding-right: 50px; font-family: 'Outfit',sans-serif; font-size: 15px; font-weight: 700; }
 .amount-wrap::after { content: 'BHD'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 700; color: var(--text-muted); pointer-events: none; }
 .balance-hint { background: var(--page-bg); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 12px; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between; }
-.balance-hint strong { font-family: 'Outfit',sans-serif; color: #DC2626; font-size: 14px; }
+.balance-hint strong { font-family: 'Outfit',sans-serif; color: var(--tone-danger-fg); font-size: 14px; }
 
 /* Payments list */
 .payment-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--card-border); }
 .payment-row:last-child { border-bottom: none; }
-.payment-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); flex-shrink: 0; background: #ECFDF5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.payment-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); flex-shrink: 0; background: var(--tone-success-bg); color: var(--tone-success-fg); display: flex; align-items: center; justify-content: center; font-size: 14px; }
 .payment-info { flex: 1; min-width: 0; }
 .payment-num { font-size: 13px; font-weight: 700; color: var(--text-primary); font-family: 'Outfit',sans-serif; }
 .payment-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-.payment-amt { font-family: 'Outfit',sans-serif; font-size: 16px; font-weight: 800; color: #059669; white-space: nowrap; }
+.payment-amt { font-family: 'Outfit',sans-serif; font-size: 16px; font-weight: 800; color: var(--tone-success-fg); white-space: nowrap; }
 textarea.form-control { resize: none; min-height: 56px; }
 
 /* ── PDF PREVIEW MODAL ───────────────────────────────────── */
-.pdf-modal-overlay {
-    display: none; position: fixed; inset: 0; z-index: 2000;
-    background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
-    align-items: center; justify-content: center;
-}
-.pdf-modal-overlay.open { display: flex; }
-.pdf-modal {
-    width: 90vw; max-width: 900px; height: 90vh;
-    background: #1E293B; border-radius: var(--radius);
-    display: flex; flex-direction: column; overflow: hidden;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
-}
-.pdf-modal-header {
-    padding: 14px 20px; background: #0F172A;
-    display: flex; align-items: center; gap: 12px; flex-shrink: 0;
-}
-.pdf-modal-title { font-family: 'Outfit',sans-serif; font-size: 14px; font-weight: 700; color: #fff; flex: 1; }
-.pdf-modal-actions { display: flex; gap: 8px; }
-.pdf-modal-btn {
-    padding: 6px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
-    cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; font-family: inherit;
-    transition: opacity 0.15s;
-}
-.pdf-modal-btn:hover { opacity: 0.85; }
-.pdf-modal-btn.download { background: #0D9488; color: #fff; }
-.pdf-modal-btn.close    { background: #334155; color: #94A3B8; }
-.pdf-modal-frame { flex: 1; width: 100%; border: none; background: #fff; }
-.pdf-modal-loading {
+.pdf-viewer-loading {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    background: #1E293B; color: #64748B; flex-direction: column; gap: 12px; font-size: 13px;
+    background: #1E293B; color: var(--tone-neutral-fg); flex-direction: column; gap: 12px; font-size: 13px;
 }
 </style>
 @endpush
@@ -164,7 +126,7 @@ textarea.form-control { resize: none; min-height: 56px; }
 <div>
 
 {{-- EWA Bill Header --}}
-<div class="detail-card">
+<div class="card">
     <div class="ewa-bill-header">
         <div>
             <div style="font-size:11px;color:rgba(255,255,255,0.7);font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Electricity &amp; Water Authority — Kingdom of Bahrain</div>
@@ -183,7 +145,7 @@ textarea.form-control { resize: none; min-height: 56px; }
         </div>
     </div>
 
-    <div class="detail-card-body">
+    <div class="card-body">
         {{-- Customer info --}}
         <div class="meta-grid" style="margin-bottom:18px">
             <div class="meta-item"><span>Tenant</span><strong>{{ $bill->tenant_name }}</strong></div>
@@ -234,7 +196,7 @@ textarea.form-control { resize: none; min-height: 56px; }
             <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px">Charges</div>
             <table class="charges-table">
                 @if($bill->elec_charges)
-                <tr><td class="lbl"><i class="fa-solid fa-bolt" style="color:#B45309;margin-right:6px"></i>Electricity Charges</td><td class="amt">{{ number_format($bill->elec_charges, 3) }} BHD</td></tr>
+                <tr><td class="lbl"><i class="fa-solid fa-bolt" style="color:var(--tone-warning-fg);margin-right:6px"></i>Electricity Charges</td><td class="amt">{{ number_format($bill->elec_charges, 3) }} BHD</td></tr>
                 @endif
                 @if($bill->water_charges)
                 <tr><td class="lbl"><i class="fa-solid fa-droplet" style="color:#0369A1;margin-right:6px"></i>Water Charges</td><td class="amt">{{ number_format($bill->water_charges, 3) }} BHD</td></tr>
@@ -259,11 +221,11 @@ textarea.form-control { resize: none; min-height: 56px; }
                     </div>
                 </td></tr>
                 <tr class="landlord-row">
-                    <td class="lbl"><i class="fa-solid fa-shield-halved" style="color:#059669;margin-right:6px"></i>Landlord covers</td>
+                    <td class="lbl"><i class="fa-solid fa-shield-halved" style="color:var(--tone-success-fg);margin-right:6px"></i>Landlord covers</td>
                     <td class="amt">{{ number_format($landlordAmt, 3) }} BHD</td>
                 </tr>
                 <tr class="tenant-row">
-                    <td class="lbl"><i class="fa-solid fa-user" style="color:#D97706;margin-right:6px"></i>Tenant owes</td>
+                    <td class="lbl"><i class="fa-solid fa-user" style="color:var(--tone-warning-fg);margin-right:6px"></i>Tenant owes</td>
                     <td class="amt">{{ number_format($tenantAmt, 3) }} BHD</td>
                 </tr>
                 @endif
@@ -273,15 +235,15 @@ textarea.form-control { resize: none; min-height: 56px; }
         {{-- Balance summary --}}
         @if($bill->hasCap())
         <div class="balance-row">
-            <div class="balance-cell"><span>Tenant Portion</span><strong style="color:#D97706">{{ number_format($bill->effective_tenant_portion, 3) }}</strong></div>
-            <div class="balance-cell"><span>Tenant Paid</span><strong style="color:#059669">{{ number_format($bill->total_paid, 3) }}</strong></div>
-            <div class="balance-cell"><span>Remaining</span><strong style="{{ $bill->balance_due > 0 && $bill->status !== 'cancelled' ? 'color:#DC2626' : 'color:#059669' }}">{{ number_format($bill->balance_due, 3) }}</strong></div>
+            <div class="balance-cell"><span>Tenant Portion</span><strong style="color:var(--tone-warning-fg)">{{ number_format($bill->effective_tenant_portion, 3) }}</strong></div>
+            <div class="balance-cell"><span>Tenant Paid</span><strong style="color:var(--tone-success-fg)">{{ number_format($bill->total_paid, 3) }}</strong></div>
+            <div class="balance-cell"><span>Remaining</span><strong style="{{ $bill->balance_due > 0 && $bill->status !== 'cancelled' ? 'color:var(--tone-danger-fg)' : 'color:var(--tone-success-fg)' }}">{{ number_format($bill->balance_due, 3) }}</strong></div>
         </div>
         @else
         <div class="balance-row">
             <div class="balance-cell"><span>Bill Total</span><strong>{{ number_format($bill->total_amount, 3) }}</strong></div>
-            <div class="balance-cell"><span>Total Paid</span><strong style="color:#059669">{{ number_format($bill->total_paid, 3) }}</strong></div>
-            <div class="balance-cell"><span>Balance Due</span><strong style="{{ $bill->balance_due > 0 && $bill->status !== 'cancelled' ? 'color:#DC2626' : 'color:#059669' }}">{{ number_format($bill->balance_due, 3) }}</strong></div>
+            <div class="balance-cell"><span>Total Paid</span><strong style="color:var(--tone-success-fg)">{{ number_format($bill->total_paid, 3) }}</strong></div>
+            <div class="balance-cell"><span>Balance Due</span><strong style="{{ $bill->balance_due > 0 && $bill->status !== 'cancelled' ? 'color:var(--tone-danger-fg)' : 'color:var(--tone-success-fg)' }}">{{ number_format($bill->balance_due, 3) }}</strong></div>
         </div>
         @endif
 
@@ -302,15 +264,15 @@ textarea.form-control { resize: none; min-height: 56px; }
 </div>
 
 {{-- Payments --}}
-<div class="detail-card">
-    <div class="detail-card-header">
-        <div class="detail-card-title">
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">
             <i class="fa-solid fa-money-bill-transfer" style="color:var(--accent)"></i>
             Payments
             <span style="font-size:12px;font-weight:600;color:var(--text-muted);background:var(--page-bg);padding:2px 8px;border-radius:20px">{{ $bill->payments->count() }}</span>
         </div>
     </div>
-    <div class="detail-card-body" style="padding-top:6px;padding-bottom:6px">
+    <div class="card-body" style="padding-top:6px;padding-bottom:6px">
         @forelse($bill->payments as $pmt)
         <div class="payment-row">
             <div class="payment-icon"><i class="fa-solid fa-circle-check"></i></div>
@@ -343,12 +305,12 @@ textarea.form-control { resize: none; min-height: 56px; }
 {{-- RIGHT: Record Payment --}}
 <div>
     @if($bill->status !== 'paid' && $bill->status !== 'cancelled')
-    <div class="pay-form-card">
-        <div class="pay-form-header">
-            <i class="fa-solid fa-circle-plus" style="color:#059669;font-size:16px"></i>
+    <div class="card is-sticky">
+        <div class="card-header">
+            <i class="fa-solid fa-circle-plus" style="color:var(--tone-success-fg);font-size:16px"></i>
             <span>Record Payment</span>
         </div>
-        <div class="pay-form-body">
+        <div class="card-body">
             @if($errors->any())
             <div class="alert alert-danger" style="font-size:12px;padding:10px 14px">
                 @foreach($errors->all() as $e)<div>{{ $e }}</div>@endforeach
@@ -416,10 +378,10 @@ textarea.form-control { resize: none; min-height: 56px; }
         </div>
     </div>
     @else
-    <div class="detail-card" style="padding:24px;text-align:center;color:var(--text-muted)">
+    <div class="card" style="padding:24px;text-align:center;color:var(--text-muted)">
         @if($bill->status === 'paid')
-        <i class="fa-solid fa-circle-check" style="font-size:32px;color:#059669;display:block;margin-bottom:10px"></i>
-        <div style="font-weight:700;color:#059669;font-size:14px">Fully Paid</div>
+        <i class="fa-solid fa-circle-check" style="font-size:32px;color:var(--tone-success-fg);display:block;margin-bottom:10px"></i>
+        <div style="font-weight:700;color:var(--tone-success-fg);font-size:14px">Fully Paid</div>
         @else
         <i class="fa-solid fa-ban" style="font-size:32px;color:#94A3B8;display:block;margin-bottom:10px"></i>
         <div style="font-weight:700;font-size:14px">Cancelled</div>
@@ -432,23 +394,23 @@ textarea.form-control { resize: none; min-height: 56px; }
 @endsection
 
 {{-- PDF PREVIEW MODAL --}}
-<div class="pdf-modal-overlay" id="pdfModalOverlay">
-    <div class="pdf-modal">
-        <div class="pdf-modal-header">
-            <div class="pdf-modal-title">
+<div class="pdf-viewer-overlay" id="pdfModalOverlay">
+    <div class="pdf-viewer">
+        <div class="pdf-viewer-header">
+            <div class="pdf-viewer-title">
                 <i class="fa-solid fa-file-invoice" style="color:#0D9488;margin-right:6px"></i>
                 {{ $bill->bill_number }} &mdash; {{ $bill->billing_period }}
             </div>
-            <div class="pdf-modal-actions">
-                <a href="{{ route('ewa-bills.pdf', $bill) }}" class="pdf-modal-btn download">
+            <div class="pdf-viewer-actions">
+                <a href="{{ route('ewa-bills.pdf', $bill) }}" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-file-arrow-down"></i> Download
                 </a>
-                <button type="button" class="pdf-modal-btn close" onclick="closePdfPreview()">
+                <button type="button" class="btn btn-outline btn-sm" onclick="closePdfPreview()">
                     <i class="fa-solid fa-xmark"></i> Close
                 </button>
             </div>
         </div>
-        <iframe id="pdfFrame" class="pdf-modal-frame" src="" title="EWA Bill Preview"></iframe>
+        <iframe id="pdfFrame" class="pdf-viewer-frame" src="" title="EWA Bill Preview"></iframe>
     </div>
 </div>
 

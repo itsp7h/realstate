@@ -18,10 +18,7 @@
 .ewa-header-strip h2 { font-family: 'Outfit',sans-serif; font-size: 18px; font-weight: 800; margin: 0; }
 .ewa-header-strip p  { font-size: 12px; opacity: 0.85; margin: 2px 0 0; }
 
-.summary-card {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 28px 32px; margin-bottom: 20px;
-}
+.summary-card { margin-bottom: 20px; }
 
 .batch-drop-zone {
     border: 2px dashed var(--card-border); border-radius: var(--radius);
@@ -43,13 +40,7 @@
 
 /* File list — styled like a stack of utility-bill stubs */
 .stub-list { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
-.stub-row {
-    display: flex; align-items: center; gap: 12px;
-    background: var(--page-bg); border: 1px solid var(--card-border);
-    border-left: 3px solid #0D9488;
-    border-radius: var(--radius-sm); padding: 10px 14px;
-    animation: stubIn 0.2s ease both;
-}
+.stub-row { display: flex; align-items: center; gap: 12px; animation: stubIn 0.2s ease both; }
 @keyframes stubIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 .stub-icon { color: #0D9488; font-size: 15px; flex-shrink: 0; }
 .stub-name { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; color: var(--text-primary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -69,14 +60,6 @@
 
 /* ── TABS ──────────────────────────────────────────────────── */
 .tab-bar { display: flex; gap: 4px; border-bottom: 2px solid var(--card-border); margin-bottom: 20px; }
-.tab-btn {
-    padding: 11px 22px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13.5px; font-weight: 600;
-    color: var(--text-muted); border: none; background: none; cursor: pointer;
-    border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.18s, border-color 0.18s;
-    display: flex; align-items: center; gap: 8px; text-decoration: none;
-}
-.tab-btn:hover { color: var(--text-primary); }
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 </style>
 @endpush
 
@@ -105,7 +88,7 @@
     </div>
 </div>
 
-<div class="summary-card">
+<div class="card is-roomy summary-card">
     <form id="batchForm" method="POST" action="{{ route('ewa-bills.summary.store') }}" enctype="multipart/form-data">
         @csrf
 
@@ -145,7 +128,7 @@
         stubList.innerHTML = '';
         files.forEach((file, i) => {
             const row = document.createElement('div');
-            row.className = 'stub-row';
+            row.className = 'card is-nested is-compact stub-row';
             row.innerHTML = `
                 <i class="fa-solid fa-file-pdf stub-icon"></i>
                 <span class="stub-name">${file.name}</span>

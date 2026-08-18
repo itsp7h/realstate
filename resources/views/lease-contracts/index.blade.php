@@ -7,102 +7,31 @@
 <style>
     /* ── STATS ─────────────────────────────────────────────── */
     .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:16px; margin-bottom:24px; }
-    .stat-card {
-        background:var(--card-bg); border:1px solid var(--card-border); border-radius:var(--radius);
-        padding:18px 20px; display:flex; align-items:center; gap:14px;
-        box-shadow:var(--shadow-sm); transition:box-shadow .2s,transform .2s;
-    }
-    .stat-card:hover { box-shadow:var(--shadow-md); transform:translateY(-2px); }
-    .stat-icon { width:44px;height:44px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0; }
-    .stat-icon.gold   { background:var(--accent-dim); color:var(--accent); }
-    .stat-icon.green  { background:#ECFDF5; color:var(--success); }
-    .stat-icon.amber  { background:#FFFBEB; color:var(--warning); }
-    .stat-icon.gray   { background:#F1F5F9; color:var(--text-muted); }
-    .stat-val { font-family:'Outfit',sans-serif; font-size:24px; font-weight:800; color:var(--text-primary); line-height:1; }
-    .stat-lbl { font-size:12px; color:var(--text-muted); margin-top:3px; }
 
     /* ── FILTER BAR ─────────────────────────────────────────── */
     .filter-bar { display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;padding:16px 20px;background:var(--page-bg);border-bottom:1px solid var(--card-border); }
-    .filter-group { display:flex;flex-direction:column;gap:5px;min-width:150px; }
-    .filter-group label { font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em; }
-    .filter-group input,.filter-group select {
-        padding:8px 12px;font-size:13px;border:1.5px solid var(--input-border);border-radius:var(--radius-sm);
-        background:var(--card-bg);color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif;
-        outline:none;appearance:none;-webkit-appearance:none;transition:border-color .18s,box-shadow .18s;
-    }
-    .filter-group input:focus,.filter-group select:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim); }
-    .filter-group select {
-        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-        background-repeat:no-repeat;background-position:right 10px center;padding-right:32px;
-    }
-    .filter-actions { display:flex;gap:8px;align-items:flex-end;margin-left:auto; }
 
     /* ── TABLE ──────────────────────────────────────────────── */
     .agr-no { font-family:'Outfit',sans-serif;font-weight:700;font-size:13px;color:var(--text-primary); }
     .tenant-cell { display:flex;align-items:center;gap:9px; }
     .tenant-av { width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;flex-shrink:0; }
-    .tenant-av.individual { background:#ECFDF5;color:var(--success); }
-    .tenant-av.company    { background:#EFF6FF;color:var(--info); }
+    .tenant-av.individual { background:var(--tone-success-bg);color:var(--success); }
+    .tenant-av.company    { background:var(--tone-info-bg);color:var(--info); }
     .cell-main { font-size:13.5px;font-weight:600;color:var(--text-primary); }
     .cell-sub  { font-size:11px;color:var(--text-muted);margin-top:2px; }
     .period-bar { height:4px;border-radius:4px;background:var(--card-border);margin-top:5px;position:relative;overflow:hidden; }
     .period-fill { height:100%;border-radius:4px;background:var(--accent); }
-    .action-btns { display:flex;gap:6px; }
 
     /* ── STATUS BADGES ──────────────────────────────────────── */
-    .status-active   { background:#ECFDF5;color:var(--success);border:1px solid #A7F3D0; }
-    .status-expiring { background:#FFFBEB;color:var(--warning);border:1px solid #FDE68A; }
-    .status-expired  { background:#F1F5F9;color:var(--text-muted);border:1px solid var(--card-border); }
-    .status-upcoming { background:#EFF6FF;color:var(--info);border:1px solid #BFDBFE; }
+    .status-active   { background:var(--tone-success-bg);color:var(--success);border:1px solid var(--tone-success-border); }
+    .status-expiring { background:var(--tone-warning-bg);color:var(--warning);border:1px solid var(--tone-warning-border); }
+    .status-expired  { background:var(--tone-neutral-bg);color:var(--text-muted);border:1px solid var(--card-border); }
+    .status-upcoming { background:var(--tone-info-bg);color:var(--info);border:1px solid var(--tone-info-border); }
 
     /* ── FOOTER / PAGINATION ────────────────────────────────── */
     .table-footer { padding:14px 20px;border-top:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px; }
-    .pagination { display:flex;gap:4px;align-items:center; }
-    .page-btn { width:32px;height:32px;border:1.5px solid var(--card-border);background:var(--card-bg);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--text-secondary);cursor:pointer;text-decoration:none;transition:all .15s; }
-    .page-btn:hover { background:var(--page-bg);color:var(--text-primary); }
-    .page-btn.active { background:var(--accent);border-color:var(--accent);color:#0B1120; }
-    .result-count { font-size:13px;color:var(--text-muted); }
-    .result-count strong { color:var(--text-primary); }
-    .empty-state { text-align:center;padding:60px 20px; }
-    .empty-icon { width:64px;height:64px;background:var(--page-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--text-muted);margin:0 auto 16px; }
-    .empty-state h4 { font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:6px; }
-    .empty-state p { font-size:13px;color:var(--text-muted); }
 
     /* ── MODAL ──────────────────────────────────────────────── */
-    .modal-overlay {
-        position:fixed;inset:0;z-index:1000;
-        background:rgba(11,17,32,.55);backdrop-filter:blur(4px);
-        display:flex;align-items:center;justify-content:center;padding:20px;
-        opacity:0;pointer-events:none;transition:opacity .25s ease;
-    }
-    .modal-overlay.open { opacity:1;pointer-events:all; }
-    .modal-box {
-        background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;
-        box-shadow:0 24px 60px rgba(0,0,0,.18),0 8px 24px rgba(0,0,0,.10);
-        width:100%;max-width:780px;max-height:92vh;
-        display:flex;flex-direction:column;
-        transform:translateY(20px) scale(.98);
-        transition:transform .3s cubic-bezier(.22,1,.36,1);
-        overflow:hidden;
-    }
-    .modal-overlay.open .modal-box { transform:translateY(0) scale(1); }
-    .modal-header { padding:18px 24px 0;border-bottom:1px solid var(--card-border);flex-shrink:0; }
-    .modal-header-top { display:flex;align-items:center;gap:12px;padding-bottom:14px; }
-    .modal-header-icon {
-        width:40px;height:40px;border-radius:10px;
-        background:var(--accent-dim);border:1px solid rgba(232,184,109,.25);
-        display:flex;align-items:center;justify-content:center;
-        color:var(--accent);font-size:16px;flex-shrink:0;
-    }
-    .modal-header-title { font-family:'Outfit',sans-serif;font-size:17px;font-weight:800;color:var(--text-primary); }
-    .modal-header-sub { font-size:12px;color:var(--text-muted);margin-top:2px; }
-    .modal-close-btn {
-        margin-left:auto;width:32px;height:32px;border-radius:var(--radius-sm);
-        border:1.5px solid var(--card-border);background:transparent;
-        cursor:pointer;display:flex;align-items:center;justify-content:center;
-        color:var(--text-muted);font-size:13px;transition:all .15s;
-    }
-    .modal-close-btn:hover { background:var(--page-bg);color:var(--text-primary); }
 
     /* ── MODAL TABS ─────────────────────────────────────────── */
     .modal-tabs { display:flex;gap:0;overflow-x:auto; }
@@ -123,18 +52,9 @@
     }
     .mtab-btn .err-dot.show { display:inline-block; }
 
-    .modal-body { padding:20px 24px;overflow-y:auto;flex:1; }
-    .modal-body::-webkit-scrollbar { width:4px; }
-    .modal-body::-webkit-scrollbar-thumb { background:#CBD5E1;border-radius:10px; }
-
     .mtab-panel { display:none; }
     .mtab-panel.active { display:block; }
 
-    .modal-footer {
-        padding:14px 24px;border-top:1px solid var(--card-border);
-        display:flex;align-items:center;justify-content:space-between;gap:10px;
-        flex-shrink:0;
-    }
     .modal-footer-nav { display:flex;gap:8px; }
 
     /* ── MODAL FIELDS ───────────────────────────────────────── */
@@ -197,8 +117,6 @@
     }
 
     @media (max-width:600px) {
-        .modal-box { max-height:100vh;border-radius:0;max-width:100%; }
-        .modal-overlay { padding:0;align-items:flex-end; }
         .mfield-grid { grid-template-columns:1fr; }
         .mfield-grid .span-full { grid-column:span 1; }
     }
@@ -499,7 +417,7 @@
      NEW CONTRACT MODAL
 ═══════════════════════════════════════════════════════ --}}
 <div class="modal-overlay" id="contractModal" role="dialog" aria-modal="true" aria-labelledby="contractModalTitle">
-    <div class="modal-box">
+    <div class="modal-box" style="--modal-w:780px">
 
         <div class="modal-header">
             <div class="modal-header-top">
@@ -516,19 +434,19 @@
             {{-- SECTION TABS --}}
             <div class="modal-tabs">
                 <button type="button" class="mtab-btn active" data-tab="mc-info" onclick="switchMTab('mc-info')">
-                    <i class="fa-solid fa-file-lines" style="color:#C2410C;font-size:11px;"></i> Contract
+                    <i class="fa-solid fa-file-lines" style="color:var(--tone-warning-fg);font-size:11px;"></i> Contract
                     <span class="err-dot" id="dot-mc-info"></span>
                 </button>
                 <button type="button" class="mtab-btn" data-tab="mc-location" onclick="switchMTab('mc-location')">
-                    <i class="fa-solid fa-location-dot" style="color:#15803D;font-size:11px;"></i> Location
+                    <i class="fa-solid fa-location-dot" style="color:var(--tone-success-fg);font-size:11px;"></i> Location
                     <span class="err-dot" id="dot-mc-location"></span>
                 </button>
                 <button type="button" class="mtab-btn" data-tab="mc-lease" onclick="switchMTab('mc-lease')">
-                    <i class="fa-solid fa-calendar-days" style="color:#1D4ED8;font-size:11px;"></i> Lease Term
+                    <i class="fa-solid fa-calendar-days" style="color:var(--tone-info-fg);font-size:11px;"></i> Lease Term
                     <span class="err-dot" id="dot-mc-lease"></span>
                 </button>
                 <button type="button" class="mtab-btn" data-tab="mc-rent" onclick="switchMTab('mc-rent')">
-                    <i class="fa-solid fa-coins" style="color:#BE123C;font-size:11px;"></i> Rent
+                    <i class="fa-solid fa-coins" style="color:var(--tone-danger-fg);font-size:11px;"></i> Rent
                     <span class="err-dot" id="dot-mc-rent"></span>
                 </button>
                 <button type="button" class="mtab-btn" data-tab="mc-service" onclick="switchMTab('mc-service')">
@@ -536,7 +454,7 @@
                     <span class="err-dot" id="dot-mc-service"></span>
                 </button>
                 <button type="button" class="mtab-btn" data-tab="mc-financial" onclick="switchMTab('mc-financial')">
-                    <i class="fa-solid fa-landmark" style="color:#92400E;font-size:11px;"></i> Financial
+                    <i class="fa-solid fa-landmark" style="color:var(--tone-accent-fg);font-size:11px;"></i> Financial
                     <span class="err-dot" id="dot-mc-financial"></span>
                 </button>
             </div>
@@ -847,7 +765,7 @@
 
                     <div class="mfield-group span-full">
                         <label class="mfield-label">EWA Cap <span style="font-size:11px;color:var(--text-muted);font-weight:400;text-transform:none">(BHD/bill — landlord covers up to this amount per EWA bill)</span></label>
-                        <div style="position:relative;max-width:320px;">
+                        <div style="position:relative;">
                             <input type="number" name="ewa_cap"
                                 class="mfield-input {{ $errors->has('ewa_cap') ? 'is-invalid' : '' }}"
                                 value="{{ old('ewa_cap') }}" placeholder="0.000 — leave blank if tenant pays full bill"
@@ -865,7 +783,7 @@
                         </label>
                         <input type="hidden" name="vat_enabled" value="0" id="mc_vatEnabledFallback"
                             {{ old('vat_enabled') ? 'disabled' : '' }}>
-                        <div id="mc_vatRateWrap" style="max-width:200px;margin-top:10px; {{ old('vat_enabled') ? '' : 'display:none;' }}">
+                        <div id="mc_vatRateWrap" style="margin-top:10px; {{ old('vat_enabled') ? '' : 'display:none;' }}">
                             <input type="number" name="vat_rate" id="mc_vatRateInput"
                                 class="mfield-input {{ $errors->has('vat_rate') ? 'is-invalid' : '' }}"
                                 value="{{ old('vat_rate', 0) }}" placeholder="0.00" min="0" max="100" step="0.01">
