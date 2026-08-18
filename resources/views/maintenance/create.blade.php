@@ -39,7 +39,7 @@
     background: none; border: none; color: var(--tone-danger-fg); cursor: pointer;
     font-size: 14px; padding: 6px; border-radius: 6px; transition: background 0.15s;
 }
-.remove-line-btn:hover { background: #FEF2F2; }
+.remove-line-btn:hover { background: var(--tone-danger-bg); }
 
 /* ── QUOTATION INLINE ATTACHMENT ─────────────────────────── */
 .quot-input-wrap { position: relative; }

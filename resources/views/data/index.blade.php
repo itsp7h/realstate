@@ -141,9 +141,9 @@
 .export-sheet-dot {
     width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
 }
-.dot-blue   { background: #3B82F6; }
-.dot-green  { background: #10B981; }
-.dot-yellow { background: #F59E0B; }
+.dot-blue   { background: var(--info); }
+.dot-green  { background: var(--success); }
+.dot-yellow { background: var(--warning); }
 .export-sheet-label { font-weight: 600; color: var(--text-primary); min-width: 80px; }
 </style>
 @endpush

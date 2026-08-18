@@ -58,9 +58,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    {{-- ── Design system ────────────────────────────────────────────────────
-         Two stylesheets, and the order between them matters:
+    {{-- ── Vendor CSS ────────────────────────────────────────────────────────
+         Third-party stylesheets go here, BEFORE the design system, so the
+         design system always wins on any class they share. Only one page uses
+         this (buildings/show pushes Bootstrap 5 for its grid, tabs and modal
+         JS); nothing new should. Loading a vendor sheet after app-core.css
+         means its .card/.btn/.badge/.table beat ours and that page stops
+         looking like the rest of the app. --}}
+    @stack('vendor-styles')
 
+    {{-- ── Design system ────────────────────────────────────────────────────
+         Four slots, and the order between them matters:
+
+           0. @stack('vendor-styles')  third-party CSS the design system overrides
            1. app-core.css     tokens, app shell, every shared component
            2. @stack('styles') per-page overrides
            3. app-mobile.css   mobile app layer — intentionally loaded last

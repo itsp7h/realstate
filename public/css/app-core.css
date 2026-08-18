@@ -55,13 +55,28 @@
     --row-hover:        #FAFBFC;
     --text-primary:     #0F172A;
     --text-secondary:   #475569;
-    --text-muted:       #94A3B8;
+    /* Was #94A3B8, which measures 2.56:1 on white — well under WCAG AA, and it
+       carries most of the app's secondary text (table headers, stat labels,
+       card subtitles, breadcrumbs, detail labels, placeholders). #61708A clears
+       4.5:1 on all three light surfaces (card #FFFFFF 5.01, alt #F8FAFC 4.79,
+       page #F1F5F9 4.57). */
+    --text-muted:       #61708A;
+    /* The old value, kept for genuinely non-text decoration where a light grey
+       is the point and no contrast minimum applies: an empty-state glyph, a
+       chevron, a divider. Never use it for text. */
+    --text-faint:       #94A3B8;
     --text-sidebar:     #8A9BBE;
     --text-sidebar-active: #FFFFFF;
 
     /* Inputs */
     --input-bg:         #FFFFFF;
-    --input-border:     #CBD5E1;
+    /* Was #CBD5E1 at 1.48:1 against the field — an input's border is the
+       "visual information required to identify the component" that WCAG 2.2
+       AA 1.4.11 requires 3:1 for. #8494A9 measures 3.09:1.
+       --card-border stays light on purpose: it separates two surfaces that are
+       already distinguished by their own fill and elevation, so it is
+       decoration rather than a component boundary. */
+    --input-border:     #8494A9;
     --input-focus:      #E8B86D;
 
     /* Status — solid values, for icons/fills/chart series */
@@ -201,7 +216,8 @@
     --text-muted:     #7E8AA3;
 
     --input-bg:       #0F1524;
-    --input-border:   #2A3348;
+    --input-border:   #5C6A8C;   /* 3.38:1 against --input-bg — see the light note */
+    --text-faint:     #64708A;
 
     --danger:  #F87171;
     --success: #34D399;
@@ -801,7 +817,7 @@ label,
     letter-spacing: 0.02em;
 }
 label .required,
-.form-label .required { color: var(--danger); margin-left: 2px; }
+.form-label .required { color: var(--tone-danger-fg); margin-left: 2px; }
 
 input[type="text"],
 input[type="search"],
@@ -881,7 +897,10 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
     gap: 5px;
     font-size: var(--fs-xs);
     font-weight: 500;
-    color: var(--danger);
+    /* Not --danger: that is the fill colour and measures 3.76:1 as text on
+       white. --tone-danger-fg is the text colour, at 6.47:1. A validation
+       message is the last place to be hard to read. */
+    color: var(--tone-danger-fg);
     margin-top: 2px;
 }
 .field-help,
@@ -1247,7 +1266,7 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
 /* Accent-led action card — picking a report to run, choosing an import target. */
 .card.is-interactive.is-accent:hover { border-color: var(--accent); }
 /* Trailing chevron on a card that navigates somewhere. */
-.card-chevron { color: var(--text-muted); font-size: var(--fs-sm); flex: none; }
+.card-chevron { color: var(--text-faint); font-size: var(--fs-sm); flex: none; }
 
 /* ── Option card ────────────────────────────────────────────────────────────
      A card the user picks: a tenant type toggle, a quotation to approve. Was
@@ -1955,7 +1974,7 @@ td.col-actions .action-btns { justify-content: flex-end; }
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: var(--fs-2xl);
-    color: var(--text-muted);
+    color: var(--text-faint);
     margin: 0 auto var(--sp-4);
 }
 .empty-state h4 {

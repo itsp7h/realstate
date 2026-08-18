@@ -6,7 +6,7 @@
 @push('styles')
 <style>
 
-.form-label .required { color: #DC2626; margin-left: 2px; }
+.form-label .required { color: var(--tone-danger-fg); margin-left: 2px; }
 .form-control {
     padding: 9px 13px; font-size: 13px;
     border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
@@ -15,7 +15,7 @@
     font-family: 'Plus Jakarta Sans', sans-serif;
 }
 .form-control:focus { border-color: var(--accent); }
-.form-control.is-invalid { border-color: #DC2626; }
+.form-control.is-invalid { border-color: var(--tone-danger-border); }
 .form-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
 .form-actions { display: flex; gap: 10px; align-items: center; justify-content: flex-end; padding-top: 6px; }
 .status-pill {
@@ -23,8 +23,8 @@
     font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 20px;
     margin-bottom: 18px;
 }
-.status-pill.configured   { background: #ECFDF5; color: var(--success); }
-.status-pill.unconfigured { background: #F1F5F9; color: var(--text-muted); }
+.status-pill.configured   { background: var(--tone-success-bg); color: var(--success); }
+.status-pill.unconfigured { background: var(--tone-neutral-bg); color: var(--text-muted); }
 </style>
 @endpush
 

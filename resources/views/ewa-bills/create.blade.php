@@ -100,7 +100,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 }
 .cbox-search::placeholder { color: var(--text-muted); }
 .cbox-clear { padding: 0 12px; font-size: 14px; color: var(--text-muted); cursor: pointer; background: none; border: none; line-height: 1; display: none; align-items: center; }
-.cbox-clear:hover { color: #DC2626; }
+.cbox-clear:hover { color: var(--tone-danger-fg); }
 .cbox-clear.visible { display: flex; }
 .cbox-spinner { padding: 0 10px; color: var(--text-muted); font-size: 13px; display: none; align-items: center; }
 .cbox-spinner.visible { display: flex; }

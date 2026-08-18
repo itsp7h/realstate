@@ -36,8 +36,8 @@
         display: flex; align-items: center; justify-content: center;
         font-size: 18px; flex-shrink: 0;
     }
-    .hero-cell:nth-child(2) .hero-cell-icon { background: #EFF6FF; color: var(--info); }
-    .hero-cell:nth-child(3) .hero-cell-icon { background: #ECFDF5; color: var(--success); }
+    .hero-cell:nth-child(2) .hero-cell-icon { background: var(--tone-info-bg); color: var(--info); }
+    .hero-cell:nth-child(3) .hero-cell-icon { background: var(--tone-success-bg); color: var(--success); }
     .hero-val {
         font-family: 'Outfit', sans-serif;
         font-size: 26px; font-weight: 800;

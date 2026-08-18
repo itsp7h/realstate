@@ -6,7 +6,7 @@
 @push('styles')
 <style>
 
-.form-label .required { color: #DC2626; margin-left: 2px; }
+.form-label .required { color: var(--tone-danger-fg); margin-left: 2px; }
 .form-control {
     padding: 9px 13px; font-size: 13px;
     border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
@@ -15,7 +15,7 @@
     font-family: 'Plus Jakarta Sans', sans-serif;
 }
 .form-control:focus { border-color: var(--accent); }
-.form-control.is-invalid { border-color: #DC2626; }
+.form-control.is-invalid { border-color: var(--tone-danger-border); }
 .form-control.is-invalid ~ .invalid-feedback { display: block; }
 textarea.form-control { resize: vertical; min-height: 80px; }
 .amount-wrap { position: relative; }

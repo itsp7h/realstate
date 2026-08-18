@@ -6,7 +6,7 @@
 @push('styles')
 <style>
 
-.form-label .required { color: #DC2626; margin-left: 2px; }
+.form-label .required { color: var(--tone-danger-fg); margin-left: 2px; }
 .form-control {
     padding: 9px 13px; font-size: 13px;
     border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
@@ -15,7 +15,7 @@
     font-family: 'Plus Jakarta Sans', sans-serif;
 }
 .form-control:focus { border-color: var(--accent); }
-.form-control.is-invalid { border-color: #DC2626; }
+.form-control.is-invalid { border-color: var(--tone-danger-border); }
 .form-control.is-invalid ~ .invalid-feedback,
 .is-invalid + .invalid-feedback { display: block; }
 textarea.form-control { resize: vertical; min-height: 80px; }
@@ -30,7 +30,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     cursor: text;
 }
 .cbox-trigger:focus-within { border-color: var(--accent); }
-.cbox-trigger.is-invalid { border-color: #DC2626; }
+.cbox-trigger.is-invalid { border-color: var(--tone-danger-border); }
 
 .cbox-search {
     flex: 1; padding: 9px 13px; font-size: 13px;
@@ -44,7 +44,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     cursor: pointer; background: none; border: none; line-height: 1;
     display: none; align-items: center; transition: color 0.15s;
 }
-.cbox-clear:hover { color: #DC2626; }
+.cbox-clear:hover { color: var(--tone-danger-fg); }
 .cbox-clear.visible { display: flex; }
 
 .cbox-spinner {
@@ -112,9 +112,9 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 }
 .type-pill input { display: none; }
 .type-pill:hover { border-color: var(--accent); color: var(--accent); }
-.type-pill.selected-rent      { border-color: #2563EB; background: #EFF6FF; color: #2563EB; }
-.type-pill.selected-utilities { border-color: #EA580C; background: #FFF7ED; color: #EA580C; }
-.type-pill.selected-other     { border-color: #64748B; background: #F1F5F9; color: #64748B; }
+.type-pill.selected-rent      { border-color: var(--tone-info-border); background: var(--tone-info-bg); color: var(--tone-info-border); }
+.type-pill.selected-utilities { border-color: var(--tone-warning-border); background: var(--tone-warning-bg); color: var(--tone-warning-border); }
+.type-pill.selected-other     { border-color: var(--tone-neutral-border); background: var(--tone-neutral-bg); color: var(--tone-neutral-border); }
 
 /* ── RENTAL LINES TABLE ──────────────────────────────────── */
 .lines-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
@@ -150,7 +150,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .line-remove-btn {
     border: none; background: none; color: var(--text-muted); cursor: pointer; padding: 6px; font-size: 13px;
 }
-.line-remove-btn:hover { color: #DC2626; }
+.line-remove-btn:hover { color: var(--tone-danger-fg); }
 .lines-actions { display: flex; gap: 8px; margin-top: 10px; }
 .lines-total-row { background: var(--page-bg); }
 .lines-total-row td { font-weight: 700; color: var(--text-primary); }
@@ -276,7 +276,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
                         </label>
                         @endforeach
                     </div>
-                    @error('type')<div style="font-size:11px;color:#DC2626;margin-top:4px">{{ $message }}</div>@enderror
+                    @error('type')<div style="font-size:11px;color:var(--tone-danger-fg);margin-top:4px">{{ $message }}</div>@enderror
                 </div>
             </div>
 
@@ -348,7 +348,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
             </div>
         </div>
         <div class="card-body">
-            @error('lines')<div style="font-size:12px;color:#DC2626;margin-bottom:10px">{{ $message }}</div>@enderror
+            @error('lines')<div style="font-size:12px;color:var(--tone-danger-fg);margin-bottom:10px">{{ $message }}</div>@enderror
 
             <table class="lines-table">
                 <thead>

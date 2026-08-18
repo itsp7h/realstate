@@ -3,35 +3,26 @@
 @section('title', $building->property_name)
 @section('topbar-title', 'Building Detail')
 
-@push('styles')
+{{-- Bootstrap is here only for this page's grid, tab and modal JS. It goes in
+     the vendor slot, which loads BEFORE app-core.css, so the design system's
+     .card / .btn / .badge / .table / .breadcrumb win. When it sat in
+     @push('styles') it loaded after the design system and beat it, which is
+     why this page used to carry ~200 lines of CSS re-implementing the shared
+     page header, buttons and table just to look like everywhere else. --}}
+@push('vendor-styles')
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-    /* Global Font & Overrides */
-    body {
-        font-family: 'Outfit', sans-serif;
-        background-color: #f8fafc; /* Very light slate for contrast against white cards */
-    }
+@endpush
 
-    h1, h2, h3, h4, h5, h6, .fw-bold {
-        font-family: 'Outfit', sans-serif;
+@push('styles')
+<style>
+    /* Headings use the display face, as they do everywhere else. Note there is
+       deliberately no `body` override here: this page used to set
+       background-color: #f8fafc and font-family: Outfit on body, which broke
+       dark mode on this page alone and set body copy in the display face. */
+    h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-display);
         font-weight: 700;
     }
-
-    /* Soft UI Shadows and Hover Effects */
-    .card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .hover-lift:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05) !important;
-    }
-
-    /* Modern Soft Badges */
-    .badge-soft-primary { background-color: rgba(13, 110, 253, 0.1); color: #0d6efd; }
-    .badge-soft-success { background-color: rgba(25, 135, 84, 0.1); color: #198754; }
-    .badge-soft-warning { background-color: rgba(255, 193, 7, 0.15); color: #b38600; }
-    .badge-soft-danger { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; }
-    .badge-soft-secondary { background-color: rgba(108, 117, 125, 0.1); color: #6c757d; }
 
     /* Building Tabs — segmented pill bar */
     .building-tabs {
@@ -40,12 +31,12 @@
         gap: 4px;
         flex-wrap: nowrap;
         overflow-x: auto;
-        background: var(--card-bg, #fff);
-        border: 1px solid var(--card-border, #e2e8f0);
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
         border-radius: 14px;
         padding: 6px;
-        margin-bottom: 1.5rem;
-        box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06));
+        margin-bottom: var(--sp-6);
+        box-shadow: var(--shadow-sm));
     }
     .building-tabs .nav-item.ms-auto-tab { margin-left: auto; }
     .building-tabs .nav-item.ms-auto-tab::before {
@@ -53,7 +44,7 @@
         display: inline-block;
         width: 1px;
         height: 22px;
-        background: var(--card-border, #e2e8f0);
+        background: var(--card-border);
         margin-right: 4px;
         vertical-align: middle;
     }
@@ -61,31 +52,32 @@
         display: flex;
         align-items: center;
         white-space: nowrap;
-        color: var(--text-secondary, #475569) !important;
-        background-color: transparent !important;
+        color: var(--text-secondary);
+        background-color: transparent;
         font-weight: 600;
-        font-size: 13.5px;
+        font-size: var(--fs-base);
         border-radius: 10px;
-        padding: 0.55rem 1.1rem;
+        padding: var(--sp-2) 18px;
+        min-height: var(--h-control);
         border: none;
         transition: background-color 0.16s ease, color 0.16s ease;
     }
     .building-tabs .nav-link:hover {
-        color: var(--text-primary, #0f172a) !important;
-        background-color: var(--page-bg, #f1f5f9) !important;
+        color: var(--text-primary);
+        background-color: var(--page-bg);
     }
     .building-tabs .nav-link.active {
-        color: #fff !important;
-        background: var(--accent, #E8B86D) !important;
-        box-shadow: 0 4px 10px -2px var(--accent-glow, rgba(232, 184, 109, 0.45));
+        color: #fff;
+        background: var(--accent);
+        box-shadow: 0 4px 10px -2px var(--accent-glow));
     }
     .building-tabs .nav-link.active:hover {
-        color: #fff !important;
-        background: var(--accent, #E8B86D) !important;
+        color: #fff;
+        background: var(--accent);
     }
     .building-tabs .nav-link:focus-visible {
         outline: none;
-        box-shadow: 0 0 0 3px var(--accent-dim, rgba(232, 184, 109, 0.3));
+        box-shadow: 0 0 0 3px var(--accent-dim));
     }
     .building-tabs .nav-link .badge {
         font-size: 0.68rem;
@@ -93,36 +85,38 @@
         margin-left: 0.5rem;
         padding: 0.2rem 0.45rem;
         border-radius: 999px;
-        background-color: rgba(255, 255, 255, 0.35) !important;
-        color: inherit !important;
+        background-color: rgba(255, 255, 255, 0.35);
+        color: inherit;
     }
     .building-tabs .nav-link:not(.active) .badge {
-        background-color: var(--page-bg, #f1f5f9) !important;
-        color: var(--text-muted, #94a3b8) !important;
+        background-color: var(--page-bg);
+        color: var(--text-muted);
     }
 
     /* File Upload Dropzone */
     .upload-zone {
-        border: 2px dashed #cbd5e1;
-        border-radius: 1rem;
-        padding: 3rem 1.5rem;
+        border: 2px dashed var(--input-border);
+        border-radius: var(--radius);
+        padding: var(--sp-10) var(--sp-6);
         text-align: center;
-        background: #f8fafc;
+        background: var(--page-bg-alt);
+        color: var(--text-secondary);
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: border-color var(--dur-base) ease, background var(--dur-base) ease;
     }
     .upload-zone:hover, .upload-zone.drag-over {
-        border-color: #0d6efd;
-        background: rgba(13, 110, 253, 0.03);
+        border-color: var(--accent);
+        background: var(--tone-accent-bg);
     }
+    .upload-zone:focus-visible { outline: var(--focus-outline); outline-offset: 2px; }
 
     /* Photo Thumbnails */
     .photo-thumb {
         position: relative;
-        border-radius: 0.75rem;
+        border-radius: var(--radius-sm);
         overflow: hidden;
         aspect-ratio: 4/3;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--card-border);
     }
     .photo-thumb img {
         width: 100%; height: 100%; object-fit: cover;
@@ -133,93 +127,24 @@
     .photo-delete-btn {
         position: absolute; top: 8px; right: 8px;
         width: 28px; height: 28px; border-radius: 50%;
-        background: rgba(220, 53, 69, 0.9); border: none; color: white;
+        background: var(--danger); border: none; color: #fff;
         display: flex; align-items: center; justify-content: center;
         opacity: 0; transform: scale(0.8); transition: all 0.2s;
     }
-    .photo-thumb:hover .photo-delete-btn {
+    .photo-thumb:hover .photo-delete-btn,
+    .photo-thumb:focus-within .photo-delete-btn {
         opacity: 1; transform: scale(1);
     }
-
-    /* Table Styling */
-    .table th {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #64748b;
-        font-weight: 700;
-        border-bottom-width: 1px;
-    }
-    .table td {
-        font-size: 0.875rem;
-        color: #334155;
+    /* Hover-only reveal leaves this unreachable by keyboard and on touch. */
+    @media (hover: none) {
+        .photo-delete-btn { opacity: 1; transform: scale(1); }
     }
 
-    /* ── Restore native page-header style ──────────────────
-       Bootstrap (loaded above for the dashboard grid/tabs/modal)
-       ships its own .breadcrumb / h1 / p / .btn / .btn-primary rules
-       that collide with the app's shared design system and load later
-       in the cascade, so they win. Scope these back to match every
-       other page (e.g. Floors) exactly. */
-    .page-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-        gap: 14px;
-    }
-    .page-header .page-header-title {
-        font-family: 'Outfit', sans-serif;
-        font-size: 24px;
-        font-weight: 800;
-        color: var(--text-primary);
-        line-height: 1.2;
-        margin: 0;
-    }
-    .page-header .page-header-sub {
-        font-size: 13px;
-        color: var(--text-muted);
-        margin-top: 3px;
-        margin-bottom: 0;
-    }
-    .page-header .page-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-    .page-header .breadcrumb {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 12px;
-        color: var(--text-muted);
-        margin-bottom: 6px;
-    }
-    .page-header .breadcrumb a { color: var(--text-muted); text-decoration: none; }
-    .page-header .breadcrumb a:hover { color: var(--accent); }
-    .page-header .breadcrumb i { font-size: 9px; }
-    .page-header-actions .btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        padding: 9px 18px;
-        border-radius: var(--radius-sm);
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 13.5px;
-        font-weight: 600;
-        cursor: pointer;
-        border: none;
-        transition: all 0.18s ease;
-        text-decoration: none;
-        white-space: nowrap;
-    }
-    .page-header-actions .btn-primary { background: var(--accent); color: #0B1120; }
-    .page-header-actions .btn-primary:hover { background: #D4A558; box-shadow: 0 4px 14px var(--accent-glow); transform: translateY(-1px); }
-
-    /* ── Even corner rounding on every card ─────────────────
-       Bootstrap's .rounded-4 utility rounds the outer card box, but
-       .card-header's own top corners use Bootstrap's default inner
-       radius variable, not rounded-4's value — so cards with a header
-       show a sharper, mismatched corner versus header-less cards.
-       Clipping to the outer shape keeps every card visually equal. */
-    .card.rounded-4 { overflow: hidden; }
+    /* Clip children to the card's radius, so a photo or a table that runs to
+       the card's edge follows its corners. The .rounded-4 utilities still in
+       this page's markup are inert now that the design system's .card loads
+       after Bootstrap and sets the radius itself. */
+    .card { overflow: hidden; }
 </style>
 @endpush
 
@@ -524,7 +449,7 @@ if (window.pmInitHeroParallax) {
             {{-- KPI Grid --}}
             <div class="row g-3 mb-4">
                 <div class="col-xl-3 col-lg-4 col-sm-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 hover-lift cursor-pointer" onclick="document.getElementById('units-tab').click()">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 is-interactive cursor-pointer" onclick="document.getElementById('units-tab').click()">
                         <div class="card-body d-flex align-items-center gap-3 p-4">
                             <div class="bg-warning bg-opacity-10 text-warning rounded-4 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px;"><i class="fa-solid fa-door-open fs-4"></i></div>
                             <div>
@@ -535,7 +460,7 @@ if (window.pmInitHeroParallax) {
                     </div>
                 </div>
                 <div class="col-xl-3 col-lg-4 col-sm-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 hover-lift cursor-pointer" onclick="document.getElementById('units-tab').click()">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 is-interactive cursor-pointer" onclick="document.getElementById('units-tab').click()">
                         <div class="card-body d-flex align-items-center gap-3 p-4">
                             <div class="bg-success bg-opacity-10 text-success rounded-4 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px;"><i class="fa-solid fa-key fs-4"></i></div>
                             <div>
@@ -546,7 +471,7 @@ if (window.pmInitHeroParallax) {
                     </div>
                 </div>
                 <div class="col-xl-3 col-lg-4 col-sm-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 hover-lift cursor-pointer" onclick="document.getElementById('units-tab').click()">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 is-interactive cursor-pointer" onclick="document.getElementById('units-tab').click()">
                         <div class="card-body d-flex align-items-center gap-3 p-4">
                             <div class="bg-danger bg-opacity-10 text-danger rounded-4 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px;"><i class="fa-regular fa-square fs-4"></i></div>
                             <div>
@@ -557,7 +482,7 @@ if (window.pmInitHeroParallax) {
                     </div>
                 </div>
                 <div class="col-xl-3 col-lg-4 col-sm-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 hover-lift cursor-pointer" onclick="document.getElementById('tenants-tab').click()">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 is-interactive cursor-pointer" onclick="document.getElementById('tenants-tab').click()">
                         <div class="card-body d-flex align-items-center gap-3 p-4">
                             <div class="bg-primary bg-opacity-10 text-primary rounded-4 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px;"><i class="fa-solid fa-users fs-4"></i></div>
                             <div>
@@ -568,7 +493,7 @@ if (window.pmInitHeroParallax) {
                     </div>
                 </div>
                 <div class="col-xl-3 col-lg-4 col-sm-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 hover-lift cursor-pointer" onclick="document.getElementById('floors-tab').click()">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 is-interactive cursor-pointer" onclick="document.getElementById('floors-tab').click()">
                         <div class="card-body d-flex align-items-center gap-3 p-4">
                             <div class="bg-info bg-opacity-10 text-info rounded-4 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px;"><i class="fa-solid fa-layer-group fs-4"></i></div>
                             <div>
@@ -581,7 +506,7 @@ if (window.pmInitHeroParallax) {
 
                 {{-- Financial KPIs --}}
                 <div class="col-xl-3 col-lg-4 col-sm-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 hover-lift cursor-pointer" onclick="window.location='{{ $profitLossUrl }}'">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 is-interactive cursor-pointer" onclick="window.location='{{ $profitLossUrl }}'">
                         <div class="card-body d-flex align-items-center gap-3 p-4">
                             <div class="bg-success bg-opacity-10 text-success rounded-4 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px;"><i class="fa-solid fa-arrow-trend-up fs-4"></i></div>
                             <div>
@@ -592,7 +517,7 @@ if (window.pmInitHeroParallax) {
                     </div>
                 </div>
                 <div class="col-xl-3 col-lg-4 col-sm-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 hover-lift cursor-pointer" onclick="window.location='{{ $profitLossUrl }}'">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 is-interactive cursor-pointer" onclick="window.location='{{ $profitLossUrl }}'">
                         <div class="card-body d-flex align-items-center gap-3 p-4">
                             <div class="bg-danger bg-opacity-10 text-danger rounded-4 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px;"><i class="fa-solid fa-file-invoice-dollar fs-4"></i></div>
                             <div>
@@ -603,7 +528,7 @@ if (window.pmInitHeroParallax) {
                     </div>
                 </div>
                 <div class="col-xl-3 col-lg-4 col-sm-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 hover-lift cursor-pointer" onclick="window.location='{{ $profitLossUrl }}'">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 is-interactive cursor-pointer" onclick="window.location='{{ $profitLossUrl }}'">
                         <div class="card-body d-flex align-items-center gap-3 p-4">
                             @php $isProfit = $dashboard['kpis']['month_profit'] >= 0; @endphp
                             <div class="bg-{{ $isProfit ? 'primary' : 'danger' }} bg-opacity-10 text-{{ $isProfit ? 'primary' : 'danger' }} rounded-4 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px;"><i class="fa-solid fa-sack-dollar fs-4"></i></div>
@@ -648,7 +573,7 @@ if (window.pmInitHeroParallax) {
             <div class="row g-4 mb-4">
                 <!-- Occupancy Donut -->
                 <div class="col-lg-3 col-md-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 hover-lift cursor-pointer" onclick="document.getElementById('units-tab').click()">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 is-interactive cursor-pointer" onclick="document.getElementById('units-tab').click()">
                         <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
                             <h6 class="fw-bold mb-1 text-dark">Occupancy</h6>
                             <p class="text-muted small mb-0">Occupied vs vacant units</p>
@@ -745,7 +670,7 @@ if (window.pmInitHeroParallax) {
                                             <div class="fw-bold text-dark fs-6">{{ $contract->tenant_name ?? $contract->tenant?->name }}</div>
                                             <div class="text-muted small">{{ $contract->unit ?? '—' }} &middot; Ends {{ $contract->lease_end_date->format('d M Y') }}</div>
                                         </div>
-                                        <span class="badge {{ $daysLeft <= 14 ? 'badge-soft-danger' : 'badge-soft-warning' }} rounded-pill ms-auto py-2 px-3">{{ $daysLeft }}d left</span>
+                                        <span class="badge {{ $daysLeft <= 14 ? 'badge-red' : 'badge-amber' }} rounded-pill ms-auto py-2 px-3">{{ $daysLeft }}d left</span>
                                     </a>
                                 @empty
                                     <div class="p-4 text-center text-muted small">No agreements expiring in the next 60 days.</div>
@@ -766,10 +691,10 @@ if (window.pmInitHeroParallax) {
                                 @forelse($dashboard['recent_maintenance'] as $req)
                                     @php
                                         $badgeClass = match($req->status) {
-                                            'completed' => 'badge-soft-success',
-                                            'in_progress', 'approved' => 'badge-soft-primary',
-                                            'cancelled' => 'badge-soft-secondary',
-                                            default => 'badge-soft-warning',
+                                            'completed' => 'badge-green',
+                                            'in_progress', 'approved' => 'badge-blue',
+                                            'cancelled' => 'badge-gray',
+                                            default => 'badge-amber',
                                         };
                                     @endphp
                                     <a href="{{ route('maintenance.show', $req) }}" class="list-group-item list-group-item-action d-flex align-items-center gap-3 p-3 border-light">
@@ -816,7 +741,7 @@ if (window.pmInitHeroParallax) {
                                     @foreach($floors as $floor)
                                     <tr>
                                         <td class="ps-4 fw-bold text-dark">{{ $floor->floor_name }}</td>
-                                        <td>@if($floor->floor_code)<span class="badge badge-soft-secondary">{{ $floor->floor_code }}</span>@else<span class="text-muted">—</span>@endif</td>
+                                        <td>@if($floor->floor_code)<span class="badge badge-gray">{{ $floor->floor_code }}</span>@else<span class="text-muted">—</span>@endif</td>
                                         <td>{{ $floor->block_name ?? '—' }}</td>
                                         <td><span class="badge bg-light text-dark border">{{ $floor->total_no_of_units ?? '—' }}</span></td>
                                         <td class="text-end pe-4">
@@ -871,15 +796,15 @@ if (window.pmInitHeroParallax) {
                                         <td class="ps-4 fw-bold text-dark">{{ $unit->unit_name }}</td>
                                         <td>
                                             <div class="small text-muted mb-1">{{ $unit->floor?->floor_name ?? '—' }}</div>
-                                            @if($unit->unit_type)<span class="badge badge-soft-primary">{{ $unit->unit_type }}</span>@endif
+                                            @if($unit->unit_type)<span class="badge badge-blue">{{ $unit->unit_type }}</span>@endif
                                         </td>
-                                        <td>@if($unit->unit_condition)<span class="badge badge-soft-secondary">{{ $unit->unit_condition }}</span>@else<span class="text-muted">—</span>@endif</td>
+                                        <td>@if($unit->unit_condition)<span class="badge badge-gray">{{ $unit->unit_condition }}</span>@else<span class="text-muted">—</span>@endif</td>
                                         <td>
                                             @if($unit->activeContract)
-                                                <span class="badge badge-soft-success"><i class="fa-solid fa-circle text-success" style="font-size:6px; vertical-align:middle; margin-right:4px;"></i>Occupied</span>
+                                                <span class="badge badge-green"><i class="fa-solid fa-circle text-success" style="font-size:6px; vertical-align:middle; margin-right:4px;"></i>Occupied</span>
                                                 <div class="small text-muted mt-1">{{ $unit->activeContract->tenant_name }}</div>
                                             @else
-                                                <span class="badge badge-soft-secondary"><i class="fa-regular fa-circle text-secondary" style="font-size:6px; vertical-align:middle; margin-right:4px;"></i>Vacant</span>
+                                                <span class="badge badge-gray"><i class="fa-regular fa-circle text-secondary" style="font-size:6px; vertical-align:middle; margin-right:4px;"></i>Vacant</span>
                                             @endif
                                         </td>
                                         <td class="text-end pe-4 fw-bold text-dark">
@@ -936,9 +861,9 @@ if (window.pmInitHeroParallax) {
                                             <div class="small text-dark mb-1"><i class="fa-solid fa-phone text-muted me-1" style="width:14px;"></i> {{ $t->phone ?? '—' }}</div>
                                             <div class="small text-muted"><i class="fa-solid fa-envelope text-muted me-1" style="width:14px;"></i> {{ $t->email ?? '—' }}</div>
                                         </td>
-                                        <td>@if($t->tenant_type)<span class="badge badge-soft-secondary">{{ ucfirst($t->tenant_type) }}</span>@else—@endif</td>
+                                        <td>@if($t->tenant_type)<span class="badge badge-gray">{{ ucfirst($t->tenant_type) }}</span>@else—@endif</td>
                                         <td class="text-end pe-4">
-                                            {!! $activeContracts > 0 ? "<span class='badge badge-soft-success rounded-pill px-3 py-2'>$activeContracts active</span>" : '<span class="text-muted">—</span>' !!}
+                                            {!! $activeContracts > 0 ? "<span class='badge badge-green rounded-pill px-3 py-2'>$activeContracts active</span>" : '<span class="text-muted">—</span>' !!}
                                         </td>
                                     </tr>
                                     @endforeach
@@ -980,10 +905,10 @@ if (window.pmInitHeroParallax) {
                                     @foreach($contracts as $c)
                                     @php
                                         $badgeClass = match($c->status) {
-                                            'active' => 'badge-soft-success',
-                                            'expiring' => 'badge-soft-warning',
-                                            'upcoming' => 'badge-soft-primary',
-                                            default => 'badge-soft-secondary',
+                                            'active' => 'badge-green',
+                                            'expiring' => 'badge-amber',
+                                            'upcoming' => 'badge-blue',
+                                            default => 'badge-gray',
                                         };
                                     @endphp
                                     <tr class="cursor-pointer" onclick="window.location='{{ route('lease-contracts.show', $c) }}'">

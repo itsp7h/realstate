@@ -49,7 +49,7 @@
     background: none; border: none; cursor: pointer; color: var(--text-muted);
     font-size: 12px; flex-shrink: 0; padding: 4px 6px; border-radius: 4px; transition: color 0.15s;
 }
-.stub-remove:hover { color: #DC2626; }
+.stub-remove:hover { color: var(--tone-danger-fg); }
 
 .batch-count-bar {
     display: flex; align-items: center; justify-content: space-between;

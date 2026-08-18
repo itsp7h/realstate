@@ -82,9 +82,9 @@
                     <th>Description</th>
                     <th class="right">Opening (BHD)</th>
                     <th class="right">Pending (BHD)</th>
-                    <th class="right" style="color:#059669">&lt; 60 Days</th>
-                    <th class="right" style="color:#D97706">60&ndash;120 Days</th>
-                    <th class="right" style="color:#DC2626">&gt; 120 Days</th>
+                    <th class="right" style="color:var(--tone-success-fg)">&lt; 60 Days</th>
+                    <th class="right" style="color:var(--tone-warning-fg)">60&ndash;120 Days</th>
+                    <th class="right" style="color:var(--tone-danger-fg)">&gt; 120 Days</th>
                 </tr>
             </thead>
             <tbody>

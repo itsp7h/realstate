@@ -11,9 +11,9 @@
 }
 .log-entry { overflow: hidden; transition: box-shadow 0.18s; }
 .log-entry:hover { box-shadow: var(--shadow-md); }
-.log-entry.level-error   { border-left: 3px solid #EF4444; }
-.log-entry.level-warning { border-left: 3px solid #F59E0B; }
-.log-entry.level-info    { border-left: 3px solid #3B82F6; }
+.log-entry.level-error   { border-left: 3px solid var(--danger); }
+.log-entry.level-warning { border-left: 3px solid var(--warning); }
+.log-entry.level-info    { border-left: 3px solid var(--info); }
 .log-entry.level-debug   { border-left: 3px solid #94A3B8; }
 
 .log-entry-header {
@@ -116,7 +116,7 @@
 {{-- TIMELINE --}}
 @if(empty($paged))
 <div class="empty-state">
-    <i class="fa-solid fa-circle-check" style="color:#10B981"></i>
+    <i class="fa-solid fa-circle-check" style="color:var(--success)"></i>
     No log entries found — looking clean!
 </div>
 @else
