@@ -1,0 +1,1913 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   APP CORE — design system foundation + shared components
+   ───────────────────────────────────────────────────────────────────────────
+   Single source of truth for tokens, the app shell, and every shared
+   component. Extracted from the ~5,300 lines of near-identical CSS that had
+   been copy-pasted across 50 per-page `@push('styles')` blocks (.filter-bar
+   was defined 24 times, .table-card 18, .modal-box 14, .pagination 6, and one
+   stat card existed under nine different names).
+
+   ── CASCADE CONTRACT ──────────────────────────────────────────────────────
+   layouts/admin.blade.php loads stylesheets in this exact order:
+
+       1. app-core.css        ← this file
+       2. @stack('styles')    ← per-page overrides
+       3. app-mobile.css      ← mobile app layer, intentionally wins
+
+   Step 3 is deliberate and predates this refactor: the mobile layer converts
+   every .modal-overlay in the app into a bottom sheet, and has to beat any
+   per-page modal CSS at equal specificity. Keep that order.
+
+   ── RULES FOR EDITING ─────────────────────────────────────────────────────
+   • Add to this file, not to a page. If two pages need it, it belongs here.
+   • Never hardcode a color. Every color is a token; tokens flip for dark mode
+     in ONE place (§1.2). A raw hex in a component is a dark-mode bug.
+   • Control heights come from --h-control*. Never set an ad-hoc height on an
+     input or button — that is what made field heights drift page to page.
+   • No `!important`. The cascade contract above removes the need for it.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §1  FOUNDATION
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── §1.1  Tokens — light (also the :root default) ───────────────────────── */
+:root,
+:root[data-theme="light"] {
+    /* Brand / chrome — the navy + gold identity, unchanged */
+    --sidebar-bg:       #0B1120;
+    --sidebar-border:   #1A2540;
+    --sidebar-hover:    #131E35;
+    --sidebar-active:   #1E2D4A;
+    --accent:           #E8B86D;
+    --accent-strong:    #D4A558;   /* accent hover — was inline in .btn-primary */
+    --accent-dim:       rgba(232,184,109,0.12);
+    --accent-glow:      rgba(232,184,109,0.25);
+    --on-accent:        #0B1120;   /* text on a gold fill */
+
+    /* Surfaces & text */
+    --page-bg:          #F1F5F9;
+    --page-bg-alt:      #F8FAFC;
+    --card-bg:          #FFFFFF;
+    --card-border:      #E2E8F0;
+    --row-border:       #F1F5F9;
+    --row-hover:        #FAFBFC;
+    --text-primary:     #0F172A;
+    --text-secondary:   #475569;
+    --text-muted:       #94A3B8;
+    --text-sidebar:     #8A9BBE;
+    --text-sidebar-active: #FFFFFF;
+
+    /* Inputs */
+    --input-bg:         #FFFFFF;
+    --input-border:     #CBD5E1;
+    --input-focus:      #E8B86D;
+
+    /* Status — solid values, for icons/fills/chart series */
+    --danger:           #EF4444;
+    --success:          #10B981;
+    --info:             #3B82F6;
+    --warning:          #F59E0B;
+
+    /* ── Semantic tones ────────────────────────────────────────────────────
+         Every status surface in the app (badges, alerts, stat icons, soft
+         buttons) draws its three values from one of these six sets, so a
+         status reads the same everywhere and flips correctly for dark mode
+         in exactly one place. The old code hardcoded the light tints
+         (#ECFDF5 / #EFF6FF / #FEF2F2 / #FFFBEB), which is why status badges
+         stayed near-white in dark mode.
+
+         `-fg` values are chosen to clear WCAG AA (4.5:1) against their own
+         `-bg`. The previous gold badge — #E8B86D on #FDF6EA, about 1.7:1 —
+         failed outright; --tone-accent-fg fixes it at ~6.4:1. */
+    --tone-success-fg:      #047857;
+    --tone-success-bg:      #ECFDF5;
+    --tone-success-border:  #A7F3D0;
+    --tone-danger-fg:       #B91C1C;
+    --tone-danger-bg:       #FEF2F2;
+    --tone-danger-border:   #FECACA;
+    --tone-warning-fg:      #B45309;
+    --tone-warning-bg:      #FFFBEB;
+    --tone-warning-border:  #FDE68A;
+    --tone-info-fg:         #1D4ED8;
+    --tone-info-bg:         #EFF6FF;
+    --tone-info-border:     #BFDBFE;
+    --tone-neutral-fg:      #475569;
+    --tone-neutral-bg:      #F1F5F9;
+    --tone-neutral-border:  #E2E8F0;
+    --tone-accent-fg:       #8A6318;
+    --tone-accent-bg:       #FDF6EA;
+    --tone-accent-border:   #EFD9AE;
+
+    /* ── Type ──────────────────────────────────────────────────────────────
+         Two faces with distinct jobs: Outfit for anything that should read as
+         a figure or a title (page titles, KPI values, money), Plus Jakarta
+         Sans for everything else. --font-data is Outfit with tabular figures
+         — this app is columns of BHD amounts and unit counts, and
+         proportional digits in a ledger never line up. */
+    --font-display: 'Outfit', system-ui, sans-serif;
+    --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-data:    'Outfit', system-ui, sans-serif;
+
+    /* Scale — replaces the 18 ad-hoc sizes that were in use
+       (10 / 10.5 / 11 / 11.5 / 12 / 12.5 / 13 / 13.5 / 14 / 14.5 / 15 / 16 /
+       17 / 19 / 21 / 24 / 26 / 28px). --fs-base stays 13.5px so no existing
+       page shifts. */
+    --fs-2xs:   10px;   /* eyebrow / section label, always uppercase */
+    --fs-xs:    11px;   /* badge, table header, meta */
+    --fs-sm:    12px;   /* form label, help text */
+    --fs-base:  13.5px; /* body, table cell, input, button */
+    --fs-md:    15px;   /* card title */
+    --fs-lg:    17px;   /* topbar title, section heading */
+    --fs-xl:    20px;   /* stat value */
+    --fs-2xl:   24px;   /* page title */
+    --fs-3xl:   30px;   /* hero figure */
+
+    --lh-tight: 1.2;
+    --lh-snug:  1.4;
+    --lh-base:  1.55;
+
+    /* ── Spacing — 4px base. Named by step, not by use, so one scale serves
+         padding, gap and margin alike. */
+    --sp-1:  4px;
+    --sp-2:  8px;
+    --sp-3:  12px;
+    --sp-4:  16px;
+    --sp-5:  20px;
+    --sp-6:  24px;
+    --sp-7:  28px;
+    --sp-8:  32px;
+    --sp-10: 40px;
+    --sp-12: 48px;
+
+    /* ── Radius */
+    --radius:       12px;
+    --radius-sm:    8px;
+    --radius-lg:    16px;
+    --radius-pill:  9999px;
+
+    /* ── Elevation — ambient + key shadow, composed rather than one flat blur */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+    --shadow-lg: 0 10px 40px rgba(0,0,0,0.10);
+    --shadow-modal: 0 24px 60px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.10);
+
+    /* ── Control sizing — the fix for inputs and buttons drifting between
+         pages. Every interactive control derives its box from these. */
+    --h-control:    38px;
+    --h-control-sm: 32px;
+    --h-control-lg: 44px;
+    --border-control: 1.5px;
+
+    /* ── Focus — visible on every control, in both themes. .btn previously
+         had no focus state at all. */
+    --focus-ring:   0 0 0 3px var(--accent-glow);
+    --focus-outline: 2px solid var(--accent-strong);
+
+    /* ── Motion */
+    --ease-out:     cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring:  cubic-bezier(.32,.72,0,1);
+    --dur-fast:     0.15s;
+    --dur-base:     0.18s;
+    --dur-slow:     0.28s;
+    --duration-sheet: 380ms;
+
+    /* ── Layers — was a spread of 20/90/95/99/100/1000/1050 literals */
+    --z-sticky:   90;
+    --z-tabbar:   95;
+    --z-backdrop: 99;
+    --z-sidebar:  100;
+    --z-modal:    1000;
+    --z-sheet:    1050;
+    --z-toast:    1100;
+
+    /* ── Shell */
+    --sidebar-width: 260px;
+    --sheet-radius:  22px;
+    --scrim:         rgba(11,17,32,0.55);
+}
+
+/* ── §1.2  Tokens — dark. Only what actually changes. ────────────────────── */
+:root[data-theme="dark"] {
+    --page-bg:        #0D1220;
+    --page-bg-alt:    #111828;
+    --card-bg:        #131A2B;
+    --card-border:    #232C42;
+    --row-border:     #1D2436;
+    --row-hover:      #171F33;
+    --text-primary:   #F1F4F9;
+    --text-secondary: #B7C0D1;
+    --text-muted:     #7E8AA3;
+
+    --input-bg:       #0F1524;
+    --input-border:   #2A3348;
+
+    --danger:  #F87171;
+    --success: #34D399;
+    --info:    #60A5FA;
+    --warning: #FBBF24;
+
+    /* Tones invert: a translucent wash of the solid color, with a light
+       foreground. Keeps the same six meanings legible on a dark surface
+       without going muddy. */
+    --tone-success-fg:      #6EE7B7;
+    --tone-success-bg:      rgba(16,185,129,0.14);
+    --tone-success-border:  rgba(16,185,129,0.32);
+    --tone-danger-fg:       #FCA5A5;
+    --tone-danger-bg:       rgba(239,68,68,0.14);
+    --tone-danger-border:   rgba(239,68,68,0.34);
+    --tone-warning-fg:      #FCD34D;
+    --tone-warning-bg:      rgba(245,158,11,0.14);
+    --tone-warning-border:  rgba(245,158,11,0.32);
+    --tone-info-fg:         #93C5FD;
+    --tone-info-bg:         rgba(59,130,246,0.14);
+    --tone-info-border:     rgba(59,130,246,0.34);
+    --tone-neutral-fg:      #B7C0D1;
+    --tone-neutral-bg:      rgba(148,163,184,0.12);
+    --tone-neutral-border:  rgba(148,163,184,0.24);
+    --tone-accent-fg:       #F0C98A;
+    --tone-accent-bg:       rgba(232,184,109,0.14);
+    --tone-accent-border:   rgba(232,184,109,0.30);
+
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.30), 0 1px 2px rgba(0,0,0,0.20);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.36), 0 2px 6px rgba(0,0,0,0.24);
+    --shadow-lg: 0 10px 40px rgba(0,0,0,0.45);
+    --shadow-modal: 0 24px 60px rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.40);
+
+    --scrim: rgba(0,0,0,0.65);
+}
+
+/* Native widget chrome (date pickers, select popups, scrollbars) has to be
+   told which theme it is in, or it renders light-on-light. */
+:root[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+
+/* ── §1.2b  Mobile app palette (--m-*) ──────────────────────────────────────
+     The first mobile pass's own palette. Kept as tokens because the mobile
+     markup references them directly (the More sheet's icon tints, the tab
+     bar, the .m-* row cards). They are intentionally theme-independent: the
+     mobile screens they serve are a fixed light treatment today, and making
+     them flip would change shipped screens rather than standardise them.
+
+     New work should use the §1.1 tokens. These stay until the .m-* screens
+     are folded into the .pm-* system. */
+:root {
+    --m-bg:            #F4F1EA;
+    --m-card:          #FFFFFF;
+    --m-ink:           #17203A;
+    --m-muted:         #8E9AAE;
+    --m-faint:         #A7B0C0;
+    --m-line:          #F1F3F8;
+    --m-border:        #E4E9F0;
+
+    --m-navy:          #10141F;
+    --m-navy-2:        #1E2842;
+    --m-navy-line:     #1A2540;
+    --m-navy-active:   #1E2D4A;
+    --m-navy-text:     #8A9BBE;
+
+    --m-gold:          #E7B266;
+    --m-gold-deep:     #D99A3D;
+    --m-gold-text:     #C08A2D;
+    --m-gold-tint:     #FBF3E4;
+    --m-gold-on:       #2A2312;
+    --m-gold-grad:     linear-gradient(135deg,#EDBE78,#DC9E45);
+
+    --m-green:  #17A96C;  --m-green-tint:  #E6F6EE;
+    --m-red:    #D64545;  --m-red-tint:    #FCEBEB;
+    --m-blue:   #4A7DF0;  --m-blue-tint:   #E9F0FD;
+    --m-purple: #7A5AF8;  --m-purple-tint: #EFEBFD;
+
+    --m-r-card: 18px;  --m-r-btn: 12px;  --m-r-chip: 10px;  --m-r-badge: 7px;
+    --m-shadow: 0 1px 3px rgba(23,32,58,.05);
+    --m-shadow-float: 0 8px 24px rgba(23,32,58,.10);
+}
+
+
+/* ── §1.3  Reset & base ─────────────────────────────────────────────────── */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    line-height: var(--lh-base);
+    background: var(--page-bg);
+    color: var(--text-primary);
+    display: flex;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+img, svg, video { max-width: 100%; }
+
+/* Long unbroken strings — a tenant's email, a reference number, a pasted URL
+   in a maintenance note — must wrap rather than widen their container and
+   push the page into horizontal scroll. */
+h1, h2, h3, h4, p, td, th, li, dd, dt, label { overflow-wrap: break-word; }
+
+
+/* ── §1.4  Accessibility primitives ─────────────────────────────────────── */
+
+/* One focus treatment for the whole app. :focus-visible so a mouse click
+   doesn't leave a ring behind, keyboard and programmatic focus always do. */
+:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+}
+/* Inputs draw their own ring inside the border instead, which reads better
+   on a field than an offset outline. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: none;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+/* Skip link — visible only once focused. */
+.skip-link {
+    position: absolute;
+    left: var(--sp-4);
+    top: -100px;
+    z-index: var(--z-toast);
+    padding: var(--sp-2) var(--sp-4);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: var(--border-control) solid var(--accent);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-base);
+    font-weight: 600;
+    text-decoration: none;
+    transition: top var(--dur-base) var(--ease-out);
+}
+.skip-link:focus { top: var(--sp-4); }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §2  APP SHELL — sidebar, topbar, main
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── §2.1  Sidebar ──────────────────────────────────────────────────────── */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: var(--z-sidebar);
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-right: 1px solid var(--sidebar-border);
+    transition: transform var(--dur-slow) ease;
+}
+
+.sidebar-logo {
+    padding: var(--sp-6) var(--sp-5) var(--sp-5);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    border-bottom: 1px solid var(--sidebar-border);
+    text-decoration: none;
+}
+.sidebar-logo-icon {
+    width: 38px; height: 38px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    color: var(--on-accent);
+    flex-shrink: 0;
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+.sidebar-logo-text { line-height: var(--lh-tight); }
+.sidebar-logo-text strong {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    font-weight: 700;
+    color: #fff;
+    display: block;
+}
+.sidebar-logo-text span {
+    font-size: var(--fs-2xs);
+    color: var(--text-sidebar);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.sidebar-section { padding: var(--sp-5) var(--sp-3) var(--sp-2); }
+.sidebar-section-label {
+    font-size: var(--fs-2xs);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-sidebar);
+    padding: 0 var(--sp-2);
+    margin-bottom: 6px;
+    opacity: 0.6;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px var(--sp-3);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    color: var(--text-sidebar);
+    font-size: var(--fs-base);
+    font-weight: 500;
+    transition: background var(--dur-base) ease, color var(--dur-base) ease;
+    position: relative;
+    margin-bottom: 2px;
+}
+.nav-item:hover {
+    background: var(--sidebar-hover);
+    color: #C8D6F0;
+}
+.nav-item.active {
+    background: var(--sidebar-active);
+    color: var(--text-sidebar-active);
+}
+/* The active marker is a rail on the leading edge, not a color change alone —
+   so "where am I" survives being read without color. */
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 20%; bottom: 20%;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 0 3px 3px 0;
+}
+.nav-item .nav-icon {
+    width: 18px;
+    text-align: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+.nav-item.active .nav-icon { color: var(--accent); }
+.nav-item:focus-visible { outline-offset: -2px; }
+
+.nav-badge {
+    margin-left: auto;
+    background: var(--accent-dim);
+    color: var(--tone-accent-fg);
+    font-size: var(--fs-2xs);
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: var(--radius-pill);
+}
+:root[data-theme="dark"] .nav-badge { color: var(--accent); }
+
+.sidebar-footer {
+    margin-top: auto;
+    padding: var(--sp-4) var(--sp-3);
+    border-top: 1px solid var(--sidebar-border);
+}
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px var(--sp-3);
+    border-radius: var(--radius-sm);
+    transition: background var(--dur-base);
+}
+.sidebar-user:hover { background: var(--sidebar-hover); }
+.user-avatar {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--accent), #C49040);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 13px; font-weight: 700;
+    color: var(--on-accent);
+    flex-shrink: 0;
+}
+.user-info { min-width: 0; }
+.user-info strong {
+    display: block;
+    font-size: 13px;
+    color: #fff;
+    font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.user-info span { font-size: var(--fs-xs); color: var(--text-sidebar); }
+
+.sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-backdrop);
+    background: var(--scrim);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-slow) ease;
+}
+.sidebar-backdrop.show { opacity: 1; pointer-events: all; }
+
+
+/* ── §2.2  Main column + topbar ─────────────────────────────────────────── */
+.main-wrap {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;   /* lets a wide table shrink instead of pushing the page */
+}
+
+.topbar {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--card-border);
+    padding: 0 var(--sp-7);
+    height: 60px;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+}
+.topbar-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+.page-content {
+    padding: var(--sp-7);
+    flex: 1;
+    min-width: 0;
+}
+
+
+/* ── §2.3  More sheet (mobile tab bar's "More" destination) ──────────────────
+     Base positioning lives here rather than in app-mobile.css because, unlike
+     a per-page modal, this sheet is part of the shell and is present on every
+     page — including pages that define no modal CSS of their own. Both rules
+     are ID-scoped so they cannot leak into another page's .modal-box. */
+#moreSheet {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-sheet);
+    background: var(--scrim);
+    display: flex;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-slow) ease;
+}
+#moreSheet.open { opacity: 1; pointer-events: all; }
+#moreSheet .modal-box {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.18);
+}
+
+
+/* ── §2.4  Scrollbars ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--input-border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §3  PAGE STRUCTURE
+   ───────────────────────────────────────────────────────────────────────────
+   The skeleton every page follows:
+       breadcrumb → page-header (title / sub / actions) → stats → filters
+       → main content → supporting content
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+.breadcrumb a { color: var(--text-muted); text-decoration: none; }
+.breadcrumb a:hover { color: var(--tone-accent-fg); text-decoration: underline; }
+.breadcrumb i { font-size: 9px; }
+.breadcrumb [aria-current="page"] { color: var(--text-secondary); font-weight: 600; }
+
+.page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: var(--sp-6);
+    flex-wrap: wrap;
+    gap: 14px;
+}
+.page-header-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-2xl);
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: var(--lh-tight);
+    letter-spacing: -0.01em;
+}
+.page-header-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    max-width: 68ch;
+}
+.page-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* Vertical rhythm between sibling sections on a page. */
+.section-stack { display: flex; flex-direction: column; gap: var(--sp-5); }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §4  COMPONENTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── §4.1  Buttons ──────────────────────────────────────────────────────────
+     One hierarchy, one box. Variants change color only — never height,
+     padding, radius or type — which is what kept buttons from lining up
+     across pages before.
+
+     primary   the single main action on a screen
+     outline   secondary actions, and every table row action
+     ghost     tertiary / low-noise (toolbar, inside a card header)
+     danger    destructive; soft by default, filled on hover
+     success   confirming / positive
+     Sizes: .btn-sm (dense, table rows) · default · .btn-lg (forms, mobile) */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: var(--h-control);
+    padding: 0 18px;
+    border: var(--border-control) solid transparent;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background var(--dur-base) ease, color var(--dur-base) ease,
+                border-color var(--dur-base) ease, box-shadow var(--dur-base) ease;
+}
+.btn > i { font-size: 0.92em; }   /* icon never outweighs its label */
+
+.btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+}
+.btn-primary:hover {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+    box-shadow: 0 4px 14px var(--accent-glow);
+}
+
+.btn-outline {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+    color: var(--text-secondary);
+}
+.btn-outline:hover {
+    background: var(--page-bg);
+    border-color: var(--input-border);
+    color: var(--text-primary);
+}
+
+.btn-ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--text-secondary);
+}
+.btn-ghost:hover { background: var(--page-bg); color: var(--text-primary); }
+
+.btn-danger {
+    background: var(--tone-danger-bg);
+    border-color: var(--tone-danger-border);
+    color: var(--tone-danger-fg);
+}
+.btn-danger:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+.btn-success {
+    background: var(--tone-success-bg);
+    border-color: var(--tone-success-border);
+    color: var(--tone-success-fg);
+}
+.btn-success:hover { background: var(--success); border-color: var(--success); color: #fff; }
+
+.btn-sm { min-height: var(--h-control-sm); padding: 0 13px; font-size: var(--fs-sm); gap: 6px; }
+.btn-lg { min-height: var(--h-control-lg); padding: 0 var(--sp-6); font-size: 14.5px; }
+
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: var(--focus-outline); outline-offset: 2px; }
+.btn:disabled,
+.btn[aria-disabled="true"],
+.btn.is-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+/* Full-width button — the mobile default for a form's submit. */
+.btn-block { width: 100%; }
+
+/* Icon-only button. Square, and it must carry an aria-label or title. */
+.btn-icon { padding: 0; width: var(--h-control); aspect-ratio: 1; }
+.btn-icon.btn-sm { width: var(--h-control-sm); }
+.btn-icon.btn-lg { width: var(--h-control-lg); }
+
+/* Topbar / card-header icon button. */
+.topbar-icon-btn {
+    width: 36px; height: 36px;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-secondary);
+    font-size: 14px;
+    transition: background var(--dur-fast), color var(--dur-fast);
+}
+.topbar-icon-btn:hover { background: var(--page-bg); color: var(--text-primary); }
+
+/* Row of actions in a table's Actions column, or a card footer. */
+.action-btns { display: flex; gap: 6px; align-items: center; }
+
+
+/* ── §4.2  Forms ────────────────────────────────────────────────────────────
+     Every field is the same height and shares one focus and one error
+     treatment. Field-level messages only — never a generic "something went
+     wrong". */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 18px;
+}
+.form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.form-group.col-span-2 { grid-column: span 2; }
+.form-group.col-span-full { grid-column: 1 / -1; }
+
+label,
+.form-label {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+}
+label .required,
+.form-label .required { color: var(--danger); margin-left: 2px; }
+
+input[type="text"],
+input[type="search"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="email"],
+input[type="tel"],
+input[type="url"],
+input[type="password"],
+select,
+textarea,
+.form-control {
+    width: 100%;
+    min-height: var(--h-control);
+    padding: 0 13px;
+    border: var(--border-control) solid var(--input-border);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    transition: border-color var(--dur-base), box-shadow var(--dur-base);
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+textarea,
+.form-control textarea {
+    padding: 9px 13px;
+    resize: vertical;
+    min-height: 80px;
+    line-height: var(--lh-base);
+}
+
+input:focus, select:focus, textarea:focus, .form-control:focus {
+    border-color: var(--input-focus);
+    box-shadow: var(--focus-ring);
+}
+input:disabled, select:disabled, textarea:disabled {
+    background: var(--page-bg);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
+
+/* Numeric and money inputs get tabular figures so digits align while typing. */
+input[type="number"],
+input[inputmode="decimal"],
+input[inputmode="numeric"] {
+    font-variant-numeric: tabular-nums;
+}
+
+select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+/* Error state — border, message, and aria-invalid all agree. */
+input.error, select.error, textarea.error,
+input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"],
+.form-control.is-invalid {
+    border-color: var(--danger);
+}
+input.error:focus, select.error:focus, textarea.error:focus,
+input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
+    box-shadow: 0 0 0 3px var(--tone-danger-bg);
+}
+.field-error,
+.invalid-feedback {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    color: var(--danger);
+    margin-top: 2px;
+}
+.field-help,
+.form-text {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+
+/* Checkbox / radio — native control, consistent label alignment. */
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: var(--h-control-sm);
+}
+.form-check input[type="checkbox"],
+.form-check input[type="radio"] {
+    width: 16px; height: 16px;
+    min-height: 0;
+    flex: none;
+    accent-color: var(--accent-strong);
+    cursor: pointer;
+    appearance: auto;
+    -webkit-appearance: auto;
+}
+.form-check label { font-weight: 500; color: var(--text-primary); cursor: pointer; }
+
+/* Form page scaffold. */
+.form-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+.form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: var(--sp-4) var(--sp-6);
+    border-top: 1px solid var(--card-border);
+    background: var(--page-bg-alt);
+}
+
+
+/* ── §4.3  Cards ────────────────────────────────────────────────────────── */
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    min-width: 0;
+}
+.card-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    flex-wrap: wrap;
+}
+.card-header-icon {
+    width: 34px; height: 34px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-dim);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--tone-accent-fg);
+    font-size: var(--fs-md);
+    flex-shrink: 0;
+}
+:root[data-theme="dark"] .card-header-icon { color: var(--accent); }
+.card-header h3 {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.card-header p {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+.card-header-actions { margin-left: auto; display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.card-body { padding: 22px; }
+
+
+/* ── §4.4  Stat cards ───────────────────────────────────────────────────────
+     Was nine separate components (.stat-card, .pay-stat, .exp-stat,
+     .inv-stat, .rev-stat, .ewa-stat, .dash-stat, .pl-stat, .bldg-stat) that
+     all rendered the same thing. §6 aliases the old names onto this one.
+
+     No hover lift: these are readouts, not controls — a card that rises
+     under the cursor promises a click that isn't there. */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--sp-4);
+    margin-bottom: var(--sp-6);
+}
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 18px var(--sp-5);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--shadow-sm);
+    min-width: 0;
+}
+.stat-icon {
+    width: 44px; height: 44px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    background: var(--tone-neutral-bg);
+    color: var(--tone-neutral-fg);
+}
+.stat-icon.gold, .stat-icon.accent  { background: var(--tone-accent-bg);  color: var(--tone-accent-fg); }
+.stat-icon.green, .stat-icon.success { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.stat-icon.blue, .stat-icon.info    { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.stat-icon.red, .stat-icon.danger   { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+.stat-icon.amber, .stat-icon.warning { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.stat-icon.gray, .stat-icon.neutral { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+.stat-icon.teal { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.stat-icon.purple { background: var(--tone-info-bg); color: var(--tone-info-fg); }
+
+.stat-body { min-width: 0; }
+.stat-val {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--fs-2xl);
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+}
+.stat-lbl {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+
+/* Stat tile — the label-above-figure variant, with a leading rail carrying
+   the tone. For a small set of headline figures that are being compared
+   against each other (the P&L's revenue / expenses / net), where the figure
+   itself should be the largest thing on the page. Was page-local CSS on
+   reports/profit-loss with the tone colors hardcoded. */
+.stat-tile {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-left: 3px solid var(--tile-rail, var(--card-border));
+    border-radius: var(--radius);
+    padding: var(--sp-5) 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+.stat-tile-label {
+    font-size: var(--fs-2xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.stat-tile-value {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--tile-fg, var(--text-primary));
+}
+.stat-tile-value sup { font-size: var(--fs-sm); font-weight: 600; margin-left: var(--sp-1); }
+.stat-tile.is-success { --tile-rail: var(--tone-success-fg); --tile-fg: var(--tone-success-fg); }
+.stat-tile.is-warning { --tile-rail: var(--tone-warning-fg); --tile-fg: var(--tone-warning-fg); }
+.stat-tile.is-danger  { --tile-rail: var(--tone-danger-fg);  --tile-fg: var(--tone-danger-fg); }
+.stat-tile.is-accent  { --tile-rail: var(--accent);          --tile-fg: var(--tone-accent-fg); }
+/* The bottom-line figure gets a double rule under it — the accounting
+   convention for a total, and it reads without relying on color. */
+.stat-tile.is-total .stat-tile-value {
+    display: inline-block;
+    padding-bottom: 6px;
+    border-bottom: 2px solid currentColor;
+    box-shadow: 0 4px 0 -3px currentColor;
+}
+
+/* ── §4.4b  Value tones ─────────────────────────────────────────────────────
+     A figure's sign or age carries meaning in this app: money owed, money
+     received, an ageing bucket past 120 days. These replace the per-report
+     hardcodes (.net-owing, .net-credit, .bucket-lt60, .bucket-b60120,
+     .bucket-gt120, .overdue-pos, .balance-row-owing, .balance-row-settled),
+     which were literal #DC2626 / #059669 / #D97706 and so stayed light-mode
+     colors on a dark surface.
+
+     Color is never the only signal — these sit on figures that are also
+     labelled by their column. */
+.val-positive { color: var(--tone-success-fg); font-weight: 700; }
+.val-negative { color: var(--tone-danger-fg);  font-weight: 700; }
+.val-warning  { color: var(--tone-warning-fg); font-weight: 700; }
+.val-muted    { color: var(--text-muted); }
+/* An overdue figure is also set in italics, so the emphasis survives being
+   read in grayscale or by someone who can't separate the two hues. */
+.val-negative.is-emphatic { font-style: italic; }
+
+
+/* ── §4.5  Filter bar ───────────────────────────────────────────────────────
+     Master pattern, taken from tenants/index: the filter bar sits INSIDE the
+     table card, above the header row, so filters visibly belong to the table
+     they narrow. Each control is labelled — the competing variant used bare
+     placeholder-only inputs, which leaves no accessible name once a value is
+     filled in.
+
+     Filtering is server-side: these controls submit a GET form and the
+     backend returns already-filtered, already-paginated rows. */
+.filter-bar {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--sp-3);
+    flex-wrap: wrap;
+    padding: var(--sp-4) var(--sp-5);
+    background: var(--page-bg-alt);
+    border-bottom: 1px solid var(--card-border);
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 150px;
+}
+.filter-group > label {
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.filter-group input,
+.filter-group select {
+    min-height: var(--h-control-sm);
+    padding: 0 var(--sp-3);
+    font-size: 13px;
+    background: var(--card-bg);
+}
+.filter-group select { background-position: right 10px center; padding-right: 32px; }
+/* Search field is the widest and comes first. */
+.filter-group.is-search { flex: 1; min-width: 220px; }
+.filter-actions {
+    display: flex;
+    gap: var(--sp-2);
+    align-items: flex-end;
+    margin-left: auto;
+}
+
+/* One filter component, two containers — the internals are identical, only
+   what the filters belong to differs:
+
+     .table-card > .filter-bar    a list page. The filters narrow a list that
+                                  is already on screen, so they sit inside the
+                                  table's own card, attached to it.
+
+     .filter-card > .filter-bar   a report page. Here the filters ARE the
+                                  page's query — pick a tenant and a date
+                                  range, then read the result — and the result
+                                  below swaps between a table and an empty
+                                  state. So the filters get their own card.
+
+   Anything else (a bare .filter-bar floating on the page background, filters
+   in a card with no label on each control) is not a third option. */
+.filter-card {
+    display: block;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 18px;
+    overflow: hidden;
+}
+.filter-card > .filter-bar { border-bottom: none; background: transparent; }
+
+
+/* ── §4.6  Tables ───────────────────────────────────────────────────────────
+     One table system for the whole app.
+
+     Structure:  .table-card > [.filter-bar] > .table-wrap > table > …
+                              > .table-footer > .result-count + .pagination
+
+     Desktop: sticky header, right-aligned numeric columns in tabular
+     figures, a single hover state, one Actions column treatment.
+
+     Mobile (≤768px, §4.6.3): rows become stacked key/value cards using each
+     cell's `data-label`. Horizontal scroll is kept only for tables marked
+     `.table-wrap.is-scroll` — a wide financial matrix (an ageing report,
+     a rent schedule) genuinely reads better scrolled than stacked, because
+     comparing across columns is the point. Everything else stacks. */
+
+.table-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    min-width: 0;
+}
+.table-wrap { overflow-x: auto; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+thead th {
+    padding: 11px var(--sp-4);
+    text-align: left;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+    background: var(--page-bg-alt);
+    border-bottom: 1px solid var(--card-border);
+    white-space: nowrap;
+}
+tbody td {
+    padding: 13px var(--sp-4);
+    font-size: var(--fs-base);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--row-border);
+    vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--row-hover); }
+
+/* Rows are clickable across the whole row (project convention). The cursor
+   and hover state say so; the Actions cell stops propagation in JS. */
+tr[data-href] { cursor: pointer; }
+tr[data-href]:focus-visible { outline: var(--focus-outline); outline-offset: -2px; }
+
+/* Numeric / money columns: right-aligned, tabular figures, no wrapping.
+   `.num` is the canonical class; `.right` and `.amount-col` / `.money-col`
+   are kept as aliases in §6. */
+.num, td.num, th.num {
+    text-align: right;
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.num-strong { font-weight: 700; }
+
+/* Summary / total row, and the bottom line beneath it. .total-row is a
+   subtotal or a closing balance; .grand-total-row is the one figure the whole
+   table is building to, and gets the heavier rule accounting expects. */
+.total-row td {
+    background: var(--page-bg-alt);
+    font-weight: 700;
+    border-top: 1px solid var(--card-border);
+}
+.grand-total-row td {
+    border-top: 2px solid var(--text-primary);
+    font-weight: 700;
+    padding-top: var(--sp-3);
+}
+
+/* Title for a table that sits inside a card without a full .card-header —
+   a section label above the rows rather than a header bar. */
+.table-card-title {
+    padding: 14px 18px 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-base);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* Cell utilities. Deliberately a short list — anything longer belongs as a
+   component, not as a utility. */
+.nowrap { white-space: nowrap; }
+.wrap-anywhere { overflow-wrap: anywhere; }
+
+/* Explanatory note under a section — how a figure was derived, what a report
+   does and does not include. */
+.section-note {
+    margin-top: var(--sp-1);
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    max-width: 72ch;
+}
+
+/* Primary identifier in a row: name on top, secondary detail beneath. */
+.cell-title { font-weight: 600; font-size: var(--fs-base); color: var(--text-primary); }
+.cell-sub   { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 2px; }
+
+/* Actions column — fixed to the trailing edge, never grows. */
+th.col-actions, td.col-actions { width: 1%; white-space: nowrap; text-align: right; }
+td.col-actions .action-btns { justify-content: flex-end; }
+
+/* §4.6.2  Footer + pagination — was duplicated in six index pages. */
+.table-footer {
+    padding: 14px var(--sp-5);
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+}
+.result-count { font-size: 13px; color: var(--text-muted); }
+.result-count strong { color: var(--text-primary); font-weight: 600; }
+
+.pagination {
+    display: flex;
+    gap: var(--sp-1);
+    align-items: center;
+    flex-wrap: wrap;
+}
+.page-btn {
+    min-width: var(--h-control-sm);
+    height: var(--h-control-sm);
+    padding: 0 6px;
+    border: var(--border-control) solid var(--card-border);
+    background: var(--card-bg);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-decoration: none;
+    transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+.page-btn:hover { background: var(--page-bg); color: var(--text-primary); }
+.page-btn.active,
+.page-btn[aria-current="page"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+}
+.page-btn.disabled,
+.page-btn[aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
+
+
+/* ── §4.7  Empty state ──────────────────────────────────────────────────────
+     One empty state, replacing .empty-state / .report-empty / .tp-empty and
+     a handful of inline `text-align:center;padding:60px 20px` blocks. An
+     empty screen is an invitation to act, so the pattern has room for a
+     primary action. */
+.empty-state {
+    text-align: center;
+    padding: var(--sp-12) var(--sp-5);
+}
+.empty-icon {
+    width: 64px; height: 64px;
+    background: var(--page-bg);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--fs-2xl);
+    color: var(--text-muted);
+    margin: 0 auto var(--sp-4);
+}
+.empty-state h4 {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+.empty-state p {
+    font-size: 13px;
+    color: var(--text-muted);
+    max-width: 46ch;
+    margin: 0 auto;
+}
+.empty-state .btn { margin-top: var(--sp-5); }
+
+
+/* ── §4.8  Badges ───────────────────────────────────────────────────────────
+     .badge is the neutral pill. .status-badge is the same box with an
+     explicit status meaning; its modifiers are the domain's own status
+     names, mapped onto the six semantic tones so they are correct in both
+     themes. */
+.badge,
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    padding: 3px 9px;
+    border-radius: var(--radius-pill);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    line-height: var(--lh-snug);
+    white-space: nowrap;
+    background: var(--tone-neutral-bg);
+    color: var(--tone-neutral-fg);
+}
+.status-badge { font-weight: 700; padding: 3px 10px; }
+
+/* Tone modifiers — the vocabulary. */
+.badge-gold,  .tone-accent  { background: var(--tone-accent-bg);  color: var(--tone-accent-fg); }
+.badge-green, .tone-success { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.badge-blue,  .tone-info    { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.badge-red,   .tone-danger  { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+.badge-amber, .tone-warning { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.badge-gray,  .tone-neutral { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+
+/* Domain status names, in use across invoices, EWA bills, leases,
+   maintenance, payments and the audit log. */
+.status-badge.paid,
+.status-badge.active,
+.status-badge.completed,
+.status-badge.approved,
+.status-badge.collected,
+.status-badge.created      { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+
+.status-badge.overdue,
+.status-badge.unpaid,
+.status-badge.failed,
+.status-badge.rejected,
+.status-badge.urgent       { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+
+.status-badge.partially_paid,
+.status-badge.partially,
+.status-badge.partial,
+.status-badge.expiring,
+.status-badge.waiting,
+.status-badge.pending,
+.status-badge.in_progress,
+.status-badge.in           { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+
+.status-badge.issued,
+.status-badge.upcoming,
+.status-badge.updated,
+.status-badge.sent         { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+
+.status-badge.draft,
+.status-badge.not_invoiced,
+.status-badge.cancelled,
+.status-badge.expired,
+.status-badge.closed,
+.status-badge.deleted      { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+
+/* Outlined variant, for a badge sitting on an already-tinted surface. */
+.badge-outline { background: transparent; border: 1px solid currentColor; }
+
+
+/* ── §4.9  Alerts ───────────────────────────────────────────────────────── */
+.alert {
+    padding: 13px var(--sp-4);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-base);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: var(--sp-5);
+    border: 1px solid transparent;
+}
+.alert > i { margin-top: 2px; flex: none; }
+.alert-success { background: var(--tone-success-bg); color: var(--tone-success-fg); border-color: var(--tone-success-border); }
+.alert-danger  { background: var(--tone-danger-bg);  color: var(--tone-danger-fg);  border-color: var(--tone-danger-border); }
+.alert-warning { background: var(--tone-warning-bg); color: var(--tone-warning-fg); border-color: var(--tone-warning-border); }
+.alert-info    { background: var(--tone-info-bg);    color: var(--tone-info-fg);    border-color: var(--tone-info-border); }
+
+
+/* ── §4.10  Tabs ────────────────────────────────────────────────────────── */
+.tab-bar {
+    display: flex;
+    gap: var(--sp-1);
+    border-bottom: 2px solid var(--card-border);
+    margin-bottom: var(--sp-5);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+    padding: 11px 22px;
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    font-weight: 600;
+    color: var(--text-muted);
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color var(--dur-base), border-color var(--dur-base);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    text-decoration: none;
+    white-space: nowrap;
+}
+.tab-btn:hover { color: var(--text-primary); }
+.tab-btn.active,
+.tab-btn[aria-selected="true"] {
+    color: var(--tone-accent-fg);
+    border-bottom-color: var(--accent);
+}
+:root[data-theme="dark"] .tab-btn.active,
+:root[data-theme="dark"] .tab-btn[aria-selected="true"] { color: var(--accent); }
+.tab-btn:focus-visible { outline-offset: -2px; }
+
+
+/* ── §4.11  Modals ──────────────────────────────────────────────────────────
+     Base for the 14 pages that each had their own copy. On mobile,
+     app-mobile.css converts this same markup into a bottom sheet — which is
+     why that file loads last. Width is set per use with a `--modal-w`
+     override rather than a new class per page. */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    background: var(--scrim);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-slow) ease;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal-box {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-modal);
+    width: 100%;
+    max-width: var(--modal-w, 560px);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(20px) scale(0.98);
+    transition: transform var(--dur-slow) var(--ease-out);
+}
+.modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
+
+.modal-header {
+    padding: var(--sp-5) var(--sp-6) var(--sp-4);
+    border-bottom: 1px solid var(--card-border);
+    flex-shrink: 0;
+}
+.modal-header-top { display: flex; align-items: center; gap: var(--sp-3); }
+.modal-header-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--accent-dim);
+    border: 1px solid var(--tone-accent-border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--tone-accent-fg);
+    font-size: var(--fs-md);
+    flex-shrink: 0;
+}
+:root[data-theme="dark"] .modal-header-icon { color: var(--accent); }
+.modal-header-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: var(--lh-tight);
+}
+.modal-header-sub { font-size: var(--fs-sm); color: var(--text-muted); margin-top: 2px; }
+.modal-close-btn {
+    margin-left: auto;
+    width: var(--h-control-sm); height: var(--h-control-sm);
+    border-radius: var(--radius-sm);
+    border: var(--border-control) solid var(--card-border);
+    background: transparent;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    flex-shrink: 0;
+    transition: background var(--dur-fast), color var(--dur-fast);
+}
+.modal-close-btn:hover { background: var(--page-bg); color: var(--text-primary); }
+
+.modal-body { padding: var(--sp-5) var(--sp-6); overflow-y: auto; flex: 1; }
+.modal-footer {
+    padding: var(--sp-4) var(--sp-6);
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+
+/* ── §4.12  Loading states ──────────────────────────────────────────────────
+     There was no shared loading pattern; pages either froze or showed
+     nothing. A skeleton for content that is arriving, a spinner for an
+     action in flight. */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--page-bg) 25%,
+        var(--card-border) 37%,
+        var(--page-bg) 63%
+    );
+    background-size: 400% 100%;
+    animation: skeleton-sweep 1.4s ease infinite;
+    border-radius: var(--radius-sm);
+    min-height: 1em;
+}
+@keyframes skeleton-sweep {
+    0%   { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+}
+.skeleton-text { height: 0.8em; margin: 0.35em 0; }
+.skeleton-text.is-short { width: 40%; }
+
+.spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid var(--card-border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spinner-turn 0.65s linear infinite;
+    vertical-align: -3px;
+}
+@keyframes spinner-turn { to { transform: rotate(360deg); } }
+
+/* A button that is submitting: swap its icon for a spinner, keep its width. */
+.btn.is-loading { pointer-events: none; opacity: 0.75; }
+.btn.is-loading > i { display: none; }
+.btn.is-loading::before {
+    content: '';
+    width: 14px; height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spinner-turn 0.65s linear infinite;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §5  RESPONSIVE
+   ───────────────────────────────────────────────────────────────────────────
+   Breakpoints:  ≤1200 laptop · ≤900 tablet · ≤768 mobile · ≤430 small phone
+   Mobile is a reorganisation, not a narrower desktop.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Laptop ─────────────────────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+    :root { --sidebar-width: 232px; }
+    .page-content { padding: var(--sp-6); }
+}
+
+/* ── Tablet — sidebar still docked, content relaxes ─────────────────────── */
+@media (max-width: 900px) {
+    .page-content { padding: var(--sp-5); }
+    .stats-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--sp-3); }
+    .card-body { padding: 18px; }
+    .filter-bar { padding: var(--sp-3) var(--sp-4); }
+    /* Two filters per row rather than a ragged wrap. */
+    .filter-group { min-width: calc(50% - var(--sp-2)); }
+    .filter-group.is-search { min-width: 100%; }
+    .filter-actions { margin-left: 0; width: 100%; }
+}
+
+/* ── Mobile ─────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    /* Sidebar becomes a drawer. */
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main-wrap { margin-left: 0; }
+
+    .page-content { padding: var(--sp-4); }
+    .page-header { margin-bottom: var(--sp-5); }
+    .page-header-title { font-size: var(--fs-xl); }
+    /* Page actions become a full-width row of equal buttons — reachable,
+       and no button silently changes size because its label is longer. */
+    .page-header-actions { width: 100%; }
+    .page-header-actions > .btn { flex: 1; min-height: var(--h-control-lg); }
+
+    /* Touch targets: 44px minimum on anything tappable (WCAG 2.2 AA 2.5.8). */
+    .btn, .page-btn, .topbar-icon-btn, .tab-btn { min-height: var(--h-control-lg); }
+    .btn-sm { min-height: 40px; }
+    .btn-icon { width: var(--h-control-lg); }
+    .page-btn { min-width: var(--h-control-lg); }
+    input, select, textarea, .form-control { min-height: var(--h-control-lg); }
+
+    /* Forms go single-column; a two-column span has nothing to span. */
+    .form-grid { grid-template-columns: 1fr; gap: var(--sp-4); }
+    .form-group.col-span-2 { grid-column: span 1; }
+    .form-actions { padding: var(--sp-4); }
+    .form-actions > .btn { flex: 1; }
+
+    /* Stats: two across, so the numbers stay legible without a long scroll. */
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+    .stat-card { padding: var(--sp-3); gap: 10px; flex-direction: column; align-items: flex-start; }
+    .stat-icon { width: 32px; height: 32px; font-size: 14px; }
+    .stat-val { font-size: var(--fs-xl); }
+    .stat-lbl { font-size: var(--fs-xs); }
+
+    /* Filters stack full-width and stay easy to hit. */
+    .filter-bar { flex-direction: column; align-items: stretch; gap: 10px; }
+    .filter-group,
+    .filter-group.is-search { min-width: 0; width: 100%; }
+    .filter-group input, .filter-group select { min-height: var(--h-control-lg); font-size: var(--fs-base); }
+    .filter-actions { width: 100%; }
+    .filter-actions > .btn, .filter-actions > .btn-sm { flex: 1; }
+
+    /* ── §4.6.3  Table → stacked cards ──────────────────────────────────────
+         Each row becomes its own card; each cell shows the column name from
+         `data-label` beside its value. Important information stays visible
+         and actions stay reachable, instead of a 9-column table shrinking to
+         4px of text or scrolling sideways.
+
+         Opt out with `.table-wrap.is-scroll` where comparing across columns
+         is the actual task (ageing buckets, rent schedule, VAT return). */
+    .table-wrap:not(.is-scroll) table,
+    .table-wrap:not(.is-scroll) tbody,
+    .table-wrap:not(.is-scroll) tr,
+    .table-wrap:not(.is-scroll) td {
+        display: block;
+        width: auto;
+    }
+    .table-wrap:not(.is-scroll) thead { display: none; }
+
+    .table-wrap:not(.is-scroll) tbody tr {
+        position: relative;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius);
+        padding: var(--sp-3) 14px;
+        margin: 0 0 10px;
+        box-shadow: var(--shadow-sm);
+    }
+    .table-wrap:not(.is-scroll) tbody tr:last-child { margin-bottom: 0; }
+
+    .table-wrap:not(.is-scroll) tbody td {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--sp-4);
+        padding: 5px 0;
+        border: none;
+        text-align: right;
+        font-size: 13px;
+        min-height: 0;
+    }
+    .table-wrap:not(.is-scroll) tbody td::before {
+        content: attr(data-label);
+        flex: none;
+        max-width: 45%;
+        text-align: left;
+        font-size: var(--fs-xs);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+    }
+    /* A cell with no data-label (spacers, checkboxes) keeps full width. */
+    .table-wrap:not(.is-scroll) tbody td:not([data-label])::before { content: none; }
+    .table-wrap:not(.is-scroll) tbody tr:hover td { background: transparent; }
+
+    /* The row's first cell is its heading: full width, larger, no label. */
+    .table-wrap:not(.is-scroll) tbody td:first-child {
+        display: block;
+        text-align: left;
+        font-size: 14px;
+        font-weight: 700;
+        padding-bottom: var(--sp-2);
+        margin-bottom: 6px;
+        border-bottom: 1px solid var(--row-border);
+    }
+    .table-wrap:not(.is-scroll) tbody td:first-child::before { content: none; }
+
+    /* Actions move to a full-width row at the card's foot. */
+    .table-wrap:not(.is-scroll) tbody td.col-actions {
+        display: flex;
+        width: auto;
+        justify-content: stretch;
+        padding-top: 10px;
+        margin-top: var(--sp-2);
+        border-top: 1px solid var(--row-border);
+    }
+    .table-wrap:not(.is-scroll) tbody td.col-actions::before { content: none; }
+    .table-wrap:not(.is-scroll) tbody td.col-actions .action-btns { flex: 1; }
+    .table-wrap:not(.is-scroll) tbody td.col-actions .action-btns > * { flex: 1; }
+
+    /* Totals row stays a single band, not a card. */
+    .table-wrap:not(.is-scroll) tbody tr.total-row {
+        background: var(--page-bg-alt);
+        box-shadow: none;
+    }
+
+    /* Where scrolling is the right answer, say so: the table gets a real
+       minimum width and its own scroll container, hinted with a shadow. */
+    .table-wrap.is-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        background:
+            linear-gradient(to right, var(--card-bg) 30%, rgba(0,0,0,0)) left center / 40px 100% no-repeat,
+            linear-gradient(to left,  var(--card-bg) 30%, rgba(0,0,0,0)) right center / 40px 100% no-repeat;
+    }
+    /* Per-table minimum, so a 7-column collection report and a 3-column
+       summary don't get the same arbitrary width. Set with
+       style="--table-min:920px" on the wrapper; 640px otherwise. */
+    .table-wrap.is-scroll table { min-width: var(--table-min, 640px); }
+
+    /* Footer: count above, pager below, both centred. */
+    .table-footer { flex-direction: column; align-items: stretch; gap: 10px; padding: var(--sp-3) 14px; }
+    .table-footer .result-count { text-align: center; }
+    .table-footer .pagination { justify-content: center; }
+
+    /* Modal / card chrome. */
+    .modal-header { padding: var(--sp-4) 18px var(--sp-3); }
+    .modal-body   { padding: var(--sp-4) 18px; }
+    .modal-footer { padding: var(--sp-3) 18px calc(var(--sp-3) + env(safe-area-inset-bottom)); }
+    .modal-footer > .btn { flex: 1; }
+    .card-header  { padding: var(--sp-4) 18px; }
+    .card-body    { padding: 18px; }
+    .empty-state  { padding: var(--sp-10) 18px; }
+    .tab-btn      { padding: 11px var(--sp-4); }
+}
+
+/* ── Small phone ────────────────────────────────────────────────────────── */
+@media (max-width: 430px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .page-header-actions { flex-direction: column; }
+    .page-header-actions > .btn { width: 100%; }
+    .table-wrap.is-scroll table { min-width: 560px; }
+}
+
+/* ── Print — reports and statements get printed from the browser too ────── */
+@media print {
+    .sidebar, .topbar, .bottom-tabbar, .page-header-actions,
+    .filter-bar, .table-footer, .sidebar-backdrop, .skip-link { display: none; }
+    .main-wrap { margin-left: 0; }
+    .page-content { padding: 0; }
+    .card, .table-card, .stat-card { box-shadow: none; border-color: #CBD5E1; }
+    thead th { background: #F1F5F9; color: #475569; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §6  LEGACY ALIASES
+   ───────────────────────────────────────────────────────────────────────────
+   Old class names, mapped onto the canonical components above so the
+   duplicated per-page CSS could be deleted without touching every page's
+   markup in the same change. Each entry is a rename, never a second
+   implementation.
+
+   These are scheduled for removal: migrate markup to the canonical class,
+   then delete the alias. Do not add new ones.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Stat card, formerly nine components. */
+.dash-stats, .ewa-stats, .exp-stats, .inv-stats,
+.pay-stats, .rev-stats, .pl-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--sp-4);
+    margin-bottom: var(--sp-6);
+}
+.dash-stat, .ewa-stat, .exp-stat, .inv-stat,
+.pay-stat, .rev-stat, .pl-stat, .bldg-stat {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 18px var(--sp-5);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--shadow-sm);
+    min-width: 0;
+}
+.dash-stat-icon, .ewa-stat-icon, .exp-stat-icon,
+.inv-stat-icon, .pay-stat-icon, .rev-stat-icon {
+    width: 44px; height: 44px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    background: var(--tone-neutral-bg);
+    color: var(--tone-neutral-fg);
+}
+.dash-stat-val, .ewa-stat-val, .exp-stat-val,
+.inv-stat-val, .pay-stat-val, .rev-stat-val {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--fs-2xl);
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+}
+.dash-stat-lbl, .ewa-stat-lbl, .exp-stat-lbl,
+.inv-stat-lbl, .pay-stat-lbl, .rev-stat-lbl {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+/* Tone modifiers on the aliased icons. */
+.dash-stat-icon.gold,  .ewa-stat-icon.gold,  .exp-stat-icon.gold,
+.inv-stat-icon.gold,   .pay-stat-icon.gold,  .rev-stat-icon.gold   { background: var(--tone-accent-bg);  color: var(--tone-accent-fg); }
+.dash-stat-icon.green, .ewa-stat-icon.green, .exp-stat-icon.green,
+.inv-stat-icon.green,  .pay-stat-icon.green, .rev-stat-icon.green,
+.pay-stat-icon.teal,   .inv-stat-icon.teal,  .rev-stat-icon.teal   { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.dash-stat-icon.blue,  .ewa-stat-icon.blue,  .exp-stat-icon.blue,
+.inv-stat-icon.blue,   .pay-stat-icon.blue,  .rev-stat-icon.blue   { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.dash-stat-icon.red,   .ewa-stat-icon.red,   .exp-stat-icon.red,
+.inv-stat-icon.red,    .pay-stat-icon.red,   .rev-stat-icon.red    { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+.dash-stat-icon.amber, .ewa-stat-icon.amber, .exp-stat-icon.amber,
+.inv-stat-icon.amber,  .pay-stat-icon.amber, .rev-stat-icon.amber  { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.dash-stat-icon.gray,  .ewa-stat-icon.gray,  .exp-stat-icon.gray,
+.inv-stat-icon.gray,   .pay-stat-icon.gray,  .rev-stat-icon.gray   { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+
+/* Empty states. */
+.report-empty, .tp-empty {
+    text-align: center;
+    padding: var(--sp-12) var(--sp-5);
+    color: var(--text-muted);
+}
+.report-empty i, .tp-empty i {
+    font-size: 36px;
+    display: block;
+    margin-bottom: var(--sp-3);
+    opacity: 0.3;
+}
+
+/* Numeric cells. */
+.right, td.right, th.right { text-align: right; }
+.amount-col, .money-col {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.amount-col { font-weight: 700; font-size: 13px; }
