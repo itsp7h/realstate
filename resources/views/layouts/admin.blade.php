@@ -96,6 +96,7 @@
         'buildings.index', 'floors.global', 'property-units.index', 'tenants.index',
         'maintenance.index', 'invoices.index', 'reports.index', 'tenants.show', 'buildings.show',
         'lease-contracts.index', 'payments.index',
+        'ewa-bills.index', 'expenses.index', 'revenues.index',
     ];
     $isMobileScreen = request()->routeIs($mobileRedesignedRoutes);
     $pushedScreenRoutes = ['tenants.show', 'buildings.show'];

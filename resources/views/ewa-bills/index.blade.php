@@ -73,7 +73,75 @@
 </div>
 
 {{-- STATS --}}
-<div class="stats-grid">
+
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
+     Same .m-screen / .m-row-card architecture as Payments, Invoices and
+     Lease Contracts. Every value carries a visible label so nothing
+     renders as a bare figure. ── --}}
+<div class="m-screen">
+    <div class="m-mini-row">
+        <div class="m-mini-stat">
+            <div class="v">{{ $stats['total'] }}</div>
+            <div class="l">Total Bills</div>
+        </div>
+        <div class="m-mini-stat">
+            <div class="v">{{ $stats['paid'] }}</div>
+            <div class="l">Paid</div>
+        </div>
+        <div class="m-mini-stat">
+            <div class="v">{{ $stats['overdue'] }}</div>
+            <div class="l">Overdue</div>
+        </div>
+    </div>
+
+    <div class="m-chip-row no-sb">
+        <a href="{{ route('ewa-bills.index') }}" class="m-chip {{ !request('status') ? 'active' : '' }}">All</a>
+        @foreach(['issued'=>'Issued','partially_paid'=>'Partially Paid','paid'=>'Paid','overdue'=>'Overdue','cancelled'=>'Cancelled','draft'=>'Draft'] as $val => $label)
+            <a href="{{ route('ewa-bills.index', ['status' => $val]) }}"
+               class="m-chip {{ request('status') === $val ? 'active' : '' }}">{{ $label }}</a>
+        @endforeach
+    </div>
+
+    <div class="m-row-list">
+        @forelse($bills as $bill)
+            @php
+                $mIsOverdue = $bill->status === 'overdue';
+                $mHasBalance = $bill->balance_due > 0 && $bill->status !== 'cancelled';
+            @endphp
+            <a href="{{ route('ewa-bills.show', $bill) }}" class="m-row-card">
+                <div class="m-row-icon" style="background:{{ $mIsOverdue ? 'var(--tone-danger-bg)' : 'var(--tone-info-bg)' }};color:{{ $mIsOverdue ? 'var(--tone-danger-fg)' : 'var(--tone-info-fg)' }};">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div class="m-row-title">{{ $bill->bill_number }}</div>
+                    <div class="m-row-sub">
+                        {{ $bill->tenant_name }} &middot; {{ $bill->property_name }}@if($bill->unit) / {{ $bill->unit }}@endif
+                    </div>
+                    <div class="m-row-sub">
+                        Period {{ $bill->billing_period }} &middot; Due {{ $bill->due_date->format('d M Y') }}
+                    </div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                    <div style="font-family:'Outfit',sans-serif;font-size:13.5px;font-weight:800;color:var(--text-primary);">
+                        BHD {{ number_format($bill->total_amount, 3) }}
+                    </div>
+                    <div style="font-size:10.5px;font-weight:600;color:{{ $mHasBalance ? 'var(--tone-danger-fg)' : 'var(--text-muted)' }};">
+                        Balance BHD {{ number_format($bill->balance_due, 3) }}
+                    </div>
+                    <span class="status-badge {{ $bill->status }}">{{ $bill->status_label }}</span>
+                </div>
+            </a>
+        @empty
+            <div class="m-empty">
+                <div class="m-empty-icon"><i class="fa-solid fa-bolt"></i></div>
+                <div class="m-empty-title">No EWA bills yet</div>
+                <div class="m-empty-sub">Try adjusting your filters.</div>
+            </div>
+        @endforelse
+    </div>
+</div>
+
+<div class="stats-grid m-hide-desktop-index">
     <div class="stat-card">
         <div class="stat-icon teal"><i class="fa-solid fa-droplet"></i></div>
         <div><div class="stat-val">{{ $stats['total'] }}</div><div class="stat-lbl">Total</div></div>
@@ -99,7 +167,7 @@
 {{-- FILTERS --}}
 
 {{-- TABLE --}}
-<div class="table-card">
+<div class="table-card m-hide-desktop-index">
     <form method="GET" action="{{ route('ewa-bills.index') }}">
         <div class="filter-bar">
             <div class="filter-group is-search">
