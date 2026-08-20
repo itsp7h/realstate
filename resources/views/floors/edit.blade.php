@@ -5,27 +5,28 @@
 
 @section('content')
 
+@section('page-breadcrumb')
+    <a href="{{ url('/dashboard') }}">Home</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <a href="{{ route('buildings.index') }}">Buildings</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <a href="{{ route('buildings.show', $building) }}?tab=floors">{{ $building->property_name }}</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Edit Floor</span>
+@endsection
+@section('page-title')
+    Edit — {{ $floor->floor_name }}
+@endsection
+@section('page-subtitle')
+    Editing floor in <strong>{{ $building->property_name }}</strong>
+@endsection
+@section('page-actions')
+    <a href="{{ route('buildings.show', $building) }}?tab=floors" class="btn btn-outline">
+        <i class="fa-solid fa-arrow-left"></i> Back to Floors
+    </a>
+@endsection
+
 {{-- PAGE HEADER --}}
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <a href="{{ route('buildings.index') }}">Buildings</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <a href="{{ route('buildings.show', $building) }}?tab=floors">{{ $building->property_name }}</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Edit Floor</span>
-        </div>
-        <h1 class="page-header-title">Edit — {{ $floor->floor_name }}</h1>
-        <p class="page-header-sub">Editing floor in <strong>{{ $building->property_name }}</strong></p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('buildings.show', $building) }}?tab=floors" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back to Floors
-        </a>
-    </div>
-</div>
 
 <form method="POST" action="{{ route('floors.update', $floor) }}" novalidate>
     @csrf

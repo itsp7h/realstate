@@ -5,29 +5,26 @@
 
 @section('content')
 
+@section('page-title', 'Profit &amp; Loss Statement')
+@section('page-subtitle', 'Cash collected against costs incurred, per building, tenant, or unit')
+@section('page-actions')
+    <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
+    <button type="button" class="btn btn-outline"
+            onclick="openReportPdf('{{ route('reports.profit-loss.pdf', request()->only(['building_id','tenant_id','unit_id','date_from','date_to'])) }}', 'Profit &amp; Loss Statement')">
+        <i class="fa-solid fa-eye"></i> Preview
+    </button>
+    <a href="{{ route('reports.profit-loss.pdf', request()->only(['building_id','tenant_id','unit_id','date_from','date_to'])) }}"
+       target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+    <a href="{{ route('reports.profit-loss.export', request()->only(['building_id','tenant_id','unit_id','date_from','date_to'])) }}"
+       class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
+@endsection
+
 @php
     $net = $statement['net_profit'];
     $isProfit = $net >= 0;
     $fmt = fn ($v) => number_format($v, 3);
 @endphp
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Profit &amp; Loss Statement</h1>
-        <p class="page-header-sub">Cash collected against costs incurred, per building, tenant, or unit</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
-        <button type="button" class="btn btn-outline"
-                onclick="openReportPdf('{{ route('reports.profit-loss.pdf', request()->only(['building_id','tenant_id','unit_id','date_from','date_to'])) }}', 'Profit &amp; Loss Statement')">
-            <i class="fa-solid fa-eye"></i> Preview
-        </button>
-        <a href="{{ route('reports.profit-loss.pdf', request()->only(['building_id','tenant_id','unit_id','date_from','date_to'])) }}"
-           target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
-        <a href="{{ route('reports.profit-loss.export', request()->only(['building_id','tenant_id','unit_id','date_from','date_to'])) }}"
-           class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
-    </div>
-</div>
 
 <form method="GET" action="{{ route('reports.profit-loss') }}" class="filter-card">
     <div class="filter-bar">
@@ -110,7 +107,7 @@
 
                 <tr class="grand-total-row">
                     <td>Net {{ $isProfit ? 'Profit' : 'Loss' }}</td>
-                    <td class="right num" style="color:{{ $isProfit ? '#059669' : '#DC2626' }}">{{ $fmt(abs($net)) }}</td>
+                    <td class="right num" style="color:{{ $isProfit ? 'var(--tone-success-fg)' : 'var(--tone-danger-fg)' }}">{{ $fmt(abs($net)) }}</td>
                 </tr>
             </tbody>
         </table>
@@ -140,7 +137,7 @@
                     </td>
                     <td class="right num">{{ $fmt($row['total_revenue']) }}</td>
                     <td class="right num">{{ $fmt($row['total_expense']) }}</td>
-                    <td class="right num num-strong" style="color:{{ $row['net_profit'] >= 0 ? '#059669' : '#DC2626' }}">{{ $fmt($row['net_profit']) }}</td>
+                    <td class="right num num-strong" style="color:{{ $row['net_profit'] >= 0 ? 'var(--tone-success-fg)' : 'var(--tone-danger-fg)' }}">{{ $fmt($row['net_profit']) }}</td>
                 </tr>
                 @endforeach
             </tbody>

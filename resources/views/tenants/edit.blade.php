@@ -5,27 +5,26 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <a href="{{ route('tenants.index') }}">Tenants</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Edit</span>
-        </div>
-        <h1 class="page-header-title">Edit Tenant</h1>
-        <p class="page-header-sub">Update profile information for {{ $tenant->name }}</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('tenants.show', $tenant) }}" class="btn btn-outline">
-            <i class="fa-regular fa-eye"></i> View Profile
-        </a>
-        <a href="{{ route('tenants.index') }}" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back to Tenants
-        </a>
-    </div>
-</div>
+@section('page-breadcrumb')
+    <a href="{{ url('/dashboard') }}">Home</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <a href="{{ route('tenants.index') }}">Tenants</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Edit</span>
+@endsection
+@section('page-title', 'Edit Tenant')
+@section('page-subtitle')
+    Update profile information for {{ $tenant->name }}
+@endsection
+@section('page-actions')
+    <a href="{{ route('tenants.show', $tenant) }}" class="btn btn-outline">
+        <i class="fa-regular fa-eye"></i> View Profile
+    </a>
+    <a href="{{ route('tenants.index') }}" class="btn btn-outline">
+        <i class="fa-solid fa-arrow-left"></i> Back to Tenants
+    </a>
+@endsection
+
 
 <form method="POST" action="{{ route('tenants.update', $tenant) }}" novalidate>
     @csrf @method('PUT')

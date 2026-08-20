@@ -40,13 +40,6 @@
 
     .tp-empty { text-align: center; padding: 50px 20px; color: var(--text-muted); }
     .tp-empty i { font-size: 32px; display: block; margin-bottom: 10px; opacity: 0.3; }
-    .tp-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
-    .tp-table th { text-align: left; padding: 10px 14px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); background: var(--page-bg); }
-    .tp-table th.right, .tp-table td.right { text-align: right; }
-    .tp-table td { padding: 9px 14px; border-bottom: 1px solid var(--card-border); }
-    .tp-table tr:last-child td { border-bottom: none; }
-    .tp-table tr[data-href] { cursor: pointer; }
-    .tp-table tr.total-row td { background: var(--page-bg); font-weight: 700; border-top: 1.5px solid var(--card-border); }
     .tp-money { font-family: 'Outfit', sans-serif; font-weight: 700; }
     .tp-link { color: var(--accent); text-decoration: none; font-weight: 700; }
     .tp-link:hover { text-decoration: underline; }
@@ -60,21 +53,12 @@
     .status-badge.partially_paid { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
     .status-badge.paid           { background: var(--tone-success-bg); color: var(--tone-success-fg); }
     .status-badge.overdue        { background: var(--tone-danger-bg); color: var(--tone-danger-fg); }
-    .status-badge.cancelled      { background: #F8FAFC; color: #94A3B8; }
+    .status-badge.cancelled      { background: var(--page-bg); color: var(--text-muted); }
     .status-badge.expired        { background: var(--tone-danger-bg); color: var(--tone-danger-fg); }
     .status-badge.upcoming       { background: var(--tone-info-bg); color: var(--tone-info-fg); }
     .status-badge.expiring       { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
     .status-badge.active         { background: var(--tone-success-bg); color: var(--tone-success-fg); }
 
-    .type-badge {
-        display: inline-flex; align-items: center; gap: 4px;
-        padding: 3px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 600;
-    }
-    .type-badge.rent      { background: var(--tone-info-bg); color: var(--tone-info-fg); }
-    .type-badge.utilities { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
-    .type-badge.other     { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
-    .type-badge.credit    { background: var(--tone-success-bg); color: var(--tone-success-fg); }
-    .type-badge.debit     { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
 
     .rs-status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; }
     .rs-status.paid          { background: var(--tone-success-bg); color: var(--tone-success-fg); }
@@ -88,7 +72,7 @@
     .note-form-card { background: var(--page-bg); border-top: 1px solid var(--card-border); padding: 16px 18px; display: none; }
     .note-form-card.open { display: block; }
     .note-form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: end; }
-    @media (max-width: 820px) { .note-form-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) { .note-form-grid { grid-template-columns: 1fr; } }
     .note-form-grid .form-group { display: flex; flex-direction: column; gap: 5px; grid-column: span 1; }
     .note-form-grid .reason-group { grid-column: 1 / -1; }
     .note-form-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
@@ -132,25 +116,33 @@
             display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;
         }
         .pm-tenant-card {
-            background: var(--pm-navy); border-radius: 12px; padding: 18px;
-            display: flex; align-items: center; gap: 14px;
+            background: var(--ps-placeholder); border-radius: var(--ps-r-card); padding: 20px;
+            display: flex; align-items: center; gap: 15px;
         }
         .pm-tenant-avatar {
-            flex: none; width: 52px; height: 52px; border-radius: 9999px; background: var(--pm-gold-tint);
-            color: var(--pm-gold); font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 18px;
+            flex: none; width: 52px; height: 52px; border-radius: var(--ps-r-pill); background: rgba(216,178,95,.16);
+            color: var(--ps-gold); font-family: 'Poppins', system-ui, sans-serif; font-weight: 600; font-size: 1.15rem;
             display: flex; align-items: center; justify-content: center;
         }
-        .pm-tenant-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 19px; color: #fff; }
-        .pm-tenant-meta { font-size: 12px; color: var(--pm-navy-text); margin-top: 1px; }
-        .pm-tenant-actions { display: flex; gap: 9px; }
+        .pm-tenant-name { font-family: 'Poppins', system-ui, sans-serif; font-weight: 700; font-size: 1.35rem; line-height: 1.25; letter-spacing: -.01em; color: var(--ps-ink-inverse); }
+        .pm-tenant-meta { font-size: .8rem; color: var(--ps-navy-text); margin-top: 3px; }
+        .pm-tenant-actions { display: flex; align-items: center; gap: 12px; }
+        /* The one filled button; the icon action beside it is a quiet
+           bordered square, not a second button weight. */
         .pm-tenant-actions .pm-btn-gold {
-            flex: 1; padding: 13px 0; border: 0; border-radius: 8px; background: var(--pm-gold); color: var(--pm-navy);
-            font-size: 13.5px; font-weight: 700; cursor: pointer; text-decoration: none; text-align: center;
-            box-shadow: 0 4px 16px var(--pm-gold-glow); font-family: 'Plus Jakarta Sans', sans-serif;
+            flex: 1; min-height: var(--ps-h-btn); border: 0; border-radius: var(--ps-r-btn);
+            background: var(--ps-btn-grad); color: var(--ps-navy);
+            font-size: .95rem; font-weight: 600; letter-spacing: .03em; cursor: pointer;
+            text-decoration: none; display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--ps-btn-shadow); font-family: 'Poppins', system-ui, sans-serif;
+            transition: transform .12s ease, box-shadow .18s ease;
         }
+        .pm-tenant-actions .pm-btn-gold:hover { transform: translateY(-1px); }
+        .pm-tenant-actions .pm-btn-gold:active { transform: translateY(1px); box-shadow: 0 4px 12px rgba(202,161,79,.28); }
         .pm-tenant-actions .pm-btn-icon {
-            flex: none; width: 48px; border: 1px solid var(--pm-border); border-radius: 8px; background: var(--pm-surface);
-            color: var(--pm-text-2); font-size: 15px; cursor: pointer; text-decoration: none;
+            flex: none; width: var(--ps-h-btn); min-height: var(--ps-h-btn);
+            border: 1px solid var(--ps-border); border-radius: var(--ps-r-btn); background: var(--ps-surface);
+            color: var(--ps-navy); font-size: 15px; cursor: pointer; text-decoration: none;
             display: flex; align-items: center; justify-content: center;
         }
     }
@@ -162,9 +154,9 @@
         ? null
         : ($tenant->invoices->contains('status', 'overdue') ? 'overdue' : 'paid');
     $mobileStatusMeta = match ($mobileRentStatus) {
-        'paid'    => ['label' => 'Paid',    'tint' => 'var(--pm-green-tint)', 'tone' => 'var(--pm-green-text)'],
-        'overdue' => ['label' => 'Overdue', 'tint' => 'var(--pm-red-tint)',   'tone' => 'var(--pm-red)'],
-        default   => ['label' => 'No invoices yet', 'tint' => 'var(--pm-page)', 'tone' => 'var(--pm-text-3)'],
+        'paid'    => ['label' => 'Paid',    'tint' => 'var(--ps-success-bg)', 'tone' => 'var(--ps-success)'],
+        'overdue' => ['label' => 'Overdue', 'tint' => 'var(--ps-danger-bg)',  'tone' => 'var(--ps-danger)'],
+        default   => ['label' => 'No invoices yet', 'tint' => 'var(--ps-bg)', 'tone' => 'var(--ps-muted-deep)'],
     };
     $mobileOpenInvoice = $tenant->invoices->first(fn ($i) => in_array($i->status, ['issued', 'partially_paid', 'overdue'], true));
 @endphp
@@ -177,16 +169,16 @@
             <div class="pm-tenant-name">{{ $tenant->name }}</div>
             <div class="pm-tenant-meta">{{ $mobileLease?->property_code ?? 'No active lease' }}{{ $mobileLease?->unit ? ' · Unit '.$mobileLease->unit : '' }}</div>
         </div>
-        <span style="padding:5px 10px;border-radius:9999px;font-size:10px;font-weight:700;background:{{ $mobileStatusMeta['tint'] }};color:{{ $mobileStatusMeta['tone'] }};flex-shrink:0;">{{ $mobileStatusMeta['label'] }}</span>
+        <span style="padding:5px 11px;border-radius:99px;font-size:.625rem;font-weight:600;letter-spacing:.04em;background:{{ $mobileStatusMeta['tint'] }};color:{{ $mobileStatusMeta['tone'] }};flex-shrink:0;">{{ $mobileStatusMeta['label'] }}</span>
     </div>
 
     <div class="pm-kpi-grid">
         <div class="pm-kpi-card">
-            <div class="pm-kpi-label">MONTHLY RENT</div>
+            <div class="pm-kpi-label">Monthly rent</div>
             <div class="pm-kpi-value">{{ $mobileLease?->rent_per_month ? 'BHD '.number_format($mobileLease->rent_per_month, 0) : '—' }}</div>
         </div>
         <div class="pm-kpi-card">
-            <div class="pm-kpi-label">LEASE ENDS</div>
+            <div class="pm-kpi-label">Lease ends</div>
             <div class="pm-kpi-value">{{ $mobileLease?->lease_end_date?->format('d M Y') ?? '—' }}</div>
         </div>
     </div>
@@ -209,18 +201,18 @@
 
     @if($tenant->payments->isNotEmpty())
     <div>
-        <div class="pm-section-label">PAYMENT HISTORY</div>
+        <div class="pm-section-label">Payment history</div>
         <div style="display:flex;flex-direction:column;gap:8px;">
             @foreach($tenant->payments->sortByDesc('payment_date')->take(6) as $payment)
-                <div style="display:flex;align-items:center;gap:12px;background:var(--pm-surface);border:1px solid var(--pm-border);border-radius:12px;padding:12px 14px;">
-                    <div style="flex:none;width:28px;height:28px;border-radius:9999px;background:var(--pm-green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;">
+                <div style="display:flex;align-items:center;gap:13px;background:var(--ps-surface);border:1px solid var(--ps-border);border-radius:16px;padding:13px 15px;box-shadow:var(--ps-card-shadow);">
+                    <div style="flex:none;width:30px;height:30px;border-radius:99px;background:var(--ps-success-bg);color:var(--ps-success);display:flex;align-items:center;justify-content:center;font-size:12px;">
                         <i class="fa-solid fa-check"></i>
                     </div>
                     <div style="flex:1;min-width:0;">
                         <div class="pm-action-title">{{ $payment->payment_date->format('F Y') }}</div>
                         <div class="pm-action-sub">Paid &mdash; {{ str_replace('_', ' ', $payment->method) }}</div>
                     </div>
-                    <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;color:var(--pm-text);flex-shrink:0;">BHD {{ number_format($payment->amount, 0) }}</div>
+                    <div style="font-family:'Poppins',system-ui,sans-serif;font-weight:700;font-size:1rem;color:var(--ps-navy);flex-shrink:0;">BHD {{ number_format($payment->amount, 0) }}</div>
                 </div>
             @endforeach
         </div>
@@ -384,28 +376,30 @@
     @if($tenant->leaseContracts->isEmpty())
     <div class="tp-empty"><i class="fa-solid fa-file-contract"></i>No lease contracts on file for this tenant.</div>
     @else
-    <table class="tp-table">
-        <thead>
-            <tr>
-                <th>Agreement No.</th>
-                <th>Property / Unit</th>
-                <th>Lease Period</th>
-                <th class="right">Rent / Month (BHD)</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($tenant->leaseContracts as $contract)
-            <tr data-href="{{ route('lease-contracts.show', $contract) }}" onclick="window.location=this.dataset.href">
-                <td><span class="tp-link">{{ $contract->lease_agreement_no }}</span></td>
-                <td>{{ $contract->property_name }}{{ $contract->unit ? ' / '.$contract->unit : '' }}</td>
-                <td>{{ $contract->lease_start_date->format('d M Y') }} &rarr; {{ $contract->lease_end_date->format('d M Y') }}</td>
-                <td class="right tp-money">{{ $contract->rent_per_month !== null ? number_format($contract->rent_per_month, 3) : '—' }}</td>
-                <td><span class="status-badge {{ $contract->status }}">{{ ucfirst($contract->status) }}</span></td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Agreement No.</th>
+                    <th>Property / Unit</th>
+                    <th>Lease Period</th>
+                    <th class="right">Rent / Month (BHD)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($tenant->leaseContracts as $contract)
+                <tr data-href="{{ route('lease-contracts.show', $contract) }}" onclick="window.location=this.dataset.href">
+                    <td data-label="Agreement No."><span class="tp-link">{{ $contract->lease_agreement_no }}</span></td>
+                    <td data-label="Property / Unit">{{ $contract->property_name }}{{ $contract->unit ? ' / '.$contract->unit : '' }}</td>
+                    <td data-label="Lease Period">{{ $contract->lease_start_date->format('d M Y') }} &rarr; {{ $contract->lease_end_date->format('d M Y') }}</td>
+                    <td data-label="Rent / Month (BHD)" class="right tp-money">{{ $contract->rent_per_month !== null ? number_format($contract->rent_per_month, 3) : '—' }}</td>
+                    <td data-label="Status"><span class="status-badge {{ $contract->status }}">{{ ucfirst($contract->status) }}</span></td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
     @endif
 </div>
 </div>
@@ -416,32 +410,34 @@
     @if($tenant->invoices->isEmpty())
     <div class="tp-empty"><i class="fa-solid fa-file-invoice"></i>No invoices raised for this tenant yet.</div>
     @else
-    <table class="tp-table">
-        <thead>
-            <tr>
-                <th>Invoice #</th>
-                <th>Type</th>
-                <th>Date</th>
-                <th class="right">Total (BHD)</th>
-                <th class="right">Paid (BHD)</th>
-                <th class="right">Balance (BHD)</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($tenant->invoices as $invoice)
-            <tr data-href="{{ route('invoices.show', $invoice) }}" onclick="window.location=this.dataset.href">
-                <td><span class="tp-link">{{ $invoice->invoice_number }}</span></td>
-                <td><span class="type-badge {{ $invoice->type }}">{{ $invoice->type_label }}</span></td>
-                <td>{{ $invoice->invoice_date->format('d M Y') }}</td>
-                <td class="right tp-money">{{ number_format($invoice->total_incl_vat, 3) }}</td>
-                <td class="right tp-money">{{ number_format($invoice->total_paid, 3) }}</td>
-                <td class="right tp-money" style="color:{{ $invoice->balance_due > 0.001 ? '#DC2626' : '#059669' }}">{{ number_format($invoice->balance_due, 3) }}</td>
-                <td><span class="status-badge {{ $invoice->status }}">{{ $invoice->status_label }}</span></td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Type</th>
+                    <th>Date</th>
+                    <th class="right">Total (BHD)</th>
+                    <th class="right">Paid (BHD)</th>
+                    <th class="right">Balance (BHD)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($tenant->invoices as $invoice)
+                <tr data-href="{{ route('invoices.show', $invoice) }}" onclick="window.location=this.dataset.href">
+                    <td data-label="Invoice #"><span class="tp-link">{{ $invoice->invoice_number }}</span></td>
+                    <td data-label="Type"><span class="status-badge {{ $invoice->type }}">{{ $invoice->type_label }}</span></td>
+                    <td data-label="Date">{{ $invoice->invoice_date->format('d M Y') }}</td>
+                    <td data-label="Total (BHD)" class="right tp-money">{{ number_format($invoice->total_incl_vat, 3) }}</td>
+                    <td data-label="Paid (BHD)" class="right tp-money">{{ number_format($invoice->total_paid, 3) }}</td>
+                    <td data-label="Balance (BHD)" class="right tp-money" style="color:{{ $invoice->balance_due > 0.001 ? 'var(--tone-danger-fg)' : 'var(--tone-success-fg)' }}">{{ number_format($invoice->balance_due, 3) }}</td>
+                    <td data-label="Status"><span class="status-badge {{ $invoice->status }}">{{ $invoice->status_label }}</span></td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
     @endif
 </div>
 </div>
@@ -452,50 +448,52 @@
     @if($tenant->payments->isEmpty())
     <div class="tp-empty"><i class="fa-solid fa-money-bill-transfer"></i>No payments recorded for this tenant yet.</div>
     @else
-    <table class="tp-table">
-        <thead>
-            <tr>
-                <th>Payment #</th>
-                <th>Date</th>
-                <th>Invoice #</th>
-                <th class="right">Amount (BHD)</th>
-                <th>Method</th>
-                <th>Receipt</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($tenant->payments as $payment)
-            <tr>
-                <td style="font-weight:700">{{ $payment->payment_number }}</td>
-                <td>{{ $payment->payment_date->format('d M Y') }}</td>
-                <td>
-                    @if($payment->invoice)
-                    <a href="{{ route('invoices.show', $payment->invoice) }}" class="tp-link">{{ $payment->invoice->invoice_number }}</a>
-                    @else
-                    —
-                    @endif
-                </td>
-                <td class="right tp-money" style="color:var(--tone-success-fg)">{{ number_format($payment->amount, 3) }}</td>
-                <td>{{ $payment->method_label }}</td>
-                <td>
-                    @if($payment->invoice)
-                    <div style="display:flex;gap:6px">
-                        <button type="button" class="btn btn-outline btn-sm" title="Preview Receipt"
-                                onclick="openReceiptPdf('{{ route('invoices.payments.receipt.preview', [$payment->invoice, $payment]) }}', '{{ $payment->payment_number }}', '{{ route('invoices.payments.receipt', [$payment->invoice, $payment]) }}')">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
-                        <a href="{{ route('invoices.payments.receipt', [$payment->invoice, $payment]) }}" class="btn btn-outline btn-sm" title="Download Receipt" target="_blank">
-                            <i class="fa-solid fa-file-arrow-down"></i>
-                        </a>
-                    </div>
-                    @else
-                    —
-                    @endif
-                </td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Payment #</th>
+                    <th>Date</th>
+                    <th>Invoice #</th>
+                    <th class="right">Amount (BHD)</th>
+                    <th>Method</th>
+                    <th>Receipt</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($tenant->payments as $payment)
+                <tr>
+                    <td data-label="Payment #" style="font-weight:700">{{ $payment->payment_number }}</td>
+                    <td data-label="Date">{{ $payment->payment_date->format('d M Y') }}</td>
+                    <td data-label="Invoice #">
+                        @if($payment->invoice)
+                        <a href="{{ route('invoices.show', $payment->invoice) }}" class="tp-link">{{ $payment->invoice->invoice_number }}</a>
+                        @else
+                        —
+                        @endif
+                    </td>
+                    <td data-label="Amount (BHD)" class="right tp-money" style="color:var(--tone-success-fg)">{{ number_format($payment->amount, 3) }}</td>
+                    <td data-label="Method">{{ $payment->method_label }}</td>
+                    <td data-label="Receipt">
+                        @if($payment->invoice)
+                        <div style="display:flex;gap:6px">
+                            <button type="button" class="btn btn-outline btn-sm" title="Preview Receipt"
+                                    onclick="openReceiptPdf('{{ route('invoices.payments.receipt.preview', [$payment->invoice, $payment]) }}', '{{ $payment->payment_number }}', '{{ route('invoices.payments.receipt', [$payment->invoice, $payment]) }}')">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                            <a href="{{ route('invoices.payments.receipt', [$payment->invoice, $payment]) }}" class="btn btn-outline btn-sm" title="Download Receipt" target="_blank">
+                                <i class="fa-solid fa-file-arrow-down"></i>
+                            </a>
+                        </div>
+                        @else
+                        —
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
     @endif
 </div>
 </div>
@@ -506,32 +504,34 @@
     @if($tenant->ewaBills->isEmpty())
     <div class="tp-empty"><i class="fa-solid fa-bolt"></i>No EWA bills on file for this tenant.</div>
     @else
-    <table class="tp-table">
-        <thead>
-            <tr>
-                <th>Bill #</th>
-                <th>Billing Period</th>
-                <th class="right">Total (BHD)</th>
-                <th class="right">Tenant Portion (BHD)</th>
-                <th class="right">Paid (BHD)</th>
-                <th class="right">Balance (BHD)</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($tenant->ewaBills as $bill)
-            <tr data-href="{{ route('ewa-bills.show', $bill) }}" onclick="window.location=this.dataset.href">
-                <td><span class="tp-link">{{ $bill->bill_number }}</span></td>
-                <td>{{ $bill->billing_period ?: '—' }}</td>
-                <td class="right tp-money">{{ number_format($bill->total_amount, 3) }}</td>
-                <td class="right tp-money">{{ number_format($bill->effective_tenant_portion, 3) }}</td>
-                <td class="right tp-money">{{ number_format($bill->total_paid, 3) }}</td>
-                <td class="right tp-money" style="color:{{ $bill->balance_due > 0.001 ? '#DC2626' : '#059669' }}">{{ number_format($bill->balance_due, 3) }}</td>
-                <td><span class="status-badge {{ $bill->status }}">{{ $bill->status_label }}</span></td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Bill #</th>
+                    <th>Billing Period</th>
+                    <th class="right">Total (BHD)</th>
+                    <th class="right">Tenant Portion (BHD)</th>
+                    <th class="right">Paid (BHD)</th>
+                    <th class="right">Balance (BHD)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($tenant->ewaBills as $bill)
+                <tr data-href="{{ route('ewa-bills.show', $bill) }}" onclick="window.location=this.dataset.href">
+                    <td data-label="Bill #"><span class="tp-link">{{ $bill->bill_number }}</span></td>
+                    <td data-label="Billing Period">{{ $bill->billing_period ?: '—' }}</td>
+                    <td data-label="Total (BHD)" class="right tp-money">{{ number_format($bill->total_amount, 3) }}</td>
+                    <td data-label="Tenant Portion (BHD)" class="right tp-money">{{ number_format($bill->effective_tenant_portion, 3) }}</td>
+                    <td data-label="Paid (BHD)" class="right tp-money">{{ number_format($bill->total_paid, 3) }}</td>
+                    <td data-label="Balance (BHD)" class="right tp-money" style="color:{{ $bill->balance_due > 0.001 ? 'var(--tone-danger-fg)' : 'var(--tone-success-fg)' }}">{{ number_format($bill->balance_due, 3) }}</td>
+                    <td data-label="Status"><span class="status-badge {{ $bill->status }}">{{ $bill->status_label }}</span></td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
     @endif
 </div>
 </div>
@@ -555,46 +555,48 @@
     @if($tenant->invoiceNotes->isEmpty())
     <div class="tp-empty"><i class="fa-solid fa-file-invoice-dollar"></i>No credit or debit notes issued for this tenant.</div>
     @else
-    <table class="tp-table">
-        <thead>
-            <tr>
-                <th>Note #</th>
-                <th>Type</th>
-                <th>Invoice #</th>
-                <th>Date</th>
-                <th class="right">Amount (BHD)</th>
-                <th>Reason</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($tenant->invoiceNotes as $note)
-            <tr>
-                <td style="font-weight:700">{{ $note->note_number }}</td>
-                <td><span class="type-badge {{ $note->type }}">{{ $note->type_label }}</span></td>
-                <td>
-                    @if($note->invoice)
-                    <a href="{{ route('invoices.show', $note->invoice) }}" class="tp-link">{{ $note->invoice->invoice_number }}</a>
-                    @else
-                    <span style="color:var(--text-muted)">General adjustment</span>
-                    @endif
-                </td>
-                <td>{{ $note->note_date->format('d M Y') }}</td>
-                <td class="right tp-money" style="color:{{ $note->type === 'credit' ? '#059669' : '#D97706' }}">{{ $note->type === 'credit' ? '−' : '+' }}{{ number_format($note->amount, 3) }}</td>
-                <td style="color:var(--text-muted)">{{ $note->reason }}</td>
-                <td>
-                    @if(!$note->invoice)
-                    <form method="POST" action="{{ route('tenants.notes.destroy', [$tenant, $note]) }}"
-                          onsubmit="return confirm('Remove {{ $note->type_label }} {{ $note->note_number }}?')">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i></button>
-                    </form>
-                    @endif
-                </td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Note #</th>
+                    <th>Type</th>
+                    <th>Invoice #</th>
+                    <th>Date</th>
+                    <th class="right">Amount (BHD)</th>
+                    <th>Reason</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($tenant->invoiceNotes as $note)
+                <tr>
+                    <td data-label="Note #" style="font-weight:700">{{ $note->note_number }}</td>
+                    <td data-label="Type"><span class="status-badge {{ $note->type }}">{{ $note->type_label }}</span></td>
+                    <td data-label="Invoice #">
+                        @if($note->invoice)
+                        <a href="{{ route('invoices.show', $note->invoice) }}" class="tp-link">{{ $note->invoice->invoice_number }}</a>
+                        @else
+                        <span style="color:var(--text-muted)">General adjustment</span>
+                        @endif
+                    </td>
+                    <td data-label="Date">{{ $note->note_date->format('d M Y') }}</td>
+                    <td data-label="Amount (BHD)" class="right tp-money" style="color:{{ $note->type === 'credit' ? 'var(--tone-success-fg)' : 'var(--tone-warning-fg)' }}">{{ $note->type === 'credit' ? '−' : '+' }}{{ number_format($note->amount, 3) }}</td>
+                    <td data-label="Reason" style="color:var(--text-muted)">{{ $note->reason }}</td>
+                    <td>
+                        @if(!$note->invoice)
+                        <form method="POST" action="{{ route('tenants.notes.destroy', [$tenant, $note]) }}"
+                              onsubmit="return confirm('Remove {{ $note->type_label }} {{ $note->note_number }}?')">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i></button>
+                        </form>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
     @endif
 
     <div class="note-form-card detail-item {{ $errors->any() ? 'open' : '' }}" id="tenantNoteFormCard">
@@ -645,44 +647,46 @@
     @if($rentSchedule->isEmpty())
     <div class="tp-empty"><i class="fa-solid fa-calendar-check"></i>No rent-bearing lease contracts on file for this tenant.</div>
     @else
-    <table class="tp-table">
-        <thead>
-            <tr>
-                <th>Month</th>
-                <th class="right">Invoiced (BHD)</th>
-                <th class="right">Received (BHD)</th>
-                <th class="right">Remaining (BHD)</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($rentSchedule as $row)
-            <tr>
-                <td style="font-weight:600">{{ $row['month']->format('F Y') }}</td>
-                <td class="right tp-money">{{ number_format($row['invoiced'], 3) }}</td>
-                <td class="right tp-money">{{ number_format($row['paid'], 3) }}</td>
-                <td class="right tp-money" style="color:{{ $row['remaining'] > 0.001 ? '#DC2626' : '#059669' }}">{{ number_format($row['remaining'], 3) }}</td>
-                <td>
-                    <span class="rs-status {{ $row['status'] }}">
-                        {{ match($row['status']) {
-                            'paid'         => 'Received',
-                            'partial'      => 'Partially Received',
-                            'unpaid'       => 'Unpaid',
-                            'not_invoiced' => 'Not Invoiced',
-                        } }}
-                    </span>
-                </td>
-            </tr>
-            @endforeach
-            <tr class="total-row">
-                <td style="padding:12px 14px">Total</td>
-                <td class="right tp-money" style="padding:12px 14px">{{ number_format($rentSchedule->sum('invoiced'), 3) }}</td>
-                <td class="right tp-money" style="padding:12px 14px">{{ number_format($rentSchedule->sum('paid'), 3) }}</td>
-                <td class="right tp-money" style="padding:12px 14px;color:{{ $rentSchedule->sum('remaining') > 0.001 ? '#DC2626' : '#059669' }}">{{ number_format($rentSchedule->sum('remaining'), 3) }}</td>
-                <td></td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th class="right">Invoiced (BHD)</th>
+                    <th class="right">Received (BHD)</th>
+                    <th class="right">Remaining (BHD)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($rentSchedule as $row)
+                <tr>
+                    <td data-label="Month" style="font-weight:600">{{ $row['month']->format('F Y') }}</td>
+                    <td data-label="Invoiced (BHD)" class="right tp-money">{{ number_format($row['invoiced'], 3) }}</td>
+                    <td data-label="Received (BHD)" class="right tp-money">{{ number_format($row['paid'], 3) }}</td>
+                    <td data-label="Remaining (BHD)" class="right tp-money" style="color:{{ $row['remaining'] > 0.001 ? 'var(--tone-danger-fg)' : 'var(--tone-success-fg)' }}">{{ number_format($row['remaining'], 3) }}</td>
+                    <td data-label="Status">
+                        <span class="rs-status {{ $row['status'] }}">
+                            {{ match($row['status']) {
+                                'paid'         => 'Received',
+                                'partial'      => 'Partially Received',
+                                'unpaid'       => 'Unpaid',
+                                'not_invoiced' => 'Not Invoiced',
+                            } }}
+                        </span>
+                    </td>
+                </tr>
+                @endforeach
+                <tr class="total-row">
+                    <td data-label="Month" style="padding:12px 14px">Total</td>
+                    <td data-label="Invoiced (BHD)" class="right tp-money" style="padding:12px 14px">{{ number_format($rentSchedule->sum('invoiced'), 3) }}</td>
+                    <td data-label="Received (BHD)" class="right tp-money" style="padding:12px 14px">{{ number_format($rentSchedule->sum('paid'), 3) }}</td>
+                    <td data-label="Remaining (BHD)" class="right tp-money" style="padding:12px 14px;color:{{ $rentSchedule->sum('remaining') > 0.001 ? 'var(--tone-danger-fg)' : 'var(--tone-success-fg)' }}">{{ number_format($rentSchedule->sum('remaining'), 3) }}</td>
+                    <td data-label="Status"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
     @endif
     <div style="padding:14px 18px;border-top:1px solid var(--card-border)">
         <a href="{{ route('reports.rent-schedule', ['tenant_id' => $tenant->id]) }}" class="tp-link">

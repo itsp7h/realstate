@@ -3,6 +3,28 @@
 @section('title', 'Edit ' . $title)
 @section('topbar-title', 'Edit ' . $title)
 
+@section('page-breadcrumb')
+    <a href="{{ url('/dashboard') }}">Home</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <a href="{{ route('form-configs.index') }}">Form & Template Management</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Edit {{ $title }}</span>
+@endsection
+@section('page-title')
+    Edit {{ $title }}
+@endsection
+@section('page-subtitle', 'Drag to reorder, toggle to show/hide fields')
+@section('page-actions')
+    <a href="{{ route('form-configs.index') }}" class="btn btn-outline">
+        <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+    @if($configType === 'form')
+    <button type="button" class="btn btn-primary" id="openAddFieldModal">
+        <i class="fa-solid fa-plus"></i> Add New Field
+    </button>
+    @endif
+@endsection
+
 @push('styles')
 <style>
     .fc-edit-layout {
@@ -33,7 +55,7 @@
         user-select: none;
     }
     .field-row:last-child { border-bottom: none; }
-    .field-row:hover { background: #FAFBFC; }
+    .field-row:hover { background: var(--row-hover); }
     .field-row.sortable-ghost {
         background: var(--accent-dim);
         opacity: 0.7;
@@ -45,7 +67,7 @@
 
     .drag-handle {
         color: var(--text-muted);
-        font-size: 12px;
+        font-size: var(--fs-sm);
         cursor: grab;
         padding: 2px 4px;
         flex-shrink: 0;
@@ -67,8 +89,8 @@
     .toggle-slider {
         position: absolute;
         inset: 0;
-        background: #CBD5E1;
-        border-radius: 20px;
+        background: var(--card-border);
+        border-radius: var(--radius-pill);
         cursor: pointer;
         transition: background 0.2s;
     }
@@ -77,7 +99,7 @@
         position: absolute;
         width: 14px; height: 14px;
         left: 3px; top: 3px;
-        background: #fff;
+        background: var(--card-bg);
         border-radius: 50%;
         transition: transform 0.2s;
         box-shadow: 0 1px 3px rgba(0,0,0,0.2);
@@ -94,24 +116,13 @@
         min-width: 0;
     }
     .field-label-text {
-        font-size: 13.5px;
+        font-size: var(--fs-base);
         font-weight: 600;
         color: var(--text-primary);
         line-height: 1.3;
     }
-    .field-name-tag {
-        display: inline-block;
-        font-family: 'Courier New', monospace;
-        font-size: 10.5px;
-        color: var(--text-muted);
-        background: var(--page-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 4px;
-        padding: 1px 6px;
-        margin-top: 2px;
-    }
     .field-section-tag {
-        font-size: 10px;
+        font-size: var(--fs-2xs);
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.06em;
@@ -142,13 +153,13 @@
         gap: 8px;
         padding: 7px 12px;
         border-radius: var(--radius-sm);
-        font-size: 13px;
+        font-size: var(--fs-base);
         color: var(--text-primary);
         background: var(--page-bg);
         transition: background 0.12s;
     }
     .preview-item i {
-        font-size: 11px;
+        font-size: var(--fs-xs);
         color: var(--success);
         flex-shrink: 0;
     }
@@ -156,12 +167,12 @@
         text-align: center;
         padding: 24px 16px;
         color: var(--text-muted);
-        font-size: 13px;
+        font-size: var(--fs-base);
     }
 
     /* Actions bar */
     .fc-actions-bar {
-        margin-top: 20px;
+        margin-top: var(--sp-5);
         padding: 16px 22px;
         background: var(--card-bg);
         border: 1px solid var(--card-border);
@@ -178,7 +189,7 @@
         padding: 8px 16px 6px;
         background: var(--page-bg);
         border-bottom: 1px solid var(--card-border);
-        font-size: 10px;
+        font-size: var(--fs-2xs);
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.1em;
@@ -199,7 +210,7 @@
         border: 1px solid var(--danger);
         background: var(--tone-danger-bg);
         color: var(--danger);
-        font-size: 11px;
+        font-size: var(--fs-xs);
         cursor: pointer;
         flex-shrink: 0;
         transition: background 0.15s, color 0.15s;
@@ -207,7 +218,7 @@
     }
     .btn-delete-custom:hover {
         background: var(--danger);
-        color: #fff;
+        color: var(--ink-on-fill);
     }
 
     /* Custom field badge */
@@ -216,10 +227,10 @@
         align-items: center;
         gap: 3px;
         padding: 2px 7px;
-        border-radius: 20px;
-        font-size: 10px;
+        border-radius: var(--radius-pill);
+        font-size: var(--fs-2xs);
         font-weight: 600;
-        background: #FEF3C7;
+        background: var(--tone-warning-bg);
         color: var(--tone-accent-fg);
         flex-shrink: 0;
     }
@@ -231,7 +242,7 @@
     }
     .cf-form-group label {
         display: block;
-        font-size: 12px;
+        font-size: var(--fs-sm);
         font-weight: 600;
         color: var(--text-secondary);
         margin-bottom: 5px;
@@ -246,7 +257,7 @@
         border-radius: var(--radius-sm);
         background: var(--page-bg);
         color: var(--text-primary);
-        font-size: 13.5px;
+        font-size: var(--fs-base);
         transition: border 0.15s;
         box-sizing: border-box;
     }
@@ -276,7 +287,7 @@
         background: var(--page-bg);
         color: var(--text-muted);
         cursor: pointer;
-        font-size: 12px;
+        font-size: var(--fs-sm);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -294,7 +305,7 @@
         margin: 0;
         text-transform: none;
         letter-spacing: 0;
-        font-size: 13.5px;
+        font-size: var(--fs-base);
         font-weight: 600;
         color: var(--text-primary);
         cursor: pointer;
@@ -311,7 +322,7 @@
         gap: 10px;
         padding: 12px 18px;
         border-radius: var(--radius-sm);
-        font-size: 13.5px;
+        font-size: var(--fs-base);
         font-weight: 600;
         box-shadow: 0 8px 24px rgba(0,0,0,0.18);
         animation: cfToastIn 0.25s ease;
@@ -329,35 +340,12 @@
 @section('content')
 
 {{-- PAGE HEADER --}}
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <a href="{{ route('form-configs.index') }}">Form & Template Management</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Edit {{ $title }}</span>
-        </div>
-        <h1 class="page-header-title">Edit {{ $title }}</h1>
-        <p class="page-header-sub">Drag to reorder, toggle to show/hide fields</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('form-configs.index') }}" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back
-        </a>
-        @if($configType === 'form')
-        <button type="button" class="btn btn-primary" id="openAddFieldModal">
-            <i class="fa-solid fa-plus"></i> Add New Field
-        </button>
-        @endif
-    </div>
-</div>
 
 <div class="fc-edit-layout">
 
     {{-- LEFT: Sortable field list --}}
     <div>
-        <div class="card" style="overflow:hidden;">
+        <div class="table-card">
             <div class="card-header">
                 <div class="card-header-icon">
                     @if($configType === 'template')
@@ -418,7 +406,7 @@
 
                         <div class="field-label-col">
                             <div class="field-label-text">{{ $field['label'] }}</div>
-                            <span class="field-name-tag">{{ $field['name'] }}</span>
+                            <span class="badge">{{ $field['name'] }}</span>
                         </div>
 
                         <span class="field-section-tag">{{ $field['section'] ?? '' }}</span>
@@ -906,7 +894,7 @@
             </label>
             <div class="field-label-col">
                 <div class="field-label-text">${escHtml(label)}</div>
-                <span class="field-name-tag">${escHtml(name)}</span>
+                <span class="badge">${escHtml(name)}</span>
             </div>
             <span class="field-section-tag">Custom Fields</span>
             <span class="badge-custom"><i class="fa-solid fa-puzzle-piece" style="font-size:8px;"></i> Custom</span>

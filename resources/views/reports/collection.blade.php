@@ -5,23 +5,20 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Collection Report</h1>
-        <p class="page-header-sub">Every rent and EWA payment received in a date range, receipt by receipt</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
-        <button type="button" class="btn btn-outline"
-                onclick="openReportPdf('{{ route('reports.collection.pdf', request()->only(['date_from','date_to'])) }}', 'Collection Report')">
-            <i class="fa-solid fa-eye"></i> Preview
-        </button>
-        <a href="{{ route('reports.collection.pdf', request()->only(['date_from','date_to'])) }}"
-           target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
-        <a href="{{ route('reports.collection.export', request()->only(['date_from','date_to'])) }}"
-           class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
-    </div>
-</div>
+@section('page-title', 'Collection Report')
+@section('page-subtitle', 'Every rent and EWA payment received in a date range, receipt by receipt')
+@section('page-actions')
+    <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
+    <button type="button" class="btn btn-outline"
+            onclick="openReportPdf('{{ route('reports.collection.pdf', request()->only(['date_from','date_to'])) }}', 'Collection Report')">
+        <i class="fa-solid fa-eye"></i> Preview
+    </button>
+    <a href="{{ route('reports.collection.pdf', request()->only(['date_from','date_to'])) }}"
+       target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+    <a href="{{ route('reports.collection.export', request()->only(['date_from','date_to'])) }}"
+       class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
+@endsection
+
 
 <form method="GET" action="{{ route('reports.collection') }}" class="filter-card">
     <div class="filter-bar">

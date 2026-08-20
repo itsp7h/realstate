@@ -5,23 +5,22 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Tenant Financial Summary</h1>
-        <p class="page-header-sub">Every tenant's balance for the period &mdash; carried-forward opening balance, what was billed and received, and the resulting net balance</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
-        <button type="button" class="btn btn-outline"
-                onclick="openReportPdf('{{ route('reports.financial-summary.pdf', request()->only(['date_from','date_to'])) }}', 'Tenant Financial Summary')">
-            <i class="fa-solid fa-eye"></i> Preview
-        </button>
-        <a href="{{ route('reports.financial-summary.pdf', request()->only(['date_from','date_to'])) }}"
-           target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
-        <a href="{{ route('reports.financial-summary.export', request()->only(['date_from','date_to'])) }}"
-           class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
-    </div>
-</div>
+@section('page-title', 'Tenant Financial Summary')
+@section('page-subtitle')
+    Every tenant's balance for the period &mdash; carried-forward opening balance, what was billed and received, and the resulting net balance
+@endsection
+@section('page-actions')
+    <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
+    <button type="button" class="btn btn-outline"
+            onclick="openReportPdf('{{ route('reports.financial-summary.pdf', request()->only(['date_from','date_to'])) }}', 'Tenant Financial Summary')">
+        <i class="fa-solid fa-eye"></i> Preview
+    </button>
+    <a href="{{ route('reports.financial-summary.pdf', request()->only(['date_from','date_to'])) }}"
+       target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+    <a href="{{ route('reports.financial-summary.export', request()->only(['date_from','date_to'])) }}"
+       class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
+@endsection
+
 
 <form method="GET" action="{{ route('reports.financial-summary') }}" class="filter-card">
     <div class="filter-bar">

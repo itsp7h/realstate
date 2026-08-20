@@ -8,7 +8,7 @@
 
 .form-label .required { color: var(--tone-danger-fg); margin-left: 2px; }
 .form-control {
-    padding: 9px 13px; font-size: 13px;
+    padding: 9px 13px; font-size: var(--fs-base);
     border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
     background: var(--input-bg); color: var(--text-primary); outline: none;
     transition: border-color 0.18s; width: 100%; box-sizing: border-box;
@@ -22,7 +22,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .amount-wrap input { padding-right: 52px; font-family: 'Outfit', sans-serif; font-weight: 700; }
 .amount-wrap::after {
     content: 'BHD'; position: absolute; right: 13px; top: 50%;
-    transform: translateY(-50%); font-size: 11px; font-weight: 700;
+    transform: translateY(-50%); font-size: var(--fs-xs); font-weight: 700;
     color: var(--text-muted); pointer-events: none;
 }
 </style>
@@ -30,17 +30,16 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">{{ $record ? 'Edit Revenue' : 'New Revenue' }}</h1>
-        <p class="page-header-sub">Record income against a building or unit</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('revenues.index') }}" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back to Revenue
-        </a>
-    </div>
-</div>
+@section('page-title')
+    {{ $record ? 'Edit Revenue' : 'New Revenue' }}
+@endsection
+@section('page-subtitle', 'Record income against a building or unit')
+@section('page-actions')
+    <a href="{{ route('revenues.index') }}" class="btn btn-outline">
+        <i class="fa-solid fa-arrow-left"></i> Back to Revenue
+    </a>
+@endsection
+
 
 <form method="POST" action="{{ $record ? route('revenues.update', $record) : route('revenues.store') }}">
     @csrf
@@ -122,7 +121,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
         </div>
     </div>
 
-    <div class="page-header-actions" style="justify-content:flex-end">
+    <div class="form-actions">
         <a href="{{ route('revenues.index') }}" class="btn btn-outline">Cancel</a>
         <button type="submit" class="btn btn-primary">
             <i class="fa-solid fa-check"></i> {{ $record ? 'Save Changes' : 'Record Revenue' }}

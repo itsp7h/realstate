@@ -109,73 +109,73 @@
             {{-- Column guide --}}
             <div class="import-col-guide">
                 @if($type === 'buildings')
-                    <span class="col-badge required-col">Property Name *</span>
-                    <span class="col-badge required-col">Property Code *</span>
-                    <span class="col-badge">Type of Ownership</span>
-                    <span class="col-badge">Property Type</span>
-                    <span class="col-badge">Land Lord</span>
-                    <span class="col-badge">Building No.</span>
-                    <span class="col-badge">Road</span>
-                    <span class="col-badge">Block</span>
-                    <span class="col-badge">Area</span>
-                    <span class="col-badge">City</span>
-                    <span class="col-badge">Total Blocks</span>
-                    <span class="col-badge">Total Floors</span>
-                    <span class="col-badge">Total Units</span>
+                    <span class="badge required-col">Property Name *</span>
+                    <span class="badge required-col">Property Code *</span>
+                    <span class="badge">Type of Ownership</span>
+                    <span class="badge">Property Type</span>
+                    <span class="badge">Land Lord</span>
+                    <span class="badge">Building No.</span>
+                    <span class="badge">Road</span>
+                    <span class="badge">Block</span>
+                    <span class="badge">Area</span>
+                    <span class="badge">City</span>
+                    <span class="badge">Total Blocks</span>
+                    <span class="badge">Total Floors</span>
+                    <span class="badge">Total Units</span>
                 @elseif($type === 'floors')
-                    <span class="col-badge required-col">Property Code *</span>
-                    <span class="col-badge required-col">Floor Name *</span>
-                    <span class="col-badge">Floor Code</span>
-                    <span class="col-badge">Block Name</span>
-                    <span class="col-badge">Block Code</span>
-                    <span class="col-badge">Units</span>
+                    <span class="badge required-col">Property Code *</span>
+                    <span class="badge required-col">Floor Name *</span>
+                    <span class="badge">Floor Code</span>
+                    <span class="badge">Block Name</span>
+                    <span class="badge">Block Code</span>
+                    <span class="badge">Units</span>
                     <div style="font-size:11px;color:var(--text-muted);margin-top:6px;width:100%;">
                         <i class="fa-solid fa-circle-info"></i>
                         <strong>Property Code</strong> must match an existing building.
                     </div>
                 @elseif($type === 'tenants')
-                    <span class="col-badge required-col">Name *</span>
-                    <span class="col-badge">Tenant Type</span>
-                    <span class="col-badge">ID / CR Number</span>
-                    <span class="col-badge">Phone</span>
-                    <span class="col-badge">Email</span>
-                    <span class="col-badge">Nationality / Country</span>
+                    <span class="badge required-col">Name *</span>
+                    <span class="badge">Tenant Type</span>
+                    <span class="badge">ID / CR Number</span>
+                    <span class="badge">Phone</span>
+                    <span class="badge">Email</span>
+                    <span class="badge">Nationality / Country</span>
                     <div style="font-size:11px;color:var(--text-muted);margin-top:6px;width:100%;">
                         <i class="fa-solid fa-circle-info"></i>
                         <strong>Tenant Type</strong> must be <code>individual</code> or <code>company</code> (defaults to individual).
                         Rows with a duplicate name are skipped.
                     </div>
                 @elseif($type === 'contracts')
-                    <span class="col-badge required-col">Lease Agreement No *</span>
-                    <span class="col-badge required-col">Tenant Name *</span>
-                    <span class="col-badge required-col">Lease Start Date *</span>
-                    <span class="col-badge required-col">Lease End Date *</span>
-                    <span class="col-badge">Date</span>
-                    <span class="col-badge">Prop Code</span>
-                    <span class="col-badge">Floor Name / Code</span>
-                    <span class="col-badge">Unit</span>
-                    <span class="col-badge">Description</span>
-                    <span class="col-badge">Rent per Month</span>
-                    <span class="col-badge">Currency</span>
-                    <span class="col-badge">Invoicing Frequency</span>
-                    <span class="col-badge">Service Amount in BD (Excl. VAT)</span>
-                    <span class="col-badge">Security Deposit</span>
-                    <span class="col-badge">Lease Break Date</span>
-                    <span class="col-badge">Notice Period</span>
+                    <span class="badge required-col">Lease Agreement No *</span>
+                    <span class="badge required-col">Tenant Name *</span>
+                    <span class="badge required-col">Lease Start Date *</span>
+                    <span class="badge required-col">Lease End Date *</span>
+                    <span class="badge">Date</span>
+                    <span class="badge">Prop Code</span>
+                    <span class="badge">Floor Name / Code</span>
+                    <span class="badge">Unit</span>
+                    <span class="badge">Description</span>
+                    <span class="badge">Rent per Month</span>
+                    <span class="badge">Currency</span>
+                    <span class="badge">Invoicing Frequency</span>
+                    <span class="badge">Service Amount in BD (Excl. VAT)</span>
+                    <span class="badge">Security Deposit</span>
+                    <span class="badge">Lease Break Date</span>
+                    <span class="badge">Notice Period</span>
                     <div style="font-size:11px;color:var(--text-muted);margin-top:6px;width:100%;">
                         <i class="fa-solid fa-circle-info"></i>
                         <strong>Tenant Name</strong> will auto-link to an existing tenant if the name matches exactly.
                         Dates must be in <strong>YYYY-MM-DD</strong> format or standard Excel date format.
                     </div>
                 @else
-                    <span class="col-badge required-col">Property Code *</span>
-                    <span class="col-badge required-col">Unit Name *</span>
-                    <span class="col-badge">Floor Code</span>
-                    <span class="col-badge">Unit Type</span>
-                    <span class="col-badge">Condition</span>
-                    <span class="col-badge">Area Inside</span>
-                    <span class="col-badge">Rent/Month</span>
-                    <span class="col-badge">+ more…</span>
+                    <span class="badge required-col">Property Code *</span>
+                    <span class="badge required-col">Unit Name *</span>
+                    <span class="badge">Floor Code</span>
+                    <span class="badge">Unit Type</span>
+                    <span class="badge">Condition</span>
+                    <span class="badge">Area Inside</span>
+                    <span class="badge">Rent/Month</span>
+                    <span class="badge">+ more…</span>
                     <div style="font-size:11px;color:var(--text-muted);margin-top:6px;width:100%;">
                         <i class="fa-solid fa-circle-info"></i>
                         <strong>Property Code</strong> must match an existing building. <strong>Floor Code</strong> is optional.
@@ -238,21 +238,21 @@
 .import-banner.success { background: var(--tone-success-bg); border-color: var(--tone-success-border); }
 .import-banner.partial  { background: var(--tone-warning-bg); border-color: var(--tone-warning-border); }
 .import-banner.error    { background: var(--tone-danger-bg); border-color: var(--tone-danger-border); }
-.import-banner-icon     { font-size: 16px; flex-shrink: 0; padding-top: 2px; }
+.import-banner-icon     { font-size: var(--fs-md); flex-shrink: 0; padding-top: 2px; }
 .import-banner.success .import-banner-icon { color: var(--tone-success-fg); }
 .import-banner.partial  .import-banner-icon { color: var(--tone-warning-fg); }
 .import-banner.error    .import-banner-icon { color: var(--tone-danger-fg); }
 .import-banner-body     { flex: 1; }
-.import-banner-title    { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
-.import-errors-details  { margin-top: 8px; }
+.import-banner-title    { font-size: var(--fs-base); font-weight: 600; color: var(--text-primary); }
+.import-errors-details  { margin-top: var(--sp-2); }
 .import-errors-details summary {
-    font-size: 12px; color: var(--text-muted); cursor: pointer;
-    list-style: revert; padding-left: 4px;
+    font-size: var(--fs-sm); color: var(--text-muted); cursor: pointer;
+    list-style: revert; padding-left: var(--sp-1);
 }
-.import-errors-list     { margin: 8px 0 0 16px; padding: 0; font-size: 12px; color: var(--text-secondary); line-height: 1.8; }
+.import-errors-list     { margin: 8px 0 0 16px; padding: 0; font-size: var(--fs-sm); color: var(--text-secondary); line-height: 1.8; }
 .import-banner-close {
     background: none; border: none; cursor: pointer;
-    color: var(--text-muted); font-size: 13px; flex-shrink: 0;
+    color: var(--text-muted); font-size: var(--fs-base); flex-shrink: 0;
     padding: 2px 4px; border-radius: 4px;
     transition: color 0.15s;
 }
@@ -274,7 +274,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 13px;
+    font-size: var(--fs-base);
     color: var(--text-secondary);
 }
 
@@ -284,21 +284,6 @@
     flex-wrap: wrap;
     gap: 5px;
     margin-bottom: 18px;
-}
-.col-badge {
-    font-size: 11px;
-    font-family: 'Plus Jakarta Sans', monospace;
-    padding: 3px 8px;
-    border-radius: 4px;
-    background: var(--page-bg);
-    border: 1px solid var(--card-border);
-    color: var(--text-muted);
-}
-.col-badge.required-col {
-    background: var(--accent-dim);
-    border-color: rgba(232,184,109,0.4);
-    color: var(--accent);
-    font-weight: 700;
 }
 
 /* ── DROP ZONE ───────────────────────────────────────────── */
@@ -329,18 +314,18 @@
 }
 .import-drop-label {
     font-family: 'Outfit', sans-serif;
-    font-size: 15px;
+    font-size: var(--fs-md);
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 5px;
 }
 .import-drop-sub {
-    font-size: 12px;
+    font-size: var(--fs-sm);
     color: var(--text-muted);
 }
 .import-file-name {
-    margin-top: 12px;
-    font-size: 13px;
+    margin-top: var(--sp-3);
+    font-size: var(--fs-base);
     font-weight: 600;
     color: var(--accent);
     min-height: 18px;

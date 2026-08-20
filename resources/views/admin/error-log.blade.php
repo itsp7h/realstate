@@ -3,6 +3,20 @@
 @section('title', 'Error Log')
 @section('topbar-title', 'Error Log')
 
+@section('page-title', 'Error Log')
+@section('page-subtitle')
+    Application errors and warnings from <code>storage/logs/laravel.log</code>
+@endsection
+@section('page-actions')
+    <form method="POST" action="{{ route('admin.error-log.clear') }}"
+          onsubmit="return confirm('Clear the entire log file? This cannot be undone.')">
+        @csrf @method('DELETE')
+        <button type="submit" class="btn btn-danger btn-sm">
+            <i class="fa-solid fa-trash"></i> Clear Log File
+        </button>
+    </form>
+@endsection
+
 @push('styles')
 <style>
 
@@ -14,7 +28,7 @@
 .log-entry.level-error   { border-left: 3px solid var(--danger); }
 .log-entry.level-warning { border-left: 3px solid var(--warning); }
 .log-entry.level-info    { border-left: 3px solid var(--info); }
-.log-entry.level-debug   { border-left: 3px solid #94A3B8; }
+.log-entry.level-debug   { border-left: 3px solid var(--text-muted); }
 
 .log-entry-header {
     display: flex; align-items: flex-start; gap: 12px;
@@ -24,22 +38,18 @@
 
 /* Typographic modifier only — worn alongside .status-badge, which supplies
    the shape and the error/warning/info/debug tones from app-core. */
-.level-badge {
-    font-size: var(--fs-2xs); font-weight: 800; letter-spacing: 0.05em;
-    flex-shrink: 0; margin-top: 1px;
-}
 
 .log-time {
-    font-family: monospace; font-size: 11.5px;
+    font-family: monospace; font-size: var(--fs-xs);
     color: var(--text-muted); flex-shrink: 0; white-space: nowrap; margin-top: 2px;
 }
 .log-message {
-    flex: 1; font-size: 13px; color: var(--text-primary);
+    flex: 1; font-size: var(--fs-base); color: var(--text-primary);
     line-height: 1.5; word-break: break-word;
 }
 .log-toggle {
     flex-shrink: 0; color: var(--text-muted);
-    font-size: 11px; margin-top: 2px;
+    font-size: var(--fs-xs); margin-top: 2px;
     transition: transform 0.2s;
 }
 .log-entry.open .log-toggle { transform: rotate(180deg); }
@@ -53,7 +63,7 @@
 
 .pager {
     display: flex; align-items: center; justify-content: space-between;
-    margin-top: 18px; font-size: 12px; color: var(--text-muted);
+    margin-top: 18px; font-size: var(--fs-sm); color: var(--text-muted);
 }
 .pager-btns { display: flex; gap: 6px; }
 </style>
@@ -61,57 +71,55 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Error Log</h1>
-        <p class="page-header-sub">Application errors and warnings from <code>storage/logs/laravel.log</code></p>
-    </div>
-    <div class="page-header-actions">
-        <form method="POST" action="{{ route('admin.error-log.clear') }}"
-              onsubmit="return confirm('Clear the entire log file? This cannot be undone.')">
-            @csrf @method('DELETE')
-            <button type="submit" class="btn btn-danger btn-sm">
-                <i class="fa-solid fa-trash"></i> Clear Log File
-            </button>
-        </form>
-    </div>
-</div>
 
 {{-- STATS --}}
 <div class="stats-grid">
     <div class="stat-card log-entry is-figure">
-        <div class="stat-val" style="color:var(--text-primary)">{{ number_format($stats['total']) }}</div>
-        <div class="stat-lbl">Total Entries</div>
+        <div class="stat-card-top"><span class="stat-lbl">Total Entries</span></div>
+        <div class="stat-val">{{ number_format($stats['total']) }}</div>
     </div>
     <div class="stat-card log-entry is-figure">
-        <div class="stat-val" style="color:var(--tone-danger-fg)">{{ number_format($stats['error']) }}</div>
-        <div class="stat-lbl">Errors</div>
+        <div class="stat-card-top"><span class="stat-lbl">Errors</span></div>
+        <div class="stat-val">{{ number_format($stats['error']) }}</div>
     </div>
     <div class="stat-card log-entry is-figure">
-        <div class="stat-val" style="color:var(--tone-warning-fg)">{{ number_format($stats['warning']) }}</div>
-        <div class="stat-lbl">Warnings</div>
+        <div class="stat-card-top"><span class="stat-lbl">Warnings</span></div>
+        <div class="stat-val">{{ number_format($stats['warning']) }}</div>
     </div>
     <div class="stat-card log-entry is-figure">
-        <div class="stat-val" style="color:var(--tone-info-fg)">{{ number_format($stats['info']) }}</div>
-        <div class="stat-lbl">Info</div>
+        <div class="stat-card-top"><span class="stat-lbl">Info</span></div>
+        <div class="stat-val">{{ number_format($stats['info']) }}</div>
     </div>
 </div>
 
-{{-- FILTERS --}}
-<form method="GET" action="{{ route('admin.error-log') }}" class="filter-bar">
-    <input type="search" name="search" value="{{ request('search') }}" placeholder="Search messages…">
-    <select name="level" onchange="this.form.submit()">
-        <option value="">All Levels</option>
-        @foreach(['ERROR','WARNING','INFO','DEBUG'] as $lvl)
-        <option value="{{ $lvl }}" {{ request('level') === $lvl ? 'selected' : '' }}>{{ $lvl }}</option>
-        @endforeach
-    </select>
-    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-    @if(request()->hasAny(['search','level']))
-    <a href="{{ route('admin.error-log') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
-    @endif
-    <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">{{ number_format($total) }} entries</span>
-</form>
+{{-- FILTERS — the standard pattern: a .filter-card, because the result below
+     is a timeline rather than a table for the bar to sit on top of. --}}
+<div class="filter-card">
+    <form method="GET" action="{{ route('admin.error-log') }}">
+        <div class="filter-bar">
+            <div class="filter-group is-search">
+                <label for="logSearch">Search</label>
+                <input id="logSearch" type="search" name="search" value="{{ request('search') }}" placeholder="Search messages…">
+            </div>
+            <div class="filter-group">
+                <label for="logLevel">Level</label>
+                <select id="logLevel" name="level" onchange="this.form.submit()">
+                    <option value="">All levels</option>
+                    @foreach(['ERROR','WARNING','INFO','DEBUG'] as $lvl)
+                        <option value="{{ $lvl }}" {{ request('level') === $lvl ? 'selected' : '' }}>{{ $lvl }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                @if(request()->hasAny(['search','level']))
+                    <a href="{{ route('admin.error-log') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
+                @endif
+                <span class="result-count"><strong>{{ number_format($total) }}</strong> entries</span>
+            </div>
+        </div>
+    </form>
+</div>
 
 {{-- TIMELINE --}}
 @if(empty($paged))
@@ -125,7 +133,7 @@
     @php $levelClass = strtolower($entry['level']); @endphp
     <div class="card log-entry level-{{ $levelClass }}" id="entry-{{ $i }}">
         <div class="card-header" onclick="toggleEntry({{ $i }})">
-            <span class="status-badge level-badge {{ strtolower($entry['level']) }}">{{ $entry['level'] }}</span>
+            <span class="status-badge {{ strtolower($entry['level']) }}">{{ $entry['level'] }}</span>
             <span class="log-time">{{ $entry['timestamp'] }}</span>
             <div class="log-message">{{ $entry['message'] }}</div>
             @if($entry['trace'])

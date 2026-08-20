@@ -3,6 +3,36 @@
 @section('title', $unit->unit_name . ' — Unit Detail')
 @section('topbar-title', 'Unit Detail')
 
+@section('page-breadcrumb')
+    <a href="{{ url('/dashboard') }}">Home</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <a href="{{ route('property-units.index') }}">Property Units</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>{{ $unit->unit_name }}</span>
+@endsection
+@section('page-title')
+    {{ $unit->unit_name }}
+@endsection
+@section('page-subtitle')
+    @if($unit->property_code)
+        <span class="badge badge-gold" style="font-size:12px;">{{ $unit->property_code }}</span>
+    @endif
+    @if($unit->unit_type)
+        <span class="badge badge-blue" style="font-size:12px;">{{ $unit->unit_type }}</span>
+    @endif
+    @if($unit->unit_condition)
+        <span class="badge badge-gray" style="font-size:12px;">{{ $unit->unit_condition }}</span>
+    @endif
+@endsection
+@section('page-actions')
+    <a href="{{ route('property-units.index') }}" class="btn btn-outline">
+        <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+    <a href="{{ route('property-units.edit', $unit) }}" class="btn btn-primary">
+        <i class="fa-regular fa-pen-to-square"></i> Edit Unit
+    </a>
+@endsection
+
 @push('styles')
 <style>
     /* ── HERO STRIP ─────────────────────────────────────── */
@@ -14,7 +44,7 @@
         border: 1.5px solid var(--card-border);
         border-radius: var(--radius);
         overflow: hidden;
-        margin-bottom: 24px;
+        margin-bottom: var(--sp-6);
         box-shadow: var(--shadow-sm);
     }
     .hero-cell {
@@ -31,10 +61,10 @@
     }
     .hero-cell:first-child::before { opacity: 1; }
     .hero-cell-icon {
-        width: 48px; height: 48px; border-radius: 12px;
+        width: 48px; height: 48px; border-radius: var(--radius);
         background: var(--accent-dim); color: var(--accent);
         display: flex; align-items: center; justify-content: center;
-        font-size: 18px; flex-shrink: 0;
+        font-size: var(--fs-lg); flex-shrink: 0;
     }
     .hero-cell:nth-child(2) .hero-cell-icon { background: var(--tone-info-bg); color: var(--info); }
     .hero-cell:nth-child(3) .hero-cell-icon { background: var(--tone-success-bg); color: var(--success); }
@@ -44,47 +74,30 @@
         color: var(--text-primary); line-height: 1;
     }
     .hero-lbl {
-        font-size: 11px; font-weight: 600;
+        font-size: var(--fs-xs); font-weight: 600;
         color: var(--text-muted); text-transform: uppercase;
-        letter-spacing: 0.06em; margin-top: 4px;
+        letter-spacing: 0.06em; margin-top: var(--sp-1);
     }
-    .hero-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+    .hero-sub { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 2px; }
 
     /* ── TABS ────────────────────────────────────────────── */
-    .tab-bar {
-        display: flex; gap: 4px;
-        border-bottom: 2px solid var(--card-border);
-        margin-bottom: 24px;
-    }
-    .tab-badge {
-        background: var(--accent-dim); color: var(--accent);
-        font-size: 10px; font-weight: 700;
-        padding: 1px 6px; border-radius: 20px;
-        min-width: 18px; text-align: center;
-    }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; animation: panelIn 0.2s ease both; }
-    @keyframes panelIn {
-        from { opacity: 0; transform: translateY(5px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
 
     /* ── SECTION HEADINGS ───────────────────────────────── */
     .section-head {
         display: flex; align-items: center; gap: 10px;
-        padding-bottom: 12px;
+        padding-bottom: var(--sp-3);
         border-bottom: 1px solid var(--card-border);
         margin-bottom: 18px;
     }
     .section-head-icon {
-        width: 32px; height: 32px; border-radius: 8px;
+        width: 32px; height: 32px; border-radius: var(--radius-sm);
         background: var(--accent-dim); color: var(--accent);
         display: flex; align-items: center; justify-content: center;
-        font-size: 13px; flex-shrink: 0;
+        font-size: var(--fs-base); flex-shrink: 0;
     }
     .section-head-title {
         font-family: 'Outfit', sans-serif;
-        font-size: 13px; font-weight: 800;
+        font-size: var(--fs-base); font-weight: 800;
         color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em;
     }
 
@@ -93,17 +106,17 @@
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 18px 24px;
-        margin-bottom: 28px;
+        margin-bottom: var(--sp-7);
     }
     .field-grid.col-2 { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
     .field-item {}
     .field-label {
-        font-size: 10.5px; font-weight: 700;
+        font-size: var(--fs-2xs); font-weight: 700;
         text-transform: uppercase; letter-spacing: 0.06em;
         color: var(--text-muted); margin-bottom: 5px;
     }
     .field-value {
-        font-size: 14px; font-weight: 600; color: var(--text-primary);
+        font-size: var(--fs-base); font-weight: 600; color: var(--text-primary);
         line-height: 1.4;
     }
     .field-value.empty { color: var(--text-muted); font-weight: 400; font-style: italic; }
@@ -112,33 +125,9 @@
     .field-value.span-full { grid-column: 1 / -1; }
 
     /* ── CONTRACT TABLE ─────────────────────────────────── */
-    .contract-table-wrap { overflow-x: auto; }
-    .contract-table { width: 100%; border-collapse: collapse; }
-    .contract-table th {
-        background: var(--page-bg);
-        font-size: 11px; font-weight: 700;
-        text-transform: uppercase; letter-spacing: 0.05em;
-        color: var(--text-muted); padding: 11px 16px;
-        text-align: left; border-bottom: 1px solid var(--card-border);
-        white-space: nowrap;
-    }
-    .contract-table td {
-        padding: 13px 16px; font-size: 13.5px;
-        color: var(--text-primary); border-bottom: 1px solid var(--card-border);
-        vertical-align: middle;
-    }
-    .contract-table tr:last-child td { border-bottom: none; }
-    .contract-table tr[data-href] { cursor: pointer; }
-    .contract-table tr[data-href]:hover td { background: var(--page-bg); }
 
-    .empty-state .empty-icon {
-        width: 60px; height: 60px; border-radius: 50%;
-        background: var(--page-bg);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 22px; color: var(--text-muted); margin: 0 auto 14px;
-    }
 
-    @media (max-width: 640px) {
+    @media (max-width: 600px) {
         .unit-hero { grid-template-columns: 1fr; }
         .unit-hero .hero-cell::before { display: none; }
         .unit-hero .hero-cell:first-child::before { display: block; }
@@ -149,37 +138,6 @@
 @section('content')
 
 {{-- PAGE HEADER --}}
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <a href="{{ route('property-units.index') }}">Property Units</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>{{ $unit->unit_name }}</span>
-        </div>
-        <h1 class="page-header-title">{{ $unit->unit_name }}</h1>
-        <p class="page-header-sub" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;">
-            @if($unit->property_code)
-                <span class="badge badge-gold" style="font-size:12px;">{{ $unit->property_code }}</span>
-            @endif
-            @if($unit->unit_type)
-                <span class="badge badge-blue" style="font-size:12px;">{{ $unit->unit_type }}</span>
-            @endif
-            @if($unit->unit_condition)
-                <span class="badge badge-gray" style="font-size:12px;">{{ $unit->unit_condition }}</span>
-            @endif
-        </p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('property-units.index') }}" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back
-        </a>
-        <a href="{{ route('property-units.edit', $unit) }}" class="btn btn-primary">
-            <i class="fa-regular fa-pen-to-square"></i> Edit Unit
-        </a>
-    </div>
-</div>
 
 {{-- HERO STRIP --}}
 <div class="unit-hero">
@@ -237,7 +195,7 @@
     </button>
     <button class="tab-btn" id="tab-contracts" onclick="switchTab('contracts')">
         <i class="fa-solid fa-file-contract"></i> Contracts
-        <span class="tab-badge">{{ $contracts->count() }}</span>
+        <span class="tab-count">{{ $contracts->count() }}</span>
     </button>
 </div>
 
@@ -470,7 +428,7 @@
 
 {{-- ═══ CONTRACTS TAB ═══ --}}
 <div class="tab-panel" id="panel-contracts">
-<div class="card" style="overflow:hidden;">
+<div class="table-card">
     @if($contracts->isEmpty())
         <div class="empty-state">
             <div class="empty-icon"><i class="fa-solid fa-file-contract"></i></div>
@@ -478,8 +436,8 @@
             <p>No lease contracts are linked to this unit's property code.</p>
         </div>
     @else
-    <div class="contract-table-wrap">
-        <table class="contract-table">
+    <div class="table-wrap">
+        <table>
             <thead>
                 <tr>
                     <th>Agreement No.</th>
@@ -498,8 +456,8 @@
                     $isExpired = $contract->lease_end_date < $now;
                 @endphp
                 <tr data-href="{{ route('lease-contracts.show', $contract) }}" onclick="window.location=this.dataset.href">
-                    <td><span class="badge badge-gold">{{ $contract->agreement_no }}</span></td>
-                    <td>
+                    <td data-label="Agreement No."><span class="badge badge-gold">{{ $contract->agreement_no }}</span></td>
+                    <td data-label="Tenant">
                         @if($contract->tenant)
                             <div style="font-weight:600;">{{ $contract->tenant->name }}</div>
                         @elseif($contract->tenant_name)
@@ -508,15 +466,15 @@
                             <span style="color:var(--text-muted);">—</span>
                         @endif
                     </td>
-                    <td>{{ $contract->lease_start_date ? \Carbon\Carbon::parse($contract->lease_start_date)->format('d M Y') : '—' }}</td>
-                    <td>{{ $contract->lease_end_date ? \Carbon\Carbon::parse($contract->lease_end_date)->format('d M Y') : '—' }}</td>
-                    <td>
+                    <td data-label="Start Date">{{ $contract->lease_start_date ? \Carbon\Carbon::parse($contract->lease_start_date)->format('d M Y') : '—' }}</td>
+                    <td data-label="End Date">{{ $contract->lease_end_date ? \Carbon\Carbon::parse($contract->lease_end_date)->format('d M Y') : '—' }}</td>
+                    <td data-label="Monthly Rent">
                         @if($contract->rent_per_month)
                             <span style="font-family:'Outfit',sans-serif;font-weight:700;">{{ number_format($contract->rent_per_month, 0) }}</span>
                             <span style="font-size:11px;color:var(--text-muted);"> BHD</span>
                         @else —  @endif
                     </td>
-                    <td onclick="event.stopPropagation()">
+                    <td data-label="Status" onclick="event.stopPropagation()">
                         @if($isActive)
                             <span class="badge badge-green">Active</span>
                         @elseif($isExpired)

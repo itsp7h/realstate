@@ -5,25 +5,22 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Bill-wise Statement</h1>
-        <p class="page-header-sub">One row per outstanding bill for a tenant, with due date and days overdue</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
-        @if($tenant)
-        <button type="button" class="btn btn-outline"
-                onclick="openReportPdf('{{ route('reports.bill-wise-statement.pdf', request()->only(['tenant_id','date_from','date_to'])) }}', 'Bill-wise Statement — {{ $tenant->name }}')">
-            <i class="fa-solid fa-eye"></i> Preview
-        </button>
-        <a href="{{ route('reports.bill-wise-statement.pdf', request()->only(['tenant_id','date_from','date_to'])) }}"
-           target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
-        <a href="{{ route('reports.bill-wise-statement.export', request()->only(['tenant_id','date_from','date_to'])) }}"
-           class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
-        @endif
-    </div>
-</div>
+@section('page-title', 'Bill-wise Statement')
+@section('page-subtitle', 'One row per outstanding bill for a tenant, with due date and days overdue')
+@section('page-actions')
+    <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
+    @if($tenant)
+    <button type="button" class="btn btn-outline"
+            onclick="openReportPdf('{{ route('reports.bill-wise-statement.pdf', request()->only(['tenant_id','date_from','date_to'])) }}', 'Bill-wise Statement — {{ $tenant->name }}')">
+        <i class="fa-solid fa-eye"></i> Preview
+    </button>
+    <a href="{{ route('reports.bill-wise-statement.pdf', request()->only(['tenant_id','date_from','date_to'])) }}"
+       target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+    <a href="{{ route('reports.bill-wise-statement.export', request()->only(['tenant_id','date_from','date_to'])) }}"
+       class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
+    @endif
+@endsection
+
 
 <form method="GET" action="{{ route('reports.bill-wise-statement') }}" class="filter-card">
     <div class="filter-bar">

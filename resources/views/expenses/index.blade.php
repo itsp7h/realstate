@@ -6,27 +6,19 @@
 @push('styles')
 <style>
 
-.category-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
-    background: var(--tone-danger-bg); color: var(--tone-danger-fg);
-}
 </style>
 @endpush
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Expenses</h1>
-        <p class="page-header-sub">Log one-off costs against a building or unit</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('expenses.create') }}" class="btn btn-primary">
-            <i class="fa-solid fa-plus"></i> New Expense
-        </a>
-    </div>
-</div>
+@section('page-title', 'Expenses')
+@section('page-subtitle', 'Log one-off costs against a building or unit')
+@section('page-actions')
+    <a href="{{ route('expenses.create') }}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> New Expense
+    </a>
+@endsection
+
 
 
 {{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
@@ -60,7 +52,7 @@
     <div class="m-row-list">
         @forelse($expenses as $expense)
             <a href="{{ route('expenses.edit', $expense) }}" class="m-row-card">
-                <div class="m-row-icon" style="background:var(--tone-danger-bg);color:var(--tone-danger-fg);">
+                <div class="m-row-icon" style="background:var(--ps-danger-bg);color:var(--ps-danger);">
                     <i class="fa-solid fa-receipt"></i>
                 </div>
                 <div style="flex:1;min-width:0;">
@@ -73,10 +65,10 @@
                     </div>
                 </div>
                 <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-                    <div style="font-family:'Outfit',sans-serif;font-size:13.5px;font-weight:800;color:var(--tone-danger-fg);">
+                    <div style="font-family:'Poppins',system-ui,sans-serif;font-size:1rem;font-weight:700;color:var(--ps-danger);">
                         BHD {{ number_format($expense->amount, 3) }}
                     </div>
-                    <span class="m-row-badge" style="background:var(--tone-danger-bg);color:var(--tone-danger-fg);">
+                    <span class="m-row-badge" style="background:var(--ps-danger-bg);color:var(--ps-danger);">
                         {{ $expense->category_label }}
                     </span>
                 </div>
@@ -93,16 +85,25 @@
 
 <div class="stats-grid m-hide-desktop-index">
     <div class="stat-card">
-        <div class="stat-icon gray"><i class="fa-solid fa-receipt"></i></div>
-        <div><div class="stat-val">{{ $stats['total'] }}</div><div class="stat-lbl">Total Entries</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon gray"><i class="fa-solid fa-receipt"></i></span>
+            <span class="stat-lbl">Total Entries</span>
+        </div>
+        <div class="stat-val">{{ $stats['total'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon red"><i class="fa-solid fa-sack-dollar"></i></div>
-        <div><div class="stat-val">{{ number_format($stats['total_amount'], 3) }}</div><div class="stat-lbl">Total (BHD)</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon red"><i class="fa-solid fa-sack-dollar"></i></span>
+            <span class="stat-lbl">Total (BHD)</span>
+        </div>
+        <div class="stat-val">{{ number_format($stats['total_amount'], 3) }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon amber"><i class="fa-solid fa-calendar-days"></i></div>
-        <div><div class="stat-val">{{ number_format($stats['this_month'], 3) }}</div><div class="stat-lbl">This Month (BHD)</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon amber"><i class="fa-solid fa-calendar-days"></i></span>
+            <span class="stat-lbl">This Month (BHD)</span>
+        </div>
+        <div class="stat-val">{{ number_format($stats['this_month'], 3) }}</div>
     </div>
 </div>
 
@@ -172,10 +173,10 @@
                 <tr data-href="{{ route('expenses.edit', $expense) }}" style="cursor:pointer">
                     <td style="white-space:nowrap;font-size:12px">{{ $expense->expense_date->format('d M Y') }}</td>
                     <td>{{ $expense->building->property_name ?? '—' }}</td>
-                    <td style="font-size:12px;color:var(--text-muted)">{{ $expense->unit->unit_name ?? '—' }}</td>
-                    <td><span class="category-badge">{{ $expense->category_label }}</span></td>
+                    <td class="cell-muted">{{ $expense->unit->unit_name ?? '—' }}</td>
+                    <td><span class="badge">{{ $expense->category_label }}</span></td>
                     <td style="font-size:13px">{{ $expense->description ?: '—' }}</td>
-                    <td style="font-size:12px;color:var(--text-muted)">{{ $expense->vendor_name ?: '—' }}</td>
+                    <td class="cell-muted">{{ $expense->vendor_name ?: '—' }}</td>
                     <td style="font-family:'Outfit',sans-serif;font-weight:700">{{ number_format($expense->amount, 3) }}</td>
                     <td>
                         <div style="display:flex;gap:6px;align-items:center" onclick="event.stopPropagation()">
@@ -196,7 +197,11 @@
             </tbody>
         </table>
     </div>
-    <div style="padding:16px 20px;border-top:1px solid var(--card-border)">
+    <div class="table-footer">
+        <div class="result-count">
+            Showing <strong>{{ $expenses->firstItem() ?? 0 }}–{{ $expenses->lastItem() ?? 0 }}</strong>
+            of <strong>{{ number_format($expenses->total()) }}</strong> expenses
+        </div>
         {{ $expenses->links() }}
     </div>
     @endif

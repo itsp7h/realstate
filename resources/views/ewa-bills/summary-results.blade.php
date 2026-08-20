@@ -5,52 +5,53 @@
 
 @push('styles')
 <style>
-.rt-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap;
-}
-.rt-badge.actual    { background: var(--tone-success-bg); color: var(--tone-success-fg); }
-.rt-badge.estimated { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
 
-.remark-note { font-size: 11px; color: var(--text-muted); margin-top: 3px; max-width: 220px; }
-.error-note  { font-size: 11px; color: var(--tone-danger-fg); margin-top: 3px; max-width: 220px; }
+.remark-note { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 3px; max-width: 220px; }
+.error-note  { font-size: var(--fs-xs); color: var(--tone-danger-fg); margin-top: 3px; max-width: 220px; }
 
 /* ── TABS ──────────────────────────────────────────────────── */
-.tab-bar { display: flex; gap: 4px; border-bottom: 2px solid var(--card-border); margin-bottom: 20px; }
 </style>
 @endpush
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">EWA Summary Results</h1>
-        <p class="page-header-sub">{{ count($rows) }} file(s) processed from this batch</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('ewa-bills.summary.export', $batch) }}" class="btn btn-outline">
-            <i class="fa-solid fa-file-excel"></i> Download Excel
-        </a>
-        <a href="{{ route('ewa-bills.summary.create') }}" class="btn btn-primary">
-            <i class="fa-solid fa-rotate"></i> Process Another Batch
-        </a>
-    </div>
-</div>
+@section('page-title', 'EWA Summary Results')
+@section('page-subtitle')
+    {{ count($rows) }} file(s) processed from this batch
+@endsection
+@section('page-actions')
+    <a href="{{ route('ewa-bills.summary.export', $batch) }}" class="btn btn-outline">
+        <i class="fa-solid fa-file-excel"></i> Download Excel
+    </a>
+    <a href="{{ route('ewa-bills.summary.create') }}" class="btn btn-primary">
+        <i class="fa-solid fa-rotate"></i> Process Another Batch
+    </a>
+@endsection
+
 
 @include('ewa-bills._tabs')
 
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-icon teal"><i class="fa-solid fa-file-invoice"></i></div>
-        <div><div class="stat-val">{{ count($rows) }}</div><div class="stat-lbl">Total Files</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon teal"><i class="fa-solid fa-file-invoice"></i></span>
+            <span class="stat-lbl">Total Files</span>
+        </div>
+        <div class="stat-val">{{ count($rows) }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
-        <div><div class="stat-val">{{ $succeeded }}</div><div class="stat-lbl">Saved</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon green"><i class="fa-solid fa-circle-check"></i></span>
+            <span class="stat-lbl">Saved</span>
+        </div>
+        <div class="stat-val">{{ $succeeded }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
-        <div><div class="stat-val">{{ $failed }}</div><div class="stat-lbl">Failed</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon red"><i class="fa-solid fa-circle-xmark"></i></span>
+            <span class="stat-lbl">Failed</span>
+        </div>
+        <div class="stat-val">{{ $failed }}</div>
     </div>
 </div>
 
@@ -81,8 +82,8 @@
             <tbody>
                 @foreach($rows as $row)
                 <tr @if(in_array($row['status'], ['created', 'updated'])) data-href="{{ route('ewa-bills.show', $row['bill_id']) }}" style="cursor:pointer" @endif>
-                    <td style="font-size:11px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $row['file'] }}</td>
-                    <td>
+                    <td data-label="File" style="font-size:11px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $row['file'] }}</td>
+                    <td data-label="Result">
                         <span class="status-badge {{ $row['status'] }}">
                             <i class="fa-solid fa-circle" style="font-size:5px"></i>
                             {{ ucfirst($row['status']) }}
@@ -93,20 +94,20 @@
                             <div class="remark-note">{{ $row['remarks'] }}</div>
                         @endif
                     </td>
-                    <td style="font-size:12px;max-width:170px">
+                    <td data-label="Property" style="font-size:12px;max-width:170px">
                         {{ $row['property_name'] ?: '—' }}
                         @if($row['address'] ?? null)
                             <div style="font-size:10px;color:var(--text-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ $row['address'] }}">{{ $row['address'] }}</div>
                         @endif
                     </td>
-                    <td style="font-size:12px">{{ $row['unit'] ?: '—' }}</td>
-                    <td>{{ $row['tenant_name'] ?: '—' }}</td>
-                    <td style="font-size:12px;color:var(--text-muted)">{{ $row['ewa_account_number'] ?: '—' }}</td>
-                    <td style="font-size:11px;white-space:nowrap">
+                    <td data-label="Flat No." style="font-size:12px">{{ $row['unit'] ?: '—' }}</td>
+                    <td data-label="Tenant">{{ $row['tenant_name'] ?: '—' }}</td>
+                    <td data-label="Account No." class="cell-muted">{{ $row['ewa_account_number'] ?: '—' }}</td>
+                    <td data-label="Previous Reading" style="font-size:11px;white-space:nowrap">
                         @if($row['previous_reading_date'])
                             <div style="color:var(--text-muted)">{{ $row['previous_reading_date'] }}</div>
                             @if($row['previous_reading_type'] ?? null)
-                                <span class="rt-badge {{ $row['previous_reading_type'] }}">
+                                <span class="status-badge {{ $row['previous_reading_type'] }}">
                                     <i class="fa-solid fa-circle" style="font-size:5px"></i>
                                     {{ ucfirst($row['previous_reading_type']) }}
                                 </span>
@@ -115,11 +116,11 @@
                             —
                         @endif
                     </td>
-                    <td style="font-size:11px;white-space:nowrap">
+                    <td data-label="Current Reading" style="font-size:11px;white-space:nowrap">
                         @if($row['current_reading_date'])
                             <div style="color:var(--text-muted)">{{ $row['current_reading_date'] }}</div>
                             @if($row['current_reading_type'] ?? null)
-                                <span class="rt-badge {{ $row['current_reading_type'] }}">
+                                <span class="status-badge {{ $row['current_reading_type'] }}">
                                     <i class="fa-solid fa-circle" style="font-size:5px"></i>
                                     {{ ucfirst($row['current_reading_type']) }}
                                 </span>
@@ -128,15 +129,15 @@
                             —
                         @endif
                     </td>
-                    <td class="amount-col">{{ $row['elec_charges'] !== null ? number_format($row['elec_charges'], 3) : '—' }}</td>
-                    <td class="amount-col">{{ $row['water_charges'] !== null ? number_format($row['water_charges'], 3) : '—' }}</td>
-                    <td class="amount-col">{{ $row['total_ewa'] !== null ? number_format($row['total_ewa'], 3) : '—' }}</td>
-                    <td class="amount-col">{{ $row['ewa_cap'] !== null ? number_format($row['ewa_cap'], 3) : '—' }}</td>
-                    <td class="amount-col">{{ $row['payable_by_tenant'] !== null ? number_format($row['payable_by_tenant'], 3) : '—' }}</td>
-                    <td class="amount-col">{{ $row['municipality_fee'] !== null ? number_format($row['municipality_fee'], 3) : '—' }}</td>
-                    <td class="amount-col">{{ $row['sanitary_fee'] !== null ? number_format($row['sanitary_fee'], 3) : '—' }}</td>
-                    <td class="amount-col">{{ $row['arrears'] !== null ? number_format($row['arrears'], 3) : '—' }}</td>
-                    <td class="amount-col">{{ $row['payable_incl_arrears'] !== null ? number_format($row['payable_incl_arrears'], 3) : '—' }}</td>
+                    <td data-label="Electricity" class="amount-col">{{ $row['elec_charges'] !== null ? number_format($row['elec_charges'], 3) : '—' }}</td>
+                    <td data-label="Water" class="amount-col">{{ $row['water_charges'] !== null ? number_format($row['water_charges'], 3) : '—' }}</td>
+                    <td data-label="Total EWA" class="amount-col">{{ $row['total_ewa'] !== null ? number_format($row['total_ewa'], 3) : '—' }}</td>
+                    <td data-label="Cap" class="amount-col">{{ $row['ewa_cap'] !== null ? number_format($row['ewa_cap'], 3) : '—' }}</td>
+                    <td data-label="Payable by Tenant" class="amount-col">{{ $row['payable_by_tenant'] !== null ? number_format($row['payable_by_tenant'], 3) : '—' }}</td>
+                    <td data-label="Muni. Tax" class="amount-col">{{ $row['municipality_fee'] !== null ? number_format($row['municipality_fee'], 3) : '—' }}</td>
+                    <td data-label="Sanitary Fee" class="amount-col">{{ $row['sanitary_fee'] !== null ? number_format($row['sanitary_fee'], 3) : '—' }}</td>
+                    <td data-label="Arrears" class="amount-col">{{ $row['arrears'] !== null ? number_format($row['arrears'], 3) : '—' }}</td>
+                    <td data-label="Total Payable" class="amount-col">{{ $row['payable_incl_arrears'] !== null ? number_format($row['payable_incl_arrears'], 3) : '—' }}</td>
                 </tr>
                 @endforeach
             </tbody>

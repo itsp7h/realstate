@@ -3,6 +3,20 @@
 @section('title', $record ? 'Edit Maintenance Request' : 'New Maintenance Request')
 @section('topbar-title', $record ? 'Edit Maintenance Request' : 'New Maintenance Request')
 
+@section('page-breadcrumb')
+    <a href="{{ route('maintenance.index') }}">Maintenance</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>{{ $record ? $record->job_order : 'New Request' }}</span>
+@endsection
+@section('page-title')
+    {{ $record ? 'Edit Request' : 'New Maintenance Request' }}
+@endsection
+@section('page-actions')
+    <a href="{{ route('maintenance.index') }}" class="btn btn-outline">
+        <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+@endsection
+
 @push('styles')
 <style>
 /* ── SECTION CARDS ───────────────────────────────────────── */
@@ -20,26 +34,19 @@
 
 /* ── JOB LINES TABLE ─────────────────────────────────────── */
 .job-lines-table { width: 100%; border-collapse: collapse; }
-.job-lines-table th {
-    padding: 9px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--text-muted); background: var(--page-bg);
-    border-bottom: 1px solid var(--card-border); text-align: left;
-}
-.job-lines-table td { padding: 8px 6px; border-bottom: 1px solid var(--tone-neutral-border); vertical-align: top; }
-.job-lines-table tr:last-child td { border-bottom: none; }
-.job-lines-table input, .job-lines-table textarea {
-    width: 100%; padding: 7px 10px; font-size: 13px;
-    border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-    background: var(--input-bg); color: var(--text-primary); outline: none;
-    transition: border-color 0.18s; font-family: 'Plus Jakarta Sans', sans-serif;
-}
-.job-lines-table input:focus, .job-lines-table textarea:focus { border-color: var(--accent); }
-.job-lines-table textarea { resize: vertical; min-height: 60px; }
 .remove-line-btn {
-    background: none; border: none; color: var(--tone-danger-fg); cursor: pointer;
-    font-size: 14px; padding: 6px; border-radius: 6px; transition: background 0.15s;
+    position: relative; background: none; border: none; color: var(--tone-danger-fg); cursor: pointer;
+    font-size: var(--fs-base); padding: 6px; border-radius: 6px; transition: background 0.15s;
 }
 .remove-line-btn:hover { background: var(--tone-danger-bg); }
+@media (max-width: 768px) {
+    /* Invisible 44px hit area — the visible icon stays compact in the table row. */
+    .remove-line-btn::after {
+        content: ''; position: absolute; inset: 50% auto auto 50%;
+        width: var(--h-control-lg); height: var(--h-control-lg);
+        transform: translate(-50%, -50%);
+    }
+}
 
 /* ── QUOTATION INLINE ATTACHMENT ─────────────────────────── */
 .quot-input-wrap { position: relative; }
@@ -49,39 +56,24 @@
     width: 34px; display: flex; align-items: center; justify-content: center;
     background: none; border: none; border-left: 1.5px solid var(--input-border);
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    color: var(--text-muted); cursor: pointer; font-size: 12px;
+    color: var(--text-muted); cursor: pointer; font-size: var(--fs-sm);
     transition: color 0.15s, background 0.15s;
 }
 .quot-clip-btn:hover { color: var(--accent); background: var(--accent-dim); }
 .quot-clip-btn.has-file { color: var(--accent); background: var(--accent-dim); }
-.quot-file-pill {
-    display: none; align-items: center; gap: 5px;
-    margin-top: 5px; padding: 3px 8px 3px 6px;
-    background: var(--accent-dim); border-radius: 20px;
-    font-size: 11px; font-weight: 600; color: var(--accent);
-    max-width: 100%; overflow: hidden;
-}
-.quot-file-pill.show { display: flex; }
-.quot-file-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
-.quot-file-pill button {
-    background: none; border: none; color: var(--accent); cursor: pointer;
-    font-size: 11px; padding: 0; line-height: 1; flex-shrink: 0; opacity: .7;
-    transition: opacity .15s;
-}
-.quot-file-pill button:hover { opacity: 1; }
 .quot-existing-file {
     display: flex; align-items: center; gap: 6px; margin-top: 5px;
     padding: 3px 8px 3px 6px; background: var(--accent-dim);
-    border-radius: 20px; font-size: 11px; font-weight: 600; max-width: 100%;
+    border-radius: var(--radius-pill); font-size: var(--fs-xs); font-weight: 600; max-width: 100%;
 }
 .quot-existing-file a { color: var(--accent); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
 .quot-existing-file a:hover { text-decoration: underline; }
 .quot-remove-label { display: flex; align-items: center; gap: 4px; color: var(--tone-danger-fg); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
-.quot-remove-label input { accent-color: #DC2626; }
+.quot-remove-label input { accent-color: var(--tone-danger-fg); }
 
 /* ── READONLY NOTE ───────────────────────────────────────── */
 .section-note {
-    font-size: 11px; color: var(--text-muted);
+    font-size: var(--fs-xs); color: var(--text-muted);
     background: var(--page-bg); border: 1px solid var(--card-border);
     border-radius: var(--radius-sm); padding: 8px 12px; margin-bottom: 14px;
     display: flex; gap: 6px; align-items: center;
@@ -91,21 +83,6 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ route('maintenance.index') }}">Maintenance</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>{{ $record ? $record->job_order : 'New Request' }}</span>
-        </div>
-        <h1 class="page-header-title">{{ $record ? 'Edit Request' : 'New Maintenance Request' }}</h1>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('maintenance.index') }}" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back
-        </a>
-    </div>
-</div>
 
 @if($errors->any())
 <div class="alert alert-danger" style="margin-bottom:20px">
@@ -215,7 +192,7 @@
         </div>
         <div class="card-body" style="padding:0">
             <div class="table-wrap">
-                <table class="job-lines-table">
+                <table class="is-editable">
                     <thead>
                         <tr>
                             <th style="width:28%">Location</th>
@@ -228,11 +205,11 @@
                         @php $jobLines = old('job_lines', $record?->job_lines ?? [['location'=>'','description'=>'','supervisor_comment'=>'']]); @endphp
                         @foreach($jobLines as $i => $line)
                         <tr class="job-line-row">
-                            <td><input type="text" name="job_lines[{{ $i }}][location]" value="{{ $line['location'] ?? '' }}" placeholder="e.g. Kitchen, Bathroom"></td>
-                            <td><textarea name="job_lines[{{ $i }}][description]" placeholder="Describe the issue or work needed">{{ $line['description'] ?? '' }}</textarea></td>
-                            <td><textarea name="job_lines[{{ $i }}][supervisor_comment]" placeholder="Supervisor notes">{{ $line['supervisor_comment'] ?? '' }}</textarea></td>
+                            <td data-label="Location"><input type="text" name="job_lines[{{ $i }}][location]" value="{{ $line['location'] ?? '' }}" placeholder="e.g. Kitchen, Bathroom"></td>
+                            <td data-label="Description of Work"><textarea name="job_lines[{{ $i }}][description]" placeholder="Describe the issue or work needed">{{ $line['description'] ?? '' }}</textarea></td>
+                            <td data-label="Supervisor Comment"><textarea name="job_lines[{{ $i }}][supervisor_comment]" placeholder="Supervisor notes">{{ $line['supervisor_comment'] ?? '' }}</textarea></td>
                             <td style="text-align:center">
-                                <button type="button" class="remove-line-btn" onclick="removeJobLine(this)" title="Remove">
+                                <button type="button" class="remove-line-btn" onclick="removeJobLine(this)" title="Remove" aria-label="Remove job line">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </td>
@@ -302,7 +279,7 @@
                         </label>
                     </div>
                     @endif
-                    <div class="quot-file-pill" id="quot_pill_{{ $n }}">
+                    <div class="file-chip" id="quot_pill_{{ $n }}">
                         <i class="fa-solid fa-paperclip" style="flex-shrink:0;font-size:10px"></i>
                         <span id="quot_fname_{{ $n }}"></span>
                         <button type="button" data-index="{{ $n }}" class="quot-pill-clear" title="Remove">
@@ -367,7 +344,7 @@ function addJobLine() {
         <td><textarea name="job_lines[${i}][description]" placeholder="Describe the issue or work needed"></textarea></td>
         <td><textarea name="job_lines[${i}][supervisor_comment]" placeholder="Supervisor notes"></textarea></td>
         <td style="text-align:center">
-            <button type="button" class="remove-line-btn" onclick="removeJobLine(this)" title="Remove">
+            <button type="button" class="remove-line-btn" onclick="removeJobLine(this)" title="Remove" aria-label="Remove job line">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </td>

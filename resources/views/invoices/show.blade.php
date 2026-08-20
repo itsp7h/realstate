@@ -3,111 +3,103 @@
 @section('title', $invoice->invoice_number)
 @section('topbar-title', 'Invoices')
 
+@section('page-title')
+    {{ $invoice->invoice_number }}
+@endsection
+@section('page-subtitle')
+    {{ $invoice->tenant_name }} &mdash; {{ $invoice->property_name }}{{ $invoice->unit ? ' / '.$invoice->unit : '' }}
+@endsection
+@section('page-actions')
+    <a href="{{ route('invoices.index') }}" class="btn btn-outline">
+        <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+    <button type="button" class="btn btn-outline"
+            onclick="openInvPdf('{{ route('invoices.pdf.preview', $invoice) }}', '{{ $invoice->invoice_number }}', '{{ route('invoices.pdf', $invoice) }}')">
+        <i class="fa-solid fa-file-pdf"></i> Preview PDF
+    </button>
+    <a href="{{ route('invoices.pdf', $invoice) }}" class="btn btn-outline" download>
+        <i class="fa-solid fa-download"></i> Download
+    </a>
+    @if($invoice->status !== 'paid' && $invoice->status !== 'cancelled')
+    <a href="{{ route('invoices.edit', $invoice) }}" class="btn btn-outline">
+        <i class="fa-solid fa-pen"></i> Edit
+    </a>
+    @endif
+    <form method="POST" action="{{ route('invoices.destroy', $invoice) }}"
+          onsubmit="return confirm('Delete invoice {{ $invoice->invoice_number }}? This cannot be undone.')">
+        @csrf @method('DELETE')
+        <button type="submit" class="btn btn-danger btn-sm">
+            <i class="fa-solid fa-trash"></i> Delete
+        </button>
+    </form>
+@endsection
+
 @push('styles')
 <style>
 .inv-number {
     font-family: 'Outfit', sans-serif; font-size: 28px; font-weight: 800;
     color: var(--accent); letter-spacing: -0.5px;
 }
-.inv-meta { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px 24px; margin-top: 20px; }
-.inv-meta-item span { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 3px; }
-.inv-meta-item strong { font-size: 14px; color: var(--text-primary); }
+.inv-meta { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px 24px; margin-top: var(--sp-5); }
+.inv-meta-item span { font-size: var(--fs-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 3px; }
+.inv-meta-item strong { font-size: var(--fs-base); color: var(--text-primary); }
 
-.amount-cell.balance strong { color: {{ $invoice->balance_due > 0 && $invoice->status !== 'cancelled' ? '#DC2626' : '#059669' }}; }
+.amount-cell.balance strong { color: {{ $invoice->balance_due > 0 && $invoice->status !== 'cancelled' ? 'var(--tone-danger-fg)' : 'var(--tone-success-fg)' }}; }
 
-.type-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
-}
-.type-badge.rent      { background: var(--tone-info-bg); color: var(--tone-info-fg); }
-.type-badge.utilities { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
-.type-badge.other     { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
 
 .notes-block {
     padding: 14px 18px; background: var(--page-bg);
-    border-radius: var(--radius-sm); font-size: 13px; color: var(--text-primary);
+    border-radius: var(--radius-sm); font-size: var(--fs-base); color: var(--text-primary);
     white-space: pre-wrap; word-break: break-word; line-height: 1.6;
 }
 
 /* Credit / Debit notes */
 .note-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--card-border); }
 .note-row:last-child { border-bottom: none; }
-.note-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.note-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: var(--fs-base); }
 .note-icon.credit { background: var(--tone-success-bg); color: var(--tone-success-fg); }
 .note-icon.debit  { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
 .note-info { flex: 1; min-width: 0; }
-.note-num { font-size: 13px; font-weight: 700; color: var(--text-primary); font-family: 'Outfit',sans-serif; }
-.note-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-.note-amt { font-family: 'Outfit',sans-serif; font-size: 16px; font-weight: 800; white-space: nowrap; }
+.note-num { font-size: var(--fs-base); font-weight: 700; color: var(--text-primary); font-family: 'Outfit',sans-serif; }
+.note-sub { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 1px; }
+.note-amt { font-family: 'Outfit',sans-serif; font-size: var(--fs-md); font-weight: 800; white-space: nowrap; }
 .note-amt.credit { color: var(--tone-success-fg); }
 .note-amt.debit  { color: var(--tone-warning-fg); }
-.note-mini-stat { font-size: 11px; color: var(--text-muted); }
+.note-mini-stat { font-size: var(--fs-xs); color: var(--text-muted); }
 .note-mini-stat strong { font-family: 'Outfit',sans-serif; font-weight: 700; }
 
-.note-form-card { margin-top: 4px; display: none; }
+.note-form-card { margin-top: var(--sp-1); display: none; }
 .note-form-card.open { display: block; }
 .note-form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: end; }
-@media (max-width: 820px) { .note-form-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .note-form-grid { grid-template-columns: 1fr; } }
 .note-form-grid .form-group { display: flex; flex-direction: column; gap: 5px; grid-column: span 1; }
 .note-form-grid .reason-group { grid-column: 1 / -1; }
-.note-form-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.note-form-label { font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .note-form-control {
-    padding: 8px 12px; font-size: 13px; border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
+    padding: 8px 12px; font-size: var(--fs-base); border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
     background: var(--input-bg); color: var(--text-primary); outline: none; width: 100%; box-sizing: border-box;
 }
 .note-form-control:focus { border-color: var(--accent); }
 .note-form-control.is-invalid { border-color: var(--tone-danger-border); }
-.note-invalid-feedback { font-size: 11px; color: var(--tone-danger-fg); margin-top: 3px; }
+.note-invalid-feedback { font-size: var(--fs-xs); color: var(--tone-danger-fg); margin-top: 3px; }
 
 /* Payments */
 .payment-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--card-border); }
 .payment-row:last-child { border-bottom: none; }
-.payment-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); flex-shrink: 0; background: var(--tone-success-bg); color: var(--tone-success-fg); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.payment-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); flex-shrink: 0; background: var(--tone-success-bg); color: var(--tone-success-fg); display: flex; align-items: center; justify-content: center; font-size: var(--fs-base); }
 .payment-info { flex: 1; min-width: 0; }
-.payment-num { font-size: 13px; font-weight: 700; color: var(--text-primary); font-family: 'Outfit',sans-serif; }
-.payment-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-.payment-amt { font-family: 'Outfit',sans-serif; font-size: 16px; font-weight: 800; color: var(--tone-success-fg); white-space: nowrap; }
+.payment-num { font-size: var(--fs-base); font-weight: 700; color: var(--text-primary); font-family: 'Outfit',sans-serif; }
+.payment-sub { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 1px; }
+.payment-amt { font-family: 'Outfit',sans-serif; font-size: var(--fs-md); font-weight: 800; color: var(--tone-success-fg); white-space: nowrap; }
 .pay-amount-wrap { position: relative; }
 .pay-amount-wrap input { padding-right: 46px; }
-.pay-amount-wrap::after { content: 'BHD'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 700; color: var(--text-muted); pointer-events: none; }
+.pay-amount-wrap::after { content: 'BHD'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: var(--fs-xs); font-weight: 700; color: var(--text-muted); pointer-events: none; }
 
 </style>
 @endpush
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">{{ $invoice->invoice_number }}</h1>
-        <p class="page-header-sub">
-            {{ $invoice->tenant_name }} &mdash; {{ $invoice->property_name }}{{ $invoice->unit ? ' / '.$invoice->unit : '' }}
-        </p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('invoices.index') }}" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back
-        </a>
-        <button type="button" class="btn btn-outline"
-                onclick="openInvPdf('{{ route('invoices.pdf.preview', $invoice) }}', '{{ $invoice->invoice_number }}', '{{ route('invoices.pdf', $invoice) }}')">
-            <i class="fa-solid fa-file-pdf"></i> Preview PDF
-        </button>
-        <a href="{{ route('invoices.pdf', $invoice) }}" class="btn btn-outline" download>
-            <i class="fa-solid fa-download"></i> Download
-        </a>
-        @if($invoice->status !== 'paid' && $invoice->status !== 'cancelled')
-        <a href="{{ route('invoices.edit', $invoice) }}" class="btn btn-outline">
-            <i class="fa-solid fa-pen"></i> Edit
-        </a>
-        @endif
-        <form method="POST" action="{{ route('invoices.destroy', $invoice) }}"
-              onsubmit="return confirm('Delete invoice {{ $invoice->invoice_number }}? This cannot be undone.')">
-            @csrf @method('DELETE')
-            <button type="submit" class="btn btn-danger btn-sm">
-                <i class="fa-solid fa-trash"></i> Delete
-            </button>
-        </form>
-    </div>
-</div>
 
 <div class="card">
     <div class="card-header">
@@ -118,7 +110,7 @@
                     <i class="fa-solid fa-circle" style="font-size:5px"></i>
                     {{ $invoice->status_label }}
                 </span>
-                <span class="type-badge {{ $invoice->type }}">{{ $invoice->type_label }}</span>
+                <span class="status-badge {{ $invoice->type }}">{{ $invoice->type_label }}</span>
             </div>
         </div>
         <div style="text-align:right;font-size:12px;color:var(--text-muted)">
@@ -166,34 +158,36 @@
         @if(!empty($invoice->lines))
         <div style="margin-top:20px">
             <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px">Rental Lines</div>
-            <table style="width:100%;border-collapse:collapse;font-size:13px">
-                <thead>
-                    <tr style="background:var(--page-bg)">
-                        <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Property</th>
-                        <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Unit</th>
-                        <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Lease No.</th>
-                        <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Period</th>
-                        <th style="text-align:right;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Rent (BHD)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($invoice->lines as $line)
-                    <tr style="border-bottom:1px solid var(--card-border)">
-                        <td style="padding:8px 10px">{{ $line['property_name'] ?? '—' }}</td>
-                        <td style="padding:8px 10px">{{ !empty($line['unit'] ?? null) ? $line['unit'] : '—' }}</td>
-                        <td style="padding:8px 10px">{{ !empty($line['lease_agreement_no'] ?? null) ? $line['lease_agreement_no'] : '—' }}</td>
-                        <td style="padding:8px 10px">
-                            @if(!empty($line['rental_period_start']))
-                                {{ \Illuminate\Support\Carbon::parse($line['rental_period_start'])->format('d M Y') }} &rarr; {{ !empty($line['rental_period_end']) ? \Illuminate\Support\Carbon::parse($line['rental_period_end'])->format('d M Y') : '—' }}
-                            @else
-                                —
-                            @endif
-                        </td>
-                        <td style="padding:8px 10px;text-align:right;font-family:'Outfit',sans-serif;font-weight:700">{{ number_format($line['amount'] ?? 0, 3) }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+            <div class="table-wrap">
+                <table class="is-compact">
+                    <thead>
+                        <tr style="background:var(--page-bg)">
+                            <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Property</th>
+                            <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Unit</th>
+                            <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Lease No.</th>
+                            <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Period</th>
+                            <th style="text-align:right;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Rent (BHD)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($invoice->lines as $line)
+                        <tr style="border-bottom:1px solid var(--card-border)">
+                            <td data-label="Property" style="padding:8px 10px">{{ $line['property_name'] ?? '—' }}</td>
+                            <td data-label="Unit" style="padding:8px 10px">{{ !empty($line['unit'] ?? null) ? $line['unit'] : '—' }}</td>
+                            <td data-label="Lease No." style="padding:8px 10px">{{ !empty($line['lease_agreement_no'] ?? null) ? $line['lease_agreement_no'] : '—' }}</td>
+                            <td data-label="Period" style="padding:8px 10px">
+                                @if(!empty($line['rental_period_start']))
+                                    {{ \Illuminate\Support\Carbon::parse($line['rental_period_start'])->format('d M Y') }} &rarr; {{ !empty($line['rental_period_end']) ? \Illuminate\Support\Carbon::parse($line['rental_period_end'])->format('d M Y') : '—' }}
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td data-label="Rent (BHD)" style="padding:8px 10px;text-align:right;font-family:'Outfit',sans-serif;font-weight:700">{{ number_format($line['amount'] ?? 0, 3) }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
         @endif
 

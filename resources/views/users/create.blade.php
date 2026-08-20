@@ -8,7 +8,7 @@
 
 .form-label .required { color: var(--tone-danger-fg); margin-left: 2px; }
 .form-control {
-    padding: 9px 13px; font-size: 13px;
+    padding: 9px 13px; font-size: var(--fs-base);
     border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
     background: var(--input-bg); color: var(--text-primary); outline: none;
     transition: border-color 0.18s; width: 100%; box-sizing: border-box;
@@ -16,22 +16,22 @@
 }
 .form-control:focus { border-color: var(--accent); }
 .form-control.is-invalid { border-color: var(--tone-danger-border); }
-.form-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
-.form-actions { display: flex; gap: 10px; align-items: center; justify-content: flex-end; padding-top: 6px; }
+.form-hint { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 3px; }
 </style>
 @endpush
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">{{ $record ? 'Edit User' : 'New User' }}</h1>
-        <p class="page-header-sub">{{ $record ? 'Update this account\'s details or role' : 'Create a new account that can sign in to this system' }}</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('users.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
-    </div>
-</div>
+@section('page-title')
+    {{ $record ? 'Edit User' : 'New User' }}
+@endsection
+@section('page-subtitle')
+    {{ $record ? 'Update this account\'s details or role' : 'Create a new account that can sign in to this system' }}
+@endsection
+@section('page-actions')
+    <a href="{{ route('users.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
+@endsection
+
 
 <form method="POST" action="{{ $record ? route('users.update', $record) : route('users.store') }}" novalidate>
     @csrf

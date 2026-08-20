@@ -5,35 +5,19 @@
 
 @push('styles')
 <style>
-    .tab-btn .tab-count {
-        background: var(--accent-dim);
-        color: var(--accent);
-        font-size: 10px;
-        font-weight: 700;
-        padding: 1px 6px;
-        border-radius: 20px;
-    }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    .fc-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
-    .fc-meta i { width: 16px; text-align: center; color: var(--text-muted); font-size: 12px; }
+    .fc-meta { display: flex; align-items: center; gap: 8px; font-size: var(--fs-base); color: var(--text-secondary); }
+    .fc-meta i { width: 16px; text-align: center; color: var(--text-muted); font-size: var(--fs-sm); }
 </style>
 @endpush
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Form / Template Management</span>
-        </div>
-        <h1 class="page-header-title">Form / Template Management</h1>
-        <p class="page-header-sub">Configure which fields appear in forms and export templates</p>
-    </div>
-</div>
+@section('page-title', 'Form / Template Management')
+@section('page-subtitle', 'Configure which fields appear in forms and export templates')
+
 
 {{-- TABS --}}
 <div class="tab-bar">

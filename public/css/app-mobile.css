@@ -62,11 +62,39 @@
 /* ── Mobile app system (≤768px) ───────────────────────────────────────────── */
 @media (max-width: 768px) {
     #menuBtn { display: flex !important; }
-    body { font-family: 'Poppins', sans-serif; }
+    body { font-family: 'Poppins', system-ui, sans-serif; }
     body.is-dashboard .topbar { display: none; }
     body.is-dashboard .page-content,
     body.is-mobile-screen .page-content { padding: 0 0 calc(78px + env(safe-area-inset-bottom)); }
     body.is-pushed-screen .topbar { display: none; }
+
+    /* The lift/sink on the primary button and the FAB is motion, so
+       it goes away with the rest of it under reduced-motion — the
+       press still reads through the shadow change. */
+    @media (prefers-reduced-motion: reduce) {
+        .m-action-btn.primary:hover, .m-action-btn.primary:active,
+        .pm-tenant-actions .pm-btn-gold:hover, .pm-tenant-actions .pm-btn-gold:active {
+            transform: none;
+        }
+    }
+
+    /* ── Promoseven foundations ─────────────────────────────────
+         The palette itself is declared further down, next to the
+         legacy aliases it feeds; custom properties resolve at
+         computed-value time, so using them up here is fine. ── */
+    body.is-dashboard,
+    body.is-mobile-screen,
+    body.is-pushed-screen { background: var(--ps-bg); }
+
+    /* One focus ring for the whole mobile app. Drawn as an outline
+       rather than a box-shadow so it cannot wipe out the shadow an
+       element already carries (the primary button, the FAB, cards);
+       the two components that want the ring *as* a shadow opt in
+       individually. */
+    :is(a, button, input, select, textarea, summary, [role="button"], [tabindex]):focus-visible {
+        outline: 3px solid var(--ps-gold-ring);
+        outline-offset: 2px;
+    }
 
     /* ── Touch/scroll physics — the tells that a page is "just a
          website" rather than an app. Kill the default blue/gray tap
@@ -115,19 +143,19 @@
     body.is-pushed-screen .pm-push-header {
         display: flex; align-items: center; gap: 12px;
         padding: calc(14px + env(safe-area-inset-top)) 18px 12px;
-        background: var(--pm-surface); border-bottom: 1px solid var(--pm-border);
-        box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        background: var(--ps-surface); border-bottom: 1px solid var(--ps-border-soft);
+        box-shadow: 0 1px 2px rgba(30,44,79,.04);
     }
     .pm-push-back {
-        flex: none; width: 34px; height: 34px; border-radius: 8px;
-        border: 1px solid var(--pm-border); background: var(--pm-surface); color: var(--pm-text-2);
-        font-size: 14px; cursor: pointer; text-decoration: none;
+        flex: none; width: var(--ps-touch); height: var(--ps-touch); border-radius: var(--ps-r-btn);
+        border: 1px solid var(--ps-border); background: var(--ps-surface); color: var(--ps-navy);
+        font-size: 15px; cursor: pointer; text-decoration: none;
         display: flex; align-items: center; justify-content: center;
     }
 
     .sidebar {
         width: clamp(260px, 84vw, 300px);
-        background: var(--m-navy);
+        background: var(--ps-navy-deep);
         transition: transform var(--duration-sheet) var(--ease-spring);
         box-shadow: none;
     }
@@ -138,72 +166,193 @@
         padding: 24px 20px 18px; border-bottom: 1px solid var(--m-navy-line);
     }
     .logo-mobile-tile {
-        width: 40px; height: 40px; border-radius: 11px;
-        background: var(--m-gold); color: var(--m-navy);
+        width: 52px; height: 52px; border-radius: 14px;
+        background: var(--ps-btn-grad); color: var(--ps-navy);
         display: flex; align-items: center; justify-content: center;
-        font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 15px;
-        box-shadow: 0 0 20px rgba(231,178,102,.25); flex-shrink: 0;
+        font-family: 'Poppins', system-ui, sans-serif; font-weight: 700; font-size: 1.125rem;
+        box-shadow: var(--ps-btn-shadow); flex-shrink: 0;
+        animation: shell-brand-mark-in var(--dur-slow) var(--ease-spring);
+        transition: transform var(--dur-fast) var(--ease-out);
     }
-    .logo-mobile-text strong { display: block; color: #fff; font-weight: 700; font-size: 14px; }
-    .logo-mobile-text span { color: var(--m-navy-text); font-size: 9.5px; letter-spacing: 1.2px; font-weight: 600; }
+    .logo-mobile-tile img { width: 100%; height: 100%; object-fit: contain; border-radius: inherit; }
+    .logo-mobile:active .logo-mobile-tile { transform: scale(.92); }
+    @keyframes shell-brand-mark-in {
+        from { opacity: 0; transform: scale(.55) rotate(-10deg); }
+        to   { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+    .logo-mobile-text strong { display: block; color: var(--ps-ink-inverse); font-weight: 600; font-size: .9375rem; }
+    .logo-mobile-text span { color: var(--ps-navy-text); font-size: .6rem; letter-spacing: .18em; text-transform: uppercase; font-weight: 600; }
 
-    .sidebar .nav-item { border-radius: 10px; font-family: 'Poppins', sans-serif; min-height: 44px; }
+    .sidebar .nav-item { border-radius: 10px; font-family: 'Poppins', system-ui, sans-serif; min-height: 44px; }
     .sidebar .nav-item.active .nav-icon { color: var(--m-gold); }
     .sidebar .nav-item.active::before { background: var(--m-gold); }
 
     /* ── Shared mobile screen components (list pages) ───────
          Reused across Buildings/Floors/Units/Tenants/Maintenance/
          Invoices/Reports so each page doesn't repeat this CSS. ── */
-    .m-screen { font-family: 'Poppins', sans-serif; color: var(--m-ink); padding: 18px 18px calc(28px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; }
-
-    .m-action-row { display: flex; gap: 10px; }
-    .m-action-btn {
-        flex: 1; height: 46px; border-radius: var(--m-r-btn); font-weight: 600; font-size: 13px;
-        font-family: 'Poppins', sans-serif; cursor: pointer; display: flex; align-items: center;
-        justify-content: center; gap: 6px; text-decoration: none; border: none;
+    .m-screen {
+        font-family: 'Poppins', system-ui, sans-serif; color: var(--ps-navy);
+        font-size: 1rem; line-height: 1.65;
+        padding: 18px 18px calc(28px + env(safe-area-inset-bottom));
+        display: flex; flex-direction: column; gap: 16px;
     }
-    .m-action-btn.primary { background: var(--m-gold); color: var(--m-gold-on); font-weight: 700; flex: 1.4; }
-    .m-action-btn.outline { background: var(--m-card); border: 1.5px solid var(--m-border); color: #4A5568; }
-    .m-action-btn.green-outline { background: #F2FBF6; border: 1.5px solid #A8DFC6; color: var(--m-green); }
 
-    .m-mini-row { display: flex; gap: 10px; }
-    .m-mini-stat { flex: 1; background: var(--m-card); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; box-shadow: var(--m-shadow); }
-    .m-mini-stat .v { font-size: 19px; font-weight: 800; color: var(--m-ink); }
-    .m-mini-stat .l { font-size: 10.5px; color: var(--m-muted); }
+    /* ── Buttons ────────────────────────────────────────────────
+         The system has exactly ONE filled button. Every other action
+         is a gold text link, which is why .outline / .green-outline
+         drop their fill and border here rather than being deleted:
+         the markup on eight screens keeps working, and the screens
+         stop showing three competing button weights in one row. ── */
+    .m-action-row { display: flex; align-items: center; gap: 12px; }
+    .m-action-btn {
+        flex: 1; min-height: var(--ps-h-btn); border-radius: var(--ps-r-btn);
+        font-weight: 600; font-size: .95rem; letter-spacing: .03em;
+        font-family: 'Poppins', system-ui, sans-serif; cursor: pointer; display: flex;
+        align-items: center; justify-content: center; gap: 8px; text-decoration: none;
+        border: none; background: none; color: var(--ps-navy);
+    }
+    .m-action-btn.primary {
+        flex: 1.4; background: var(--ps-btn-grad); color: var(--ps-navy);
+        box-shadow: var(--ps-btn-shadow);
+    }
+    /* Lift on hover, sink on press — the shared :active scale below is
+       overridden here so the primary reads as a physical key press. */
+    .m-action-btn.primary:hover { transform: translateY(-1px); }
+    .m-action-btn.primary:active {
+        transform: translateY(1px); opacity: 1;
+        box-shadow: 0 4px 12px rgba(202,161,79,.28);
+    }
+    .m-action-btn.primary:focus-visible {
+        outline: none; box-shadow: var(--ps-btn-shadow), var(--ps-focus-ring);
+    }
+    .m-action-btn.outline,
+    .m-action-btn.green-outline {
+        flex: 1; background: none; border: none; color: var(--ps-gold-text-deep);
+    }
+
+    .m-mini-row { display: flex; gap: 12px; min-width: 0; }
+    .m-mini-stat {
+        flex: 1; min-width: 0; background: var(--ps-surface); border-radius: var(--ps-r-card-sm);
+        border-top: 3px solid var(--ps-gold); padding: 14px 10px;
+        display: flex; flex-direction: column; align-items: center; gap: 4px;
+        box-shadow: var(--ps-card-shadow);
+    }
+    .m-mini-stat .v { font-size: clamp(1.05rem, 5vw, 1.35rem); line-height: 1.25; font-weight: 700; letter-spacing: -.01em; color: var(--ps-navy); overflow-wrap: break-word; }
+    /* A word-shaped value ("Commercial") in a slot sized for a number. */
+    .m-mini-stat .v.is-word { font-size: clamp(.75rem, 3.6vw, .9rem); }
+    .m-mini-stat .l {
+        font-size: .6rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+        color: var(--ps-gold-text); text-align: center; line-height: 1.4;
+    }
+
+    /* ── Semantic tones inside the mobile app ───────────────────
+         app-core's .badge / .status-badge vocabulary is theme-aware,
+         and the mobile app is deliberately a fixed light system — so
+         a status pill on a white row card was picking up dark-mode
+         tones the moment the user flipped the theme. Redeclaring the
+         tone tokens ON the mobile containers (rather than at :root)
+         fixes that without touching a single .status-badge rule:
+         inheritance takes the nearest declaring ancestor, so
+         :root[data-theme="dark"] no longer reaches inside. ── */
+    .m-screen, .m-dash, .pm-tenant-hero, .more-sheet-item {
+        --tone-success-fg: var(--ps-success);  --tone-success-bg: var(--ps-success-bg);
+        --tone-danger-fg:  var(--ps-danger);   --tone-danger-bg:  var(--ps-danger-bg);
+        --tone-warning-fg: var(--ps-warning);  --tone-warning-bg: var(--ps-warning-bg);
+        --tone-info-fg:    var(--ps-info);     --tone-info-bg:    var(--ps-info-bg);
+        --tone-accent-fg:  var(--ps-gold-text);--tone-accent-bg:  var(--ps-gold-tint);
+        --tone-neutral-fg: var(--ps-muted-deep); --tone-neutral-bg: var(--ps-bg);
+    }
+    /* Status pill geometry: 99px, .6rem/600 — the badge boxes those
+       screens inherit from app-core are square-ish and 700-weight. */
+    .m-screen :is(.badge, .status-badge),
+    .m-dash :is(.badge, .status-badge) {
+        padding: 5px 11px; border-radius: var(--ps-r-pill);
+        font-size: .625rem; font-weight: 600; letter-spacing: .04em;
+    }
+
+    /* ── Dark stat strip ────────────────────────────────────────
+         The navy summary band at the top of Lease contracts,
+         Invoices, Payments and Building detail. It was four copies
+         of the same inline gradient; it is one class now, and the
+         only place besides the dashboard hero where the app goes
+         dark. ── */
+    .ps-stat-strip {
+        display: flex; gap: 20px;
+        background: var(--ps-placeholder); border-radius: var(--ps-r-card);
+        padding: 20px; box-shadow: var(--ps-card-shadow-lift);
+    }
+    .ps-stat { flex: 1; min-width: 0; }
+    .ps-stat-label > * { min-width: 0; }
+    .ps-stat-label {
+        display: flex; align-items: center; gap: 8px;
+        font-size: .6rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+        color: var(--ps-gold); line-height: 1.4;
+    }
+    .ps-stat-label::before {
+        content: ""; flex: none; width: 20px; height: 3px; border-radius: 2px; background: var(--ps-gold);
+    }
+    .ps-stat-value {
+        font-size: clamp(1.15rem, 5.6vw, 1.45rem); line-height: 1.2; font-weight: 700; letter-spacing: -.01em;
+        color: var(--ps-ink-inverse); margin-top: 8px;
+    }
+    .ps-stat-value.is-gold { color: var(--ps-gold); }
+    .ps-stat-value.is-danger { color: #f0b4ac; }
 
     .m-search-input {
-        height: 48px; border: 1.5px solid var(--m-border); border-radius: var(--m-r-btn);
-        padding: 0 16px; font-size: 13.5px; font-family: 'Poppins', sans-serif;
-        background: var(--m-card); outline: none; color: var(--m-ink); width: 100%;
+        min-height: var(--ps-h-btn); border: 1px solid var(--ps-border); border-radius: var(--ps-r-btn);
+        padding: 0 16px; font-size: 1rem; font-family: 'Poppins', system-ui, sans-serif;
+        background: var(--ps-surface); outline: none; color: var(--ps-navy); width: 100%;
+        transition: border-color .15s ease, box-shadow .15s ease;
     }
+    .m-search-input::placeholder { color: var(--ps-muted); }
+    .m-search-input:focus-visible { border-color: var(--ps-gold-dark); box-shadow: var(--ps-focus-ring); }
 
-    .m-chip-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+    /* min-width:0 is load-bearing: .m-screen is a flex column, so this row's
+       automatic minimum size is its min-content width (all chips laid out),
+       which made the whole page 27px wider than a 320px viewport on Lease
+       contracts. overflow-x alone does not defeat that. */
+    .m-chip-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; min-width: 0; }
     .m-chip-row.no-sb::-webkit-scrollbar { display: none; }
     .m-chip {
-        height: 40px; padding: 0 16px; border-radius: 11px; font-size: 12.5px; font-weight: 600;
-        font-family: 'Poppins', sans-serif; cursor: pointer; flex-shrink: 0; display: flex;
-        align-items: center; text-decoration: none; border: 1.5px solid var(--m-border);
-        background: var(--m-card); color: #6B7688;
+        min-height: var(--ps-touch); padding: 0 16px; border-radius: var(--ps-r-btn);
+        font-size: .8rem; font-weight: 500;
+        font-family: 'Poppins', system-ui, sans-serif; cursor: pointer; flex-shrink: 0; display: flex;
+        align-items: center; text-decoration: none; border: 1px solid var(--ps-border);
+        background: var(--ps-surface); color: var(--ps-muted);
     }
-    .m-chip.active { border-color: var(--m-gold); background: var(--m-gold); color: var(--m-gold-on); }
+    .m-chip.active { border-color: transparent; background: var(--ps-navy); color: var(--ps-ink-inverse); font-weight: 600; }
 
     .m-row-list { display: flex; flex-direction: column; gap: 10px; }
     .m-row-card {
-        background: var(--m-card); border-radius: 15px; padding: 14px 16px; display: flex;
-        align-items: center; gap: 13px; box-shadow: var(--m-shadow); text-decoration: none; color: inherit;
-        border: none; width: 100%; text-align: left; font-family: 'Poppins', sans-serif; cursor: pointer;
+        background: var(--ps-surface); border-radius: var(--ps-r-card-sm); padding: 14px 16px; display: flex;
+        align-items: center; gap: 14px; box-shadow: var(--ps-card-shadow); text-decoration: none; color: inherit;
+        border: none; width: 100%; min-height: var(--ps-touch); text-align: left;
+        font-family: 'Poppins', system-ui, sans-serif; cursor: pointer;
     }
-    .m-row-icon { width: 42px; height: 42px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 17px; }
-    .m-row-title { font-size: 13.5px; font-weight: 700; color: var(--m-ink); }
-    .m-row-sub { font-size: 11px; color: var(--m-muted); margin-top: 1px; }
-    .m-row-chip { padding: 6px 9px; border-radius: 9px; background: var(--m-gold-tint); color: var(--m-gold-text); font-size: 10.5px; font-weight: 700; flex-shrink: 0; }
-    .m-row-badge { padding: 4px 10px; border-radius: 8px; font-size: 10.5px; font-weight: 600; flex-shrink: 0; }
-    .m-row-chevron { color: #C3CBD8; font-size: 14px; flex-shrink: 0; }
+    .m-row-icon { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 17px; }
+    /* A record's own name can be an unbreakable run — "Seven Leisure
+       Restaurant/Store/Pastry" has no spaces around its slashes — and at 320px
+       that pushed the card 45px past its box and the page 27px past the
+       viewport. Let those break rather than widen the layout. */
+    .m-row-title { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-navy); overflow-wrap: anywhere; }
+    .m-row-sub { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); margin-top: 2px; overflow-wrap: anywhere; }
+    .m-row-chip {
+        padding: 6px 11px; border-radius: var(--ps-r-pill); background: var(--ps-gold-tint);
+        color: var(--ps-gold-text-deep); font-size: .625rem; font-weight: 600; letter-spacing: .04em; flex-shrink: 0;
+    }
+    /* Status pill — Paid green, Due amber, Overdue red; the tone pair
+       itself comes from the semantic tokens set on the element. */
+    .m-row-badge { padding: 5px 11px; border-radius: var(--ps-r-pill); font-size: .625rem; font-weight: 600; letter-spacing: .04em; flex-shrink: 0; }
+    .m-row-chevron { color: var(--ps-faint); font-size: 13px; flex-shrink: 0; }
 
     .m-empty { text-align: center; padding: 60px 24px; }
-    .m-empty-icon { width: 64px; height: 64px; border-radius: 18px; background: var(--m-gold-tint); display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--m-gold-text); margin: 0 auto 14px; }
-    .m-empty-title { font-size: 15px; font-weight: 700; color: var(--m-ink); margin-bottom: 4px; }
-    .m-empty-sub { font-size: 12px; color: var(--m-muted); }
+    .m-empty-icon {
+        width: 64px; height: 64px; border-radius: 18px; background: var(--ps-gold-tint);
+        display: flex; align-items: center; justify-content: center; font-size: 22px;
+        color: var(--ps-gold-text); margin: 0 auto 16px;
+    }
+    .m-empty-title { font-size: 1.05rem; font-weight: 600; letter-spacing: -.01em; color: var(--ps-navy); margin-bottom: 6px; }
+    .m-empty-sub { font-size: .875rem; line-height: 1.65; color: var(--ps-muted-deep); }
 
     /* Desktop list-page chrome each redesigned mobile screen replaces —
        scoped to body.is-mobile-screen so untouched pages (Lease
@@ -212,120 +361,286 @@
     body.is-mobile-screen .stats-grid,
     body.is-mobile-screen .m-hide-desktop-index { display: none !important; }
 
-    /* ── Shared "pm-" design system (Miknas Property Manager
-         mobile redesign) — tokens + components reused across every
-         screen migrated to the new design (Home, Properties, ...).
-         Pages not yet migrated keep using the --m-* / .m-screen
-         system above untouched. ── */
+    /* ═══════════════════════════════════════════════════════════
+       PROMOSEVEN — mobile app design language
+       ───────────────────────────────────────────────────────────
+       One palette, one type family (Poppins), one button. Navy is
+       the ink, gold is the only accent, everything else is
+       whitespace. Declared INSIDE the ≤768px query on purpose: the
+       --m-* tokens below are redefinitions of app-core §1.2b, and
+       scoping them here guarantees the desktop app cannot inherit
+       a single value from this block.
+
+       Two tones exist for muted text and for gold text, and the
+       split is load-bearing, not decorative: the spec's #6b7689 /
+       #8a6d20 clear AA on a white card but land at 4.05 / 4.32 on
+       the #eef1f6 page background, which is a fail at the 0.6–0.9rem
+       sizes those roles are used at. The -deep variants are the
+       same hues carried far enough to clear 4.5:1 there. Pick by
+       the surface the text sits on, never by eye.
+
+       Decorative-only greys (--ps-faint) are for chevrons, rules and
+       icon washes. They must never carry a word.
+       ═══════════════════════════════════════════════════════════ */
     :root {
-        --pm-gold:        #E8B86D;
-        --pm-gold-dark:   #B98A2E;
-        --pm-gold-tint:   rgba(232,184,109,0.12);
-        --pm-gold-glow:   rgba(232,184,109,0.25);
-        --pm-navy:        #0B1120;
-        --pm-navy-800:    #1A2540;
-        --pm-navy-text:   #8A9BBE;
-        --pm-text:        #0F172A;
-        --pm-text-2:      #475569;
-        --pm-text-3:      #94A3B8;
-        --pm-border:      #E2E8F0;
-        --pm-border-strong: #CBD5E1;
-        --pm-surface:     #FFFFFF;
-        --pm-page:        #F1F5F9;
-        --pm-page-alt:    #F8FAFC;
-        --pm-green:       #10B981;
-        --pm-green-tint:  rgba(16,185,129,0.12);
-        --pm-green-text:  #0F766E;
-        --pm-red:         #EF4444;
-        --pm-red-tint:    rgba(239,68,68,0.12);
-        --pm-warn:        #F59E0B;
-        --pm-warn-tint:   rgba(245,158,11,0.12);
-        --pm-info:        #3B82F6;
+        /* Core */
+        --ps-navy:            #1e2c4f;   /* headings, body ink, button labels, icons  */
+        --ps-navy-deep:       #0b132b;   /* dark gradient stop, image placeholders    */
+        --ps-navy-line:       #2b3a60;   /* hairlines drawn on navy                   */
+        --ps-navy-text:       #a8b3c7;   /* muted text on navy — 6.50 on --ps-navy    */
+        --ps-ink-inverse:     #ffffff;   /* text sitting on navy or on a gold fill    */
+
+        --ps-gold:            #d8b25f;   /* accent dashes, 3px card top borders       */
+        --ps-gold-dark:       #caa14f;   /* focus rings, borders — never text         */
+        --ps-gold-text:       #8a6d20;   /* eyebrows/links on white   — 4.90          */
+        --ps-gold-text-deep:  #836619;   /* the same role on tint/page — 4.78         */
+        --ps-gold-tint:       #faf3e3;   /* icon washes, quiet gold fills             */
+        --ps-gold-ring:       rgba(216,178,95,.40);
+        --ps-gold-glow:       rgba(216,178,95,.26);
+
+        /* Text */
+        --ps-muted:           #6b7689;   /* subtitles on white  — 4.59                */
+        --ps-muted-deep:      #616c82;   /* subtitles on page   — 4.67                */
+        --ps-faint:           #97a1b4;   /* DECORATIVE ONLY — fails AA at text sizes  */
+
+        /* Surfaces */
+        --ps-bg:              #eef1f6;
+        --ps-bg-alt:          #f6f8fb;
+        --ps-surface:         #ffffff;
+        --ps-border:          #d5dae3;
+        --ps-border-soft:     #e7ebf2;
+        --ps-border-strong:   #c3cad7;
+        --ps-track:           #e3e8f0;   /* segmented-control track                   */
+
+        /* Semantic */
+        --ps-success:         #2f7a4f;   --ps-success-bg: #e6f4ec;
+        --ps-danger:          #b4483c;   --ps-danger-bg:  #fbeae8;
+        --ps-warning:         #8a6d20;   --ps-warning-bg: #fdf6e6;
+        --ps-info:            #3d5a8a;   --ps-info-bg:    #e8edf6;
+
+        /* Materials */
+        --ps-btn-grad:        linear-gradient(100deg, #edcd85 0%, #d0a854 100%);
+        --ps-btn-shadow:      0 8px 20px rgba(202,161,79,.32);
+        --ps-fab-shadow:      0 10px 26px rgba(202,161,79,.45);
+        --ps-focus-ring:      0 0 0 4px var(--ps-gold-ring);
+        --ps-card-shadow:     0 8px 24px rgba(30,44,79,.07);
+        --ps-card-shadow-lift:0 12px 30px rgba(30,44,79,.11);
+        --ps-placeholder:     linear-gradient(135deg, #1e2c4f, #0b132b);
+
+        /* Geometry */
+        --ps-r-card:          18px;
+        --ps-r-card-sm:       16px;
+        --ps-r-btn:           12px;
+        --ps-r-pill:          99px;
+        --ps-h-btn:           50px;      /* spec 48–52                                */
+        --ps-touch:           44px;
+
+        /* ── Legacy aliases ──────────────────────────────────────
+             The .pm-* and .m-* screens address the palette through
+             these names in ~40 files. Repointing the aliases at the
+             Promoseven values reskins every one of them without
+             touching a screen, and leaves one place to edit next
+             time. Do not add new --pm-*/--m-* names; use --ps-*. ── */
+        --pm-gold:          var(--ps-gold);
+        --pm-gold-dark:     var(--ps-gold-text);      /* was used as a text colour */
+        --pm-gold-tint:     var(--ps-gold-tint);
+        --pm-gold-glow:     var(--ps-gold-glow);
+        --pm-navy:          var(--ps-navy);
+        --pm-navy-800:      var(--ps-navy-deep);
+        --pm-navy-text:     var(--ps-navy-text);
+        --pm-text:          var(--ps-navy);
+        --pm-text-2:        var(--ps-muted);
+        --pm-text-3:        var(--ps-muted);          /* was #94A3B8 — carried words */
+        --pm-border:        var(--ps-border);
+        --pm-border-strong: var(--ps-border-strong);
+        --pm-surface:       var(--ps-surface);
+        --pm-page:          var(--ps-bg);
+        --pm-page-alt:      var(--ps-bg-alt);
+        --pm-green:         var(--ps-success);
+        --pm-green-tint:    var(--ps-success-bg);
+        --pm-green-text:    var(--ps-success);
+        --pm-red:           var(--ps-danger);
+        --pm-red-tint:      var(--ps-danger-bg);
+        --pm-warn:          var(--ps-warning);
+        --pm-warn-tint:     var(--ps-warning-bg);
+        --pm-info:          var(--ps-info);
+
+        --m-bg:            var(--ps-bg);
+        --m-card:          var(--ps-surface);
+        --m-ink:           var(--ps-navy);
+        --m-muted:         var(--ps-muted);
+        --m-faint:         var(--ps-faint);
+        --m-line:          var(--ps-bg);
+        --m-border:        var(--ps-border);
+
+        --m-navy:          var(--ps-navy);
+        --m-navy-2:        var(--ps-navy-deep);
+        --m-navy-line:     var(--ps-navy-line);
+        --m-navy-active:   var(--ps-navy-line);
+        --m-navy-text:     var(--ps-navy-text);
+
+        --m-gold:          var(--ps-gold);
+        --m-gold-deep:     var(--ps-gold-dark);
+        --m-gold-text:     var(--ps-gold-text);
+        --m-gold-tint:     var(--ps-gold-tint);
+        --m-gold-on:       var(--ps-navy);            /* gold fills carry navy labels */
+        --m-gold-grad:     var(--ps-btn-grad);
+
+        --m-green:  var(--ps-success);  --m-green-tint:  var(--ps-success-bg);
+        --m-red:    var(--ps-danger);   --m-red-tint:    var(--ps-danger-bg);
+        --m-blue:   var(--ps-info);     --m-blue-tint:   var(--ps-info-bg);
+        --m-purple: var(--ps-navy);     --m-purple-tint: #e8ebf2;
+
+        --m-r-card: var(--ps-r-card);  --m-r-btn: var(--ps-r-btn);
+        --m-r-chip: var(--ps-r-btn);   --m-r-badge: var(--ps-r-pill);
+        --m-shadow: var(--ps-card-shadow);
+        --m-shadow-float: var(--ps-card-shadow-lift);
     }
 
     .pm-header {
         flex: none; display: flex; align-items: center; gap: 12px;
         padding: calc(14px + env(safe-area-inset-top)) 18px 12px;
-        background: var(--pm-surface); border-bottom: 1px solid var(--pm-border);
-        box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        background: var(--ps-surface); border-bottom: 1px solid var(--ps-border-soft);
+        box-shadow: 0 1px 2px rgba(30,44,79,.04);
     }
     .pm-header-text { flex: 1; min-width: 0; }
-    .pm-title { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 21px; letter-spacing: -.2px; color: var(--pm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pm-subtitle { font-size: 11px; font-weight: 500; color: var(--pm-text-3); margin-top: 1px; }
+    .pm-title {
+        font-family: 'Poppins', system-ui, sans-serif; font-weight: 700; font-size: 1.35rem;
+        line-height: 1.25; letter-spacing: -.01em; color: var(--ps-navy);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pm-subtitle { font-size: .8rem; font-weight: 500; color: var(--ps-muted); margin-top: 2px; }
+    /* Chrome buttons carry the 44px floor, not the 38px the first pass
+       used — they are the only way out of several screens. */
     .pm-icon-btn {
-        position: relative; flex: none; width: 38px; height: 38px; border-radius: 8px;
-        border: 1px solid var(--pm-border); background: var(--pm-surface); color: var(--pm-text-2);
+        position: relative; flex: none; width: var(--ps-touch); height: var(--ps-touch);
+        border-radius: var(--ps-r-btn);
+        border: 1px solid var(--ps-border); background: var(--ps-surface); color: var(--ps-navy);
         font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
-    .pm-icon-btn:active { background: var(--pm-page); }
-    .pm-dot { position: absolute; top: 6px; right: 7px; width: 8px; height: 8px; border-radius: 9999px; background: var(--pm-red); border: 1.5px solid var(--pm-surface); }
+    .pm-icon-btn:active { background: var(--ps-bg); }
+    .pm-dot { position: absolute; top: 8px; right: 9px; width: 8px; height: 8px; border-radius: var(--ps-r-pill); background: var(--ps-danger); border: 2px solid var(--ps-surface); }
     .pm-avatar {
-        flex: none; width: 38px; height: 38px; border-radius: 9999px; border: 0;
-        background: var(--pm-gold); color: var(--pm-navy); font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px;
+        flex: none; width: var(--ps-touch); height: var(--ps-touch); border-radius: var(--ps-r-pill); border: 0;
+        background: var(--ps-btn-grad); color: var(--ps-navy);
+        font-family: 'Poppins', system-ui, sans-serif; font-weight: 600; font-size: 1rem;
         display: flex; align-items: center; justify-content: center; cursor: pointer;
-        box-shadow: 0 0 0 3px var(--pm-gold-glow);
+        box-shadow: var(--ps-btn-shadow);
     }
 
     .pm-scroll { position: relative; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
     .pm-bottom-space { height: calc(96px + env(safe-area-inset-bottom)); }
-    .pm-section-label { font-size: 10px; font-weight: 700; letter-spacing: .7px; color: var(--pm-text-3); margin-bottom: 8px; }
-    .pm-empty { padding: 24px 16px; text-align: center; font-size: 12px; color: var(--pm-text-3); }
+    /* Eyebrow — the one recurring signature of the language: a 26x3px
+       gold dash, then uppercase gold caps at .65rem/.18em. */
+    .pm-section-label {
+        display: flex; align-items: center; gap: 10px;
+        font-size: .65rem; font-weight: 600; letter-spacing: .18em; text-transform: uppercase;
+        color: var(--ps-gold-text-deep); margin-bottom: 12px;
+    }
+    .pm-section-label::before {
+        content: ""; flex: none; width: 26px; height: 3px; border-radius: 2px; background: var(--ps-gold);
+    }
+    .pm-empty { padding: 28px 16px; text-align: center; font-size: .875rem; line-height: 1.65; color: var(--ps-muted-deep); }
 
     /* ── KPI cards (Home Portfolio, Property detail, ...) ──── */
-    .pm-kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .pm-kpi-card { background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-    .pm-kpi-label { font-size: 10px; font-weight: 700; letter-spacing: .7px; color: var(--pm-text-3); }
-    .pm-kpi-value { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 26px; color: var(--pm-text); margin-top: 6px; }
-    .pm-kpi-sub { font-size: 11px; font-weight: 600; color: var(--pm-text-2); margin-top: 2px; }
-    .pm-kpi-sub.is-green { color: var(--pm-green); }
+    /* minmax(0,1fr), not 1fr: a bare 1fr floors at the cell's min-content,
+       so a long "BHD 24,850" widened the grid past the viewport. */
+    .pm-kpi-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+    .pm-kpi-card {
+        background: var(--ps-surface); border: 1px solid var(--ps-border);
+        border-top: 3px solid var(--ps-gold); border-radius: var(--ps-r-card-sm);
+        padding: 16px; box-shadow: var(--ps-card-shadow);
+    }
+    .pm-kpi-label {
+        font-size: .6rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+        color: var(--ps-gold-text); line-height: 1.5;
+    }
+    .pm-kpi-value {
+        font-family: 'Poppins', system-ui, sans-serif; font-weight: 700;
+        font-size: clamp(1.15rem, 5.6vw, 1.55rem);
+        line-height: 1.2; letter-spacing: -.01em; color: var(--ps-navy); margin-top: 8px;
+        overflow-wrap: anywhere;
+    }
+    .pm-kpi-sub { font-size: .8rem; font-weight: 500; color: var(--ps-muted); margin-top: 4px; }
+    .pm-kpi-sub.is-green { color: var(--ps-success); }
 
     /* ── Property card (Home/Properties) ──────────────────── */
-    .pm-property-card { background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,.08); text-decoration: none; color: inherit; display: block; }
-    .pm-property-photo { position: relative; height: 132px; background: var(--pm-border); background-size: cover; background-position: center; }
-    .pm-property-photo-fallback { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--pm-border-strong); font-size: 30px; }
-    .pm-property-kind { position: absolute; top: 10px; right: 10px; padding: 4px 9px; border-radius: 9999px; background: rgba(11,17,32,.72); color: var(--pm-gold); font-size: 10px; font-weight: 700; letter-spacing: .4px; }
-    .pm-property-body { padding: 14px; }
-    .pm-property-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 17px; color: var(--pm-text); }
-    .pm-property-address { font-size: 11.5px; color: var(--pm-text-2); margin-top: 3px; }
-    .pm-property-address i { color: var(--pm-gold); }
-    .pm-property-wells { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
-    .pm-well { background: var(--pm-page); border-radius: 8px; padding: 9px 10px; }
-    .pm-well-label { font-size: 9.5px; font-weight: 700; color: var(--pm-text-3); letter-spacing: .5px; }
-    .pm-well-value { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px; color: var(--pm-text); margin-top: 2px; }
+    .pm-property-card {
+        background: var(--ps-surface); border: 1px solid var(--ps-border);
+        border-top: 3px solid var(--ps-gold); border-radius: var(--ps-r-card);
+        overflow: hidden; box-shadow: var(--ps-card-shadow);
+        text-decoration: none; color: inherit; display: block;
+    }
+    /* Missing-photo state: navy gradient block, gold glyph at 35%. */
+    .pm-property-photo { position: relative; height: 132px; background: var(--ps-placeholder); background-size: cover; background-position: center; }
+    .pm-property-photo-fallback { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--ps-gold); opacity: .35; font-size: 34px; }
+    .pm-property-kind {
+        position: absolute; top: 12px; right: 12px; padding: 5px 11px; border-radius: var(--ps-r-pill);
+        background: rgba(11,19,43,.72); color: var(--ps-gold);
+        font-size: .6rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    }
+    .pm-property-body { padding: 16px; }
+    .pm-property-name { font-family: 'Poppins', system-ui, sans-serif; font-weight: 600; font-size: 1.05rem; line-height: 1.35; letter-spacing: -.01em; color: var(--ps-navy); }
+    .pm-property-address { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); margin-top: 4px; }
+    .pm-property-address i { color: var(--ps-gold-dark); }
+    .pm-property-wells { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 14px; }
+    .pm-well { background: var(--ps-bg); border-radius: 10px; padding: 10px 11px; }
+    .pm-well-label { font-size: .6rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--ps-gold-text-deep); line-height: 1.4; }
+    .pm-well-value { font-family: 'Poppins', system-ui, sans-serif; font-weight: 700; font-size: clamp(.85rem, 3.6vw, 1rem); line-height: 1.3; color: var(--ps-navy); margin-top: 3px; overflow-wrap: anywhere; }
 
     /* ── Action / list rows (needs-you-today, empty states, etc.) ── */
-    .pm-action-list { display: flex; flex-direction: column; gap: 8px; }
-    .pm-action-row { display: flex; align-items: center; gap: 12px; background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; padding: 12px 14px; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-    .pm-action-icon { flex: none; width: 34px; height: 34px; border-radius: 8px; background: var(--pm-gold-tint); color: var(--pm-gold); display: flex; align-items: center; justify-content: center; font-size: 14px; }
-    .pm-action-title { font-size: 13.5px; font-weight: 600; color: var(--pm-text); }
-    .pm-action-sub { font-size: 11.5px; color: var(--pm-text-3); }
-    .pm-action-chevron { color: var(--pm-border-strong); font-size: 12px; }
+    .pm-action-list { display: flex; flex-direction: column; gap: 10px; }
+    .pm-action-row {
+        display: flex; align-items: center; gap: 13px; min-height: var(--ps-touch);
+        background: var(--ps-surface); border: 1px solid var(--ps-border);
+        border-radius: var(--ps-r-card-sm); padding: 13px 15px; text-decoration: none;
+        box-shadow: var(--ps-card-shadow);
+    }
+    .pm-action-icon {
+        flex: none; width: 38px; height: 38px; border-radius: 11px;
+        background: var(--ps-gold-tint); color: var(--ps-gold-text);
+        display: flex; align-items: center; justify-content: center; font-size: 14px;
+    }
+    .pm-action-title { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-navy); }
+    .pm-action-sub { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); }
+    .pm-action-chevron { color: var(--ps-faint); font-size: 12px; }
 
     /* ── FAB ──────────────────────────────────────────────── */
     .pm-fab {
         position: absolute; right: 18px; bottom: calc(112px + env(safe-area-inset-bottom));
-        width: 56px; height: 56px; border-radius: 9999px; border: 0; background: var(--pm-gold); color: var(--pm-navy);
-        font-size: 19px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 10px 40px rgba(0,0,0,.10), 0 0 0 6px var(--pm-gold-glow); z-index: 20;
+        width: 56px; height: 56px; border-radius: var(--ps-r-pill); border: 0;
+        background: var(--ps-btn-grad); color: var(--ps-navy);
+        font-size: 20px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center;
+        box-shadow: var(--ps-fab-shadow); z-index: 20;
     }
 
     /* ── Search field + filter chips (Tenants, Property detail units) ── */
     .pm-search-field {
-        display: flex; align-items: center; gap: 9px; background: var(--pm-surface);
-        border: 1px solid var(--pm-border-strong); border-radius: 8px; padding: 10px 12px;
+        display: flex; align-items: center; gap: 10px; min-height: var(--ps-h-btn);
+        background: var(--ps-surface);
+        border: 1px solid var(--ps-border); border-radius: var(--ps-r-btn); padding: 0 14px;
+        transition: border-color .15s ease, box-shadow .15s ease;
     }
+    .pm-search-field:focus-within { border-color: var(--ps-gold-dark); box-shadow: var(--ps-focus-ring); }
+    /* 1rem, not 13.5px: anything under 16px makes iOS zoom the viewport
+       on focus and the screen never zooms back out. */
     .pm-search-field input {
-        flex: 1; border: 0; outline: none; font-size: 13.5px; color: var(--pm-text);
-        background: transparent; font-family: 'Plus Jakarta Sans', sans-serif;
+        /* min-width:0 is load-bearing: an <input>'s default intrinsic width
+           (size=20) is its flex min-content, which pushed the page 53px past
+           a 320px viewport before this. */
+        flex: 1; min-width: 0; border: 0; outline: none; font-size: 1rem; color: var(--ps-navy);
+        background: transparent; font-family: 'Poppins', system-ui, sans-serif;
     }
-    .pm-search-field i { color: var(--pm-text-3); font-size: 13px; }
-    .pm-chip-row { display: flex; gap: 7px; overflow-x: auto; }
+    .pm-search-field input::placeholder { color: var(--ps-muted); }
+    .pm-search-field i { color: var(--ps-muted); font-size: 14px; }
+    .pm-chip-row { display: flex; align-items: center; gap: 8px; overflow-x: auto; }
     .pm-chip {
-        padding: 7px 13px; border-radius: 9999px; font-size: 12px; font-weight: 600;
+        display: inline-flex; align-items: center; min-height: var(--ps-touch); padding: 0 15px;
+        border-radius: var(--ps-r-btn); font-size: .8rem; font-weight: 500;
         text-decoration: none; white-space: nowrap; flex-shrink: 0;
-        border: 1px solid var(--pm-border); background: var(--pm-surface); color: var(--pm-text-2);
+        border: 1px solid var(--ps-border); background: var(--ps-surface); color: var(--ps-muted);
     }
-    .pm-chip.active { border-color: var(--pm-navy); background: var(--pm-navy); color: #fff; }
+    .pm-chip.active { border-color: transparent; background: var(--ps-navy); color: var(--ps-ink-inverse); font-weight: 600; }
 
     /* ── Property detail: photo hero + floors & units native list ──
          Redesigned so the screen reads as an app detail screen (photo
@@ -340,64 +655,65 @@
        instead of being pulled up on top of the pm-push-header above it. */
     .pm-hero-wrap { position: relative; margin: 0 -18px 0; }
     .pm-hero-photo {
-        position: relative; height: 232px; background: var(--pm-navy-800);
+        position: relative; height: 232px; background: var(--ps-placeholder);
         background-size: cover; background-position: center;
         overflow: hidden;
     }
     .pm-hero-scrim {
         position: absolute; inset: 0;
-        background: linear-gradient(180deg, rgba(11,17,32,0) 40%, rgba(11,17,32,.90) 100%);
+        background: linear-gradient(180deg, rgba(11,19,43,0) 38%, rgba(11,19,43,.92) 100%);
         display: flex; flex-direction: column; justify-content: flex-end;
         padding: 16px 18px 14px;
     }
     .pm-hero-topbar { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
     .pm-hero-occ-pill {
-        background: rgba(11,17,32,.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .2px;
-        padding: 7px 12px; border-radius: 9999px; display: flex; align-items: center; gap: 6px;
-        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(11,19,43,.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        color: var(--ps-ink-inverse); font-size: .7rem; font-weight: 600; letter-spacing: .04em;
+        min-height: 34px; padding: 0 13px; border-radius: var(--ps-r-pill); display: flex; align-items: center; gap: 7px;
+        border: 1px solid rgba(255,255,255,.16);
     }
-    .pm-hero-occ-pill i { color: var(--pm-gold); font-size: 9px; }
+    .pm-hero-occ-pill i { color: var(--ps-gold); font-size: 9px; }
     .pm-hero-edit-btn {
-        flex: none; width: 34px; height: 34px; border-radius: 9999px;
-        background: rgba(11,17,32,.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        border: 1px solid rgba(255,255,255,.14); color: #fff;
-        display: flex; align-items: center; justify-content: center; font-size: 13px; text-decoration: none;
+        flex: none; width: var(--ps-touch); height: var(--ps-touch); border-radius: var(--ps-r-pill);
+        background: rgba(11,19,43,.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,.16); color: var(--ps-ink-inverse);
+        display: flex; align-items: center; justify-content: center; font-size: 14px; text-decoration: none;
     }
-    .pm-hero-name { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 22px; color: #fff; line-height: 1.15; text-shadow: 0 1px 8px rgba(0,0,0,.25); }
-    .pm-hero-address { font-size: 12px; color: rgba(255,255,255,.8); margin-top: 5px; display: flex; align-items: center; gap: 6px; }
-    .pm-hero-address i { color: var(--pm-gold); font-size: 11px; }
+    .pm-hero-name { font-family: 'Poppins', system-ui, sans-serif; font-weight: 700; font-size: 1.5rem; color: var(--ps-ink-inverse); line-height: 1.2; letter-spacing: -.01em; }
+    .pm-hero-address { font-size: .8rem; color: rgba(255,255,255,.82); margin-top: 6px; display: flex; align-items: center; gap: 7px; }
+    .pm-hero-address i { color: var(--ps-gold); font-size: 11px; }
 
     /* Floors & units — flat sections, no boxed accordion table */
     .pm-floor-section { margin-bottom: 4px; }
     .pm-floor-row {
-        display: flex; align-items: center; gap: 11px; padding: 12px 2px; cursor: pointer;
+        display: flex; align-items: center; gap: 12px; min-height: var(--ps-touch); padding: 12px 2px; cursor: pointer;
         background: none; border: none; width: 100%; text-align: left; font-family: inherit;
-        border-bottom: 1px solid var(--pm-border);
+        border-bottom: 1px solid var(--ps-border);
     }
     .pm-floor-row.is-open { border-bottom-color: transparent; }
-    .pm-floor-name { font-size: 13.5px; font-weight: 700; color: var(--pm-text); }
-    .pm-floor-meta { font-size: 11px; color: var(--pm-text-3); margin-top: 1px; }
-    .pm-floor-units { display: flex; flex-direction: column; gap: 9px; padding: 12px 0 16px; }
+    .pm-floor-name { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-navy); }
+    .pm-floor-meta { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); margin-top: 2px; }
+    .pm-floor-units { display: flex; flex-direction: column; gap: 10px; padding: 12px 0 16px; }
     .pm-unit-card {
-        display: flex; align-items: center; gap: 12px; padding: 12px 14px; text-decoration: none; color: inherit;
-        background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 14px;
-        box-shadow: 0 1px 3px rgba(0,0,0,.05);
+        display: flex; align-items: center; gap: 13px; min-height: var(--ps-touch);
+        padding: 12px 15px; text-decoration: none; color: inherit;
+        background: var(--ps-surface); border: 1px solid var(--ps-border); border-radius: var(--ps-r-card-sm);
+        box-shadow: var(--ps-card-shadow);
     }
     div.pm-unit-card { cursor: default; }
     .pm-unit-tile {
-        flex: none; width: 42px; height: 42px; border-radius: 12px; font-family: 'Outfit', sans-serif;
-        font-weight: 700; font-size: 12.5px; display: flex; align-items: center; justify-content: center;
+        flex: none; width: 44px; height: 44px; border-radius: 13px; font-family: 'Poppins', system-ui, sans-serif;
+        font-weight: 600; font-size: .8rem; display: flex; align-items: center; justify-content: center;
     }
-    .pm-unit-tile.is-let { background: var(--pm-navy); color: var(--pm-gold); }
-    .pm-unit-tile.is-vacant { background: var(--pm-page); color: var(--pm-text-3); }
-    .pm-unit-name { font-size: 13.5px; font-weight: 700; color: var(--pm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pm-unit-rent { font-size: 11px; color: var(--pm-text-3); margin-top: 1px; }
-    .pm-unit-badge { padding: 4px 10px; border-radius: 9999px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+    .pm-unit-tile.is-let { background: var(--ps-navy); color: var(--ps-gold); }
+    .pm-unit-tile.is-vacant { background: var(--ps-bg); color: var(--ps-muted); }
+    .pm-unit-name { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pm-unit-rent { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); margin-top: 2px; }
+    .pm-unit-badge { padding: 5px 11px; border-radius: var(--ps-r-pill); font-size: .625rem; font-weight: 600; letter-spacing: .04em; flex-shrink: 0; }
     .pm-unit-more {
-        display: block; text-align: center; padding: 11px 0; margin-top: 2px;
-        color: var(--pm-gold-dark); font-size: 12.5px; font-weight: 700; text-decoration: none;
-        background: var(--pm-page-alt); border-radius: 12px;
+        display: flex; align-items: center; justify-content: center; min-height: var(--ps-touch);
+        margin-top: 2px; color: var(--ps-gold-text-deep); font-size: .85rem; font-weight: 600;
+        text-decoration: none; background: var(--ps-bg); border-radius: var(--ps-r-btn);
     }
 
     /* ═══════════════════════════════════════════════════════════
@@ -423,15 +739,14 @@
        single flat rgba blur. Reused directly on pm-property-card /
        pm-kpi-card / pm-unit-card since those three are exclusive
        to the screens in scope. */
+    /* Promoseven runs one card shadow, so the three elevation steps
+       collapse to that shadow plus a lift for anything genuinely
+       floating. Kept as tokens because the Depth & Motion rules below
+       and dashboard.blade.php both address them by name. */
     :root {
-        --pm-elev-1: 0 1px 2px rgba(23,32,58,.06), 0 4px 12px rgba(23,32,58,.05);
-        --pm-elev-2: 0 2px 4px rgba(23,32,58,.08), 0 12px 28px rgba(23,32,58,.10);
-        --pm-elev-3: 0 4px 10px rgba(23,32,58,.12), 0 20px 44px rgba(23,32,58,.16);
-    }
-    :root[data-theme="dark"] {
-        --pm-elev-1: 0 1px 2px rgba(0,0,0,.35), 0 4px 14px rgba(0,0,0,.30);
-        --pm-elev-2: 0 2px 5px rgba(0,0,0,.40), 0 14px 32px rgba(0,0,0,.38);
-        --pm-elev-3: 0 4px 12px rgba(0,0,0,.45), 0 22px 48px rgba(0,0,0,.48);
+        --pm-elev-1: var(--ps-card-shadow);
+        --pm-elev-2: var(--ps-card-shadow);
+        --pm-elev-3: var(--ps-card-shadow-lift);
     }
     .pm-property-card { box-shadow: var(--pm-elev-2); transition: box-shadow .18s ease, transform .12s ease; }
     .pm-kpi-card { box-shadow: var(--pm-elev-1); transition: box-shadow .18s ease, transform .12s ease; }
@@ -446,7 +761,7 @@
     .pm-ripple { position: relative; overflow: hidden; }
     .pm-ripple-wave {
         position: absolute; border-radius: 50%; pointer-events: none;
-        background: radial-gradient(circle, rgba(232,184,109,.35) 0%, rgba(232,184,109,0) 72%);
+        background: radial-gradient(circle, rgba(216,178,95,.35) 0%, rgba(216,178,95,0) 72%);
         transform: scale(0); opacity: .9;
         animation: pm-ripple-expand .5s cubic-bezier(.22,.72,.24,1) forwards;
     }
@@ -461,16 +776,23 @@
        — the same "large title deflates into a compact bar" motion
        as iOS navigation bars / Android's collapsing toolbar. */
     .pm-title.is-lg {
-        font-size: 28px; font-weight: 800; letter-spacing: -.4px;
+        font-size: 1.55rem; font-weight: 700; letter-spacing: -.01em;
         transition: font-size .28s var(--ease-spring);
     }
     .pm-header.is-collapsible {
         transition: box-shadow .22s ease, background-color .22s ease;
     }
-    .pm-header.is-collapsible.is-collapsed .pm-title.is-lg { font-size: 17px; }
+    .pm-header.is-collapsible.is-collapsed .pm-title.is-lg { font-size: 1.15rem; }
+    /* The greeting is the screen's eyebrow — same dash + gold caps as
+       .pm-section-label, so the language reads the same on every screen. */
     .pm-greeting {
-        font-size: 12.5px; font-weight: 600; color: var(--pm-text-3);
-        margin-bottom: 2px; transition: opacity .2s ease, max-height .2s ease;
+        display: flex; align-items: center; gap: 10px;
+        font-size: .65rem; font-weight: 600; letter-spacing: .18em; text-transform: uppercase;
+        color: var(--ps-gold-text); margin-bottom: 6px;
+        transition: opacity .2s ease, max-height .2s ease;
+    }
+    .pm-greeting::before {
+        content: ""; flex: none; width: 26px; height: 3px; border-radius: 2px; background: var(--ps-gold);
     }
     .pm-header.is-collapsible.is-collapsed .pm-greeting { opacity: 0; max-height: 0; margin: 0; overflow: hidden; }
 
@@ -478,11 +800,13 @@
        animates position/width via spring easing, instead of just
        toggling each button's own background. Dashboard-only
        (`#pmSegment` doesn't exist elsewhere). */
-    .pm-segment { position: relative; }
+    /* Segmented control — track #e3e8f0 at 12px, active segment white
+       on a soft shadow. The thumb is a real element the JS slides. */
+    .pm-segment { position: relative; background: var(--ps-track); border-radius: var(--ps-r-btn); }
     .pm-segment-thumb {
         position: absolute; top: 4px; bottom: 4px; left: 4px;
-        background: var(--pm-surface); border-radius: 7px;
-        box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        background: var(--ps-surface); border-radius: 9px;
+        box-shadow: 0 2px 6px rgba(30,44,79,.10);
         transition: transform .32s var(--ease-spring), width .32s var(--ease-spring);
         will-change: transform;
     }
@@ -492,7 +816,7 @@
        gives the flat KPI numbers below in dashboard.blade.php more
        visual hierarchy than plain stacked text. */
     .pm-kpi-icon {
-        width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+        width: 28px; height: 28px; border-radius: 9px; flex-shrink: 0;
         display: flex; align-items: center; justify-content: center; font-size: 11px;
     }
     .pm-kpi-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -509,7 +833,7 @@
     }
     .pm-ptr-spinner {
         width: 26px; height: 26px; border-radius: 50%;
-        border: 2.5px solid var(--pm-border); border-top-color: var(--pm-gold);
+        border: 2.5px solid var(--ps-border); border-top-color: var(--ps-gold);
         transition: transform .1s linear;
     }
     .pm-ptr-spinner.is-loading { animation: pm-ptr-spin .6s linear infinite; }
@@ -519,17 +843,16 @@
        `.pm-search-field.is-pill` (buildings index only; the
        default `.pm-search-field` used elsewhere is untouched). */
     .pm-search-field.is-pill {
-        background: var(--pm-page); border: 1px solid transparent; border-radius: 12px;
-        padding: 11px 14px; box-shadow: inset 0 0 0 1px rgba(15,23,42,.04);
+        background: var(--ps-surface); border: 1px solid var(--ps-border);
+        border-radius: var(--ps-r-btn); padding: 0 14px; box-shadow: none;
     }
-    :root[data-theme="dark"] .pm-search-field.is-pill { box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); }
 
     /* Roomier "big" empty state — opt in with `.pm-empty.is-lg`
        (used only where explicitly added below). */
     .pm-empty.is-lg { padding: 48px 24px; }
     .pm-empty-icon-lg {
-        width: 60px; height: 60px; border-radius: 18px; margin: 0 auto 14px;
-        background: var(--pm-gold-tint); color: var(--pm-gold-dark);
+        width: 64px; height: 64px; border-radius: 18px; margin: 0 auto 16px;
+        background: var(--ps-gold-tint); color: var(--ps-gold-text);
         display: flex; align-items: center; justify-content: center; font-size: 22px;
     }
 
@@ -566,10 +889,10 @@
     .modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
 
     .sheet-handle {
-        width: 36px;
+        width: 40px;
         height: 4px;
         border-radius: 3px;
-        background: var(--input-border);
+        background: var(--ps-border-strong);
         margin: 10px auto 4px;
         transition: background 0.15s ease, box-shadow 0.15s ease;
         touch-action: none;
@@ -581,60 +904,72 @@
         height: auto;
         padding: calc(18px + env(safe-area-inset-top)) 18px 12px;
         gap: 10px;
-        font-family: 'Poppins', sans-serif;
+        font-family: 'Poppins', system-ui, sans-serif;
     }
-    .topbar-title { font-size: 19px; font-weight: 800; font-family: 'Poppins', sans-serif; }
-    #menuBtn, .topbar-actions .topbar-icon-btn { width: 40px; height: 40px; border-radius: 12px; }
-    .topbar .user-avatar { width: 40px; height: 40px; font-size: 14px; }
+    .topbar-title {
+        font-size: 1.35rem; font-weight: 700; letter-spacing: -.01em;
+        font-family: 'Poppins', system-ui, sans-serif; color: var(--ps-navy);
+    }
+    #menuBtn, .topbar-actions .topbar-icon-btn {
+        width: var(--ps-touch); height: var(--ps-touch); border-radius: var(--ps-r-btn);
+    }
+    .topbar .user-avatar { width: var(--ps-touch); height: var(--ps-touch); font-size: .9375rem; }
 
     /* ── More sheet ───────────────────────────────────────── */
     .more-sheet-item {
         display: flex; align-items: center; gap: 14px;
         width: 100%; padding: 12px 10px; border: none; background: none;
-        border-radius: 14px; cursor: pointer; text-align: left;
-        font-family: 'Poppins', sans-serif; min-height: 56px;
+        border-radius: var(--ps-r-btn); cursor: pointer; text-align: left;
+        font-family: 'Poppins', system-ui, sans-serif; min-height: 60px;
         text-decoration: none; color: inherit;
     }
-    .more-sheet-item:active { background: var(--m-line); }
+    .more-sheet-item:active { background: var(--ps-bg); }
     .more-sheet-icon {
-        width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
+        width: var(--ps-touch); height: var(--ps-touch); border-radius: 13px; flex-shrink: 0;
         display: flex; align-items: center; justify-content: center; font-size: 17px;
     }
-    .more-sheet-label { font-size: 14px; font-weight: 700; color: var(--m-ink); }
-    .more-sheet-desc { font-size: 11px; color: var(--m-muted); margin-top: 1px; }
-    .more-sheet-item.danger .more-sheet-label { color: var(--m-red); }
+    .more-sheet-label { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-navy); }
+    .more-sheet-desc { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); margin-top: 2px; }
+    .more-sheet-item.danger .more-sheet-label { color: var(--ps-danger); }
 
     /* ── Bottom tab bar ──────────────────────────────────── */
     .page-content { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
 
+    /* White bar, one hairline, no lift shadow — the nav is a rule at
+       the bottom of the page, not a floating slab. */
     .bottom-tabbar {
         display: flex;
         position: fixed;
         left: 0; right: 0; bottom: 0;
         z-index: 95;
-        background: var(--m-card);
-        border-top: 1px solid #E9EDF3;
-        padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
-        box-shadow: 0 -2px 16px rgba(0,0,0,0.05);
+        background: var(--ps-surface);
+        border-top: 1px solid var(--ps-border-soft);
+        padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+        box-shadow: none;
     }
+    /* Inactive is --ps-muted, not the spec's #96a0b3: that grey lands at
+       2.63:1 on white, and these are 0.625rem labels. Same read, AA-clean. */
     .tabbar-item {
         flex: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 4px;
+        justify-content: center;
+        gap: 5px;
+        min-height: var(--ps-touch);
         padding: 6px 2px;
         border: none;
         background: none;
-        color: #9AA5B8;
+        color: var(--ps-muted);
         text-decoration: none;
-        font-family: 'Poppins', sans-serif;
-        font-size: 10px;
-        font-weight: 600;
+        font-family: 'Poppins', system-ui, sans-serif;
+        font-size: .625rem;
+        font-weight: 500;
+        letter-spacing: .02em;
         transition: color 0.15s ease;
     }
-    .tabbar-item i { font-size: 21px; transition: transform 0.15s var(--ease-spring); }
-    .tabbar-item.active { color: #B98A2E; }
+    .tabbar-item i { font-size: 20px; transition: transform 0.15s var(--ease-spring); }
+    .tabbar-item.active { color: var(--ps-gold-text); font-weight: 600; }
     .tabbar-item.active i { transform: translateY(-1px); }
     .tabbar-item:active i { transform: scale(0.88); }
 }
@@ -645,4 +980,10 @@
     .logo-mobile { display: none; }
     #moreSheet { display: none !important; }
     .m-screen { display: none !important; }
+    /* The pushed-screen header is a sibling of .m-screen, not a child, so it
+       was not covered by the line above: on Building and Tenant detail it
+       rendered unstyled at desktop widths — a stray back chevron, title and
+       two broken icon boxes, 118px tall, between the page header and the
+       content. Observed at 1440px. */
+    .pm-push-header { display: none !important; }
 }

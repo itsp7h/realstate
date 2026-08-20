@@ -5,25 +5,22 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Tenant Statement</h1>
-        <p class="page-header-sub">Bill-wise outstanding statement for a single tenant</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
-        @if($tenant)
-        <button type="button" class="btn btn-outline"
-                onclick="openReportPdf('{{ route('reports.tenant-statement.pdf', request()->only(['tenant_id','date_from','date_to'])) }}', 'Tenant Statement — {{ $tenant->name }}')">
-            <i class="fa-solid fa-eye"></i> Preview
-        </button>
-        <a href="{{ route('reports.tenant-statement.pdf', request()->only(['tenant_id','date_from','date_to'])) }}"
-           target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
-        <a href="{{ route('reports.tenant-statement.export', request()->only(['tenant_id','date_from','date_to'])) }}"
-           class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
-        @endif
-    </div>
-</div>
+@section('page-title', 'Tenant Statement')
+@section('page-subtitle', 'Bill-wise outstanding statement for a single tenant')
+@section('page-actions')
+    <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
+    @if($tenant)
+    <button type="button" class="btn btn-outline"
+            onclick="openReportPdf('{{ route('reports.tenant-statement.pdf', request()->only(['tenant_id','date_from','date_to'])) }}', 'Tenant Statement — {{ $tenant->name }}')">
+        <i class="fa-solid fa-eye"></i> Preview
+    </button>
+    <a href="{{ route('reports.tenant-statement.pdf', request()->only(['tenant_id','date_from','date_to'])) }}"
+       target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+    <a href="{{ route('reports.tenant-statement.export', request()->only(['tenant_id','date_from','date_to'])) }}"
+       class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
+    @endif
+@endsection
+
 
 <form method="GET" action="{{ route('reports.tenant-statement') }}" class="filter-card">
     <div class="filter-bar">

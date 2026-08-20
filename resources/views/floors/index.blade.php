@@ -5,49 +5,48 @@
 
 @section('content')
 
+@section('page-breadcrumb')
+    <a href="{{ url('/dashboard') }}">Home</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <a href="{{ route('buildings.index') }}">Buildings</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <a href="{{ route('buildings.show', $building) }}">{{ $building->property_name }}</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Floors</span>
+@endsection
+@section('page-title')
+    {{ $building->property_name }} — Floors
+@endsection
+@section('page-subtitle')
+    <span class="badge badge-gold">{{ $building->property_code }}</span>
+    &nbsp;Manage floors for this building
+@endsection
+@section('page-actions')
+    <a href="{{ route('buildings.floors.create', $building) }}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Add Floor
+    </a>
+    <a href="{{ route('buildings.index') }}" class="btn btn-outline">
+        <i class="fa-solid fa-arrow-left"></i> Back to Buildings
+    </a>
+@endsection
+
 {{-- PAGE HEADER --}}
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <a href="{{ route('buildings.index') }}">Buildings</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <a href="{{ route('buildings.show', $building) }}">{{ $building->property_name }}</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Floors</span>
-        </div>
-        <h1 class="page-header-title">{{ $building->property_name }} — Floors</h1>
-        <p class="page-header-sub">
-            <span class="badge badge-gold">{{ $building->property_code }}</span>
-            &nbsp;Manage floors for this building
-        </p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('buildings.floors.create', $building) }}" class="btn btn-primary">
-            <i class="fa-solid fa-plus"></i> Add Floor
-        </a>
-        <a href="{{ route('buildings.index') }}" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back to Buildings
-        </a>
-    </div>
-</div>
 
 {{-- STATS --}}
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-icon gold"><i class="fa-solid fa-layer-group"></i></div>
-        <div>
-            <div class="stat-val">{{ $stats['total_floors'] }}</div>
-            <div class="stat-lbl">Total Floors</div>
+        <div class="stat-card-top">
+            <span class="stat-icon gold"><i class="fa-solid fa-layer-group"></i></span>
+            <span class="stat-lbl">Total Floors</span>
         </div>
+        <div class="stat-val">{{ $stats['total_floors'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon blue"><i class="fa-solid fa-door-open"></i></div>
-        <div>
-            <div class="stat-val">{{ $stats['total_units'] ?? 0 }}</div>
-            <div class="stat-lbl">Total Units (across floors)</div>
+        <div class="stat-card-top">
+            <span class="stat-icon blue"><i class="fa-solid fa-door-open"></i></span>
+            <span class="stat-lbl">Total Units (across floors)</span>
         </div>
+        <div class="stat-val">{{ $stats['total_units'] ?? 0 }}</div>
     </div>
 </div>
 
@@ -68,40 +67,40 @@
             <tbody>
                 @forelse($floors as $floor)
                 <tr>
-                    <td>
+                    <td data-label="Floor Name">
                         <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;">
                             {{ $floor->floor_name }}
                         </div>
                     </td>
-                    <td>
+                    <td data-label="Floor Code">
                         @if($floor->floor_code)
                             <span class="badge badge-gold">{{ $floor->floor_code }}</span>
                         @else
                             <span style="color:var(--text-muted);">—</span>
                         @endif
                     </td>
-                    <td>
+                    <td data-label="Block">
                         @if($floor->block_name)
                             <span style="font-size:13px;">{{ $floor->block_name }}</span>
                         @else
                             <span style="color:var(--text-muted);">—</span>
                         @endif
                     </td>
-                    <td>
+                    <td data-label="Block Code">
                         @if($floor->block_code)
                             <span class="badge badge-gray">{{ $floor->block_code }}</span>
                         @else
                             <span style="color:var(--text-muted);">—</span>
                         @endif
                     </td>
-                    <td>
+                    <td data-label="Total Units">
                         @if($floor->total_no_of_units !== null)
                             <div style="font-family:'Outfit',sans-serif;font-weight:700;">{{ $floor->total_no_of_units }}</div>
                         @else
                             <span style="color:var(--text-muted);">—</span>
                         @endif
                     </td>
-                    <td>
+                    <td data-label="Actions">
                         <div class="action-btns" style="justify-content:flex-end;">
                             <a href="{{ route('floors.edit', $floor) }}" class="btn btn-outline btn-sm">
                                 <i class="fa-regular fa-pen-to-square"></i>
@@ -141,23 +140,7 @@
             Showing <strong>{{ $floors->firstItem() ?? 0 }}–{{ $floors->lastItem() ?? 0 }}</strong>
             of <strong>{{ $floors->total() }}</strong> floors
         </div>
-        <div class="pagination">
-            @if($floors->onFirstPage())
-                <span class="page-btn" style="opacity:0.4;cursor:default;"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></span>
-            @else
-                <a href="{{ $floors->previousPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></a>
-            @endif
-
-            @foreach($floors->getUrlRange(max(1, $floors->currentPage()-2), min($floors->lastPage(), $floors->currentPage()+2)) as $page => $url)
-                <a href="{{ $url }}" class="page-btn {{ $page == $floors->currentPage() ? 'active' : '' }}">{{ $page }}</a>
-            @endforeach
-
-            @if($floors->hasMorePages())
-                <a href="{{ $floors->nextPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></a>
-            @else
-                <span class="page-btn" style="opacity:0.4;cursor:default;"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></span>
-            @endif
-        </div>
+        {{ $floors->links() }}
     </div>
 </div>
 

@@ -5,25 +5,22 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Tenant Ageing</h1>
-        <p class="page-header-sub">Outstanding bills for one tenant, split by how overdue they are</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
-        @if($tenant)
-        <button type="button" class="btn btn-outline"
-                onclick="openReportPdf('{{ route('reports.tenant-ageing.pdf', request()->only(['tenant_id','date_from','date_to'])) }}', 'Tenant Ageing — {{ $tenant->name }}')">
-            <i class="fa-solid fa-eye"></i> Preview
-        </button>
-        <a href="{{ route('reports.tenant-ageing.pdf', request()->only(['tenant_id','date_from','date_to'])) }}"
-           target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
-        <a href="{{ route('reports.tenant-ageing.export', request()->only(['tenant_id','date_from','date_to'])) }}"
-           class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
-        @endif
-    </div>
-</div>
+@section('page-title', 'Tenant Ageing')
+@section('page-subtitle', 'Outstanding bills for one tenant, split by how overdue they are')
+@section('page-actions')
+    <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
+    @if($tenant)
+    <button type="button" class="btn btn-outline"
+            onclick="openReportPdf('{{ route('reports.tenant-ageing.pdf', request()->only(['tenant_id','date_from','date_to'])) }}', 'Tenant Ageing — {{ $tenant->name }}')">
+        <i class="fa-solid fa-eye"></i> Preview
+    </button>
+    <a href="{{ route('reports.tenant-ageing.pdf', request()->only(['tenant_id','date_from','date_to'])) }}"
+       target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+    <a href="{{ route('reports.tenant-ageing.export', request()->only(['tenant_id','date_from','date_to'])) }}"
+       class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
+    @endif
+@endsection
+
 
 <form method="GET" action="{{ route('reports.tenant-ageing') }}" class="filter-card">
     <div class="filter-bar">

@@ -5,24 +5,21 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <a href="{{ route('lease-contracts.index') }}">Lease Contracts</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>New</span>
-        </div>
-        <h1 class="page-header-title">New Lease Contract</h1>
-        <p class="page-header-sub">Fill in all sections below to create a new lease agreement</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('lease-contracts.index') }}" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back
-        </a>
-    </div>
-</div>
+@section('page-breadcrumb')
+    <a href="{{ url('/dashboard') }}">Home</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <a href="{{ route('lease-contracts.index') }}">Lease Contracts</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>New</span>
+@endsection
+@section('page-title', 'New Lease Contract')
+@section('page-subtitle', 'Fill in all sections below to create a new lease agreement')
+@section('page-actions')
+    <a href="{{ route('lease-contracts.index') }}" class="btn btn-outline">
+        <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+@endsection
+
 
 <form method="POST" action="{{ route('lease-contracts.store') }}" novalidate>
 @csrf
@@ -299,7 +296,7 @@
     {{-- ── 5. SERVICE CHARGE ─────────────────────────────────── --}}
     <div class="card">
         <div class="card-header">
-            <div class="card-header-icon" style="background:#F5F3FF;color:#6D28D9;"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+            <div class="card-header-icon" style="background:var(--tone-info-bg);color:var(--tone-info-fg);"><i class="fa-solid fa-screwdriver-wrench"></i></div>
             <div>
                 <h3>Service Charge <span class="badge is-caps">Optional</span></h3>
                 <p>Service charge component details (BD excl. VAT)</p>

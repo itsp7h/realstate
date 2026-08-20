@@ -3,12 +3,15 @@
 @section('title', 'Mail Settings')
 @section('topbar-title', 'Mail Settings')
 
+@section('page-title', 'Mail Settings')
+@section('page-subtitle', 'Azure AD app registration used to send invoice, receipt, and reminder emails to tenants')
+
 @push('styles')
 <style>
 
 .form-label .required { color: var(--tone-danger-fg); margin-left: 2px; }
 .form-control {
-    padding: 9px 13px; font-size: 13px;
+    padding: 9px 13px; font-size: var(--fs-base);
     border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
     background: var(--input-bg); color: var(--text-primary); outline: none;
     transition: border-color 0.18s; width: 100%; box-sizing: border-box;
@@ -16,28 +19,14 @@
 }
 .form-control:focus { border-color: var(--accent); }
 .form-control.is-invalid { border-color: var(--tone-danger-border); }
-.form-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
-.form-actions { display: flex; gap: 10px; align-items: center; justify-content: flex-end; padding-top: 6px; }
-.status-pill {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 20px;
-    margin-bottom: 18px;
-}
-.status-pill.configured   { background: var(--tone-success-bg); color:var(--tone-success-fg); }
-.status-pill.unconfigured { background: var(--tone-neutral-bg); color: var(--text-muted); }
+.form-hint { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 3px; }
 </style>
 @endpush
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Mail Settings</h1>
-        <p class="page-header-sub">Azure AD app registration used to send invoice, receipt, and reminder emails to tenants</p>
-    </div>
-</div>
 
-<span class="status-pill {{ $setting->isConfigured() ? 'configured' : 'unconfigured' }}">
+<span class="status-badge {{ $setting->isConfigured() ? 'configured' : 'unconfigured' }}">
     <i class="fa-solid {{ $setting->isConfigured() ? 'fa-circle-check' : 'fa-circle-minus' }}"></i>
     {{ $setting->isConfigured() ? 'Configured' : 'Not configured yet' }}
 </span>

@@ -3,63 +3,50 @@
 @section('title', 'EWA Bills')
 @section('topbar-title', 'EWA Bills')
 
+@section('page-title', 'EWA Bills')
+@section('page-subtitle', 'Electricity & Water Authority bills linked to lease contracts')
+@section('page-actions')
+    <a href="{{ route('ewa-bills.create') }}" class="btn btn-outline">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Import from PDF
+    </a>
+    <a href="{{ route('ewa-bills.create') }}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> New EWA Bill
+    </a>
+@endsection
+
 @push('styles')
 <style>
 /* ── STATS ─────────────────────────────────────────────────── */
 
 /* ── FILTER ────────────────────────────────────────────────── */
-.filter-bar {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 14px 18px;
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px;
-}
 
 /* ── STATUS BADGES ─────────────────────────────────────────── */
-.status-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
-}
 
-.overdue-row td { background: #FFF8F8; }
+.overdue-row td { background: var(--tone-danger-bg); }
 .actions-cell { display: flex; gap: 6px; align-items: center; }
 
 /* ── PDF PREVIEW MODAL ───────────────────────────────────── */
 
 /* ── TABS ──────────────────────────────────────────────────── */
-.tab-bar { display: flex; gap: 4px; border-bottom: 2px solid var(--card-border); margin-bottom: 20px; }
 
 /* EWA header strip */
 .ewa-header-strip {
-    background: linear-gradient(135deg, #0D9488 0%, #0369A1 100%);
-    border-radius: var(--radius); padding: 16px 22px; margin-bottom: 20px;
-    display: flex; align-items: center; gap: 16px; color: #fff;
+    background: linear-gradient(135deg, var(--tone-info-fg) 0%, var(--tone-info-fg) 100%);
+    border-radius: var(--radius); padding: 16px 22px; margin-bottom: var(--sp-5);
+    display: flex; align-items: center; gap: 16px; color: var(--ink-on-fill);
 }
 .ewa-header-strip .ewa-logo-circle {
     width: 48px; height: 48px; border-radius: 50%;
     background: rgba(255,255,255,0.2); backdrop-filter: blur(4px);
     display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;
 }
-.ewa-header-strip h2 { font-family: 'Outfit',sans-serif; font-size: 18px; font-weight: 800; margin: 0; }
-.ewa-header-strip p  { font-size: 12px; opacity: 0.85; margin: 2px 0 0; }
+.ewa-header-strip h2 { font-family: 'Outfit',sans-serif; font-size: var(--fs-lg); font-weight: 800; margin: 0; }
+.ewa-header-strip p  { font-size: var(--fs-sm); opacity: 0.85; margin: 2px 0 0; }
 </style>
 @endpush
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">EWA Bills</h1>
-        <p class="page-header-sub">Electricity &amp; Water Authority bills linked to lease contracts</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('ewa-bills.create') }}" class="btn btn-outline">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> Import from PDF
-        </a>
-        <a href="{{ route('ewa-bills.create') }}" class="btn btn-primary">
-            <i class="fa-solid fa-plus"></i> New EWA Bill
-        </a>
-    </div>
-</div>
 
 @include('ewa-bills._tabs')
 
@@ -109,7 +96,7 @@
                 $mHasBalance = $bill->balance_due > 0 && $bill->status !== 'cancelled';
             @endphp
             <a href="{{ route('ewa-bills.show', $bill) }}" class="m-row-card">
-                <div class="m-row-icon" style="background:{{ $mIsOverdue ? 'var(--tone-danger-bg)' : 'var(--tone-info-bg)' }};color:{{ $mIsOverdue ? 'var(--tone-danger-fg)' : 'var(--tone-info-fg)' }};">
+                <div class="m-row-icon" style="background:{{ $mIsOverdue ? 'var(--ps-danger-bg)' : 'var(--ps-info-bg)' }};color:{{ $mIsOverdue ? 'var(--ps-danger)' : 'var(--ps-info)' }};">
                     <i class="fa-solid fa-bolt"></i>
                 </div>
                 <div style="flex:1;min-width:0;">
@@ -122,10 +109,10 @@
                     </div>
                 </div>
                 <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-                    <div style="font-family:'Outfit',sans-serif;font-size:13.5px;font-weight:800;color:var(--text-primary);">
+                    <div style="font-family:'Poppins',system-ui,sans-serif;font-size:1rem;font-weight:700;color:var(--ps-navy);">
                         BHD {{ number_format($bill->total_amount, 3) }}
                     </div>
-                    <div style="font-size:10.5px;font-weight:600;color:{{ $mHasBalance ? 'var(--tone-danger-fg)' : 'var(--text-muted)' }};">
+                    <div style="font-size:.7rem;font-weight:600;color:{{ $mHasBalance ? 'var(--ps-danger)' : 'var(--ps-muted-deep)' }};">
                         Balance BHD {{ number_format($bill->balance_due, 3) }}
                     </div>
                     <span class="status-badge {{ $bill->status }}">{{ $bill->status_label }}</span>
@@ -143,24 +130,39 @@
 
 <div class="stats-grid m-hide-desktop-index">
     <div class="stat-card">
-        <div class="stat-icon teal"><i class="fa-solid fa-droplet"></i></div>
-        <div><div class="stat-val">{{ $stats['total'] }}</div><div class="stat-lbl">Total</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon teal"><i class="fa-solid fa-droplet"></i></span>
+            <span class="stat-lbl">Total</span>
+        </div>
+        <div class="stat-val">{{ $stats['total'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon blue"><i class="fa-solid fa-paper-plane"></i></div>
-        <div><div class="stat-val">{{ $stats['issued'] }}</div><div class="stat-lbl">Issued</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon blue"><i class="fa-solid fa-paper-plane"></i></span>
+            <span class="stat-lbl">Issued</span>
+        </div>
+        <div class="stat-val">{{ $stats['issued'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon amber"><i class="fa-solid fa-circle-half-stroke"></i></div>
-        <div><div class="stat-val">{{ $stats['partially_paid'] }}</div><div class="stat-lbl">Partial</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon amber"><i class="fa-solid fa-circle-half-stroke"></i></span>
+            <span class="stat-lbl">Partial</span>
+        </div>
+        <div class="stat-val">{{ $stats['partially_paid'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
-        <div><div class="stat-val">{{ $stats['paid'] }}</div><div class="stat-lbl">Paid</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon green"><i class="fa-solid fa-circle-check"></i></span>
+            <span class="stat-lbl">Paid</span>
+        </div>
+        <div class="stat-val">{{ $stats['paid'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <div><div class="stat-val">{{ $stats['overdue'] }}</div><div class="stat-lbl">Overdue</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></span>
+            <span class="stat-lbl">Overdue</span>
+        </div>
+        <div class="stat-val">{{ $stats['overdue'] }}</div>
     </div>
 </div>
 
@@ -221,7 +223,7 @@
                 @foreach($bills as $bill)
                 <tr data-href="{{ route('ewa-bills.show', $bill) }}" style="cursor:pointer"
                     class="{{ $bill->status === 'overdue' ? 'overdue-row' : '' }}">
-                    <td style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--accent)">
+                    <td class="cell-id">
                         {{ $bill->bill_number }}
                     </td>
                     <td style="font-size:12px;white-space:nowrap">{{ $bill->billing_period }}</td>
@@ -233,7 +235,7 @@
                         {{ $bill->property_name }}
                         @if($bill->unit)<span style="color:var(--text-muted)"> / {{ $bill->unit }}</span>@endif
                     </td>
-                    <td style="font-size:12px;color:var(--text-muted)">{{ $bill->ewa_account_number ?: '—' }}</td>
+                    <td class="cell-muted">{{ $bill->ewa_account_number ?: '—' }}</td>
                     <td class="amount-col">{{ number_format($bill->total_amount, 3) }}</td>
                     <td class="amount-col {{ $bill->balance_due > 0 && $bill->status !== 'cancelled' ? '' : '' }}"
                         style="{{ $bill->balance_due > 0 && $bill->status !== 'cancelled' ? 'color:var(--tone-danger-fg)' : 'color:var(--text-muted)' }}">
@@ -273,9 +275,12 @@
             </tbody>
         </table>
     </div>
-    <div style="padding:14px 18px;border-top:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-muted)">
-        <div>Showing {{ $bills->firstItem() }}–{{ $bills->lastItem() }} of {{ $bills->total() }}</div>
-        <div>{{ $bills->links() }}</div>
+    <div class="table-footer">
+        <div class="result-count">
+            Showing <strong>{{ $bills->firstItem() ?? 0 }}–{{ $bills->lastItem() ?? 0 }}</strong>
+            of <strong>{{ number_format($bills->total()) }}</strong> bills
+        </div>
+        {{ $bills->links() }}
     </div>
     @endif
 </div>
@@ -285,7 +290,7 @@
     <div class="pdf-viewer">
         <div class="pdf-viewer-header">
             <div class="pdf-viewer-title" id="pdfModalTitle">
-                <i class="fa-solid fa-file-invoice" style="color:#0D9488;margin-right:6px"></i>
+                <i class="fa-solid fa-file-invoice" style="color:var(--tone-info-fg);margin-right:6px"></i>
                 EWA Bill
             </div>
             <div class="pdf-viewer-actions">
@@ -309,7 +314,7 @@ function openPdfPreview(previewUrl, downloadUrl, title) {
     document.getElementById('pdfFrame').src        = previewUrl;
     document.getElementById('pdfDownloadBtn').href = downloadUrl;
     document.getElementById('pdfModalTitle').innerHTML =
-        '<i class="fa-solid fa-file-invoice" style="color:#0D9488;margin-right:6px"></i>' + title;
+        '<i class="fa-solid fa-file-invoice" style="color:var(--tone-info-fg);margin-right:6px"></i>' + title;
     document.getElementById('pdfModalOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
 }

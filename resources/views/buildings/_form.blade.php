@@ -10,7 +10,7 @@
     display: flex;
     align-items: center;
     gap: 0;
-    margin-bottom: 28px;
+    margin-bottom: var(--sp-7);
     padding: 20px 24px;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
@@ -49,7 +49,7 @@
     align-items: center;
     justify-content: center;
     font-family: 'Outfit', sans-serif;
-    font-size: 14px;
+    font-size: var(--fs-base);
     font-weight: 700;
     color: var(--text-muted);
     flex-shrink: 0;
@@ -60,7 +60,7 @@
 .progress-step.active .step-bubble {
     border-color: var(--accent);
     background: var(--accent);
-    color: #0B1120;
+    color: var(--text-primary);
     box-shadow: 0 0 0 4px var(--accent-dim);
 }
 .progress-step.done .step-bubble {
@@ -71,12 +71,12 @@
 .step-meta { display: flex; flex-direction: column; gap: 1px; }
 .step-label {
     font-family: 'Outfit', sans-serif;
-    font-size: 13px;
+    font-size: var(--fs-base);
     font-weight: 700;
     color: var(--text-primary);
 }
 .step-sub {
-    font-size: 11px;
+    font-size: var(--fs-xs);
     color: var(--text-muted);
     white-space: nowrap;
 }
@@ -107,7 +107,7 @@
     gap: 0;
 }
 .field-label {
-    font-size: 11.5px;
+    font-size: var(--fs-xs);
     font-weight: 700;
     color: var(--text-secondary);
     letter-spacing: 0.04em;
@@ -119,7 +119,7 @@
 }
 .field-label .req {
     color: var(--danger);
-    font-size: 14px;
+    font-size: var(--fs-base);
     line-height: 1;
 }
 
@@ -132,7 +132,7 @@
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: var(--fs-base);
     pointer-events: none;
     transition: color 0.2s;
 }
@@ -148,10 +148,10 @@
     padding: 10px 14px;
     border: 1.5px solid var(--input-border);
     border-radius: var(--radius-sm);
-    background: var(--input-bg, #fff);
+    background: var(--input-bg);
     color: var(--text-primary);
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 13.5px;
+    font-size: var(--fs-base);
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     outline: none;
     appearance: none;
@@ -162,14 +162,14 @@
 .field-textarea::placeholder { color: var(--text-muted); opacity: 0.7; }
 
 .field-input:hover,
-.field-select:hover { border-color: #B0BCCF; }
+.field-select:hover { border-color: var(--input-border); }
 
 .field-input:focus,
 .field-select:focus,
 .field-textarea:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3.5px var(--accent-dim);
-    background: #FFFDF8;
+    background: var(--tone-warning-bg);
 }
 .field-input-wrap:focus-within .field-input-icon {
     color: var(--accent);
@@ -179,7 +179,7 @@
 .field-select.is-invalid,
 .field-textarea.is-invalid {
     border-color: var(--danger);
-    background: #FFF8F8;
+    background: var(--tone-danger-bg);
 }
 .field-input.is-invalid:focus,
 .field-select.is-invalid:focus {
@@ -191,11 +191,11 @@
     align-items: center;
     gap: 5px;
     margin-top: 5px;
-    font-size: 11.5px;
+    font-size: var(--fs-xs);
     color: var(--danger);
     font-weight: 500;
 }
-.field-error-msg i { font-size: 11px; }
+.field-error-msg i { font-size: var(--fs-xs); }
 
 .field-select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2394A3B8' d='M5 7L0.669873 2.5L9.33013 2.5L5 7Z'/%3E%3C/svg%3E");
@@ -215,25 +215,28 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
 }
+/* `gap` already spaces these, so app-core's normal-flow card stacking margin
+   would only push every card after the first out of line. */
+.capacity-grid > .card + .card { margin-top: 0; }
 .capacity-item { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; transition: border-color 0.2s, box-shadow 0.2s; cursor: default; }
 .capacity-item:focus-within {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-dim);
-    background: #FFFDF8;
+    background: var(--tone-warning-bg);
 }
 .capacity-icon {
     width: 36px;
     height: 36px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: var(--accent-dim);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--accent);
-    font-size: 14px;
+    font-size: var(--fs-base);
 }
 .capacity-label {
-    font-size: 11px;
+    font-size: var(--fs-xs);
     font-weight: 700;
     color: var(--text-secondary);
     letter-spacing: 0.04em;
@@ -255,34 +258,9 @@
 }
 .capacity-item input::-webkit-outer-spin-button,
 .capacity-item input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.capacity-item input::placeholder { color: var(--text-muted); font-weight: 400; font-size: 20px; }
+.capacity-item input::placeholder { color: var(--text-muted); font-weight: 400; font-size: var(--fs-xl); }
 
 /* ── STICKY ACTIONS ────────────────────────────────────── */
-.form-actions-bar {
-    position: sticky;
-    bottom: 0;
-    background: var(--card-bg);
-    border-top: 1px solid var(--card-border);
-    padding: 14px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    z-index: 50;
-    border-radius: 0 0 var(--radius) var(--radius);
-    margin-top: 20px;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
-    backdrop-filter: blur(8px);
-}
-.actions-hint {
-    font-size: 12px;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.actions-hint i { color: var(--accent); }
-.actions-right { display: flex; align-items: center; gap: 10px; }
 
 /* ── DIVIDER ───────────────────────────────────────────── */
 .address-divider {
@@ -293,7 +271,7 @@
     margin: 4px 0 4px;
 }
 .divider-label {
-    font-size: 10.5px;
+    font-size: var(--fs-2xs);
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -311,10 +289,8 @@
     .field-grid { grid-template-columns: 1fr; }
     .field-grid .span-2 { grid-column: span 1; }
     .capacity-grid { grid-template-columns: 1fr; }
-    .form-actions-bar { padding: 12px 16px; }
-    .actions-hint { display: none; }
 }
-@media (max-width: 520px) {
+@media (max-width: 600px) {
 }
 </style>
 @endpush
@@ -724,12 +700,12 @@
     </div>{{-- /section-stack --}}
 
     {{-- STICKY ACTIONS BAR --}}
-    <div class="form-actions-bar">
-        <div class="actions-hint">
+    <div class="form-sticky-actions">
+        <div class="form-sticky-actions-hint">
             <i class="fa-solid fa-circle-info"></i>
             Fields marked <span style="color:var(--danger);font-weight:700;margin:0 2px;">*</span> are required
         </div>
-        <div class="actions-right">
+        <div class="action-btns">
             <a href="{{ route('buildings.index') }}" class="btn btn-outline">
                 <i class="fa-solid fa-xmark"></i> Cancel
             </a>

@@ -3,6 +3,9 @@
 @section('title', 'Import / Export')
 @section('topbar-title', 'Import / Export')
 
+@section('page-title', 'Import / Export')
+@section('page-subtitle', 'Bulk import data from a spreadsheet or export all records')
+
 @push('styles')
 <style>
 /* ── PAGE LAYOUT ───────────────────────────────────────── */
@@ -13,6 +16,9 @@
     align-items: start;
 }
 @media (max-width: 900px) { .data-grid { grid-template-columns: 1fr; } }
+/* This grid spaces its children with `gap`, so app-core's normal-flow stacking
+   margin has to go — it would drop the second card --sp-5 below the first. */
+.data-grid > .card + .card { margin-top: 0; }
 
 /* ── PANEL CARD ────────────────────────────────────────── */
 
@@ -21,7 +27,7 @@
     display: flex;
     flex-direction: column;
     gap: 0;
-    margin-bottom: 24px;
+    margin-bottom: var(--sp-6);
 }
 .flow-step {
     display: flex;
@@ -44,29 +50,29 @@
     border: 2px solid var(--card-border);
     display: flex; align-items: center; justify-content: center;
     font-family: 'Outfit', sans-serif;
-    font-size: 12px; font-weight: 800;
+    font-size: var(--fs-sm); font-weight: 800;
     color: var(--text-muted);
     flex-shrink: 0; z-index: 1; position: relative;
 }
 .flow-num.gold { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
 .flow-body { padding-top: 5px; }
-.flow-title { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
-.flow-desc  { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.flow-title { font-size: var(--fs-base); font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+.flow-desc  { font-size: var(--fs-sm); color: var(--text-muted); line-height: 1.5; }
 
 /* ── SECTION BANDS ─────────────────────────────────────── */
 .section-bands {
-    display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap;
+    display: flex; gap: 6px; margin-bottom: var(--sp-5); flex-wrap: wrap;
 }
 .section-band {
     display: flex; align-items: center; gap: 6px;
     padding: 5px 10px; border-radius: var(--radius-sm);
-    font-size: 11px; font-weight: 700;
+    font-size: var(--fs-xs); font-weight: 700;
     border: 1px solid;
 }
 .section-band.blue   { background: var(--tone-info-bg); border-color: var(--tone-info-border); color: var(--tone-info-fg); }
 .section-band.green  { background: var(--tone-success-bg); border-color: var(--tone-success-border); color: var(--tone-success-fg); }
 .section-band.yellow { background: var(--tone-warning-bg); border-color: var(--tone-warning-border); color: var(--tone-warning-fg); }
-.section-band i { font-size: 10px; }
+.section-band i { font-size: var(--fs-2xs); }
 
 /* ── TEMPLATE DOWNLOAD ─────────────────────────────────── */
 .tpl-bar {
@@ -75,9 +81,9 @@
     border-radius: var(--radius-sm);
     padding: 12px 16px;
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    margin-bottom: 20px;
+    margin-bottom: var(--sp-5);
 }
-.tpl-bar-text { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+.tpl-bar-text { font-size: var(--fs-base); color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
 .tpl-bar-btns { display: flex; gap: 6px; flex-shrink: 0; }
 
 /* ── DROP ZONE ─────────────────────────────────────────── */
@@ -89,29 +95,29 @@
     text-align: center;
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
-    margin-bottom: 16px;
+    margin-bottom: var(--sp-4);
 }
 .drop-zone:hover, .drop-zone.drag-over {
     border-color: var(--accent);
     background: var(--accent-dim);
 }
 .drop-icon {
-    font-size: 40px; color: var(--text-muted); margin-bottom: 12px;
+    font-size: 40px; color: var(--text-muted); margin-bottom: var(--sp-3);
     transition: color 0.2s, transform 0.2s;
 }
 .drop-zone:hover .drop-icon, .drop-zone.drag-over .drop-icon {
     color: var(--accent); transform: translateY(-4px);
 }
-.drop-label { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
-.drop-sub   { font-size: 12px; color: var(--text-muted); }
-.drop-file  { margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--accent); min-height: 18px; }
+.drop-label { font-family: 'Outfit', sans-serif; font-size: var(--fs-md); font-weight: 700; color: var(--text-primary); margin-bottom: var(--sp-1); }
+.drop-sub   { font-size: var(--fs-sm); color: var(--text-muted); }
+.drop-file  { margin-top: 10px; font-size: var(--fs-base); font-weight: 600; color: var(--accent); min-height: 18px; }
 
 /* ── RESULT BANNER ─────────────────────────────────────── */
 .result-banner {
     padding: 14px 18px;
     border-radius: var(--radius-sm);
     border: 1px solid;
-    margin-bottom: 20px;
+    margin-bottom: var(--sp-5);
     animation: bannerIn 0.3s ease;
 }
 @keyframes bannerIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
@@ -119,11 +125,11 @@
 .result-banner.partial  { background: var(--tone-warning-bg); border-color: var(--tone-warning-border); }
 .result-banner.error    { background: var(--tone-danger-bg); border-color: var(--tone-danger-border); }
 .result-counts { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
-.result-count-item { font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 5px; }
+.result-count-item { font-size: var(--fs-base); font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 5px; }
 .result-count-item i.ok   { color: var(--tone-success-fg); }
 .result-count-item i.warn { color: var(--tone-warning-fg); }
-.result-errors-toggle { font-size: 12px; color: var(--text-muted); cursor: pointer; }
-.result-errors-list { margin: 8px 0 0 0; padding: 0; font-size: 12px; color: var(--text-secondary); line-height: 1.8; list-style: disc; padding-left: 18px; }
+.result-errors-toggle { font-size: var(--fs-sm); color: var(--text-muted); cursor: pointer; }
+.result-errors-list { margin: 8px 0 0 0; padding: 0; font-size: var(--fs-sm); color: var(--text-secondary); line-height: 1.8; list-style: disc; padding-left: 18px; }
 
 /* ── EXPORT CARD ───────────────────────────────────────── */
 .export-info {
@@ -131,12 +137,12 @@
     border: 1px solid var(--card-border);
     border-radius: var(--radius-sm);
     padding: 14px 16px;
-    margin-bottom: 20px;
+    margin-bottom: var(--sp-5);
 }
 .export-sheets { display: flex; flex-direction: column; gap: 8px; }
 .export-sheet-row {
     display: flex; align-items: center; gap: 10px;
-    font-size: 13px; color: var(--text-secondary);
+    font-size: var(--fs-base); color: var(--text-secondary);
 }
 .export-sheet-dot {
     width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
@@ -150,17 +156,6 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Import / Export</span>
-        </div>
-        <h1 class="page-header-title">Import / Export</h1>
-        <p class="page-header-sub">Bulk import data from a spreadsheet or export all records</p>
-    </div>
-</div>
 
 {{-- RESULT BANNER --}}
 @if(session()->has('import_counts'))

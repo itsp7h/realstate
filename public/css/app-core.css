@@ -32,6 +32,21 @@
    §1  FOUNDATION
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ── §1.0  Breakpoints ───────────────────────────────────────────────────────
+     Six steps, and no others. CSS custom properties cannot be used in a media
+     query, so this is a contract rather than a token — but it is the contract:
+     a page that invents 620px or 820px puts a fold in the layout that exists
+     on that page and nowhere else.
+
+       430px   small phone — two-up KPI cards go single file
+       600px   large phone / small tablet — two-column content stacks
+       768px   the mobile boundary. ≤768 the mobile app layer owns the screen;
+               ≥769 the desktop shell does. Nothing else may sit on this line.
+       900px   side-by-side panels stack (a detail page's aside)
+       1200px  wide-desktop reflow (a four-up grid to two-up)
+       1400px  the five-across KPI strip goes three-across
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 /* ── §1.1  Tokens — light (also the :root default) ───────────────────────── */
 :root,
 :root[data-theme="light"] {
@@ -40,31 +55,47 @@
     --sidebar-border:   #1A2540;
     --sidebar-hover:    #131E35;
     --sidebar-active:   #1E2D4A;
-    --accent:           #E8B86D;
-    --accent-strong:    #D4A558;   /* accent hover — was inline in .btn-primary */
-    --accent-dim:       rgba(232,184,109,0.12);
-    --accent-glow:      rgba(232,184,109,0.25);
-    --on-accent:        #0B1120;   /* text on a gold fill */
+    --accent:           #D8B25F;
+    --accent-strong:    #CAA14F;   /* accent hover — was inline in .btn-primary */
+    --accent-dim:       rgba(216,178,95,0.16);
+    --accent-glow:      rgba(216,178,95,0.22);
+    --on-accent:        #1E2C4F;   /* text on a gold fill — 6.8:1 on --accent */
+    /* The gold is a gradient wherever it fills a control, not a flat wash.
+       One declaration so a button, a header action and an avatar are the
+       same object lit the same way. */
+    --accent-gradient:  linear-gradient(100deg, #EDCD85 0%, #D0A854 100%);
+    --accent-lift:      0 6px 16px rgba(202,161,79,0.30);
+    --accent-lift-hover: 0 9px 20px rgba(202,161,79,0.42);
+    /* Ink on any saturated fill — a tone chip, a navy panel, a coloured
+       header. White in both themes, because the fill under it is too. Pages
+       were writing #fff for this, which reads as a surface and got mistaken
+       for one during theming. */
+    --ink-on-fill:      #FFFFFF;
 
     /* Surfaces & text */
-    --page-bg:          #F1F5F9;
-    --page-bg-alt:      #F8FAFC;
+    --page-bg:          #EEF1F6;
+    --page-bg-alt:      #F7F9FC;
+    /* The canvas the cards sit ON, as opposed to --page-bg's second job as a
+       subtle fill (ghost/outline button hover, search field, drop zone). They
+       were one token, so lightening the canvas also washed out those hovers.
+       Split: the canvas is a shade lighter, the fills keep their weight. */
+    --page-canvas:      #EEF1F6;
     --card-bg:          #FFFFFF;
-    --card-border:      #E2E8F0;
-    --row-border:       #F1F5F9;
-    --row-hover:        #FAFBFC;
-    --text-primary:     #0F172A;
-    --text-secondary:   #475569;
+    --card-border:      #D5DAE3;
+    --row-border:       #EEF1F6;
+    --row-hover:        #F7F9FC;
+    --text-primary:     #1E2C4F;
+    --text-secondary:   #5D6880;
     /* Was #94A3B8, which measures 2.56:1 on white — well under WCAG AA, and it
        carries most of the app's secondary text (table headers, stat labels,
        card subtitles, breadcrumbs, detail labels, placeholders). #61708A clears
        4.5:1 on all three light surfaces (card #FFFFFF 5.01, alt #F8FAFC 4.79,
        page #F1F5F9 4.57). */
-    --text-muted:       #61708A;
+    --text-muted:       #626E85;
     /* The old value, kept for genuinely non-text decoration where a light grey
        is the point and no contrast minimum applies: an empty-state glyph, a
        chevron, a divider. Never use it for text. */
-    --text-faint:       #94A3B8;
+    --text-faint:       #97A1B4;
     --text-sidebar:     #8A9BBE;
     --text-sidebar-active: #FFFFFF;
 
@@ -76,14 +107,14 @@
        --card-border stays light on purpose: it separates two surfaces that are
        already distinguished by their own fill and elevation, so it is
        decoration rather than a component boundary. */
-    --input-border:     #8494A9;
-    --input-focus:      #E8B86D;
+    --input-border:     #848FA6;
+    --input-focus:      #CAA14F;
 
     /* Status — solid values, for icons/fills/chart series */
-    --danger:           #EF4444;
-    --success:          #10B981;
-    --info:             #3B82F6;
-    --warning:          #F59E0B;
+    --danger:           #B4483C;
+    --success:          #2F7A4F;
+    --info:             #2F4A7A;
+    --warning:          #CAA14F;
 
     /* ── Semantic tones ────────────────────────────────────────────────────
          Every status surface in the app (badges, alerts, stat icons, soft
@@ -96,24 +127,43 @@
          `-fg` values are chosen to clear WCAG AA (4.5:1) against their own
          `-bg`. The previous gold badge — #E8B86D on #FDF6EA, about 1.7:1 —
          failed outright; --tone-accent-fg fixes it at ~6.4:1. */
-    --tone-success-fg:      #047857;
-    --tone-success-bg:      #ECFDF5;
-    --tone-success-border:  #A7F3D0;
-    --tone-danger-fg:       #B91C1C;
-    --tone-danger-bg:       #FEF2F2;
-    --tone-danger-border:   #FECACA;
-    --tone-warning-fg:      #B45309;
-    --tone-warning-bg:      #FFFBEB;
-    --tone-warning-border:  #FDE68A;
-    --tone-info-fg:         #1D4ED8;
-    --tone-info-bg:         #EFF6FF;
-    --tone-info-border:     #BFDBFE;
-    --tone-neutral-fg:      #475569;
-    --tone-neutral-bg:      #F1F5F9;
-    --tone-neutral-border:  #E2E8F0;
-    --tone-accent-fg:       #8A6318;
-    --tone-accent-bg:       #FDF6EA;
-    --tone-accent-border:   #EFD9AE;
+    --tone-success-fg:      #2F7A4F;
+    --tone-success-bg:      #E4F2EA;
+    --tone-success-border:  #C3E2D1;
+    --tone-danger-fg:       #B4483C;
+    --tone-danger-bg:       #F9E9E7;
+    --tone-danger-border:   #F0CFCB;
+    --tone-warning-fg:      #8A6D20;
+    --tone-warning-bg:      #FDF6E6;
+    --tone-warning-border:  #EFDFB6;
+    --tone-info-fg:         #1E2C4F;
+    --tone-info-bg:         #E8EEF8;
+    --tone-info-border:     #CBD8EC;
+    /* Chart series — fixed system-wide (DESKTOP-UI.md §3) so a colour always
+       means the same thing on every chart. Identical in both themes: these
+       are data identities, not surfaces. */
+    --chart-income:   #2F7A4F;
+    --chart-expenses: #B4483C;
+    --chart-credits:  #2F4A7A;
+    --chart-debits:   #CAA14F;
+    --chart-profit:   #6E5AA8;
+    /* The two-series pairing the brand uses when the series ARE the brand
+       rather than a semantic (income vs expense on a building's financial
+       card): navy against gold. Semantic green/red above still means
+       good/bad everywhere else. */
+    --chart-primary:  #1E2C4F;
+    --chart-accent:   #D8B25F;
+
+    --tone-neutral-fg:      #5D6880;
+    --tone-neutral-bg:      #EEF1F6;
+    --tone-neutral-border:  #D5DAE3;
+    /* #8A6D20 is the design's gold ink, and it measures 4.32:1 on the page
+       background — the active tab label sits directly on it. One step darker
+       clears AA on all three light surfaces (page 4.66, card 5.28, gold tint
+       4.90) and is indistinguishable at label size. */
+    --tone-accent-fg:       #84681E;
+    --tone-accent-bg:       #FDF6E6;
+    --tone-accent-border:   #EFDFB6;
 
     /* ── Type ──────────────────────────────────────────────────────────────
          Two faces with distinct jobs: Outfit for anything that should read as
@@ -121,9 +171,9 @@
          Sans for everything else. --font-data is Outfit with tabular figures
          — this app is columns of BHD amounts and unit counts, and
          proportional digits in a ledger never line up. */
-    --font-display: 'Outfit', system-ui, sans-serif;
-    --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
-    --font-data:    'Outfit', system-ui, sans-serif;
+    --font-display: 'Poppins', system-ui, sans-serif;
+    --font-body:    'Poppins', system-ui, sans-serif;
+    --font-data:    'Poppins', system-ui, sans-serif;
 
     /* Scale — replaces the 18 ad-hoc sizes that were in use
        (10 / 10.5 / 11 / 11.5 / 12 / 12.5 / 13 / 13.5 / 14 / 14.5 / 15 / 16 /
@@ -131,7 +181,7 @@
        page shifts. */
     --fs-2xs:   10px;   /* eyebrow / section label, always uppercase */
     --fs-xs:    11px;   /* badge, table header, meta */
-    --fs-sm:    12px;   /* form label, help text */
+    --fs-sm:    12px;   /* form label, help text, muted table-cell text (.cell-muted) */
     --fs-base:  13.5px; /* body, table cell, input, button */
     --fs-md:    15px;   /* card title */
     --fs-lg:    17px;   /* topbar title, section heading */
@@ -150,6 +200,12 @@
     --sp-3:  12px;
     --sp-4:  16px;
     --sp-5:  20px;
+
+    /* Section rhythm — the vertical gap between the page's own sections
+       (header → KPIs → filters → content → pagination). Declared once here
+       and applied by .shell-content, so no page sets a section margin. */
+    --section-gap:    24px;
+    --section-gap-sm: 18px;
     --sp-6:  24px;
     --sp-7:  28px;
     --sp-8:  32px;
@@ -158,15 +214,15 @@
 
     /* ── Radius */
     --radius:       12px;
-    --radius-sm:    8px;
-    --radius-lg:    16px;
+    --radius-sm:    10px;
+    --radius-lg:    14px;
     --radius-pill:  9999px;
 
     /* ── Elevation — ambient + key shadow, composed rather than one flat blur */
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
-    --shadow-lg: 0 10px 40px rgba(0,0,0,0.10);
-    --shadow-modal: 0 24px 60px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.10);
+    --shadow-sm: 0 1px 2px rgba(30,44,79,0.05);
+    --shadow-md: 0 6px 18px rgba(30,44,79,0.08), 0 2px 6px rgba(30,44,79,0.04);
+    --shadow-lg: 0 12px 30px rgba(30,44,79,0.10);
+    --shadow-modal: 0 24px 60px rgba(30,44,79,0.20), 0 8px 24px rgba(30,44,79,0.12);
 
     /* ── Control sizing — the fix for inputs and buttons drifting between
          pages. Every interactive control derives its box from these. */
@@ -177,7 +233,7 @@
 
     /* ── Focus — visible on every control, in both themes. .btn previously
          had no focus state at all. */
-    --focus-ring:   0 0 0 3px var(--accent-glow);
+    --focus-ring:   0 0 0 4px var(--accent-glow);
     --focus-outline: 2px solid var(--accent-strong);
 
     /* ── Motion */
@@ -191,6 +247,9 @@
     /* ── Layers — was a spread of 20/90/95/99/100/1000/1050 literals */
     --z-sticky:   90;
     --z-tabbar:   95;
+    /* A panel hung off the top bar — the notification bell. Above the sticky
+       chrome it opens from, below the backdrop so a modal still covers it. */
+    --z-dropdown: 96;
     --z-backdrop: 99;
     --z-sidebar:  100;
     --z-modal:    1000;
@@ -205,51 +264,61 @@
 
 /* ── §1.2  Tokens — dark. Only what actually changes. ────────────────────── */
 :root[data-theme="dark"] {
-    --page-bg:        #0D1220;
-    --page-bg-alt:    #111828;
-    --card-bg:        #131A2B;
-    --card-border:    #232C42;
-    --row-border:     #1D2436;
-    --row-hover:      #171F33;
-    --text-primary:   #F1F4F9;
-    --text-secondary: #B7C0D1;
-    --text-muted:     #7E8AA3;
+    --page-bg:        #0E1526;
+    --page-bg-alt:    #141C31;
+    --page-canvas:    #0E1526;   /* dark has no room to lighten — see the light note */
+    --card-bg:        #16203A;
+    --card-border:    #26314D;
+    --row-border:     #1E2740;
+    --row-hover:      #1B2439;
+    --text-primary:   #EDF1F8;
+    --text-secondary: #B4BFD3;
+    --text-muted:     #8894AC;   /* 5.28:1 on --card-bg */
 
-    --input-bg:       #0F1524;
-    --input-border:   #5C6A8C;   /* 3.38:1 against --input-bg — see the light note */
-    --text-faint:     #64708A;
+    --input-bg:       #101829;
+    --input-border:   #6B7897;   /* 4.02:1 against --input-bg — see the light note */
+    --text-faint:     #6B7691;
 
-    --danger:  #F87171;
-    --success: #34D399;
-    --info:    #60A5FA;
-    --warning: #FBBF24;
+    --danger:  #E8938A;
+    --success: #7BD1A3;
+    --info:    #9DB6E4;
+    --warning: #E0BE79;
 
     /* Tones invert: a translucent wash of the solid color, with a light
        foreground. Keeps the same six meanings legible on a dark surface
        without going muddy. */
-    --tone-success-fg:      #6EE7B7;
-    --tone-success-bg:      rgba(16,185,129,0.14);
-    --tone-success-border:  rgba(16,185,129,0.32);
-    --tone-danger-fg:       #FCA5A5;
-    --tone-danger-bg:       rgba(239,68,68,0.14);
-    --tone-danger-border:   rgba(239,68,68,0.34);
-    --tone-warning-fg:      #FCD34D;
-    --tone-warning-bg:      rgba(245,158,11,0.14);
-    --tone-warning-border:  rgba(245,158,11,0.32);
-    --tone-info-fg:         #93C5FD;
-    --tone-info-bg:         rgba(59,130,246,0.14);
-    --tone-info-border:     rgba(59,130,246,0.34);
-    --tone-neutral-fg:      #B7C0D1;
-    --tone-neutral-bg:      rgba(148,163,184,0.12);
-    --tone-neutral-border:  rgba(148,163,184,0.24);
-    --tone-accent-fg:       #F0C98A;
-    --tone-accent-bg:       rgba(232,184,109,0.14);
-    --tone-accent-border:   rgba(232,184,109,0.30);
+    --tone-success-fg:      #7BD1A3;
+    --tone-success-bg:      rgba(47,122,79,0.20);
+    --tone-success-border:  rgba(47,122,79,0.42);
+    --tone-danger-fg:       #E8938A;
+    --tone-danger-bg:       rgba(180,72,60,0.20);
+    --tone-danger-border:   rgba(180,72,60,0.44);
+    --tone-warning-fg:      #E0BE79;
+    --tone-warning-bg:      rgba(202,161,79,0.16);
+    --tone-warning-border:  rgba(202,161,79,0.34);
+    --tone-info-fg:         #9DB6E4;
+    --tone-info-bg:         rgba(47,74,122,0.26);
+    --tone-info-border:     rgba(47,74,122,0.50);
+    --tone-neutral-fg:      #B4BFD3;
+    --tone-neutral-bg:      rgba(151,161,180,0.12);
+    --tone-neutral-border:  rgba(151,161,180,0.24);
+    --tone-accent-fg:       #EDCD85;
+    --tone-accent-bg:       rgba(216,178,95,0.16);
+    --tone-accent-border:   rgba(216,178,95,0.32);
 
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.30), 0 1px 2px rgba(0,0,0,0.20);
     --shadow-md: 0 4px 16px rgba(0,0,0,0.36), 0 2px 6px rgba(0,0,0,0.24);
     --shadow-lg: 0 10px 40px rgba(0,0,0,0.45);
     --shadow-modal: 0 24px 60px rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.40);
+
+    /* The gold gradient dims a step on a dark surface — the light-mode stops
+       glare against a #16203A card — but stays the same object. */
+    --accent-gradient:   linear-gradient(100deg, #E0BE79 0%, #C29A46 100%);
+    --accent-lift:       0 6px 16px rgba(0,0,0,0.40);
+    --accent-lift-hover: 0 9px 20px rgba(0,0,0,0.52);
+
+    --chart-primary:  #8FA6D6;
+    --chart-accent:   #E0BE79;
 
     --scrim: rgba(0,0,0,0.65);
 }
@@ -414,15 +483,19 @@ textarea:focus-visible {
     text-decoration: none;
 }
 .sidebar-logo-icon {
-    width: 38px; height: 38px;
+    width: 48px; height: 48px;
     background: var(--accent);
-    border-radius: 10px;
+    border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
+    font-size: 22px;
     color: var(--on-accent);
     flex-shrink: 0;
     box-shadow: 0 0 20px var(--accent-glow);
+    animation: shell-brand-mark-in var(--dur-slow) var(--ease-spring);
+    transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
 }
+.sidebar-logo-icon img { width: 100%; height: 100%; object-fit: contain; border-radius: inherit; }
+.sidebar-logo:hover .sidebar-logo-icon { transform: scale(1.08) rotate(-2deg); box-shadow: 0 0 28px var(--accent-glow); }
 .sidebar-logo-text { line-height: var(--lh-tight); }
 .sidebar-logo-text strong {
     font-family: var(--font-display);
@@ -705,15 +778,21 @@ textarea:focus-visible {
 }
 .btn > i { font-size: 0.92em; }   /* icon never outweighs its label */
 
+/* The gold fill is a gradient with its own lift — the same object as
+   .shell-headbtn.is-primary, so the page header's action and a card's action
+   are lit identically. */
 .btn-primary {
-    background: var(--accent);
-    border-color: var(--accent);
+    background: var(--accent-gradient);
+    border-color: transparent;
     color: var(--on-accent);
+    box-shadow: var(--accent-lift);
 }
 .btn-primary:hover {
-    background: var(--accent-strong);
-    border-color: var(--accent-strong);
-    box-shadow: 0 4px 14px var(--accent-glow);
+    box-shadow: var(--accent-lift-hover);
+    transform: translateY(-1px);
+}
+@media (prefers-reduced-motion: reduce) {
+    .btn-primary:hover { transform: none; }
 }
 
 .btn-outline {
@@ -723,7 +802,7 @@ textarea:focus-visible {
 }
 .btn-outline:hover {
     background: var(--page-bg);
-    border-color: var(--input-border);
+    border-color: var(--accent-strong);
     color: var(--text-primary);
 }
 
@@ -817,7 +896,11 @@ label,
     letter-spacing: 0.02em;
 }
 label .required,
-.form-label .required { color: var(--tone-danger-fg); margin-left: 2px; }
+label .req,
+.form-label .required,
+.form-label .req { color: var(--tone-danger-fg); margin-left: 2px; }
+/* Bare .req, for the pages whose label is not a <label> element. */
+.req { color: var(--tone-danger-fg); }
 
 input[type="text"],
 input[type="search"],
@@ -1007,6 +1090,10 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
     --card-pad-x:    20px;
     --card-pad-x-sm: 16px;
     --card-pad-x-lg: 28px;
+    /* The corner, as a variable rather than a literal, so a card that needs a
+       softer one (a dashboard panel) swaps the token instead of restating the
+       radius — and anything clipped to the card's edge can follow it. */
+    --card-radius:   var(--radius);
 }
 
 .card {
@@ -1014,7 +1101,7 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
     flex-direction: column;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
-    border-radius: var(--radius);
+    border-radius: var(--card-radius);
     box-shadow: var(--shadow-sm);
     min-width: 0;          /* lets a card shrink in a grid instead of overflowing */
 }
@@ -1045,6 +1132,11 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
 .card-header-icon.is-warning { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
 .card-header-icon.is-info    { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
 .card-header-icon.is-neutral { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+/* Quieter glyph, same chip. For a card whose icon is orientation rather than
+   status — a dashboard panel — where a full-strength mark out-shouts the
+   title next to it. Decoration only, so --text-muted carries no contrast
+   duty here. */
+.card-header-icon.is-soft { color: var(--text-muted); font-size: var(--fs-base); }
 
 /* Title block. The text takes the free space so actions land on the trailing
    edge; min-width:0 is what lets a long title wrap or ellipsis instead of
@@ -1098,28 +1190,40 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
     flex: none;
 }
 
-/* Staggered entrance for a stack of form section cards. Opt in by putting
-   .card-reveal on the container. Shared rather than duplicated, since
-   buildings/_form and property-units/_form each carried their own keyframes
-   and nth-child delay ladder. Respects prefers-reduced-motion via §1.4. */
-.card-reveal > .card {
+/* Staggered entrance for a stack of cards. Opt in by putting .card-reveal on
+   the container. Shared rather than duplicated, since buildings/_form and
+   property-units/_form each carried their own keyframes and nth-child delay
+   ladder. Respects prefers-reduced-motion via §1.4.
+
+   What reveals is an explicit list, not `> *`: a .card-reveal container also
+   holds things that must never start at opacity 0 — .form-sticky-actions is a
+   direct child of both form stacks, and a Save bar that fades in (or fails to)
+   is a bug, not an entrance. A panel that is not a .card opts in by name with
+   .reveal-item, which also works standalone for a section with no container. */
+.card-reveal > .card,
+.card-reveal > .stat-card,
+.reveal-item {
     opacity: 0;
     transform: translateY(16px);
     animation: card-reveal 0.42s var(--ease-out) forwards;
 }
 @keyframes card-reveal { to { opacity: 1; transform: translateY(0); } }
-.card-reveal > .card:nth-child(1) { animation-delay: 0.04s; }
-.card-reveal > .card:nth-child(2) { animation-delay: 0.10s; }
-.card-reveal > .card:nth-child(3) { animation-delay: 0.16s; }
-.card-reveal > .card:nth-child(4) { animation-delay: 0.22s; }
-.card-reveal > .card:nth-child(5) { animation-delay: 0.28s; }
-.card-reveal > .card:nth-child(6) { animation-delay: 0.34s; }
-.card-reveal > .card:nth-child(7) { animation-delay: 0.40s; }
-.card-reveal > .card:nth-child(n+8) { animation-delay: 0.46s; }
+/* The ladder is delay only, so it can be addressed positionally: a child that
+   carries no animation ignores an animation-delay entirely. */
+.card-reveal > :nth-child(1) { animation-delay: 0.04s; }
+.card-reveal > :nth-child(2) { animation-delay: 0.10s; }
+.card-reveal > :nth-child(3) { animation-delay: 0.16s; }
+.card-reveal > :nth-child(4) { animation-delay: 0.22s; }
+.card-reveal > :nth-child(5) { animation-delay: 0.28s; }
+.card-reveal > :nth-child(6) { animation-delay: 0.34s; }
+.card-reveal > :nth-child(7) { animation-delay: 0.40s; }
+.card-reveal > :nth-child(n+8) { animation-delay: 0.46s; }
 /* With motion reduced, §1.4 collapses the animation duration — which would
    leave the card at opacity 0. Make the end state the start state instead. */
 @media (prefers-reduced-motion: reduce) {
-    .card-reveal > .card { opacity: 1; transform: none; animation: none; }
+    .card-reveal > .card,
+    .card-reveal > .stat-card,
+    .reveal-item { opacity: 1; transform: none; animation: none; }
 }
 
 /* Sticky action bar at the foot of a long form. Same anatomy as .card-footer,
@@ -1148,6 +1252,33 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
     gap: 5px;
 }
 .form-sticky-actions-hint i { color: var(--accent); }
+/* The button row wraps rather than pushing the bar wider than the page. */
+.form-sticky-actions .action-btns,
+.form-sticky-actions .actions-right { flex-wrap: wrap; justify-content: flex-end; }
+
+/* ≤600px the hint sits above a full-width row of equal buttons. Observed at
+   320–430px: three buttons in one row overflowed the viewport by up to 243px
+   on the unit form and 121px on the building form. */
+@media (max-width: 600px) {
+    .form-sticky-actions {
+        flex-direction: column;
+        align-items: stretch;
+        padding: var(--sp-3) var(--sp-4);
+    }
+    .form-sticky-actions-hint { justify-content: center; text-align: center; }
+    .form-sticky-actions .action-btns,
+    .form-sticky-actions .actions-right {
+        width: 100%;
+        gap: var(--sp-2);
+    }
+    .form-sticky-actions .action-btns > *,
+    .form-sticky-actions .actions-right > * {
+        flex: 1 1 auto;
+        min-width: 0;
+        justify-content: center;
+        min-height: var(--h-control-lg);   /* 44px touch target */
+    }
+}
 
 /* ── Body ───────────────────────────────────────────────────────────────── */
 .card-body {
@@ -1159,6 +1290,12 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
 .card > .card-body:only-child { padding: var(--card-pad-lg); }
 /* Body content that must run to the card's edge — a table, a full-bleed image. */
 .card-body.is-flush { padding: 0; }
+/* …and when that body is what the card ends on, it has to carry the card's
+   bottom corners, or a table's last row (and its hover fill) squares them. */
+.card > .card-body.is-flush:last-child {
+    overflow: hidden;
+    border-radius: 0 0 var(--card-radius) var(--card-radius);
+}
 /* A body whose content stacks, so a trailing row can pin itself to the bottom
    with margin-top:auto and line up across a grid of cards. */
 .card-body.is-stack { display: flex; flex-direction: column; gap: 10px; }
@@ -1397,10 +1534,15 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
 /* Stacked sibling cards get their rhythm from the system, so a page never has
    to add its own margin-bottom (which is how .form-card, .fc-card,
    .detail-card and .maint-section each ended up with a different gap).
-   Reset inside any container that already spaces its children. */
+   The margin is for cards in normal flow. Any container that lays its children
+   out with `gap` — every grid and flex row below, and every page-local one —
+   must reset it, or its second card sits --sp-5 lower than its first and, in a
+   stretch grid, --sp-5 shorter. That misalignment is the whole reason this
+   list exists; a page adding its own card grid adds a reset with it. */
 .card + .card { margin-top: var(--sp-5); }
 .card-grid > .card + .card,
 .stats-grid > .card + .card,
+.detail-grid > .card + .card,
 .section-stack > .card + .card { margin-top: 0; }
 
 /* ── Card grid ──────────────────────────────────────────────────────────────
@@ -1413,11 +1555,23 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
     gap: var(--sp-4);
     align-items: stretch;
 }
+/* Two families here, and the difference matters when you pick one:
+     .is-2 FLOWS — as many >=340px columns as fit. Right for a set whose
+       length varies (form-configs runs 5 and 6 cards through it).
+     .is-pair / .is-3 / .is-4 are FIXED counts. Right when the row is a
+       designed composition of exactly that many panels: four donuts read as
+       one strip, two lists read as a pair. A flow grid cannot express that —
+       give it two children and a 3-track width and you get two cards at a
+       third each with a hole on the end, which is precisely how the building
+       detail page's chart strip broke. */
 .card-grid.is-2 { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+.card-grid.is-pair { grid-template-columns: repeat(2, 1fr); }
 .card-grid.is-3 { grid-template-columns: repeat(3, 1fr); }
+.card-grid.is-4 { grid-template-columns: repeat(4, 1fr); }
 /* A card row that should NOT equalise heights (cards of genuinely different
    length, where stretching leaves dead space). */
 .card-grid.is-natural { align-items: start; }
+@media (max-width: 900px) { .card-grid.is-pair { grid-template-columns: 1fr; } }
 
 /* ── Empty state inside a card ─────────────────────────────────────────────
      A card with nothing in it still needs to say so. §4.7's .empty-state drops
@@ -1489,31 +1643,99 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
      .card.is-interactive instead. */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: var(--sp-4);
+    grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
+    gap: var(--sp-5);
+    align-items: stretch;   /* one row of KPIs, one height */
     margin-bottom: var(--sp-6);
 }
+/* A fixed five, for a page whose KPI row is read as a set (the dashboard). */
+.stats-grid.is-5 { grid-template-columns: repeat(5, 1fr); }
+@media (max-width: 1400px) { .stats-grid.is-5 { grid-template-columns: repeat(3, 1fr); } }
 /* A fixed count, where the figures are being read against each other and
    auto-fill would let them drift apart on a wide screen (the P&L's
    revenue / expenses / net). */
 .stats-grid.is-triple { grid-template-columns: repeat(3, 1fr); }
 .stats-grid.is-double { grid-template-columns: repeat(2, 1fr); }
+/* ── The compact strip ──────────────────────────────────────────────────────
+     Eight or nine figures that are read as one block — a building's whole
+     position in a glance — rather than four headline KPIs. At 22px padding
+     and a 30px figure the standard card needs 212px and two rows to hold
+     them; the reader loses the set. The compact card drops the icon, halves
+     the padding and steps the figure down to 19px, which fits the same nine
+     figures in one row from about 1330px.
+
+     Same anatomy and same markup contract as the standard card — label above
+     figure, .stat-card-top then .stat-val — so a card can move between the
+     two by changing one class. Use it only where the figures are a set; a
+     lone KPI still deserves the full card. */
+/* 130px, not the 148px the cards settle at: the minimum is what decides how
+   many columns auto-fit takes, and 148 leaves a 1440px screen one card short
+   of eight — an orphan on a second row. At 130 the eighth card fits and 1fr
+   grows them all back to ~148. */
+.stats-grid.is-compact { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: var(--sp-3); }
+/* Below that, eight across stops being readable at all, so the strip breaks
+   into deliberate blocks rather than whatever auto-fit leaves over. */
+@media (max-width: 1400px) { .stats-grid.is-compact { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 900px)  { .stats-grid.is-compact { grid-template-columns: repeat(2, 1fr); } }
+.stat-card.is-compact {
+    padding: 13px 14px;
+    min-height: 0;
+    box-shadow: none;
+}
+.stat-card.is-compact .stat-lbl {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+}
+.stat-card.is-compact .stat-val { font-size: 19px; margin-top: 7px; }
+.stat-card.is-compact .stat-val .stat-cur { font-size: 13px; font-weight: 500; }
+/* ── The anatomy ────────────────────────────────────────────────────────────
+     One order, everywhere:
+
+         ┌────────────────────────────┐
+         │  [icon]  LABEL             │   .stat-card-top
+         │                            │
+         │  30px figure               │   .stat-val
+         │                            │
+         │  supporting line   [trend] │   .stat-foot
+         └────────────────────────────┘
+
+     Label above the figure, not below it: the reader needs to know what they
+     are looking at before they read it, and it is what makes cards with and
+     without a supporting line still line up.
+
+     min-height is what holds the row even, including across pages — a card
+     with no supporting line occupies the same box as one that has it. */
 .stat-card {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: var(--radius);
-    padding: var(--card-pad);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-sm);
+    min-width: 0;
+    min-height: 132px;
+}
+/* Several KPI cards navigate — they are rendered as <button>, which brings
+   the UA's centred text, its own font and no pointer. Reset here rather than
+   on each page. */
+button.stat-card {
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+}
+.stat-card-top {
     display: flex;
     align-items: center;
-    gap: 14px;
-    box-shadow: var(--shadow-sm);
+    gap: 12px;
     min-width: 0;
 }
 .stat-icon {
-    width: 44px; height: 44px;
-    border-radius: var(--radius-sm);
+    width: 40px; height: 40px;
+    border-radius: 11px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
+    font-size: 15px;
     flex-shrink: 0;
     background: var(--tone-neutral-bg);
     color: var(--tone-neutral-fg);
@@ -1528,19 +1750,50 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
 .stat-icon.purple { background: var(--tone-info-bg); color: var(--tone-info-fg); }
 
 .stat-body { min-width: 0; }
+.stat-lbl {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    min-width: 0;
+}
 .stat-val {
     font-family: var(--font-data);
     font-variant-numeric: tabular-nums;
-    font-size: var(--fs-2xl);
-    font-weight: 800;
+    font-size: 30px;
+    font-weight: 700;
     color: var(--text-primary);
     line-height: 1;
+    margin-top: 16px;
 }
-.stat-lbl {
-    font-size: var(--fs-sm);
+/* The currency prefix rides one step down from the figure so the number
+     stays the thing the eye lands on. */
+.stat-val .stat-cur { font-size: 20px; font-weight: 600; margin-right: 4px; }
+
+/* Supporting line, and the optional trend chip beside it. */
+.stat-foot {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.stat-sub {
+    font-size: 12.5px;
     color: var(--text-muted);
-    margin-top: 3px;
+    min-width: 0;
 }
+.stat-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.stat-trend.is-up   { color: var(--tone-success-fg); }
+.stat-trend.is-down { color: var(--tone-danger-fg); }
 
 /* A stat card that really does navigate — the dashboard's figures link to the
    list behind them. Same interactive treatment as .card.is-interactive, so a
@@ -1556,6 +1809,8 @@ button.stat-card {
 }
 a.stat-card:hover,
 button.stat-card:hover { border-color: var(--input-border); box-shadow: var(--shadow-md); }
+a.stat-card:hover .stat-val,
+button.stat-card:hover .stat-val { color: var(--text-primary); }
 a.stat-card:focus-visible,
 button.stat-card:focus-visible { outline: var(--focus-outline); outline-offset: 2px; }
 
@@ -1621,20 +1876,10 @@ button.stat-card:focus-visible { outline: var(--focus-outline); outline-offset: 
 /* Figure-first variant: no icon, the number leads and an uppercase caption
    sits beneath it. For dense rows of counts (the audit and error logs) where
    an icon per card added noise without adding meaning. */
-.stat-card.is-figure {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--sp-1);
-    padding: var(--sp-4) 18px;
-}
-.stat-card.is-figure .stat-val { font-size: 28px; }
-.stat-card.is-figure .stat-lbl {
-    margin-top: 0;
-    font-size: var(--fs-xs);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-}
+/* No icon tile — for dense rows of counts (the audit and error logs) where an
+   icon per card added noise without adding meaning. Same order, same type,
+   same box; the tile is simply absent. */
+.stat-card.is-figure { min-height: 104px; }
 .stat-card.is-figure.is-danger  .stat-val { color: var(--tone-danger-fg); }
 .stat-card.is-figure.is-warning .stat-val { color: var(--tone-warning-fg); }
 .stat-card.is-figure.is-info    .stat-val { color: var(--tone-info-fg); }
@@ -1675,6 +1920,7 @@ button.stat-card:focus-visible { outline: var(--focus-outline); outline-offset: 
     line-height: 1.15;
     color: var(--tile-fg, var(--text-primary));
 }
+.stat-tile-value { overflow-wrap: anywhere; }
 .stat-tile-value sup { font-size: var(--fs-sm); font-weight: 600; margin-left: var(--sp-1); }
 .stat-tile.is-success { --tile-rail: var(--tone-success-fg); --tile-fg: var(--tone-success-fg); }
 .stat-tile.is-warning { --tile-rail: var(--tone-warning-fg); --tile-fg: var(--tone-warning-fg); }
@@ -1813,19 +2059,23 @@ table {
     border-collapse: collapse;
 }
 thead th {
-    padding: 11px var(--sp-4);
+    padding: 11px var(--sp-5);
     text-align: left;
-    font-size: var(--fs-xs);
-    font-weight: 700;
+    font-size: var(--fs-2xs);
+    /* 600 at --text-secondary, not 700 at --text-muted: the label reads darker
+       (7.3:1 on --page-bg-alt, was 4.8:1) without gaining visual weight, so a
+       header still sits behind its column rather than competing with it. */
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    color: var(--text-secondary);
     background: var(--page-bg-alt);
     border-bottom: 1px solid var(--card-border);
+    vertical-align: middle;
     white-space: nowrap;
 }
 tbody td {
-    padding: 13px var(--sp-4);
+    padding: 12px var(--sp-5);
     font-size: var(--fs-base);
     color: var(--text-primary);
     border-bottom: 1px solid var(--row-border);
@@ -1834,10 +2084,77 @@ tbody td {
 tbody tr:last-child td { border-bottom: none; }
 tbody tr:hover td { background: var(--row-hover); }
 
+/* ── An editable line table ─────────────────────────────────────────────────
+     A table whose cells hold inputs: an invoice's rental lines, a maintenance
+     request's job lines, the same job lines inside the request modal. Three
+     pages had written this three times (.lines-table, .job-lines-table,
+     .modal-job-lines-table) with padding 6px 6px / 8px 6px / 6px 4px, header
+     type at 10px and 11px, and each restating the input border and focus
+     colour that §4.2 already defines.
+
+     Markup:  .table-wrap > table.is-editable > … > td > input|select|textarea
+     Cells are top-aligned because a textarea in one column must not drag the
+     row's other controls down with it. */
+table.is-editable tbody td {
+    padding: var(--sp-2) 6px;
+    vertical-align: top;
+}
+table.is-editable thead th { padding: 9px 10px; }
+table.is-editable tbody tr:hover td { background: transparent; }
+table.is-editable :is(input, select, textarea) {
+    width: 100%;
+    min-height: var(--h-control-sm);
+    padding: 6px 9px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--text-primary);
+    background: var(--input-bg);
+    border: var(--border-control) solid var(--input-border);
+    border-radius: var(--radius-sm);
+}
+table.is-editable :is(input, select, textarea):focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: var(--focus-ring);
+}
+table.is-editable input:disabled {
+    background: var(--page-bg);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+table.is-editable textarea { resize: vertical; min-height: 60px; }
+/* A money cell keeps the figure treatment even while it is an input. */
+table.is-editable td.num input {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    text-align: right;
+}
+
+/* A denser read-only table, for a small breakdown sitting inside a card
+   (a bill's meter readings, a unit's contract history) rather than a full
+   page listing. Same type, one step less padding. */
+table.is-compact thead th { padding: 8px var(--sp-3); }
+table.is-compact tbody td { padding: 10px var(--sp-3); }
+
 /* Rows are clickable across the whole row (project convention). The cursor
    and hover state say so; the Actions cell stops propagation in JS. */
 tr[data-href] { cursor: pointer; }
 tr[data-href]:focus-visible { outline: var(--focus-outline); outline-offset: -2px; }
+
+/* A record's own identifier in a table cell — an invoice number, a payment
+   reference, a unit code. Nine index pages each wrote
+   `font-family:'Outfit';font-weight:700;color:var(--accent)` inline, which
+   put a 1.82:1 gold on white where the cell IS the row's identity. Uses the
+   AA-compliant accent ink (§8's compliant swap), not the decorative gold. */
+.cell-id {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: var(--tone-accent-fg);
+    text-decoration: none;
+}
+a.cell-id:hover { text-decoration: underline; }
 
 /* Numeric / money columns: right-aligned, tabular figures, no wrapping.
    `.num` is the canonical class; `.right` and `.amount-col` / `.money-col`
@@ -1909,6 +2226,13 @@ tr[data-href]:focus-visible { outline: var(--focus-outline); outline-offset: -2p
 .cell-title { font-weight: 600; font-size: var(--fs-base); color: var(--text-primary); }
 .cell-sub   { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 2px; }
 
+/* A whole cell that is itself de-emphasized — a reference number, unit
+   suffix, or "—" placeholder column, not a second line under a title (that's
+   .cell-sub, one step smaller at --fs-xs). Was 10 identical
+   `style="font-size:12px;color:var(--text-muted)"` copies across 8 index
+   pages; --fs-sm already existed at exactly this value, so no new token. */
+.cell-muted { font-size: var(--fs-sm); color: var(--text-muted); }
+
 /* Actions column — fixed to the trailing edge, never grows. */
 th.col-actions, td.col-actions { width: 1%; white-space: nowrap; text-align: right; }
 td.col-actions .action-btns { justify-content: flex-end; }
@@ -1948,6 +2272,7 @@ td.col-actions .action-btns { justify-content: flex-end; }
     text-decoration: none;
     transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
 }
+.page-btn > i { font-size: 10px; }
 .page-btn:hover { background: var(--page-bg); color: var(--text-primary); }
 .page-btn.active,
 .page-btn[aria-current="page"] {
@@ -1956,8 +2281,54 @@ td.col-actions .action-btns { justify-content: flex-end; }
     color: var(--on-accent);
 }
 .page-btn.disabled,
-.page-btn[aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
+.page-btn.is-disabled,
+.page-btn[aria-disabled="true"] { opacity: 0.4; pointer-events: none; cursor: default; }
 
+
+/* ── §4.6b  Entity list ─────────────────────────────────────────────────────
+     A card body that is a list of records rather than a table: leading tone
+     icon, a two-line identity, and a trailing badge or figure. Buildings/show
+     had been writing this with Bootstrap's .list-group / .list-group-item,
+     which no longer exist anywhere in the app — the rows rendered with no
+     separator, no hover and no focus ring.
+
+     Markup:  .entity-list > a.entity-row > .stat-icon + .entity-row-text + [trailing]
+                                            .entity-row-title
+                                            .entity-row-sub
+
+     The dashboard's .dash-attention-row is the same shape and should fold
+     into this next time that page is touched; it is left alone here rather
+     than widening an unrelated change. */
+.entity-list { display: flex; flex-direction: column; }
+.entity-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--card-pad-x);
+    border-bottom: 1px solid var(--row-border);
+    text-decoration: none;
+    color: inherit;
+    transition: background var(--dur-base);
+}
+.entity-row:last-child { border-bottom: none; }
+.entity-row:hover { background: var(--row-hover); }
+.entity-row:focus-visible { outline: var(--focus-outline); outline-offset: -2px; }
+.entity-row-text { flex: 1; min-width: 0; }
+.entity-row-title {
+    display: block;         /* the markup uses spans, so this is not automatic */
+    font-size: var(--fs-base);
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.entity-row-sub {
+    display: block;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* The trailing badge never shrinks under a long title. */
+.entity-row > .badge { flex: none; margin-left: auto; }
 
 /* ── §4.7  Empty state ──────────────────────────────────────────────────────
      One empty state, replacing .empty-state / .report-empty / .tp-empty and
@@ -2076,8 +2447,37 @@ td.col-actions .action-btns { justify-content: flex-end; }
 .status-badge.sent,
 .status-badge.info          { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
 
-/* Bulk / system origin. */
-.status-badge.imported      { background: var(--tone-accent-bg);  color: var(--tone-accent-fg); }
+/* Bulk / system origin, and privileged roles. */
+.status-badge.imported,
+.status-badge.admin         { background: var(--tone-accent-bg);  color: var(--tone-accent-fg); }
+
+/* Authentication events in the audit log. A refused or throttled sign-in is
+   the same "needs attention" red as any other failure; a successful one is the
+   same green as any other settled thing; signing out is neither. */
+.status-badge.signed_in      { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.status-badge.signed_out     { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+.status-badge.sign_in_failed,
+.status-badge.locked_out     { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+.status-badge.password_reset { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.status-badge.password_reset_requested { background: var(--tone-info-bg); color: var(--tone-info-fg); }
+.status-badge.leases_expiring { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+
+/* Kinds rather than states: an invoice's type, a user's role. Same box, same
+   vocabulary — a page must not invent .type-badge / .role-badge for these. */
+.status-badge.rent,
+.status-badge.user          { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.status-badge.utilities     { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.status-badge.other,
+.status-badge.maintenance   { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+
+/* A reading taken vs one estimated; a setting configured vs not; a meter's
+   service. Same three tones as everything else means the same thing. */
+.status-badge.actual,
+.status-badge.configured    { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.status-badge.estimated,
+.status-badge.elec          { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.status-badge.water         { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.status-badge.unconfigured  { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
 
 /* Inert — never started, or over. */
 .status-badge.draft,
@@ -2094,6 +2494,150 @@ td.col-actions .action-btns { justify-content: flex-end; }
 .badge.is-caps { text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
 /* Extra small, for a marker attached to a single field. */
 .badge.is-xs { padding: 2px 7px; font-size: var(--fs-2xs); gap: 3px; }
+
+
+/* ── §4.8b  File chip ────────────────────────────────────────────────────────
+     One attached-file pill, shown after a file input once a file is picked.
+     Was .mquot-pill (maintenance/index) and .quot-file-pill (maintenance/create)
+     — identical CSS under two names. Toggle with .show; JS sets the filename
+     text and wires the clear button.
+
+     Markup: .file-chip > i.fa-paperclip + span (filename) + button (clear) */
+.file-chip {
+    display: none; align-items: center; gap: 5px;
+    padding: 3px 8px 3px 6px; margin-top: 5px;
+    background: var(--accent-dim); border-radius: var(--radius-pill);
+    font-size: var(--fs-xs); font-weight: 600; color: var(--accent);
+    max-width: 100%; overflow: hidden;
+}
+.file-chip.show { display: flex; }
+.file-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+.file-chip button {
+    background: none; border: none; color: var(--accent); cursor: pointer;
+    font-size: var(--fs-xs); padding: 0; line-height: 1; flex-shrink: 0; opacity: .7;
+    transition: opacity .15s;
+}
+.file-chip button:hover { opacity: 1; }
+
+
+/* ── §4.15  Board (kanban) ──────────────────────────────────────────────────
+     Work grouped by the stage it is at, rather than listed by date. Right when
+     the question is "what is stuck and where", which a paginated table answers
+     badly — you cannot see the shape of 40 requests through a 20-row window.
+
+     Markup:
+       .board > .board-col > .board-col-head > .board-dot + label + .board-count
+                           > .board-card (an <a>) …
+                           > .board-more | .board-empty
+
+     A board is NOT a replacement for the list. It has no pagination and no
+     sorting, and it caps what it draws — so every page that offers one also
+     offers the table, and the cap links across to it. Columns are a fixed
+     three: a board that grows a column per status stops being scannable.
+
+     Deliberately not drag-and-drop. Moving a card would have to mean a status
+     transition, and the transitions here carry assessments, quotations and
+     approvals — a drag is the wrong gesture for a decision that needs a form. */
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-4);
+    align-items: start;
+}
+.board-col {
+    background: var(--page-bg-alt);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: var(--sp-3);
+    min-width: 0;
+}
+.board-col-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 2px 6px 12px;
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.board-col-head > span:nth-child(2) { flex: 1; min-width: 0; }
+/* The dot carries the column's tone, so the three groups are told apart by
+   position AND colour AND label — never colour alone. */
+.board-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--text-faint); }
+.board-dot.is-danger  { background: var(--tone-danger-fg); }
+.board-dot.is-accent  { background: var(--accent-strong); }
+.board-dot.is-success { background: var(--tone-success-fg); }
+.board-count {
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+}
+.board-card {
+    display: block;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 11px 13px;
+    margin-bottom: var(--sp-2);
+    text-decoration: none;
+    transition: border-color var(--dur-base) ease, box-shadow var(--dur-base) ease;
+}
+.board-card:hover { border-color: var(--input-border); box-shadow: var(--shadow-md); }
+.board-card:focus-visible { outline: var(--focus-outline); outline-offset: 2px; }
+.board-card:last-child { margin-bottom: 0; }
+.board-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-2);
+    margin-bottom: 6px;
+}
+.board-card-title {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+.board-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+.board-card-meta .sep { opacity: 0.5; }
+/* Age, and the same figure once it has been sitting too long. */
+.board-age.is-stale { color: var(--tone-danger-fg); font-weight: 600; }
+.board-more {
+    display: block;
+    padding: 9px;
+    text-align: center;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border: 1px dashed var(--card-border);
+    border-radius: var(--radius-sm);
+}
+.board-more:hover { color: var(--tone-accent-fg); border-color: var(--accent-strong); }
+.board-empty {
+    padding: 18px 10px;
+    text-align: center;
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+/* Three columns need width. Below the panel breakpoint they stack, which is
+   also where the board stops being the better view — hence the list toggle. */
+@media (max-width: 1200px) {
+    .board { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+    .board { grid-template-columns: 1fr; }
+}
 
 
 /* ── §4.9  Alerts ───────────────────────────────────────────────────────── */
@@ -2117,24 +2661,25 @@ td.col-actions .action-btns { justify-content: flex-end; }
 /* ── §4.10  Tabs ────────────────────────────────────────────────────────── */
 .tab-bar {
     display: flex;
+    align-items: center;
     gap: var(--sp-1);
-    border-bottom: 2px solid var(--card-border);
-    margin-bottom: var(--sp-5);
+    border-bottom: 1px solid var(--card-border);
+    margin-bottom: 18px;
     overflow-x: auto;
     scrollbar-width: none;
 }
 .tab-bar::-webkit-scrollbar { display: none; }
 .tab-btn {
-    padding: 11px 22px;
+    padding: 11px 14px;
     font-family: var(--font-body);
-    font-size: var(--fs-base);
-    font-weight: 600;
-    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-secondary);
     border: none;
     background: none;
     cursor: pointer;
     border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
+    margin-bottom: -1px;
     transition: color var(--dur-base), border-color var(--dur-base);
     display: flex;
     align-items: center;
@@ -2142,15 +2687,41 @@ td.col-actions .action-btns { justify-content: flex-end; }
     text-decoration: none;
     white-space: nowrap;
 }
-.tab-btn:hover { color: var(--text-primary); }
+.tab-btn > i { font-size: 15px; }
+.tab-btn:hover { color: var(--tone-accent-fg); }
 .tab-btn.active,
 .tab-btn[aria-selected="true"] {
     color: var(--tone-accent-fg);
-    border-bottom-color: var(--accent);
+    font-weight: 600;
+    border-bottom-color: var(--accent-strong);
 }
 :root[data-theme="dark"] .tab-btn.active,
 :root[data-theme="dark"] .tab-btn[aria-selected="true"] { color: var(--accent); }
 .tab-btn:focus-visible { outline-offset: -2px; }
+
+/* The panel a tab reveals. Was page-local on property-units/show and needed
+   again by buildings/show, so it belongs here — one contract for both:
+   .tab-panel is hidden, .tab-panel.active is shown. */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: tab-panel-in var(--dur-base) var(--ease-out) both; }
+@keyframes tab-panel-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .tab-panel.active { animation: none; } }
+/* Pushes the tabs after it to the trailing edge — a settings tab that belongs
+   at the far end of the bar. */
+.tab-bar-spacer { flex: 1; }
+
+/* A count riding inside a tab — "Units 24". Was page-local on form-configs;
+   any tab bar that filters a list wants it. */
+.tab-count {
+    margin-left: var(--sp-1);
+    padding: 1px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--tone-accent-bg);
+    color: var(--tone-accent-fg);
+    font-size: var(--fs-2xs);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
 
 
 /* ── §4.11  Modals ──────────────────────────────────────────────────────────
@@ -2173,6 +2744,23 @@ td.col-actions .action-btns { justify-content: flex-end; }
     transition: opacity var(--dur-slow) ease;
 }
 .modal-overlay.open { opacity: 1; pointer-events: all; }
+/* Lightbox variant — the photo IS the box, on a darker scrim. */
+.modal-overlay.is-lightbox { background: rgba(11,17,32,0.82); padding: var(--sp-5); }
+.lightbox-img {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+}
+/* A closed overlay is still laid out (it only fades), so a modal whose content
+   is wider than a phone extended the page's scrollable width and gave the
+   whole app a horizontal scrollbar. Observed on Lease contracts at 320px,
+   whose modal tab row is ~590px wide. The overlay scrolls its own content
+   instead — which also rescues a modal taller than the viewport. */
+.modal-overlay { overflow: auto; }
+.modal-overlay:not(.open) { visibility: hidden; }
+.modal-overlay.open { visibility: visible; }
 
 .modal-box {
     background: var(--card-bg);
@@ -2428,6 +3016,176 @@ td.col-actions .action-btns { justify-content: flex-end; }
 }
 
 
+/* ── §4.14  Figure panels ───────────────────────────────────────────────────
+     Three small components that a detail dashboard is built from, and that
+     three pages had drawn by hand (buildings/show, property-units/show, the
+     portfolio dashboard): a ring, a breakdown meter, and an identity block.
+
+     Why the ring is SVG and not a canvas: a canvas cannot read a CSS custom
+     property, so every colour in it has to be resolved in JavaScript and
+     repainted by hand on a theme toggle — that is what the four Chart.js
+     donuts on buildings/show were doing, and the centre label had to be
+     drawn with ctx.fillText in a font the page could not restyle. As SVG
+     with an HTML overlay the ring costs no JavaScript at all: it re-themes,
+     re-types and reflows with everything else, and its centre figure is real
+     selectable text a screen reader reads.
+
+     Markup:
+       .ring > svg.ring-svg > circle.ring-track + circle.ring-arc
+             + .ring-centre > .ring-figure + .ring-caption
+     The arc's length is set with stroke-dasharray on the element, since it
+     is data. Everything else is here.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.ring { position: relative; width: 128px; height: 128px; margin: 0 auto; }
+.ring-svg { display: block; width: 128px; height: 128px; }
+.ring-track { fill: none; stroke: var(--page-bg); stroke-width: 13; }
+.ring-arc {
+    fill: none;
+    stroke-width: 13;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dasharray var(--dur-slow) var(--ease-out);
+}
+/* A second arc behind the first, for a two-part reading (active vs active +
+   expiring). Butt-capped so the round cap of the arc in front is the only
+   one that shows. */
+.ring-arc.is-behind { stroke-linecap: butt; }
+.ring-arc.is-success { stroke: var(--tone-success-fg); }
+.ring-arc.is-accent  { stroke: var(--accent-strong); }
+.ring-arc.is-danger  { stroke: var(--tone-danger-fg); }
+.ring-centre {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    text-align: center;
+}
+.ring-figure {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text-primary);
+}
+.ring-figure.is-success { color: var(--tone-success-fg); }
+.ring-figure.is-danger  { color: var(--tone-danger-fg); }
+.ring-caption {
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+@media (prefers-reduced-motion: reduce) { .ring-arc { transition: none; } }
+
+/* The key beneath a ring. A ring with no key is decoration. */
+.ring-key { margin-top: var(--sp-3); display: flex; flex-direction: column; }
+.ring-key-row { display: flex; align-items: center; gap: var(--sp-2); padding: 5px 0; font-size: 11.5px; }
+.ring-key-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.ring-key-dot.is-success { background: var(--tone-success-fg); }
+.ring-key-dot.is-accent  { background: var(--accent-strong); }
+.ring-key-dot.is-danger  { background: var(--tone-danger-fg); }
+.ring-key-dot.is-faint   { background: var(--text-faint); }
+.ring-key-label { flex: 1; min-width: 0; color: var(--text-secondary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ring-key-val { font-family: var(--font-data); font-variant-numeric: tabular-nums; font-weight: 600; }
+.ring-key-pct { width: 38px; text-align: right; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/* ── The breakdown meter ────────────────────────────────────────────────────
+     A share-of-total list: category, amount, and a bar the width of its
+     share. Preferred over a second ring when the categories are ranked and
+     the reader wants the amounts — a four-slice donut makes them guess. */
+.meter-list { display: flex; flex-direction: column; gap: 13px; }
+.meter-row { min-width: 0; }
+.meter-head { display: flex; align-items: baseline; gap: var(--sp-2); font-size: 11.5px; margin-bottom: 5px; }
+.meter-label { flex: 1; min-width: 0; color: var(--text-secondary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meter-val { font-family: var(--font-data); font-variant-numeric: tabular-nums; font-weight: 600; }
+.meter-track { height: 7px; border-radius: var(--radius-pill); background: var(--page-bg); overflow: hidden; }
+.meter-fill { height: 100%; border-radius: var(--radius-pill); background: var(--accent-gradient); }
+.meter-fill.is-success { background: var(--tone-success-fg); }
+.meter-fill.is-danger  { background: var(--tone-danger-fg); }
+
+/* ── The identity block ─────────────────────────────────────────────────────
+     What a detail page opens with: a large mark, the record's location and
+     codes, and the one figure that says how it is doing. Sits above the tab
+     bar, so it stays on screen whichever tab is open. */
+.ident {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-5);
+    padding: var(--sp-5) var(--sp-6);
+}
+.ident-mark {
+    width: 84px; height: 84px;
+    border-radius: var(--radius);
+    background: var(--page-bg);
+    color: var(--text-secondary);
+    font-size: 30px;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+    overflow: hidden;
+}
+.ident-mark img { width: 100%; height: 100%; object-fit: cover; }
+.ident-body { flex: 1; min-width: 0; }
+.ident-place {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 13.5px; font-weight: 600;
+    margin-bottom: 9px;
+}
+.ident-place > i { color: var(--text-secondary); font-size: 13px; }
+.ident-meta {
+    display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-3);
+    font-size: 12px; color: var(--text-secondary);
+}
+.ident-meta-item { display: inline-flex; align-items: center; gap: 6px; }
+.ident-meta-sep { color: var(--text-faint); }
+.ident-figure { text-align: right; flex: none; }
+.ident-figure-val {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: 30px; font-weight: 700; line-height: 1.1;
+}
+.ident-figure-val.is-success { color: var(--tone-success-fg); }
+.ident-figure-cap {
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-muted);
+}
+/* The same figure standing in the page header, where it sits beside a 24px
+   title and must not out-shout it. */
+.ident-figure.is-sm .ident-figure-val { font-size: 22px; }
+.ident-figure.is-sm .ident-figure-cap { font-size: 9.5px; letter-spacing: 0.18em; }
+@media (max-width: 600px) {
+    .ident { flex-wrap: wrap; gap: var(--sp-4); }
+    .ident-mark { width: 60px; height: 60px; font-size: 22px; }
+    .ident-figure { text-align: left; }
+}
+
+/* ── The days-left tile ─────────────────────────────────────────────────────
+     A count of days standing in for an icon, in a list of things that expire.
+     Tone carries urgency, so it is never the only signal — the row states the
+     date in words beside it. */
+.daytile {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: 11px; font-weight: 600;
+    background: var(--tone-accent-bg);
+    color: var(--tone-accent-fg);
+}
+.daytile.is-urgent { background: var(--tone-danger-bg); color: var(--tone-danger-fg); }
+
+/* A card whose subject is money or performance, marked with a gold rule
+   across its top edge. Used sparingly — one per screen. */
+.card.has-accent-rule { border-top: 3px solid var(--accent); }
+
+
 /* ═══════════════════════════════════════════════════════════════════════════
    §5  RESPONSIVE
    ───────────────────────────────────────────────────────────────────────────
@@ -2444,13 +3202,16 @@ td.col-actions .action-btns { justify-content: flex-end; }
 /* ── Tablet — sidebar still docked, content relaxes ─────────────────────── */
 @media (max-width: 900px) {
     .page-content { padding: var(--sp-5); }
-    .stats-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--sp-3); }
+    .stats-grid,
+    .stats-grid.is-5,
+    .stats-grid.is-triple,
+    .stats-grid.is-double { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--sp-3); }
     /* Cards step down one density level and grids relax to two across. */
     .card-body { padding: var(--card-pad); }
     .card.is-roomy > .card-body { padding: var(--card-pad); }
     .card.is-hero { padding: var(--sp-5) var(--card-pad-x); }
     .card-grid, .card-grid.is-2 { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
-    .card-grid.is-3 { grid-template-columns: repeat(2, 1fr); }
+    .card-grid.is-3, .card-grid.is-4 { grid-template-columns: repeat(2, 1fr); }
     .form-grid.cols-3, .form-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
     .filter-bar { padding: var(--sp-3) var(--sp-4); }
     /* Two filters per row rather than a ragged wrap. */
@@ -2490,7 +3251,10 @@ td.col-actions .action-btns { justify-content: flex-end; }
     .form-actions > .btn { flex: 1; }
 
     /* Stats: two across, so the numbers stay legible without a long scroll. */
-    .stats-grid { grid-template-columns: 1fr 1fr; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+    .stats-grid,
+    .stats-grid.is-5,
+    .stats-grid.is-triple,
+    .stats-grid.is-double { grid-template-columns: 1fr 1fr; gap: var(--sp-2); margin-bottom: var(--sp-4); }
     .stat-card { padding: var(--sp-3); gap: 10px; flex-direction: column; align-items: flex-start; }
     .stat-icon { width: 32px; height: 32px; font-size: 14px; }
     .stat-val { font-size: var(--fs-xl); }
@@ -2619,7 +3383,8 @@ td.col-actions .action-btns { justify-content: flex-end; }
          and the header reflows: icon and title stay on the first line, actions
          drop to a full-width row beneath so a long title never squeezes a
          button down to an unreadable sliver. */
-    .card-grid, .card-grid.is-2, .card-grid.is-3 { grid-template-columns: 1fr; gap: var(--sp-3); }
+    .card-grid, .card-grid.is-2, .card-grid.is-pair,
+    .card-grid.is-3, .card-grid.is-4 { grid-template-columns: 1fr; gap: var(--sp-3); }
 
     .card { --card-pad: var(--card-pad-sm); --card-pad-x: var(--card-pad-x-sm); }
     .card-header { padding: var(--card-pad-sm); gap: 10px; }
@@ -2648,7 +3413,10 @@ td.col-actions .action-btns { justify-content: flex-end; }
 
 /* ── Small phone ────────────────────────────────────────────────────────── */
 @media (max-width: 430px) {
-    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .stats-grid,
+    .stats-grid.is-5,
+    .stats-grid.is-triple,
+    .stats-grid.is-double { grid-template-columns: 1fr 1fr; }
     /* Below this width a two-across figure starts truncating, so stat cards
        go full width and lay the icon beside the figure again. */
     .stat-card { flex-direction: row; align-items: center; }
@@ -2661,9 +3429,16 @@ td.col-actions .action-btns { justify-content: flex-end; }
 /* ── Print — reports and statements get printed from the browser too ────── */
 @media print {
     .sidebar, .topbar, .bottom-tabbar, .page-header-actions,
-    .filter-bar, .table-footer, .sidebar-backdrop, .skip-link { display: none; }
+    .filter-bar, .table-footer, .sidebar-backdrop, .skip-link,
+    .shell-sidebar, .shell-topbar,
+    .shell-pagehead-actions, .palette { display: none; }
     .main-wrap { margin-left: 0; }
     .page-content { padding: 0; }
+    /* The shell frames the screen with a fixed height; on paper the content
+       has to be allowed to run over as many pages as it needs. */
+    body.app-shell { height: auto; overflow: visible; display: block; padding: 0; }
+    .shell-frame { display: block; border-radius: 0; overflow: visible; }
+    .shell-content { padding: 0; overflow: visible; }
     .card, .table-card, .stat-card { box-shadow: none; border-color: #CBD5E1; }
     thead th { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
 }
@@ -2762,3 +3537,858 @@ td.col-actions .action-btns { justify-content: flex-end; }
     white-space: nowrap;
 }
 .amount-col { font-weight: 700; font-size: 13px; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §7  DESKTOP SHELL — sidebar, top bar, page header
+   ───────────────────────────────────────────────────────────────────────────
+   Implements DASHBOARD-SPEC.md §1 and §2, which supersede DESKTOP-UI.md §4
+   and §5A. There is no icon rail: one 228px navy sidebar, one 80px top bar,
+   and the page header sits inside the content column rather than in a fixed
+   bar of its own.
+
+   The whole frame is inset in an 8px navy margin with a 12px radius on the
+   content area (§1, "page gutter"), which is why <body> carries the navy and
+   the sidebar has no border — the gutter is the separation.
+
+   The shell exists only ≥769px. Below that the mobile app layer owns the
+   screen, so every shell region is display:none there and the legacy
+   .sidebar drawer / .topbar / .bottom-tabbar — which app-mobile.css styles —
+   take over. Those are the reverse: hidden ≥769px, live below it. That is
+   why this section has two media queries and no !important; the cascade
+   (app-core → @stack('styles') → app-mobile) does the rest.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+    /* Shell geometry — DASHBOARD-SPEC.md §1, final. */
+    --shell-sidebar-w:  236px;
+    --shell-topbar-h:   60px;
+    /* No gutter: the sidebar runs to the screen edge and the 1px topbar rule
+       is the only separation the frame needs. The inset navy border the shell
+       used to draw put a second frame inside the browser's own. */
+    --shell-gutter:     0px;
+
+    /* The navy is the same value in both themes: it is the product's frame,
+       not a surface that follows the theme (§7). */
+    --shell-navy:       #1E2C4F;
+    --shell-navy-deep:  #0B132B;   /* the help card, one step below the rail */
+    --shell-gold:       #D8B25F;
+    --shell-gold-lit:   #EDCD85;   /* gold on navy — 11:1, the active nav ink */
+    --shell-on-gold:    #1E2C4F;
+
+    /* 4.9:1 on the navy — an inactive nav item is still text people read. */
+    --shell-nav-ink:        #C6CDDA;
+    --shell-nav-ink-active: var(--shell-gold-lit);
+    --shell-gold-soft:      #EDCD85;   /* the light stop of the gold gradient */
+    --shell-nav-fill:       rgba(216,178,95,0.16);
+    --shell-nav-hover:      rgba(255,255,255,0.07);
+    --shell-nav-group:      #CAA14F;
+    --shell-nav-meta:       #97A1B4;
+    --shell-nav-card:       var(--shell-navy-deep);
+}
+
+body.app-shell {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    padding: var(--shell-gutter);
+    background: var(--shell-navy);
+}
+
+/* ── §7.1  Sidebar, 228px ───────────────────────────────────────────────── */
+.shell-sidebar {
+    width: var(--shell-sidebar-w);
+    flex: none;
+    background: var(--shell-navy);
+    /* An inherited colour, not the body's: --text-primary IS the navy, so
+       anything dropped in here without its own colour would be invisible. */
+    color: var(--shell-nav-ink);
+    display: flex;
+    flex-direction: column;
+}
+.shell-brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: var(--sp-5) var(--sp-5) 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    text-decoration: none;
+}
+/* A filled gold tile, not gold type on navy: the mark is the one object in
+   the rail that is meant to be looked at rather than read. */
+.shell-brand-mark {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--shell-gold-soft), #D0A854);
+    color: var(--shell-on-gold);
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+    overflow: hidden;
+    animation: shell-brand-mark-in var(--dur-slow) var(--ease-spring);
+    transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+/* A tenant's own logo is its own object — it does not want a gold tile
+   painted behind it. The gradient is the fallback mark's treatment only. */
+.shell-brand-mark img { width: 100%; height: 100%; object-fit: contain; border-radius: inherit; }
+.shell-brand-mark:has(img) { background: none; }
+.shell-brand:hover .shell-brand-mark { transform: scale(1.08) rotate(-2deg); box-shadow: 0 0 0 4px var(--accent-glow); }
+@keyframes shell-brand-mark-in {
+    from { opacity: 0; transform: scale(.55) rotate(-10deg); }
+    to   { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+/* Name over tagline, not name beside tagline. The lockup sits in whatever is
+   left of a 228px sidebar after the 52px mark and the gutters — 116px — and
+   the two lines were sharing it: the name took 102px and the tagline was left
+   with 6px of the 139px it needs, so "Management Suite" rendered as "M…".
+   Stacked, each line gets the full 116px. Both still ellipsize, because the
+   name and tagline are tenant-configurable and a long one must degrade
+   rather than widen the sidebar. */
+.shell-brand-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+.shell-brand-name {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1.3;
+    color: #FFFFFF;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* 10px at 0.05em, down from 10.5px at 0.12em. Measured, not guessed: the
+   default tagline needs 129.5px at the old setting and the column is 112.8px.
+   This lands it at 108px — about 4px of slack, the most the sidebar's 52px
+   mark and --sp-6 gutters leave without shrinking the brand itself. Tighter
+   tracking than the .shell-nav-group eyebrows on purpose; those get the full
+   180px and can afford 0.14em. */
+.shell-brand-sub {
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    line-height: 1.4;
+    text-transform: uppercase;
+    color: var(--shell-nav-meta);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* min-height:0 lets the nav actually shrink and scroll inside the sidebar's
+   flex column; without it the last item sat clipped behind the help card at
+   900px viewport height. */
+.shell-nav { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 0; }
+.shell-nav-group {
+    padding: 4px 22px 8px;
+    font-family: var(--font-body);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--shell-nav-group);
+}
+.shell-nav-group + .shell-nav-group,
+.shell-navitem + .shell-nav-group,
+.shell-navgroup + .shell-nav-group { padding-top: var(--sp-4); }
+/* A pill, not a rail. The 3px gold bar flush to the sidebar edge dated from
+   a shell that had a gutter around it; without one it reads as a crack in
+   the frame. A filled pill inset from both edges belongs to the item. */
+.shell-navitem {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 1px 10px;
+    padding: 9px 12px;
+    border-radius: 9px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--shell-nav-ink);
+    text-decoration: none;
+    transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.shell-navitem > i { width: 17px; font-size: 15px; text-align: center; flex: none; }
+.shell-navitem-label { flex: 1; min-width: 0; }
+.shell-navitem-count {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: var(--radius-pill);
+    background: rgba(216,178,95,0.25);
+    color: var(--shell-gold-lit);
+    font-variant-numeric: tabular-nums;
+    flex: none;
+}
+.shell-navitem:hover { background: var(--shell-nav-hover); color: #FFFFFF; }
+.shell-navitem.is-active {
+    background: var(--shell-nav-fill);
+    color: var(--shell-nav-ink-active);
+    font-weight: 600;
+}
+/* A destination this build does not have yet. Visibly disabled with a
+   "Soon" chip rather than a fake URL — the design keeps the row, the user
+   learns it is coming, and navigation is never broken. */
+.shell-navitem.is-disabled,
+.shell-subitem.is-disabled {
+    opacity: 0.45;
+    cursor: default;
+    pointer-events: none;
+}
+.shell-soon {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: var(--radius-pill);
+    background: rgba(255,255,255,0.10);
+    color: var(--shell-nav-meta);
+    flex: none;
+}
+
+/* ── A nav item that opens in place ─────────────────────────────────────────
+     One row for a group of pages that are one piece of work to the user
+     (Bills & Payments; Settings). <details>/<summary> so it works without
+     JavaScript and keeps its own state. */
+.shell-navgroup > summary { list-style: none; cursor: pointer; }
+.shell-navgroup > summary::-webkit-details-marker { display: none; }
+.shell-navitem-caret {
+    font-size: 9px;
+    color: var(--shell-nav-meta);
+    transition: transform var(--dur-fast) ease;
+    flex: none;
+}
+.shell-navgroup[open] > summary .shell-navitem-caret { transform: rotate(180deg); }
+/* An open group is not a selected page — white, so the gold stays the
+   answer to "where am I". */
+.shell-navgroup[open] > summary,
+.shell-navitem.is-open { color: #FFFFFF; }
+
+.shell-subnav { display: flex; flex-direction: column; padding: 2px 0 6px; }
+.shell-subitem {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 1px 10px;
+    /* Aligned under the parent's label, not its icon: 12px item padding +
+       17px icon column + 12px gap. */
+    padding: 7px 12px 7px 41px;
+    border-radius: 9px;
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    font-weight: 400;
+    color: var(--shell-nav-meta);
+    text-decoration: none;
+    transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.shell-subitem:hover { background: var(--shell-nav-hover); color: #FFFFFF; }
+.shell-subitem.is-active {
+    background: var(--shell-nav-fill);
+    color: var(--shell-nav-ink-active);
+    font-weight: 600;
+}
+
+.shell-help {
+    margin: 14px;
+    padding: 13px 14px;
+    border-radius: var(--radius);
+    background: var(--shell-nav-card);
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    text-decoration: none;
+}
+.shell-help:hover { background: #101B36; }
+.shell-help-icon {
+    width: 30px; height: 30px;
+    border-radius: var(--radius-sm);
+    background: rgba(216,178,95,0.16);
+    color: var(--shell-gold-lit);
+    font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+}
+.shell-help-title { display: block; font-size: 11.5px; font-weight: 600; color: #FFFFFF; margin-bottom: 2px; }
+.shell-help-sub { display: block; font-size: 10.5px; line-height: 1.5; color: var(--shell-nav-meta); }
+
+/* ── §7.2  The content frame: top bar + scrolling column ────────────────── */
+.shell-frame {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--page-canvas);
+    overflow: hidden;
+}
+
+.shell-topbar {
+    height: var(--shell-topbar-h);
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+    padding: 0 26px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--card-border);
+}
+/* A hairline between the notification cluster and the account block, so the
+   two read as two things rather than one run of five controls. */
+.shell-divider { width: 1px; height: 24px; flex: none; background: var(--card-border); }
+.shell-hamburger {
+    border: 0;
+    background: none;
+    padding: 0;
+    width: 32px; height: 32px;
+    font-size: 18px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.shell-hamburger:hover { color: var(--text-primary); }
+.shell-topbar-spacer { flex: 1; }
+
+/* Leading, not trailing: search is the bar's primary affordance, so it takes
+   the left edge and grows to a 420px cap rather than sitting in the cluster
+   of icon buttons on the right. */
+.shell-search {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 420px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 13px;
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    background: var(--page-bg-alt);
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    text-align: left;
+    cursor: pointer;
+}
+.shell-search:hover { border-color: var(--input-border); }
+.shell-search > i { font-size: 13px; }
+.shell-search-label { flex: 1; }
+.shell-kbd {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 5px;
+    padding: 1px 5px;
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    flex: none;
+}
+
+.shell-iconbtn {
+    position: relative;
+    border: 0;
+    background: none;
+    padding: 0;
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    font-size: 17px;
+    color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex: none;
+    transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.shell-iconbtn:hover { background: var(--page-bg); color: var(--text-primary); }
+/* Red, not gold: an unread count is an alert, and gold is this app's
+   "primary action" colour everywhere else. */
+.shell-badge {
+    position: absolute;
+    top: 5px; right: 5px;
+    min-width: 14px; height: 14px;
+    padding: 0 3px;
+    border-radius: var(--radius-pill);
+    background: var(--danger);
+    color: var(--ink-on-fill);
+    font-family: var(--font-data);
+    font-size: 8.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.shell-user {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    border: 0;
+    background: none;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+}
+.shell-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    color: var(--on-accent);
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+}
+.shell-user-name { font-size: 12px; font-weight: 600; line-height: 1.2; color: var(--text-primary); }
+.shell-user-role { font-size: 10px; color: var(--text-muted); }
+.shell-user > .fa-chevron-down { font-size: 11px; color: var(--text-muted); }
+
+.shell-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 24px 26px 34px;
+}
+
+/* ── §7.5  One vertical rhythm for every page ───────────────────────────────
+     The content column spaces its own children, so a page never sets a
+     section margin. This is what makes the KPI row start at the same y on
+     every page that has one: the header is one component of one height, and
+     the gap below it is one token.
+
+     Scoped ≥769px because the mobile app layer (.m-screen / .pm-*) draws its
+     own spacing and must not be touched. */
+@media (min-width: 769px) {
+    .shell-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--section-gap);
+        align-items: stretch;
+    }
+    /* Sections used to carry their own bottom margin; with a gap that would
+       double up. Zeroed here rather than in each page. */
+    .shell-content > .page-header,
+    .shell-content > .stats-grid,
+    .shell-content > .filter-card,
+    .shell-content > .table-card,
+    .shell-content > .alert,
+    .shell-content > .card-grid,
+    .shell-content > .section-stack,
+    .shell-content > .shell-pagehead { margin-bottom: 0; }
+
+    /* A page's own wrapper div gets the same rhythm, so nesting one level
+       deep — which several pages do — behaves identically. */
+    .shell-content > .section-stack { gap: var(--section-gap); }
+
+    /* The column scrolls; its sections keep their natural height.
+       Without this, flex-shrink:1 (the default) lets a section taller than
+       the remaining space be SQUASHED rather than overflow — and because
+       .table-card clips to its radius with overflow:hidden, the squash is
+       silent: the rows are in the DOM, laid out, and invisible, with the
+       scroll container reporting no overflow to scroll. A 15-row table
+       rendered as 4 rows and no scrollbar is the symptom.
+
+       Excludes .is-flush, where a pane filling the height is the whole point
+       (archetype B master-detail, archetype D bulk grids own their scroll). */
+    .shell-content:not(.is-flush) > * { flex: 0 0 auto; }
+}
+/* Archetype B master-detail and D bulk grids own their own scroll. */
+.shell-content.is-flush { padding: 0; overflow: hidden; display: flex; }
+
+/* ── §7.3  Page header — §2, inside the content column ──────────────────── */
+.shell-pagehead {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-5);
+    flex-wrap: wrap;
+}
+.shell-pagehead-text { flex: 1; min-width: 0; }
+.shell-pagehead .breadcrumb { margin-bottom: 8px; }
+.shell-pagehead-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: var(--lh-tight);
+    color: var(--text-primary);
+}
+.shell-pagehead-sub {
+    margin-top: 4px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.shell-pagehead-sub:empty { display: none; }
+.shell-pagehead-actions { display: flex; align-items: center; gap: 12px; }
+.shell-pagehead-actions:empty { display: none; }
+
+/* The header's own button sizes — 44px, radius 10px (§2) — rather than
+   .btn's, which the rest of the app shares. */
+.shell-headbtn {
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 0 18px;
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    background: var(--card-bg);
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--text-primary);
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color var(--dur-fast) ease, transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+}
+.shell-headbtn:hover { border-color: var(--accent-strong); }
+/* The gold fill is a gradient with its own lift, so the page's one primary
+   action is the only thing on the screen that sits above the surface. */
+.shell-headbtn.is-primary {
+    background: var(--accent-gradient);
+    border-color: transparent;
+    color: var(--on-accent);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    box-shadow: var(--accent-lift);
+}
+.shell-headbtn.is-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--accent-lift-hover);
+}
+@media (prefers-reduced-motion: reduce) {
+    .shell-headbtn.is-primary:hover { transform: none; }
+}
+
+/* ── §7.5  Command palette (⌘K) ─────────────────────────────────────────── */
+.palette {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-sheet);
+    background: var(--scrim);
+    backdrop-filter: blur(2px);
+    display: flex;
+    justify-content: center;
+    padding-top: 118px;
+}
+.palette[hidden] { display: none; }
+.palette-box {
+    width: 568px;
+    max-width: calc(100vw - 2 * var(--sp-5));
+    max-height: 420px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: palette-in var(--dur-fast) ease-out;
+}
+@keyframes palette-in {
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .palette-box { animation: none; }
+}
+.palette-head {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: var(--sp-4) var(--sp-4);
+    border-bottom: 1px solid var(--card-border);
+}
+.palette-head > i { font-size: 12px; color: var(--text-secondary); }
+.palette-input {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--text-primary);
+}
+.palette-input::placeholder { color: var(--text-muted); }
+.palette-list { flex: 1; overflow-y: auto; padding: 7px; }
+.palette-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 10px;
+    border-radius: 9px;
+    text-decoration: none;
+    color: inherit;
+}
+.palette-row:hover,
+.palette-row:focus-visible { background: var(--accent-dim); }
+.palette-row-icon {
+    width: 28px; height: 28px;
+    border-radius: var(--radius-sm);
+    background: var(--page-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-secondary);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+}
+.palette-row-text { flex: 1; min-width: 0; }
+.palette-row-title {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.palette-row-sub {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 10.5px;
+    color: var(--text-secondary);
+}
+.palette-row-kind {
+    font-family: var(--font-body);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    color: var(--text-secondary);
+}
+.palette-empty {
+    padding: 22px;
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+/* Group heading above a run of record results ("Tenants", "Invoices"). Same
+   eyebrow treatment as the sidebar's section labels, so the two lists of
+   destinations in this app are labelled the same way. */
+.palette-group {
+    padding: 10px 10px 4px;
+    font-family: var(--font-body);
+    font-size: var(--fs-2xs);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.palette-hint {
+    padding: 14px;
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 11.5px;
+    color: var(--text-muted);
+}
+.palette-foot {
+    display: flex;
+    gap: var(--sp-4);
+    padding: 9px 15px;
+    border-top: 1px solid var(--card-border);
+    background: var(--page-bg);
+    font-family: var(--font-body);
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+/* ── §7.5b  Notification bell ───────────────────────────────────────────────
+     The bell was a button with no behaviour and no data behind it. It now
+     opens a panel of derived items (App\Services\AttentionFeed), each one a
+     link into the list it describes.
+
+     A panel, not a page: everything in it is a count that belongs to a list
+     the app already has, so the bell's job is to point at the right filtered
+     list, never to become a fifth place where invoices live. */
+.shell-bell { position: relative; display: flex; }
+/* Count riding the bell. Tabular figures so 3 and 11 sit the same, and the
+   ring in --topbar-bg keeps it legible where it overlaps the glyph. */
+.shell-bell-badge {
+    position: absolute;
+    top: 2px; right: 2px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: var(--radius-pill);
+    background: var(--danger);
+    box-shadow: 0 0 0 2px var(--card-bg);
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 9.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 16px;
+    text-align: center;
+    pointer-events: none;
+}
+.shell-notif {
+    position: absolute;
+    top: calc(100% + 9px);
+    right: 0;
+    z-index: var(--z-dropdown);
+    width: 336px;
+    max-width: calc(100vw - var(--sp-6));
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+.shell-notif-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--card-border);
+    background: var(--page-bg-alt);
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.shell-notif-count {
+    margin-left: auto;
+    padding: 1px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--tone-danger-bg);
+    color: var(--tone-danger-fg);
+    font-size: var(--fs-2xs);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.shell-notif-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 11px 14px;
+    text-decoration: none;
+    border-bottom: 1px solid var(--card-border);
+}
+.shell-notif-item:hover { background: var(--page-bg); }
+.shell-notif-icon {
+    width: 30px; height: 30px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+    font-size: 12px;
+    background: var(--tone-neutral-bg);
+    color: var(--tone-neutral-fg);
+}
+.shell-notif-icon.is-danger  { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+.shell-notif-icon.is-warning { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.shell-notif-icon.is-info    { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.shell-notif-text { flex: 1; min-width: 0; }
+.shell-notif-title {
+    display: block;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.shell-notif-sub {
+    display: block;
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+.shell-notif-chev { color: var(--text-faint); font-size: 10px; flex: none; }
+.shell-notif-empty {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 18px 14px;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+.shell-notif-empty i { color: var(--tone-success-fg); }
+.shell-notif-foot {
+    display: block;
+    padding: 10px 14px;
+    text-align: center;
+    background: var(--page-bg-alt);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+.shell-notif-foot:hover { color: var(--tone-accent-fg); }
+/* On a phone the panel would run off the edge; pin it to the viewport. */
+@media (max-width: 600px) {
+    .shell-notif { position: fixed; top: 64px; right: var(--sp-3); left: var(--sp-3); width: auto; }
+}
+
+/* ── §7.6  Focus, per §8 ────────────────────────────────────────────────── */
+.shell-iconbtn:focus-visible,
+.shell-search:focus-visible,
+.shell-user:focus-visible,
+.shell-headbtn:focus-visible,
+.shell-help:focus-visible,
+.palette-row:focus-visible,
+.palette-input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+.shell-navitem:focus-visible,
+.shell-subitem:focus-visible,
+.shell-navgroup > summary:focus-visible {
+    outline: 2px solid var(--shell-gold);
+    outline-offset: -2px;
+}
+
+/* ── §7.7  The two boundaries ───────────────────────────────────────────── */
+
+/* Desktop: the legacy 260px drawer, its backdrop, the 60px topbar and the
+   mobile "More" sheet are the mobile layer's chrome. The shell replaces
+   them, so they are not rendered here — but they stay in the DOM because
+   app-mobile.css styles them below 769px. */
+@media (min-width: 769px) {
+    body.app-shell > .sidebar,
+    body.app-shell > .sidebar-backdrop,
+    body.app-shell #moreSheet,
+    body.app-shell .topbar { display: none; }
+}
+
+/* Mobile: the shell does not exist. Everything reverts to document flow so
+   the .pm-* / .m-* screens behave exactly as they did before the shell. */
+@media (max-width: 768px) {
+    .shell-sidebar,
+    .shell-topbar,
+    .palette { display: none; }
+
+    body.app-shell { height: auto; overflow: visible; display: block; padding: 0; background: var(--page-bg); }
+    .shell-frame { display: block; border-radius: 0; overflow: visible; }
+    .shell-content { overflow: visible; }
+    /* ── The page header on mobile ──────────────────────────────────────
+       Stacked, not shrunk: title, description, then the actions as a
+       full-width row of equal buttons. Hidden only on the routes that draw
+       their own header (the .m-screen / .pm-* app layer), which is what
+       body.is-mobile-screen and body.is-dashboard mark. */
+    .shell-pagehead {
+        display: block;
+        padding: var(--sp-4) var(--sp-4) 0;
+    }
+    .shell-pagehead-title { font-size: 22px; }
+    .shell-pagehead-sub { font-size: 13px; }
+    .shell-pagehead-actions {
+        width: 100%;
+        margin-top: var(--sp-4);
+        flex-wrap: wrap;
+    }
+    .shell-pagehead-actions > .shell-headbtn,
+    .shell-pagehead-actions > .btn {
+        flex: 1 1 auto;
+        min-width: 0;
+        justify-content: center;
+        min-height: var(--h-control-lg);
+    }
+    body.is-mobile-screen .shell-pagehead,
+    body.is-dashboard .shell-pagehead { display: none; }
+}
+
+/* The top bar hamburger hides the sidebar. Desktop only — ≤768px the drawer
+   is the mobile layer's and has its own handler. */
+@media (min-width: 769px) {
+    body.app-shell.is-nav-collapsed > .shell-sidebar { display: none; }
+}

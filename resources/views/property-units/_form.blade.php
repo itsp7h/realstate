@@ -24,16 +24,16 @@
 
 .u-field-group { display: flex; flex-direction: column; }
 .u-field-label {
-    font-size: 11px; font-weight: 700; color: var(--text-secondary);
+    font-size: var(--fs-xs); font-weight: 700; color: var(--text-secondary);
     letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 7px;
     display: flex; align-items: center; gap: 3px;
 }
-.u-field-label .req { color: var(--danger); font-size: 13px; line-height: 1; }
+.u-field-label .req { color: var(--danger); font-size: var(--fs-base); line-height: 1; }
 
 .u-field-wrap { position: relative; }
 .u-field-icon {
     position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-    color: var(--text-muted); font-size: 12px; pointer-events: none; transition: color 0.2s;
+    color: var(--text-muted); font-size: var(--fs-sm); pointer-events: none; transition: color 0.2s;
 }
 .u-has-icon input, .u-has-icon select { padding-left: 36px; }
 .u-field-wrap:focus-within .u-field-icon { color: var(--accent); }
@@ -41,18 +41,18 @@
 .u-input, .u-select, .u-textarea {
     width: 100%; padding: 10px 13px;
     border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-    background: #fff; color: var(--text-primary);
-    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13.5px;
+    background: var(--input-bg); color: var(--text-primary);
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: var(--fs-base);
     outline: none; appearance: none; -webkit-appearance: none;
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
     line-height: 1.5;
 }
 .u-input::placeholder { color: var(--text-muted); opacity: 0.65; }
-.u-input:hover, .u-select:hover  { border-color: #B0BCCF; }
+.u-input:hover, .u-select:hover  { border-color: var(--input-border); }
 .u-input:focus, .u-select:focus, .u-textarea:focus {
-    border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: #FFFDF8;
+    border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: var(--tone-warning-bg);
 }
-.u-input.is-invalid, .u-select.is-invalid { border-color: var(--danger); background: #FFF8F8; }
+.u-input.is-invalid, .u-select.is-invalid { border-color: var(--danger); background: var(--tone-danger-bg); }
 .u-input.is-invalid:focus, .u-select.is-invalid:focus { box-shadow: 0 0 0 3px rgba(239,68,68,0.12); }
 
 .u-select {
@@ -63,9 +63,9 @@
 
 .u-field-error {
     display: flex; align-items: center; gap: 4px; margin-top: 5px;
-    font-size: 11px; color: var(--danger); font-weight: 500;
+    font-size: var(--fs-xs); color: var(--danger); font-weight: 500;
 }
-.u-field-error i { font-size: 10px; }
+.u-field-error i { font-size: var(--fs-2xs); }
 
 /* ── BUILDING-LOCKED STATE ─────────────────────────────────
    These fields mirror the selected building and cannot be edited here. No
@@ -82,9 +82,9 @@
 .u-locked-section { position: relative; }
 .u-lock-hint {
     display: none; align-items: center; gap: 4px;
-    font-size: 10.5px; color: var(--text-muted); margin-top: 5px;
+    font-size: var(--fs-2xs); color: var(--text-muted); margin-top: 5px;
 }
-.u-lock-hint i { font-size: 9px; }
+.u-lock-hint i { font-size: var(--fs-2xs); }
 .u-locked-section .u-lock-hint { display: flex; }
 
 /* ── BUILDING PREVIEW CARD ─────────────────────────────── */
@@ -100,24 +100,18 @@
 }
 .building-preview.visible { display: flex; }
 .building-preview-icon {
-    width: 36px; height: 36px; border-radius: 8px;
-    background: var(--accent); color: #0B1120;
+    width: 36px; height: 36px; border-radius: var(--radius-sm);
+    background: var(--accent); color: var(--text-primary);
     display: flex; align-items: center; justify-content: center;
-    font-size: 15px; flex-shrink: 0;
+    font-size: var(--fs-md); flex-shrink: 0;
 }
-.building-preview-name { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary); }
-.building-preview-sub  { font-size: 11.5px; color: var(--text-secondary); margin-top: 1px; }
-.building-preview-badge {
-    margin-left: auto;
-    display: flex; align-items: center; gap: 4px;
-    font-size: 10.5px; color: var(--accent); font-weight: 600;
-    padding: 3px 9px; background: var(--accent-dim); border-radius: 20px;
-}
+.building-preview-name { font-family: 'Outfit', sans-serif; font-size: var(--fs-base); font-weight: 700; color: var(--text-primary); }
+.building-preview-sub  { font-size: var(--fs-xs); color: var(--text-secondary); margin-top: 1px; }
 
 /* ── SUB-SECTION DIVIDER ───────────────────────────────── */
 .u-sub-divider {
     display: flex; align-items: center; gap: 8px;
-    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    font-size: var(--fs-2xs); font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.08em; color: var(--text-muted);
     margin: 18px 0 14px;
 }
@@ -183,7 +177,7 @@
                                 <div class="building-preview-name" id="previewName">—</div>
                                 <div class="building-preview-sub" id="previewSub">—</div>
                             </div>
-                            <div class="building-preview-badge"><i class="fa-solid fa-lock"></i> Auto-filled</div>
+                            <div class="badge"><i class="fa-solid fa-lock"></i> Auto-filled</div>
                         </div>
                     </div>
 

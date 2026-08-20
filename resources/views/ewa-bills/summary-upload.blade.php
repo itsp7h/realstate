@@ -3,22 +3,27 @@
 @section('title', 'EWA Summary')
 @section('topbar-title', 'EWA Bills')
 
+@section('page-title', 'EWA Summary')
+@section('page-subtitle')
+    Upload government EWA bill PDFs in bulk — each one is parsed, saved, and summarized into an Excel sheet
+@endsection
+
 @push('styles')
 <style>
 .ewa-header-strip {
-    background: linear-gradient(135deg, #0D9488 0%, #0369A1 100%);
-    border-radius: var(--radius); padding: 16px 22px; margin-bottom: 20px;
-    display: flex; align-items: center; gap: 16px; color: #fff;
+    background: linear-gradient(135deg, var(--tone-info-fg) 0%, var(--tone-info-fg) 100%);
+    border-radius: var(--radius); padding: 16px 22px; margin-bottom: var(--sp-5);
+    display: flex; align-items: center; gap: 16px; color: var(--ink-on-fill);
 }
 .ewa-header-strip .ewa-logo-circle {
     width: 48px; height: 48px; border-radius: 50%;
     background: rgba(255,255,255,0.2); backdrop-filter: blur(4px);
     display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;
 }
-.ewa-header-strip h2 { font-family: 'Outfit',sans-serif; font-size: 18px; font-weight: 800; margin: 0; }
-.ewa-header-strip p  { font-size: 12px; opacity: 0.85; margin: 2px 0 0; }
+.ewa-header-strip h2 { font-family: 'Outfit',sans-serif; font-size: var(--fs-lg); font-weight: 800; margin: 0; }
+.ewa-header-strip p  { font-size: var(--fs-sm); opacity: 0.85; margin: 2px 0 0; }
 
-.summary-card { margin-bottom: 20px; }
+.summary-card { margin-bottom: var(--sp-5); }
 
 .batch-drop-zone {
     border: 2px dashed var(--card-border); border-radius: var(--radius);
@@ -26,51 +31,44 @@
     cursor: pointer; transition: border-color 0.2s, background 0.2s;
 }
 .batch-drop-zone:hover, .batch-drop-zone.drag-over {
-    border-color: #0D9488; background: rgba(13,148,136,0.06);
+    border-color: var(--tone-info-fg); background: rgba(13,148,136,0.06);
 }
 .batch-drop-icon {
     font-size: 38px; color: var(--text-muted); margin-bottom: 10px;
     transition: color 0.2s, transform 0.2s;
 }
 .batch-drop-zone:hover .batch-drop-icon, .batch-drop-zone.drag-over .batch-drop-icon {
-    color: #0D9488; transform: translateY(-3px);
+    color: var(--tone-info-fg); transform: translateY(-3px);
 }
-.batch-drop-label { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 5px; }
-.batch-drop-sub { font-size: 12px; color: var(--text-muted); }
+.batch-drop-label { font-family: 'Outfit', sans-serif; font-size: var(--fs-md); font-weight: 700; color: var(--text-primary); margin-bottom: 5px; }
+.batch-drop-sub { font-size: var(--fs-sm); color: var(--text-muted); }
 
 /* File list — styled like a stack of utility-bill stubs */
-.stub-list { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+.stub-list { margin-top: var(--sp-5); display: flex; flex-direction: column; gap: 8px; }
 .stub-row { display: flex; align-items: center; gap: 12px; animation: stubIn 0.2s ease both; }
 @keyframes stubIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-.stub-icon { color: #0D9488; font-size: 15px; flex-shrink: 0; }
-.stub-name { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; color: var(--text-primary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.stub-size { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.stub-icon { color: var(--tone-info-fg); font-size: var(--fs-md); flex-shrink: 0; }
+.stub-name { font-family: 'Outfit', sans-serif; font-size: var(--fs-base); font-weight: 600; color: var(--text-primary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stub-size { font-size: var(--fs-xs); color: var(--text-muted); font-variant-numeric: tabular-nums; flex-shrink: 0; }
 .stub-remove {
     background: none; border: none; cursor: pointer; color: var(--text-muted);
-    font-size: 12px; flex-shrink: 0; padding: 4px 6px; border-radius: 4px; transition: color 0.15s;
+    font-size: var(--fs-sm); flex-shrink: 0; padding: 4px 6px; border-radius: 4px; transition: color 0.15s;
 }
 .stub-remove:hover { color: var(--tone-danger-fg); }
 
 .batch-count-bar {
     display: flex; align-items: center; justify-content: space-between;
-    margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--card-border);
+    margin-top: 18px; padding-top: var(--sp-4); border-top: 1px solid var(--card-border);
 }
-.batch-count-label { font-size: 13px; color: var(--text-muted); }
+.batch-count-label { font-size: var(--fs-base); color: var(--text-muted); }
 .batch-count-label strong { color: var(--text-primary); font-family: 'Outfit', sans-serif; }
 
 /* ── TABS ──────────────────────────────────────────────────── */
-.tab-bar { display: flex; gap: 4px; border-bottom: 2px solid var(--card-border); margin-bottom: 20px; }
 </style>
 @endpush
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">EWA Summary</h1>
-        <p class="page-header-sub">Upload government EWA bill PDFs in bulk — each one is parsed, saved, and summarized into an Excel sheet</p>
-    </div>
-</div>
 
 @include('ewa-bills._tabs')
 

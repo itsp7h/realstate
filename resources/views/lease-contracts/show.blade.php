@@ -5,7 +5,7 @@
 
 @push('styles')
 <style>
-.contract-hero { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+.contract-hero { display: flex; align-items: flex-start; gap: 20px; margin-bottom: var(--sp-5); flex-wrap: wrap; }
 .contract-icon-wrap {
     width: 64px; height: 64px; border-radius: var(--radius);
     background: var(--accent-dim); color: var(--accent);
@@ -20,32 +20,31 @@
 .contract-meta { display: flex; align-items: center; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
 .hero-actions { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
 
-.lease-progress-wrap { margin-top: 12px; }
+.lease-progress-wrap { margin-top: var(--sp-3); }
 .lease-progress-labels { display: flex; justify-content: space-between; margin-top: 6px; }
-.lease-progress-labels span { font-size: 11px; color: var(--text-muted); }
+.lease-progress-labels span { font-size: var(--fs-xs); color: var(--text-muted); }
 </style>
 @endpush
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <a href="{{ route('lease-contracts.index') }}">Lease Contracts</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>{{ $leaseContract->lease_agreement_no }}</span>
-        </div>
-        <h1 class="page-header-title">Contract Detail</h1>
-        <p class="page-header-sub">Full breakdown of lease agreement {{ $leaseContract->lease_agreement_no }}</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('lease-contracts.index') }}" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back
-        </a>
-    </div>
-</div>
+@section('page-breadcrumb')
+    <a href="{{ url('/dashboard') }}">Home</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <a href="{{ route('lease-contracts.index') }}">Lease Contracts</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>{{ $leaseContract->lease_agreement_no }}</span>
+@endsection
+@section('page-title', 'Contract Detail')
+@section('page-subtitle')
+    Full breakdown of lease agreement {{ $leaseContract->lease_agreement_no }}
+@endsection
+@section('page-actions')
+    <a href="{{ route('lease-contracts.index') }}" class="btn btn-outline">
+        <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+@endsection
+
 
 {{-- HERO --}}
 <div class="card is-hero contract-hero">

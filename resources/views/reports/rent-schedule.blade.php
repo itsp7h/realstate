@@ -5,25 +5,22 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Rent Payment Schedule</h1>
-        <p class="page-header-sub">Month-by-month rent history for a single tenant</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
-        @if($tenant)
-        <button type="button" class="btn btn-outline"
-                onclick="openReportPdf('{{ route('reports.rent-schedule.pdf', request()->only(['tenant_id','date_from','date_to'])) }}', 'Rent Payment Schedule — {{ $tenant->name }}')">
-            <i class="fa-solid fa-eye"></i> Preview
-        </button>
-        <a href="{{ route('reports.rent-schedule.pdf', request()->only(['tenant_id','date_from','date_to'])) }}"
-           target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
-        <a href="{{ route('reports.rent-schedule.export', request()->only(['tenant_id','date_from','date_to'])) }}"
-           class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
-        @endif
-    </div>
-</div>
+@section('page-title', 'Rent Payment Schedule')
+@section('page-subtitle', 'Month-by-month rent history for a single tenant')
+@section('page-actions')
+    <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
+    @if($tenant)
+    <button type="button" class="btn btn-outline"
+            onclick="openReportPdf('{{ route('reports.rent-schedule.pdf', request()->only(['tenant_id','date_from','date_to'])) }}', 'Rent Payment Schedule — {{ $tenant->name }}')">
+        <i class="fa-solid fa-eye"></i> Preview
+    </button>
+    <a href="{{ route('reports.rent-schedule.pdf', request()->only(['tenant_id','date_from','date_to'])) }}"
+       target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+    <a href="{{ route('reports.rent-schedule.export', request()->only(['tenant_id','date_from','date_to'])) }}"
+       class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
+    @endif
+@endsection
+
 
 <form method="GET" action="{{ route('reports.rent-schedule') }}" class="filter-card">
     <div class="filter-bar">
@@ -91,7 +88,7 @@
                     <td class="right" style="font-family:'Outfit',sans-serif">{{ number_format($row['expected'], 3) }}</td>
                     <td class="right" style="font-family:'Outfit',sans-serif">{{ number_format($row['invoiced'], 3) }}</td>
                     <td class="right" style="font-family:'Outfit',sans-serif">{{ number_format($row['paid'], 3) }}</td>
-                    <td class="right cell-title" style="font-family:'Outfit',sans-serif; color:{{ $row['remaining'] > 0.001 ? '#DC2626' : '#059669' }}">{{ number_format($row['remaining'], 3) }}</td>
+                    <td class="right cell-title" style="font-family:'Outfit',sans-serif; color:{{ $row['remaining'] > 0.001 ? 'var(--tone-danger-fg)' : 'var(--tone-success-fg)' }}">{{ number_format($row['remaining'], 3) }}</td>
                     <td>
                         <span class="status-badge {{ $row['status'] }}">
                             {{ match($row['status']) {

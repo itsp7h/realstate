@@ -5,17 +5,6 @@
 
 @push('styles')
 <style>
-    .bldg-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        background: var(--accent-dim);
-        color: var(--accent);
-        font-size: 11px;
-        font-weight: 700;
-        padding: 3px 8px;
-        border-radius: 20px;
-    }
 
     /* Modal */
     @keyframes modalIn {
@@ -27,29 +16,21 @@
 
 @section('content')
 
+@section('page-title', 'Floors')
+@section('page-subtitle', 'All floors across all buildings')
+@section('page-actions')
+    <a href="{{ route('export.floors', array_filter(['building_id' => $buildingId ?? null])) }}" class="btn btn-success">
+        <i class="fa-solid fa-file-excel"></i> Export
+    </a>
+    <button type="button" class="btn btn-outline" onclick="openImport_floors()">
+        <i class="fa-solid fa-file-import"></i> Import
+    </button>
+    <button class="btn btn-primary" onclick="openAddFloorModal()">
+        <i class="fa-solid fa-plus"></i> Add Floor
+    </button>
+@endsection
+
 {{-- PAGE HEADER --}}
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Floors</span>
-        </div>
-        <h1 class="page-header-title">Floors</h1>
-        <p class="page-header-sub">All floors across all buildings</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('export.floors', array_filter(['building_id' => $buildingId ?? null])) }}" class="btn btn-success">
-            <i class="fa-solid fa-file-excel"></i> Export
-        </a>
-        <button type="button" class="btn btn-outline" onclick="openImport_floors()">
-            <i class="fa-solid fa-file-import"></i> Import
-        </button>
-        <button class="btn btn-primary" onclick="openAddFloorModal()">
-            <i class="fa-solid fa-plus"></i> Add Floor
-        </button>
-    </div>
-</div>
 
 {{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
 <div class="m-screen">
@@ -74,7 +55,7 @@
                     <div class="m-row-sub">{{ $floor->building->property_name }}{{ $floor->block_name ? ' · '.$floor->block_name : '' }}</div>
                 </div>
                 @if($floor->floor_code)
-                    <span class="m-row-badge" style="background:var(--m-line);color:#6B7688;">{{ $floor->floor_code }}</span>
+                    <span class="m-row-badge" style="background:var(--ps-bg);color:var(--ps-muted-deep);">{{ $floor->floor_code }}</span>
                 @endif
             </a>
         @empty
@@ -99,23 +80,23 @@
 {{-- STATS --}}
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-icon gold"><i class="fa-solid fa-layer-group"></i></div>
-        <div>
-            <div class="stat-val">{{ $stats['total'] }}</div>
-            <div class="stat-lbl">Total Floors</div>
+        <div class="stat-card-top">
+            <span class="stat-icon gold"><i class="fa-solid fa-layer-group"></i></span>
+            <span class="stat-lbl">Total Floors</span>
         </div>
+        <div class="stat-val">{{ $stats['total'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon blue"><i class="fa-solid fa-building"></i></div>
-        <div>
-            <div class="stat-val">{{ $buildings->count() }}</div>
-            <div class="stat-lbl">Buildings</div>
+        <div class="stat-card-top">
+            <span class="stat-icon blue"><i class="fa-solid fa-building"></i></span>
+            <span class="stat-lbl">Buildings</span>
         </div>
+        <div class="stat-val">{{ $buildings->count() }}</div>
     </div>
 </div>
 
 {{-- FILTER + TABLE --}}
-<div class="card m-hide-desktop-index" style="overflow:hidden;">
+<div class="table-card m-hide-desktop-index">
 
     {{-- FILTER --}}
     <form method="GET" action="{{ route('floors.global') }}" id="filterForm">
@@ -161,7 +142,7 @@
                     <td>
                         <a href="{{ route('buildings.show', $floor->building) }}?tab=floors"
                            style="text-decoration:none;">
-                            <span class="bldg-pill">
+                            <span class="badge">
                                 <i class="fa-solid fa-building" style="font-size:9px;"></i>
                                 {{ $floor->building->property_code }}
                             </span>
@@ -237,23 +218,7 @@
             Showing <strong>{{ $floors->firstItem() ?? 0 }}–{{ $floors->lastItem() ?? 0 }}</strong>
             of <strong>{{ $floors->total() }}</strong> floors
         </div>
-        <div class="pagination">
-            @if($floors->onFirstPage())
-                <span class="page-btn" style="opacity:0.4;cursor:default;"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></span>
-            @else
-                <a href="{{ $floors->previousPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></a>
-            @endif
-
-            @foreach($floors->getUrlRange(max(1, $floors->currentPage()-2), min($floors->lastPage(), $floors->currentPage()+2)) as $page => $url)
-                <a href="{{ $url }}" class="page-btn {{ $page == $floors->currentPage() ? 'active' : '' }}">{{ $page }}</a>
-            @endforeach
-
-            @if($floors->hasMorePages())
-                <a href="{{ $floors->nextPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></a>
-            @else
-                <span class="page-btn" style="opacity:0.4;cursor:default;"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></span>
-            @endif
-        </div>
+        {{ $floors->links() }}
     </div>
 
 </div>

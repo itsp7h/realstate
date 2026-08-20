@@ -5,25 +5,22 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">VAT Return</h1>
-        <p class="page-header-sub">Invoice-level VAT schedule, ready to hand to the accountant for filing</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
-        @if($rows->isNotEmpty())
-        <button type="button" class="btn btn-outline"
-                onclick="openReportPdf('{{ route('reports.vat-return.pdf', request()->only(['building_id','date_from','date_to'])) }}', 'VAT Return{{ $building ? ' — '.$building->property_name : '' }}')">
-            <i class="fa-solid fa-eye"></i> Preview
-        </button>
-        <a href="{{ route('reports.vat-return.pdf', request()->only(['building_id','date_from','date_to'])) }}"
-           target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
-        <a href="{{ route('reports.vat-return.export', request()->only(['building_id','date_from','date_to'])) }}"
-           class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
-        @endif
-    </div>
-</div>
+@section('page-title', 'VAT Return')
+@section('page-subtitle', 'Invoice-level VAT schedule, ready to hand to the accountant for filing')
+@section('page-actions')
+    <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
+    @if($rows->isNotEmpty())
+    <button type="button" class="btn btn-outline"
+            onclick="openReportPdf('{{ route('reports.vat-return.pdf', request()->only(['building_id','date_from','date_to'])) }}', 'VAT Return{{ $building ? ' — '.$building->property_name : '' }}')">
+        <i class="fa-solid fa-eye"></i> Preview
+    </button>
+    <a href="{{ route('reports.vat-return.pdf', request()->only(['building_id','date_from','date_to'])) }}"
+       target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+    <a href="{{ route('reports.vat-return.export', request()->only(['building_id','date_from','date_to'])) }}"
+       class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
+    @endif
+@endsection
+
 
 <form method="GET" action="{{ route('reports.vat-return') }}" class="filter-card">
     <div class="filter-bar">

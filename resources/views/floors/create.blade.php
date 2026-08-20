@@ -5,27 +5,26 @@
 
 @section('content')
 
+@section('page-breadcrumb')
+    <a href="{{ url('/dashboard') }}">Home</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <a href="{{ route('buildings.index') }}">Buildings</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <a href="{{ route('floors.index', $building) }}">{{ $building->property_name }}</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Add Floor</span>
+@endsection
+@section('page-title', 'Add Floor')
+@section('page-subtitle')
+    Add a new floor to <strong>{{ $building->property_name }}</strong>
+@endsection
+@section('page-actions')
+    <a href="{{ route('floors.index', $building) }}" class="btn btn-outline">
+        <i class="fa-solid fa-arrow-left"></i> Back to Floors
+    </a>
+@endsection
+
 {{-- PAGE HEADER --}}
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <a href="{{ route('buildings.index') }}">Buildings</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <a href="{{ route('floors.index', $building) }}">{{ $building->property_name }}</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Add Floor</span>
-        </div>
-        <h1 class="page-header-title">Add Floor</h1>
-        <p class="page-header-sub">Add a new floor to <strong>{{ $building->property_name }}</strong></p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('floors.index', $building) }}" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back to Floors
-        </a>
-    </div>
-</div>
 
 <form method="POST" action="{{ route('buildings.floors.store', $building) }}" novalidate>
     @csrf

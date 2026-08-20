@@ -5,14 +5,6 @@
 
 @push('styles')
 <style>
-.job-lines-table { width: 100%; border-collapse: collapse; }
-.job-lines-table th {
-    padding: 9px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--text-muted); background: var(--page-bg);
-    border-bottom: 1px solid var(--card-border); text-align: left;
-}
-.job-lines-table td { padding: 12px 14px; font-size: 13px; color: var(--text-secondary); border-bottom: 1px solid var(--tone-neutral-border); vertical-align: top; }
-.job-lines-table tr:last-child td { border-bottom: none; }
 
 @media print {
     .sidebar, .topbar, .page-header-actions, .no-print { display: none !important; }
@@ -24,33 +16,19 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ route('maintenance.index') }}">Maintenance</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>{{ $record->job_order ?? "#{$record->id}" }}</span>
-        </div>
-        <h1 class="page-header-title" style="display:flex;align-items:center;gap:12px">
-            {{ $record->job_order ?? "Request #{$record->id}" }}
-            <span class="status-badge {{ $record->status }}">
-                <i class="fa-solid fa-circle" style="font-size:6px"></i>
-                {{ $record->status_label }}
-            </span>
-        </h1>
-    </div>
-    <div class="page-header-actions no-print" style="display:flex;gap:8px">
-        <button onclick="window.print()" class="btn btn-outline">
-            <i class="fa-solid fa-print"></i> Print
-        </button>
-        <a href="{{ route('maintenance.edit', $record) }}" class="btn btn-primary">
-            <i class="fa-solid fa-pen"></i> Edit
-        </a>
-        <a href="{{ route('maintenance.index') }}" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back
-        </a>
-    </div>
-</div>
+@section('page-breadcrumb')
+    <a href="{{ route('maintenance.index') }}">Maintenance</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>{{ $record->job_order ?? "#{$record->id}" }}</span>
+@endsection
+@section('page-title')
+    {{ $record->job_order ?? "Request #{$record->id}" }}
+    <span class="status-badge {{ $record->status }}">
+        <i class="fa-solid fa-circle" style="font-size:6px"></i>
+        {{ $record->status_label }}
+    </span>
+@endsection
+
 
 {{-- ── SECTION 1: REQUEST DETAILS ───────────────────────── --}}
 <div class="card">
@@ -108,7 +86,7 @@
     </div>
     @if($record->job_lines && count($record->job_lines) > 0)
     <div class="table-wrap">
-        <table class="job-lines-table">
+        <table>
             <thead>
                 <tr>
                     <th>#</th>
@@ -121,10 +99,10 @@
                 @foreach($record->job_lines as $i => $line)
                 @if(!empty($line['location']) || !empty($line['description']))
                 <tr>
-                    <td style="color:var(--text-muted);font-size:12px;width:40px">{{ $i + 1 }}</td>
-                    <td style="font-weight:600;color:var(--text-primary)">{{ $line['location'] ?? '—' }}</td>
-                    <td>{{ $line['description'] ?? '—' }}</td>
-                    <td>{{ $line['supervisor_comment'] ?? '—' }}</td>
+                    <td data-label="#" class="cell-muted" style="width:40px">{{ $i + 1 }}</td>
+                    <td data-label="Location" style="font-weight:600;color:var(--text-primary)">{{ $line['location'] ?? '—' }}</td>
+                    <td data-label="Description of Work">{{ $line['description'] ?? '—' }}</td>
+                    <td data-label="Supervisor Comment">{{ $line['supervisor_comment'] ?? '—' }}</td>
                 </tr>
                 @endif
                 @endforeach
@@ -155,7 +133,7 @@
             @if($record->supervisor_signature)
             <div class="detail-item" style="grid-column:1/-1">
                 <div class="detail-label">Supervisor Signature</div>
-                <div style="margin-top:6px;padding:12px;background:#fff;border:1.5px solid var(--card-border);border-radius:var(--radius-sm);display:inline-block;">
+                <div style="margin-top:6px;padding:12px;background:var(--input-bg);border:1.5px solid var(--card-border);border-radius:var(--radius-sm);display:inline-block;">
                     <img src="{{ $record->supervisor_signature }}" alt="Supervisor Signature"
                          style="max-height:80px;max-width:300px;display:block;">
                 </div>
@@ -218,7 +196,7 @@
             <div class="detail-item">
                 <div class="detail-label">Approved Quotation</div>
                 <div class="detail-value">
-                    <span style="display:inline-flex;align-items:center;gap:6px;background:#F5F3FF;color:#7C3AED;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700">
+                    <span style="display:inline-flex;align-items:center;gap:6px;background:var(--tone-info-bg);color:var(--tone-info-fg);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700">
                         <i class="fa-solid fa-stamp" style="font-size:10px"></i>
                         Q{{ $record->selected_quotation }} — {{ $record->selected_quotation_amount ?? '—' }}
                     </span>
@@ -236,7 +214,7 @@
             @if($record->dept_head_signature)
             <div class="detail-item" style="grid-column:1/-1">
                 <div class="detail-label">Dept. Head Signature</div>
-                <div style="margin-top:6px;padding:12px;background:#fff;border:1.5px solid var(--card-border);border-radius:var(--radius-sm);display:inline-block;">
+                <div style="margin-top:6px;padding:12px;background:var(--input-bg);border:1.5px solid var(--card-border);border-radius:var(--radius-sm);display:inline-block;">
                     <img src="{{ $record->dept_head_signature }}" alt="Dept. Head Signature"
                          style="max-height:80px;max-width:300px;display:block;">
                 </div>
