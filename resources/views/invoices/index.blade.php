@@ -3,24 +3,28 @@
 @section('title', 'Invoices')
 @section('topbar-title', 'Invoices')
 
+@section('page-title', 'Invoices')
+@section('page-subtitle', 'Manage and track invoices issued to tenants')
+@section('page-actions')
+    <button type="button" class="btn btn-outline" onclick="openGenInvoicesModal()">
+        <i class="fa-solid fa-bolt"></i> Generate Invoices
+    </button>
+    <a href="{{ route('invoices.create') }}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> New Invoice
+    </a>
+@endsection
+
 @push('styles')
 <style>
 
-.type-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;
-}
-.type-badge.rent      { background: var(--tone-info-bg); color: var(--tone-info-fg); }
-.type-badge.utilities { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
-.type-badge.other     { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
 
-.overdue-row td { background: #FFF8F8; }
+.overdue-row td { background: var(--tone-danger-bg); }
 
 /* GENERATE INVOICES MODAL */
 .gen-modal-overlay {
     display: none; position: fixed; inset: 0; z-index: 1050;
     background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(2px);
-    align-items: center; justify-content: center; padding: 20px;
+    align-items: center; justify-content: center; padding: var(--sp-5);
 }
 .gen-modal-overlay.open { display: flex; }
 .gen-modal-header {
@@ -30,17 +34,17 @@
 .gen-modal-icon {
     width: 40px; height: 40px; border-radius: var(--radius-sm); flex-shrink: 0;
     background: var(--accent-dim); color: var(--accent);
-    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    display: flex; align-items: center; justify-content: center; font-size: var(--fs-md);
 }
-.gen-modal-title { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-primary); }
-.gen-modal-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
+.gen-modal-title { font-family: 'Outfit', sans-serif; font-size: var(--fs-md); font-weight: 700; color: var(--text-primary); }
+.gen-modal-sub { font-size: var(--fs-sm); color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
 .gen-modal-body { padding: 20px 24px; }
 .gen-modal-body label {
-    display: block; font-size: 12px; font-weight: 600; color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px;
+    display: block; font-size: var(--fs-sm); font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: var(--sp-2);
 }
 .gen-modal-body input[type="date"] {
-    width: 100%; padding: 10px 13px; font-size: 14px; box-sizing: border-box;
+    width: 100%; padding: 10px 13px; font-size: var(--fs-base); box-sizing: border-box;
     border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
     background: var(--input-bg); color: var(--text-primary); outline: none;
     transition: border-color 0.18s; font-family: 'Plus Jakarta Sans', sans-serif;
@@ -50,8 +54,8 @@
     margin-top: 14px; padding: 12px 14px; border-radius: var(--radius-sm);
     background: var(--accent-dim); display: flex; align-items: center; gap: 10px;
 }
-.gen-modal-preview i { color: var(--accent); font-size: 14px; }
-.gen-modal-preview span { font-size: 13px; color: var(--text-primary); }
+.gen-modal-preview i { color: var(--accent); font-size: var(--fs-base); }
+.gen-modal-preview span { font-size: var(--fs-base); color: var(--text-primary); }
 .gen-modal-preview strong { font-family: 'Outfit', sans-serif; font-weight: 700; }
 .gen-modal-footer {
     padding: 16px 24px; border-top: 1px solid var(--card-border);
@@ -62,37 +66,25 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Invoices</h1>
-        <p class="page-header-sub">Manage and track invoices issued to tenants</p>
-    </div>
-    <div class="page-header-actions">
-        <button type="button" class="btn btn-outline" onclick="openGenInvoicesModal()">
-            <i class="fa-solid fa-bolt"></i> Generate Invoices
-        </button>
-        <a href="{{ route('invoices.create') }}" class="btn btn-primary">
-            <i class="fa-solid fa-plus"></i> New Invoice
-        </a>
-    </div>
-</div>
 
 {{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
 @php
     $invStatusLabels = ['issued' => 'Issued', 'partially_paid' => 'Partially Paid', 'paid' => 'Paid', 'overdue' => 'Overdue'];
+    // Status pills use the Promoseven semantic pairs, not app-core's
+    // theme-flipping tones: this mobile layer is a fixed light system.
     $invBadgeColors = [
-        'paid'           => ['#E6F6EE', '#17A96C'],
-        'partially_paid' => ['#FBF3E4', '#C08A2D'],
-        'issued'         => ['#E9F0FD', '#4A7DF0'],
-        'overdue'        => ['#FCEBEB', '#D64545'],
-        'draft'          => ['#F1F3F8', '#6B7688'],
-        'cancelled'      => ['#F1F3F8', '#6B7688'],
+        'paid'           => ['var(--ps-success-bg)', 'var(--ps-success)'],
+        'partially_paid' => ['var(--ps-warning-bg)', 'var(--ps-warning)'],
+        'issued'         => ['var(--ps-info-bg)',    'var(--ps-info)'],
+        'overdue'        => ['var(--ps-danger-bg)',  'var(--ps-danger)'],
+        'draft'          => ['var(--ps-bg)',         'var(--ps-muted-deep)'],
+        'cancelled'      => ['var(--ps-bg)',         'var(--ps-muted-deep)'],
     ];
 @endphp
 <div class="m-screen">
-    <div style="background:linear-gradient(135deg,#10141F,#232B42);border-radius:18px;padding:20px;display:flex;gap:24px;">
-        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">COLLECTED &middot; {{ now()->format('M') }}</div><div style="font-size:21px;font-weight:800;color:#7ED8AC;">BHD {{ number_format($collectedThisMonth, 0) }}</div></div>
-        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">OUTSTANDING</div><div style="font-size:21px;font-weight:800;color:#E7B266;">BHD {{ number_format($outstanding, 0) }}</div></div>
+    <div class="ps-stat-strip">
+        <div class="ps-stat"><div class="ps-stat-label">Collected &middot; {{ now()->format('M') }}</div><div class="ps-stat-value">BHD {{ number_format($collectedThisMonth, 0) }}</div></div>
+        <div class="ps-stat"><div class="ps-stat-label">Outstanding</div><div class="ps-stat-value is-gold">BHD {{ number_format($outstanding, 0) }}</div></div>
     </div>
     <div class="m-chip-row no-sb">
         <a href="{{ route('invoices.index') }}" class="m-chip {{ !request('status') ? 'active' : '' }}">All</a>
@@ -102,9 +94,9 @@
     </div>
     <div class="m-row-list">
         @forelse($invoices as $inv)
-            @php [$bg, $fg] = $invBadgeColors[$inv->status] ?? ['#F1F3F8', '#6B7688']; @endphp
+            @php [$bg, $fg] = $invBadgeColors[$inv->status] ?? ['var(--ps-bg)', 'var(--ps-muted-deep)']; @endphp
             <a href="{{ route('invoices.show', $inv) }}" class="m-row-card">
-                <div class="m-row-icon" style="background:var(--m-line);color:#8E9AAE;"><i class="fa-solid fa-file-invoice"></i></div>
+                <div class="m-row-icon" style="background:var(--ps-gold-tint);color:var(--ps-gold-text);"><i class="fa-solid fa-file-invoice"></i></div>
                 <div style="flex:1;min-width:0;">
                     <div class="m-row-title">{{ $inv->invoice_number }}</div>
                     <div class="m-row-sub">{{ $inv->tenant_name }}</div>
@@ -126,24 +118,39 @@
 
 <div class="stats-grid m-hide-desktop-index">
     <div class="stat-card">
-        <div class="stat-icon gray"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-        <div><div class="stat-val">{{ $stats['total'] }}</div><div class="stat-lbl">Total</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon gray"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+            <span class="stat-lbl">Total</span>
+        </div>
+        <div class="stat-val">{{ $stats['total'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon blue"><i class="fa-solid fa-paper-plane"></i></div>
-        <div><div class="stat-val">{{ $stats['issued'] }}</div><div class="stat-lbl">Issued</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon blue"><i class="fa-solid fa-paper-plane"></i></span>
+            <span class="stat-lbl">Issued</span>
+        </div>
+        <div class="stat-val">{{ $stats['issued'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon amber"><i class="fa-solid fa-circle-half-stroke"></i></div>
-        <div><div class="stat-val">{{ $stats['partially_paid'] }}</div><div class="stat-lbl">Partial</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon amber"><i class="fa-solid fa-circle-half-stroke"></i></span>
+            <span class="stat-lbl">Partial</span>
+        </div>
+        <div class="stat-val">{{ $stats['partially_paid'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
-        <div><div class="stat-val">{{ $stats['paid'] }}</div><div class="stat-lbl">Paid</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon green"><i class="fa-solid fa-circle-check"></i></span>
+            <span class="stat-lbl">Paid</span>
+        </div>
+        <div class="stat-val">{{ $stats['paid'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <div><div class="stat-val">{{ $stats['overdue'] }}</div><div class="stat-lbl">Overdue</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></span>
+            <span class="stat-lbl">Overdue</span>
+        </div>
+        <div class="stat-val">{{ $stats['overdue'] }}</div>
     </div>
 </div>
 
@@ -203,17 +210,17 @@
                     <th>Tenant</th>
                     <th>Property / Unit</th>
                     <th>Type</th>
-                    <th>Amount (BHD)</th>
-                    <th>Balance (BHD)</th>
+                    <th class="num">Amount (BHD)</th>
+                    <th class="num">Balance (BHD)</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th class="col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($invoices as $inv)
                 <tr data-href="{{ route('invoices.show', $inv) }}" style="cursor:pointer"
                     class="{{ $inv->status === 'overdue' ? 'overdue-row' : '' }}">
-                    <td style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--accent)">
+                    <td class="cell-id">
                         {{ $inv->invoice_number }}
                     </td>
                     <td style="white-space:nowrap;font-size:12px">{{ $inv->invoice_date->format('d M Y') }}</td>
@@ -226,9 +233,11 @@
                             @if($inv->unit)<span style="color:var(--text-muted)"> / {{ $inv->unit }}</span>@endif
                         @endif
                     </td>
-                    <td><span class="type-badge {{ $inv->type }}">{{ $inv->type_label }}</span></td>
-                    <td style="font-family:'Outfit',sans-serif;font-weight:700">{{ number_format($inv->amount, 3) }}</td>
-                    <td style="font-family:'Outfit',sans-serif;font-weight:700;{{ $inv->balance_due > 0 && $inv->status !== 'cancelled' ? 'color:var(--tone-danger-fg)' : 'color:var(--text-muted)' }}">
+                    <td><span class="status-badge {{ $inv->type }}">{{ $inv->type_label }}</span></td>
+                    <td class="num">{{ number_format($inv->amount, 3) }}</td>
+                    {{-- An outstanding balance is the column people scan for, so it
+                         carries a tone; a settled or cancelled one recedes. --}}
+                    <td class="num {{ $inv->balance_due > 0 && $inv->status !== 'cancelled' ? 'val-negative' : 'cell-muted' }}">
                         {{ number_format($inv->balance_due, 3) }}
                     </td>
                     <td>
@@ -265,9 +274,12 @@
             </tbody>
         </table>
     </div>
-    <div style="padding:14px 18px;border-top:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-muted)">
-        <div>Showing {{ $invoices->firstItem() }}–{{ $invoices->lastItem() }} of {{ $invoices->total() }}</div>
-        <div>{{ $invoices->links() }}</div>
+    <div class="table-footer">
+        <div class="result-count">
+            Showing <strong>{{ $invoices->firstItem() ?? 0 }}–{{ $invoices->lastItem() ?? 0 }}</strong>
+            of <strong>{{ number_format($invoices->total()) }}</strong> invoices
+        </div>
+        {{ $invoices->links() }}
     </div>
     @endif
 </div>

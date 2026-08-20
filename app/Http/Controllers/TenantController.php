@@ -16,7 +16,11 @@ class TenantController extends Controller
 
     public function index(Request $request)
     {
-        $query = Tenant::query()->with(['activeLease', 'invoices']);
+        // activeLease.propertyUnit for the unit column, invoices.payments for
+        // the balance — both loaded up front, because Invoice::balance_due
+        // walks the payments and would otherwise be a query per invoice per
+        // tenant on a 44-row page.
+        $query = Tenant::query()->with(['activeLease.propertyUnit', 'invoices.payments']);
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {

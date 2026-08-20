@@ -3,33 +3,40 @@
 @section('title', 'Lease Contracts')
 @section('topbar-title', 'Lease Contracts')
 
+@section('page-title', 'Lease Contracts')
+@section('page-subtitle', 'Manage all lease agreements and contract records')
+@section('page-actions')
+    <a href="{{ route('export.contracts', request()->only(['search','property_code'])) }}" class="btn btn-outline">
+        <i class="fa-solid fa-file-export"></i> Export
+    </a>
+    <button type="button" class="btn btn-outline" onclick="openImport_contracts()">
+        <i class="fa-solid fa-file-import"></i> Import
+    </button>
+    <button type="button" class="btn btn-primary" onclick="openContractModal()">
+        <i class="fa-solid fa-plus"></i> New Contract
+    </button>
+@endsection
+
 @push('styles')
 <style>
     /* ── STATS ─────────────────────────────────────────────── */
-    .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:16px; margin-bottom:24px; }
 
     /* ── FILTER BAR ─────────────────────────────────────────── */
-    .filter-bar { display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;padding:16px 20px;background:var(--page-bg);border-bottom:1px solid var(--card-border); }
 
     /* ── TABLE ──────────────────────────────────────────────── */
-    .agr-no { font-family:'Outfit',sans-serif;font-weight:700;font-size:13px;color:var(--text-primary); }
+    .agr-no { font-family:'Outfit',sans-serif;font-weight:700;font-size: var(--fs-base);color:var(--text-primary); }
     .tenant-cell { display:flex;align-items:center;gap:9px; }
-    .tenant-av { width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;flex-shrink:0; }
+    .tenant-av { width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-size: var(--fs-sm);font-weight:700;flex-shrink:0; }
     .tenant-av.individual { background:var(--tone-success-bg);color:var(--tone-success-fg); }
     .tenant-av.company    { background:var(--tone-info-bg);color:var(--tone-info-fg); }
-    .cell-main { font-size:13.5px;font-weight:600;color:var(--text-primary); }
-    .cell-sub  { font-size:11px;color:var(--text-muted);margin-top:2px; }
+    .cell-main { font-size: var(--fs-base);font-weight:600;color:var(--text-primary); }
+    .cell-sub  { font-size: var(--fs-xs);color:var(--text-muted);margin-top:2px; }
     .period-bar { height:4px;border-radius:4px;background:var(--card-border);margin-top:5px;position:relative;overflow:hidden; }
     .period-fill { height:100%;border-radius:4px;background:var(--accent); }
 
     /* ── STATUS BADGES ──────────────────────────────────────── */
-    .status-active   { background:var(--tone-success-bg);color:var(--tone-success-fg);border:1px solid var(--tone-success-border); }
-    .status-expiring { background:var(--tone-warning-bg);color:var(--tone-warning-fg);border:1px solid var(--tone-warning-border); }
-    .status-expired  { background:var(--tone-neutral-bg);color:var(--text-muted);border:1px solid var(--card-border); }
-    .status-upcoming { background:var(--tone-info-bg);color:var(--tone-info-fg);border:1px solid var(--tone-info-border); }
 
     /* ── FOOTER / PAGINATION ────────────────────────────────── */
-    .table-footer { padding:14px 20px;border-top:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px; }
 
     /* ── MODAL ──────────────────────────────────────────────── */
 
@@ -37,7 +44,7 @@
     .modal-tabs { display:flex;gap:0;overflow-x:auto; }
     .modal-tabs::-webkit-scrollbar { display:none; }
     .mtab-btn {
-        padding:10px 16px;font-size:12px;font-weight:700;color:var(--text-muted);
+        padding:10px 16px;font-size: var(--fs-sm);font-weight:700;color:var(--text-muted);
         border:none;background:none;cursor:pointer;
         border-bottom:2px solid transparent;margin-bottom:-1px;
         white-space:nowrap;display:flex;align-items:center;gap:6px;
@@ -62,57 +69,57 @@
     .mfield-grid .span-full { grid-column:1/-1; }
     .mfield-group { display:flex;flex-direction:column; }
     .mfield-label {
-        font-size:11px;font-weight:700;color:var(--text-secondary);
+        font-size: var(--fs-xs);font-weight:700;color:var(--text-secondary);
         letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px;
         display:flex;align-items:center;gap:3px;
     }
-    .mfield-label .req { color:var(--danger);font-size:13px;line-height:1; }
+    .mfield-label .req { color:var(--danger);font-size: var(--fs-base);line-height:1; }
     .mfield-input, .mfield-select {
         width:100%;padding:9px 12px;
         border:1.5px solid var(--input-border);border-radius:var(--radius-sm);
-        background:#fff;color:var(--text-primary);
-        font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;
+        background:var(--input-bg);color:var(--text-primary);
+        font-family:'Plus Jakarta Sans',sans-serif;font-size: var(--fs-base);
         outline:none;appearance:none;-webkit-appearance:none;
         transition:border-color .2s,box-shadow .2s;
     }
-    .mfield-input:focus,.mfield-select:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);background:#FFFDF8; }
-    .mfield-input.is-invalid,.mfield-select.is-invalid { border-color:var(--danger);background:#FFF8F8; }
+    .mfield-input:focus,.mfield-select:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);background:var(--tone-warning-bg); }
+    .mfield-input.is-invalid,.mfield-select.is-invalid { border-color:var(--danger);background:var(--tone-danger-bg); }
     .mfield-select {
         background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2394A3B8' d='M5 7L0.669873 2.5L9.33013 2.5L5 7Z'/%3E%3C/svg%3E");
-        background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;
+        background-repeat:no-repeat;background-position:right 12px center;padding-right: var(--sp-8);
     }
-    .mfield-error { display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;color:var(--danger);font-weight:500; }
+    .mfield-error { display:flex;align-items:center;gap:4px;margin-top: var(--sp-1);font-size: var(--fs-xs);color:var(--danger);font-weight:500; }
 
     /* ── TENANT SEARCH DROPDOWN ─────────────────────────────── */
     .tenant-combo { position:relative; }
     .tenant-combo-dropdown {
         position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:230px;overflow-y:auto;z-index:60;
-        background:#fff;border:1.5px solid var(--input-border);border-radius:var(--radius-sm);
+        background:var(--card-bg);border:1.5px solid var(--input-border);border-radius:var(--radius-sm);
         box-shadow:0 12px 28px rgba(0,0,0,.14);display:none;
     }
     .tenant-combo-dropdown.open { display:block; }
-    .tenant-combo-item { padding:9px 14px;font-size:13px;color:var(--text-primary);cursor:pointer; }
+    .tenant-combo-item { padding:9px 14px;font-size: var(--fs-base);color:var(--text-primary);cursor:pointer; }
     .tenant-combo-item:hover, .tenant-combo-item.active { background:var(--accent-dim); }
     .tenant-combo-item.hidden { display:none; }
-    .tenant-combo-empty { padding:14px;text-align:center;font-size:12px;color:var(--text-muted);display:none; }
+    .tenant-combo-empty { padding:14px;text-align:center;font-size: var(--fs-sm);color:var(--text-muted);display:none; }
     .tenant-combo-empty.show { display:block; }
 
     /* ── LOCATION SEARCH DROPDOWNS (property / block / floor / unit) ── */
     .search-combo { position:relative; }
     .search-combo-dropdown {
         position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:230px;overflow-y:auto;z-index:60;
-        background:#fff;border:1.5px solid var(--input-border);border-radius:var(--radius-sm);
+        background:var(--card-bg);border:1.5px solid var(--input-border);border-radius:var(--radius-sm);
         box-shadow:0 12px 28px rgba(0,0,0,.14);display:none;
     }
     .search-combo-dropdown.open { display:block; }
-    .search-combo-item { padding:9px 14px;font-size:13px;color:var(--text-primary);cursor:pointer; }
+    .search-combo-item { padding:9px 14px;font-size: var(--fs-base);color:var(--text-primary);cursor:pointer; }
     .search-combo-item:hover { background:var(--accent-dim); }
-    .search-combo-empty { padding:14px;text-align:center;font-size:12px;color:var(--text-muted); }
+    .search-combo-empty { padding:14px;text-align:center;font-size: var(--fs-sm);color:var(--text-muted); }
 
     /* ── SECTION DIVIDER ────────────────────────────────────── */
     .msection-label {
-        font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;
-        color:var(--text-muted);margin-bottom:12px;padding-bottom:8px;
+        font-size: var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.08em;
+        color:var(--text-muted);margin-bottom: var(--sp-3);padding-bottom: var(--sp-2);
         border-bottom:1px solid var(--card-border);
     }
 
@@ -125,43 +132,21 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Lease Contracts</span>
-        </div>
-        <h1 class="page-header-title">Lease Contracts</h1>
-        <p class="page-header-sub">Manage all lease agreements and contract records</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('export.contracts', request()->only(['search','property_code'])) }}" class="btn btn-outline">
-            <i class="fa-solid fa-file-export"></i> Export
-        </a>
-        <button type="button" class="btn btn-outline" onclick="openImport_contracts()">
-            <i class="fa-solid fa-file-import"></i> Import
-        </button>
-        <button type="button" class="btn btn-primary" onclick="openContractModal()">
-            <i class="fa-solid fa-plus"></i> New Contract
-        </button>
-    </div>
-</div>
 
 {{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
 @php
     $leaseStatusLabels = ['active' => 'Active', 'expiring' => 'Expiring', 'upcoming' => 'Upcoming', 'expired' => 'Expired'];
     $leaseBadgeColors = [
-        'active'   => ['#E6F6EE', '#17A96C'],
-        'expiring' => ['#FBF3E4', '#C08A2D'],
-        'upcoming' => ['#E9F0FD', '#4A7DF0'],
-        'expired'  => ['#F1F3F8', '#6B7688'],
+        'active'   => ['var(--ps-success-bg)', 'var(--ps-success)'],
+        'expiring' => ['var(--ps-warning-bg)', 'var(--ps-warning)'],
+        'upcoming' => ['var(--ps-info-bg)',    'var(--ps-info)'],
+        'expired'  => ['var(--ps-bg)',         'var(--ps-muted-deep)'],
     ];
 @endphp
 <div class="m-screen">
-    <div style="background:linear-gradient(135deg,#10141F,#232B42);border-radius:18px;padding:20px;display:flex;gap:24px;">
-        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">ACTIVE CONTRACTS</div><div style="font-size:21px;font-weight:800;color:#7ED8AC;">{{ $stats['active'] }}</div></div>
-        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">EXPIRING (30D)</div><div style="font-size:21px;font-weight:800;color:#E7B266;">{{ $stats['expiring'] }}</div></div>
+    <div class="ps-stat-strip">
+        <div class="ps-stat"><div class="ps-stat-label">Active contracts</div><div class="ps-stat-value">{{ $stats['active'] }}</div></div>
+        <div class="ps-stat"><div class="ps-stat-label">Expiring (30d)</div><div class="ps-stat-value is-gold">{{ $stats['expiring'] }}</div></div>
     </div>
     <div class="m-action-row">
         <button type="button" class="m-action-btn primary" onclick="openContractModal()">
@@ -177,10 +162,10 @@
     <div class="m-row-list">
         @forelse($contracts as $mContract)
             @php
-                [$mBg, $mFg] = $leaseBadgeColors[$mContract->status] ?? ['#F1F3F8', '#6B7688'];
+                [$mBg, $mFg] = $leaseBadgeColors[$mContract->status] ?? ['var(--ps-bg)', 'var(--ps-muted-deep)'];
             @endphp
             <a href="{{ route('lease-contracts.show', $mContract) }}" class="m-row-card">
-                <div class="m-row-icon" style="background:var(--m-line);color:#8E9AAE;"><i class="fa-solid fa-file-contract"></i></div>
+                <div class="m-row-icon" style="background:var(--ps-gold-tint);color:var(--ps-gold-text);"><i class="fa-solid fa-file-contract"></i></div>
                 <div style="flex:1;min-width:0;">
                     <div class="m-row-title">{{ $mContract->tenant_name }}</div>
                     <div class="m-row-sub">{{ $mContract->property_code ?? '—' }}{{ $mContract->unit ? ' / '.$mContract->unit : '' }}</div>
@@ -203,25 +188,37 @@
 {{-- STATS --}}
 <div class="stats-grid m-hide-desktop-index">
     <div class="stat-card">
-        <div class="stat-icon gold"><i class="fa-solid fa-file-contract"></i></div>
-        <div><div class="stat-val">{{ $stats['total'] }}</div><div class="stat-lbl">Total Contracts</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon gold"><i class="fa-solid fa-file-contract"></i></span>
+            <span class="stat-lbl">Total Contracts</span>
+        </div>
+        <div class="stat-val">{{ $stats['total'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
-        <div><div class="stat-val">{{ $stats['active'] }}</div><div class="stat-lbl">Active</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon green"><i class="fa-solid fa-circle-check"></i></span>
+            <span class="stat-lbl">Active</span>
+        </div>
+        <div class="stat-val">{{ $stats['active'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <div><div class="stat-val">{{ $stats['expiring'] }}</div><div class="stat-lbl">Expiring (30 days)</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon amber"><i class="fa-solid fa-triangle-exclamation"></i></span>
+            <span class="stat-lbl">Expiring (30 days)</span>
+        </div>
+        <div class="stat-val">{{ $stats['expiring'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon gray"><i class="fa-solid fa-clock-rotate-left"></i></div>
-        <div><div class="stat-val">{{ $stats['expired'] }}</div><div class="stat-lbl">Expired</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon gray"><i class="fa-solid fa-clock-rotate-left"></i></span>
+            <span class="stat-lbl">Expired</span>
+        </div>
+        <div class="stat-val">{{ $stats['expired'] }}</div>
     </div>
 </div>
 
 {{-- TABLE CARD --}}
-<div class="card m-hide-desktop-index" style="overflow:hidden;">
+<div class="table-card m-hide-desktop-index">
 
     <form method="GET" action="{{ route('lease-contracts.index') }}" id="filterForm">
         <div class="filter-bar">
@@ -271,9 +268,9 @@
                     <th>Tenant</th>
                     <th>Property / Unit</th>
                     <th>Lease Period</th>
-                    <th>Rent / Month</th>
+                    <th class="num">Rent / Month</th>
                     <th>Status</th>
-                    <th style="text-align:right;">Actions</th>
+                    <th class="col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -332,9 +329,9 @@
                             <div class="period-fill" style="width:{{ $pct }}%;background:{{ $status === 'expired' ? 'var(--text-muted)' : ($status === 'expiring' ? 'var(--warning)' : 'var(--accent)') }};"></div>
                         </div>
                     </td>
-                    <td>
+                    <td class="num">
                         @if($contract->rent_per_month)
-                            <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;">
+                            <div>
                                 {{ $contract->currency ?? 'BHD' }} {{ number_format($contract->rent_per_month, 3) }}
                             </div>
                             @if($contract->invoicing_frequency)
@@ -345,7 +342,7 @@
                         @endif
                     </td>
                     <td>
-                        <span class="badge status-{{ $status }}">
+                        <span class="status-badge {{ $status }}">
                             <i class="fa-solid {{ $statusIcon }}"></i> {{ $statusLabel }}
                         </span>
                     </td>
@@ -387,21 +384,7 @@
             Showing <strong>{{ $contracts->firstItem() ?? 0 }}–{{ $contracts->lastItem() ?? 0 }}</strong>
             of <strong>{{ $contracts->total() }}</strong> contracts
         </div>
-        <div class="pagination">
-            @if($contracts->onFirstPage())
-                <span class="page-btn" style="opacity:.4;cursor:default;"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></span>
-            @else
-                <a href="{{ $contracts->previousPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></a>
-            @endif
-            @foreach($contracts->getUrlRange(max(1,$contracts->currentPage()-2),min($contracts->lastPage(),$contracts->currentPage()+2)) as $page => $url)
-                <a href="{{ $url }}" class="page-btn {{ $page == $contracts->currentPage() ? 'active' : '' }}">{{ $page }}</a>
-            @endforeach
-            @if($contracts->hasMorePages())
-                <a href="{{ $contracts->nextPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></a>
-            @else
-                <span class="page-btn" style="opacity:.4;cursor:default;"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></span>
-            @endif
-        </div>
+        {{ $contracts->links() }}
     </div>
 
 </div>
@@ -450,7 +433,7 @@
                     <span class="err-dot" id="dot-mc-rent"></span>
                 </button>
                 <button type="button" class="mtab-btn" data-tab="mc-service" onclick="switchMTab('mc-service')">
-                    <i class="fa-solid fa-screwdriver-wrench" style="color:#6D28D9;font-size:11px;"></i> Service
+                    <i class="fa-solid fa-screwdriver-wrench" style="color:var(--tone-info-fg);font-size:11px;"></i> Service
                     <span class="err-dot" id="dot-mc-service"></span>
                 </button>
                 <button type="button" class="mtab-btn" data-tab="mc-financial" onclick="switchMTab('mc-financial')">

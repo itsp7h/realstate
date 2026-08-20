@@ -3,33 +3,45 @@
 @section('title', 'Property Units')
 @section('topbar-title', 'Property Units')
 
+@section('page-title', 'Property Units')
+@section('page-subtitle', 'Manage all property unit records')
+@section('page-actions')
+    <a href="{{ route('export.units', request()->only(['search','property_code','unit_type','unit_condition'])) }}" class="btn btn-success">
+        <i class="fa-solid fa-file-excel"></i> Export
+    </a>
+    <button type="button" class="btn btn-outline" onclick="openImport_units()">
+        <i class="fa-solid fa-file-import"></i> Import
+    </button>
+    <button type="button" class="btn btn-primary" onclick="openUnitModal()">
+        <i class="fa-solid fa-plus"></i> Add Unit
+    </button>
+@endsection
+
 @push('styles')
 <style>
 /* ── STATS ─────────────────────────────────────────────── */
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
 
 /* ── FILTER BAR ─────────────────────────────────────────── */
-.filter-bar { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; padding: 16px 20px; background: var(--page-bg); border-bottom: 1px solid var(--card-border); }
 
 /* ── TABLE ──────────────────────────────────────────────── */
-.unit-code { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text-primary); font-size: 13.5px; }
-.unit-prop { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.rent-val  { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text-primary); }
-.rent-per  { font-size: 11px; color: var(--text-muted); }
+.unit-code { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text-primary); font-size: var(--fs-base); }
+.unit-prop { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 2px; }
+.rent-val  { font-family: var(--font-display); font-weight: 700; color: var(--text-primary); }
+.rent-per  { font-size: var(--fs-xs); color: var(--text-muted); }
 
 /* ── MODAL OVERLAY ──────────────────────────────────────── */
 
 /* ── MODAL HEADER ───────────────────────────────────────── */
 
 /* ── STEP TRACK ─────────────────────────────────────────── */
-.step-track { display: flex; align-items: flex-start; margin-bottom: 20px; }
+.step-track { display: flex; align-items: flex-start; margin-bottom: var(--sp-5); }
 .step-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; cursor: default; }
 .step-item:not(:last-child)::after { content: ''; position: absolute; top: 13px; left: 50%; right: -50%; height: 1.5px; background: var(--card-border); transition: background 0.4s ease; z-index: 0; }
 .step-item.done:not(:last-child)::after, .step-item.active:not(:last-child)::after { background: var(--accent); }
-.step-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--card-border); background: var(--card-bg); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 800; color: var(--text-muted); flex-shrink: 0; position: relative; z-index: 1; transition: all 0.3s ease; }
-.step-item.active .step-dot { border-color: var(--accent); background: var(--accent); color: #0B1120; box-shadow: 0 0 0 3px var(--accent-dim); }
+.step-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--card-border); background: var(--card-bg); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: var(--fs-xs); font-weight: 800; color: var(--text-muted); flex-shrink: 0; position: relative; z-index: 1; transition: all 0.3s ease; }
+.step-item.active .step-dot { border-color: var(--accent); background: var(--accent); color: var(--text-primary); box-shadow: 0 0 0 3px var(--accent-dim); }
 .step-item.done   .step-dot { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
-.step-name { font-size: 10.5px; font-weight: 600; color: var(--text-muted); white-space: nowrap; text-align: center; position: relative; z-index: 1; transition: color 0.2s; }
+.step-name { font-size: var(--fs-2xs); font-weight: 600; color: var(--text-muted); white-space: nowrap; text-align: center; position: relative; z-index: 1; transition: color 0.2s; }
 .step-item.active .step-name { color: var(--accent); }
 .step-item.done   .step-name { color: var(--text-secondary); }
 
@@ -41,35 +53,35 @@
 @keyframes mStepIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
 
 .step-panel-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--card-border); }
-.step-panel-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 14px; flex-shrink: 0; }
-.step-panel-title { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary); }
-.step-panel-sub   { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+.step-panel-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); background: var(--accent-dim); display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: var(--fs-base); flex-shrink: 0; }
+.step-panel-title { font-family: 'Outfit', sans-serif; font-size: var(--fs-base); font-weight: 700; color: var(--text-primary); }
+.step-panel-sub   { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 1px; }
 
 /* ── MODAL FIELDS ───────────────────────────────────────── */
 .mfield-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 18px; }
 .mfield-grid .mspan-2    { grid-column: span 2; }
 .mfield-grid .mspan-full { grid-column: 1 / -1; }
 .mfield-group { display: flex; flex-direction: column; }
-.mfield-label { font-size: 10.5px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 3px; }
-.mfield-label .req { color: var(--danger); font-size: 13px; line-height: 1; }
+.mfield-label { font-size: var(--fs-2xs); font-weight: 700; color: var(--text-secondary); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 3px; }
+.mfield-label .req { color: var(--danger); font-size: var(--fs-base); line-height: 1; }
 .mfield-wrap { position: relative; }
-.mfield-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 11px; pointer-events: none; transition: color 0.2s; }
-.mhas-icon input, .mhas-icon select { padding-left: 32px; }
+.mfield-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: var(--fs-xs); pointer-events: none; transition: color 0.2s; }
+.mhas-icon input, .mhas-icon select { padding-left: var(--sp-8); }
 .mfield-wrap:focus-within .mfield-icon { color: var(--accent); }
 .minput, .mselect {
     width: 100%; padding: 9px 12px;
     border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-    background: #fff; color: var(--text-primary);
-    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px;
+    background: var(--input-bg); color: var(--text-primary);
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: var(--fs-base);
     outline: none; appearance: none; -webkit-appearance: none;
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 .minput::placeholder { color: var(--text-muted); opacity: 0.6; }
-.minput:hover, .mselect:hover { border-color: #B0BCCF; }
-.minput:focus, .mselect:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: #FFFDF8; }
-.minput.is-invalid, .mselect.is-invalid { border-color: var(--danger); background: #FFF8F8; }
+.minput:hover, .mselect:hover { border-color: var(--input-border); }
+.minput:focus, .mselect:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: var(--tone-warning-bg); }
+.minput.is-invalid, .mselect.is-invalid { border-color: var(--danger); background: var(--tone-danger-bg); }
 .mselect { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2394A3B8' d='M5 7L0.669873 2.5L9.33013 2.5L5 7Z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; padding-right: 30px; cursor: pointer; }
-.mfield-error { display: flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 11px; color: var(--danger); font-weight: 500; }
+.mfield-error { display: flex; align-items: center; gap: 4px; margin-top: var(--sp-1); font-size: var(--fs-xs); color: var(--danger); font-weight: 500; }
 
 /* Building preview in modal */
 .m-bldg-preview {
@@ -78,20 +90,20 @@
     border-radius: var(--radius-sm); padding: 10px 14px;
 }
 .m-bldg-preview.visible { display: flex; }
-.m-bldg-preview-icon { width: 30px; height: 30px; border-radius: 6px; background: var(--accent); color: #0B1120; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
-.m-bldg-preview-name { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-primary); }
-.m-bldg-preview-sub  { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
-.m-lock-badge { margin-left: auto; font-size: 10px; color: var(--accent); font-weight: 600; display: flex; align-items: center; gap: 3px; padding: 2px 8px; background: rgba(232,184,109,0.12); border-radius: 20px; }
+.m-bldg-preview-icon { width: 30px; height: 30px; border-radius: 6px; background: var(--accent); color: var(--text-primary); display: flex; align-items: center; justify-content: center; font-size: var(--fs-sm); flex-shrink: 0; }
+.m-bldg-preview-name { font-family: 'Outfit', sans-serif; font-size: var(--fs-base); font-weight: 700; color: var(--text-primary); }
+.m-bldg-preview-sub  { font-size: var(--fs-xs); color: var(--text-secondary); margin-top: 1px; }
+.m-lock-badge { margin-left: auto; font-size: var(--fs-2xs); color: var(--accent); font-weight: 600; display: flex; align-items: center; gap: 3px; padding: 2px 8px; background: rgba(232,184,109,0.12); border-radius: var(--radius-pill); }
 
 /* Sub-dividers inside step panels */
-.m-sub-divider { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin: 14px 0 10px; }
+.m-sub-divider { display: flex; align-items: center; gap: 6px; font-size: var(--fs-2xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin: 14px 0 10px; }
 .m-sub-divider::after { content: ''; flex: 1; height: 1px; background: var(--card-border); }
 
 /* ── MODAL FOOTER ───────────────────────────────────────── */
-.step-counter { font-size: 11px; font-weight: 600; color: var(--text-muted); padding: 4px 10px; background: var(--page-bg); border-radius: 20px; border: 1px solid var(--card-border); }
+.step-counter { font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted); padding: 4px 10px; background: var(--page-bg); border-radius: var(--radius-pill); border: 1px solid var(--card-border); }
 .step-counter strong { color: var(--accent); }
 
-@media (max-width: 620px) {
+@media (max-width: 600px) {
     .mfield-grid { grid-template-columns: 1fr; }
     .mfield-grid .mspan-2 { grid-column: span 1; }
     .step-name { display: none; }
@@ -102,28 +114,6 @@
 @section('content')
 
 {{-- PAGE HEADER --}}
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Property Units</span>
-        </div>
-        <h1 class="page-header-title">Property Units</h1>
-        <p class="page-header-sub">Manage all property unit records</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('export.units', request()->only(['search','property_code','unit_type','unit_condition'])) }}" class="btn btn-success">
-            <i class="fa-solid fa-file-excel"></i> Export
-        </a>
-        <button type="button" class="btn btn-outline" onclick="openImport_units()">
-            <i class="fa-solid fa-file-import"></i> Import
-        </button>
-        <button type="button" class="btn btn-primary" onclick="openUnitModal()">
-            <i class="fa-solid fa-plus"></i> Add Unit
-        </button>
-    </div>
-</div>
 
 {{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
 <div class="m-screen">
@@ -151,7 +141,7 @@
         @forelse($units as $unit)
             @php $occupied = $unit->activeContract !== null; @endphp
             <a href="{{ route('property-units.show', $unit) }}" class="m-row-card">
-                <div class="m-row-icon" style="background:{{ $occupied ? 'var(--m-green-tint)' : 'var(--m-line)' }};color:{{ $occupied ? 'var(--m-green)' : 'var(--m-muted)' }};">
+                <div class="m-row-icon" style="background:{{ $occupied ? 'var(--ps-success-bg)' : 'var(--ps-bg)' }};color:{{ $occupied ? 'var(--ps-success)' : 'var(--ps-muted-deep)' }};">
                     <i class="fa-solid fa-door-open"></i>
                 </div>
                 <div style="flex:1;min-width:0;">
@@ -159,8 +149,8 @@
                     <div class="m-row-sub">{{ $unit->property_code }}{{ optional($unit->floor)->floor_name ? ' · '.$unit->floor->floor_name : '' }}{{ optional($unit->floor)->block_name ? ' · '.$unit->floor->block_name : '' }}</div>
                 </div>
                 <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-                    <span class="m-row-badge" style="background:{{ $occupied ? 'var(--m-green-tint)' : 'var(--m-red-tint)' }};color:{{ $occupied ? 'var(--m-green)' : 'var(--m-red)' }};">{{ $occupied ? 'Occupied' : 'Vacant' }}</span>
-                    <span style="font-size:10px;color:var(--m-faint);">{{ $unit->unit_condition ?: '—' }}</span>
+                    <span class="m-row-badge" style="background:{{ $occupied ? 'var(--ps-success-bg)' : 'var(--ps-warning-bg)' }};color:{{ $occupied ? 'var(--ps-success)' : 'var(--ps-warning)' }};">{{ $occupied ? 'Occupied' : 'Vacant' }}</span>
+                    <span style="font-size:.7rem;color:var(--ps-muted);">{{ $unit->unit_condition ?: '—' }}</span>
                 </div>
             </a>
         @empty
@@ -185,35 +175,44 @@
 {{-- STATS --}}
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-icon gold"><i class="fa-solid fa-door-open"></i></div>
-        <div><div class="stat-val">{{ $stats['total'] ?? 0 }}</div><div class="stat-lbl">Total Units</div></div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
-        <div><div class="stat-val">{{ $stats['furnished'] ?? 0 }}</div><div class="stat-lbl">Furnished</div></div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon blue"><i class="fa-solid fa-wrench"></i></div>
-        <div><div class="stat-val">{{ $stats['fitted'] ?? 0 }}</div><div class="stat-lbl">Fitted</div></div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon" style="background:var(--tone-success-bg);color:var(--tone-success-fg);"><i class="fa-solid fa-key"></i></div>
-        <div>
-            <div class="stat-val" style="color:var(--tone-success-fg);">{{ $stats['occupied'] ?? 0 }}</div>
-            <div class="stat-lbl">Occupied</div>
-            @if(($stats['total'] ?? 0) > 0)
-            <div style="font-size:11px;color:var(--text-muted);margin-top:1px;">{{ $stats['total'] - ($stats['occupied'] ?? 0) }} vacant</div>
-            @endif
+        <div class="stat-card-top">
+            <span class="stat-icon gold"><i class="fa-solid fa-door-open"></i></span>
+            <span class="stat-lbl">Total Units</span>
         </div>
+        <div class="stat-val">{{ $stats['total'] ?? 0 }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon purple"><i class="fa-solid fa-building"></i></div>
-        <div><div class="stat-val">{{ $stats['properties'] ?? 0 }}</div><div class="stat-lbl">Properties</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon green"><i class="fa-solid fa-circle-check"></i></span>
+            <span class="stat-lbl">Furnished</span>
+        </div>
+        <div class="stat-val">{{ $stats['furnished'] ?? 0 }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon blue"><i class="fa-solid fa-wrench"></i></span>
+            <span class="stat-lbl">Fitted</span>
+        </div>
+        <div class="stat-val">{{ $stats['fitted'] ?? 0 }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon"><i class="fa-solid fa-key"></i></span>
+            <span class="stat-lbl">Occupied</span>
+        </div>
+        <div class="stat-val">{{ $stats['occupied'] ?? 0 }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon purple"><i class="fa-solid fa-building"></i></span>
+            <span class="stat-lbl">Properties</span>
+        </div>
+        <div class="stat-val">{{ $stats['properties'] ?? 0 }}</div>
     </div>
 </div>
 
 {{-- FILTER + TABLE --}}
-<div class="card m-hide-desktop-index" style="overflow:hidden;">
+<div class="table-card m-hide-desktop-index">
 
     <form method="GET" action="{{ route('property-units.index') }}" id="filterForm">
         <div class="filter-bar">
@@ -270,17 +269,12 @@
                 <tr>
                     <th>Unit</th>
                     <th>Property</th>
-                    <th>Land Lord</th>
                     <th>Floor / Block</th>
                     <th>Type</th>
-                    <th>Condition</th>
-                    <th>Area</th>
-                    <th>Rent/Month</th>
-                    <th>Deposit</th>
-                    <th>Elec. A/c</th>
+                    <th class="num">Area</th>
+                    <th class="num">Rent/Month</th>
                     <th>Occupancy</th>
-                    <th>View</th>
-                    <th style="text-align:right;">Actions</th>
+                    <th class="col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -295,41 +289,21 @@
                         <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">{{ $unit->property_name }}</div>
                     </td>
                     <td>
-                        @if($unit->land_lord_name) <div style="font-size:13px;">{{ $unit->land_lord_name }}</div>
-                        @else <span style="color:var(--text-muted);">—</span> @endif
-                    </td>
-                    <td>
                         <div style="font-size:13px;">{{ optional($unit->floor)->floor_name ?? '—' }}</div>
                         <div style="font-size:11px;color:var(--text-muted);">{{ optional($unit->floor)->block_name ?? '' }}</div>
                     </td>
                     <td><span class="badge badge-blue">{{ $unit->unit_type ?: '—' }}</span></td>
-                    <td>
-                        <span class="badge {{ $unit->unit_condition === 'Furnished' ? 'badge-green' : 'badge-gray' }}">
-                            {{ $unit->unit_condition ?: '—' }}
-                        </span>
-                    </td>
-                    <td>
+                    <td class="num">
                         @if($unit->area_inside)
                             <div>{{ number_format($unit->area_inside, 1) }}</div>
-                            <div style="font-size:11px;color:var(--text-muted);">{{ $unit->area_unit }}</div>
-                        @else <span style="color:var(--text-muted);">—</span> @endif
+                            <div class="cell-sub">{{ $unit->area_unit }}</div>
+                        @else <span class="cell-muted">—</span> @endif
                     </td>
-                    <td>
+                    <td class="num">
                         @if($unit->rent_per_month)
                             <div class="rent-val">{{ number_format($unit->rent_per_month) }}</div>
                             <div class="rent-per">BHD / mo</div>
-                        @else <span style="color:var(--text-muted);">—</span> @endif
-                    </td>
-                    <td>
-                        @if($unit->security_deposit_amount)
-                            <div class="rent-val">{{ number_format($unit->security_deposit_amount) }}</div>
-                            <div class="rent-per">BHD</div>
-                        @else <span style="color:var(--text-muted);">—</span> @endif
-                    </td>
-                    <td>
-                        @if($unit->electricity_ac_no)
-                            <div style="font-size:13px;font-family:'Outfit',sans-serif;">{{ $unit->electricity_ac_no }}</div>
-                        @else <span style="color:var(--text-muted);">—</span> @endif
+                        @else <span class="cell-muted">—</span> @endif
                     </td>
                     <td>
                         @if($unit->activeContract)
@@ -343,12 +317,8 @@
                             </span>
                         @endif
                     </td>
-                    <td>
-                        @if($unit->view) <span class="badge badge-gray">{{ $unit->view }}</span>
-                        @else <span style="color:var(--text-muted);">—</span> @endif
-                    </td>
-                    <td onclick="event.stopPropagation()">
-                        <div class="action-btns" style="justify-content:flex-end;">
+                    <td class="col-actions" onclick="event.stopPropagation()">
+                        <div class="action-btns">
                             <a href="{{ route('property-units.show', $unit) }}" class="btn btn-outline btn-sm"><i class="fa-regular fa-eye"></i></a>
                             <a href="{{ route('property-units.edit', $unit) }}" class="btn btn-outline btn-sm"><i class="fa-regular fa-pen-to-square"></i></a>
                             <form method="POST" action="{{ route('property-units.destroy', $unit) }}" onsubmit="return confirm('Delete this unit?')">
@@ -359,7 +329,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="13">
+                <tr><td colspan="8">
                     <div class="empty-state">
                         <div class="empty-icon"><i class="fa-solid fa-door-open"></i></div>
                         <h4>No units found</h4>
@@ -378,21 +348,7 @@
             Showing <strong>{{ $units->firstItem() ?? 0 }}–{{ $units->lastItem() ?? 0 }}</strong>
             of <strong>{{ $units->total() }}</strong> units
         </div>
-        <div class="pagination">
-            @if($units->onFirstPage())
-                <span class="page-btn" style="opacity:0.4;cursor:default;"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></span>
-            @else
-                <a href="{{ $units->previousPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></a>
-            @endif
-            @foreach($units->getUrlRange(max(1,$units->currentPage()-2), min($units->lastPage(),$units->currentPage()+2)) as $page => $url)
-                <a href="{{ $url }}" class="page-btn {{ $page == $units->currentPage() ? 'active' : '' }}">{{ $page }}</a>
-            @endforeach
-            @if($units->hasMorePages())
-                <a href="{{ $units->nextPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></a>
-            @else
-                <span class="page-btn" style="opacity:0.4;cursor:default;"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></span>
-            @endif
-        </div>
+        {{ $units->links() }}
     </div>
 </div>
 

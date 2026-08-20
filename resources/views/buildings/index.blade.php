@@ -3,27 +3,29 @@
 @section('title', 'Buildings')
 @section('topbar-title', 'Buildings')
 
+@section('page-title', 'Buildings')
+@section('page-subtitle', 'Manage all building and property records')
+@section('page-actions')
+    <a href="{{ route('export.buildings', request()->only(['search','property_type','type_of_ownership'])) }}" class="btn btn-success">
+        <i class="fa-solid fa-file-excel"></i> Export
+    </a>
+    <button type="button" class="btn btn-outline" onclick="openImport_buildings()">
+        <i class="fa-solid fa-file-import"></i> Import
+    </button>
+    <button type="button" class="btn btn-primary" onclick="openBuildingModal()">
+        <i class="fa-solid fa-plus"></i> Add Building
+    </button>
+@endsection
+
 @push('styles')
 <style>
     /* ── STATS ─────────────────────────────────────────── */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
-    }
 
     /* ── FILTER BAR ─────────────────────────────────────── */
-    .filter-bar {
-        display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;
-        padding: 16px 20px;
-        background: var(--page-bg);
-        border-bottom: 1px solid var(--card-border);
-    }
 
     /* ── TABLE ──────────────────────────────────────────── */
-    .bldg-code { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text-primary); font-size: 13.5px; }
-    .bldg-sub  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .bldg-code { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text-primary); font-size: var(--fs-base); }
+    .bldg-sub  { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 2px; }
 
     /* ── VIEW TOGGLE ────────────────────────────────────── */
     .view-toggle {
@@ -37,12 +39,12 @@
         width: 34px; height: 34px;
         display: flex; align-items: center; justify-content: center;
         background: var(--card-bg); border: none; cursor: pointer;
-        color: var(--text-muted); font-size: 13px;
+        color: var(--text-muted); font-size: var(--fs-base);
         transition: background 0.15s, color 0.15s;
     }
     .view-toggle-btn:first-child { border-right: 1.5px solid var(--card-border); }
     .view-toggle-btn:hover { background: var(--page-bg); color: var(--text-primary); }
-    .view-toggle-btn.active { background: var(--accent); color: #0B1120; }
+    .view-toggle-btn.active { background: var(--accent); color: var(--text-primary); }
 
     /* ── VIEW PANELS ────────────────────────────────────── */
     .view-panel { animation: viewFadeIn 0.22s ease both; }
@@ -56,7 +58,7 @@
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
         gap: 20px;
-        padding: 20px;
+        padding: var(--sp-5);
     }
 
     /* ── CARD PHOTO AREA ─────────────────────────────────── */
@@ -80,7 +82,7 @@
         border: 1px solid rgba(255,255,255,0.18);
         border-radius: 50%; cursor: pointer;
         display: flex; align-items: center; justify-content: center;
-        color: #fff; font-size: 10px;
+        color: var(--ink-on-fill); font-size: var(--fs-2xs);
         opacity: 0; transition: opacity 0.2s, background 0.2s;
     }
     .photo-arrow:hover { background: rgba(11,17,32,0.82); }
@@ -98,13 +100,13 @@
         cursor: pointer; transition: background 0.2s, transform 0.2s;
         border: none; padding: 0;
     }
-    .photo-dot.active { background: #fff; transform: scale(1.3); }
+    .photo-dot.active { background: var(--ink-on-fill); transform: scale(1.3); }
     /* Photo count badge */
     .photo-count-badge {
         position: absolute; top: 10px; right: 10px; z-index: 4;
         background: rgba(11,17,32,0.62); backdrop-filter: blur(4px);
-        color: #fff; font-size: 10.5px; font-weight: 700;
-        padding: 3px 8px; border-radius: 20px;
+        color: var(--ink-on-fill); font-size: var(--fs-2xs); font-weight: 700;
+        padding: 3px 8px; border-radius: var(--radius-pill);
         display: flex; align-items: center; gap: 4px;
     }
     /* Placeholder */
@@ -124,7 +126,7 @@
             );
     }
     .photo-placeholder i { font-size: 28px; color: var(--text-muted); opacity: 0.35; }
-    .photo-placeholder span { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+    .photo-placeholder span { font-size: var(--fs-xs); color: var(--text-muted); font-weight: 500; }
 
     /* ── CARD BODY ───────────────────────────────────────── */
     /* Layout only — the card system owns this card's chrome, padding and
@@ -133,20 +135,27 @@
        on one line across a grid of cards with different title lengths. */
     .bldg-card-body { gap: 10px; }
     .bldg-card-stats { padding-top: 10px; border-top: 1px solid var(--card-border); margin-top: auto; }
-    .bldg-card-actions .btn { flex: 1; justify-content: center; font-size: 12px; }
+    .bldg-card-actions .btn { flex: 1; justify-content: center; }
     .bldg-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
     .bldg-card-badges { display: flex; flex-wrap: wrap; gap: 5px; }
     .bldg-card-meta { display: flex; flex-direction: column; gap: 4px; }
     .bldg-card-meta-row {
         display: flex; align-items: center; gap: 7px;
-        font-size: 12px; color: var(--text-muted);
+        font-size: var(--fs-sm); color: var(--text-muted);
     }
-    .bldg-card-meta-row i { width: 13px; text-align: center; opacity: 0.6; font-size: 11px; flex-shrink: 0; }
+    .bldg-card-meta-row i { width: 13px; text-align: center; opacity: 0.6; font-size: var(--fs-xs); flex-shrink: 0; }
+
+    /* Occupancy rides the photo, bottom-left, so it clears the photo counter
+       in the opposite corner. */
+    .bldg-occ-pill { top: auto; right: auto; bottom: 10px; left: 10px; }
+    /* Let / vacant split under the unit count. */
+    .bldg-occ-split { font-size: var(--fs-2xs); margin-top: 3px; line-height: 1.3; color: var(--text-muted); }
+    .bldg-occ-split .is-let { color: var(--tone-success-fg); font-weight: 600; }
 
     @media (max-width: 768px) {
         .buildings-grid { grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px; }
     }
-    @media (max-width: 480px) {
+    @media (max-width: 600px) {
         .buildings-grid { grid-template-columns: 1fr; }
     }
 
@@ -158,7 +167,7 @@
     .step-track {
         display: flex;
         align-items: flex-start;
-        margin-bottom: 20px;
+        margin-bottom: var(--sp-5);
     }
     .step-item {
         flex: 1;
@@ -188,7 +197,7 @@
         border: 2px solid var(--card-border);
         background: var(--card-bg);
         display: flex; align-items: center; justify-content: center;
-        font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 800;
+        font-family: 'Outfit', sans-serif; font-size: var(--fs-xs); font-weight: 800;
         color: var(--text-muted);
         flex-shrink: 0;
         position: relative; z-index: 1;   /* sits above the connector line */
@@ -196,13 +205,13 @@
     }
     .step-item.active .step-dot {
         border-color: var(--accent); background: var(--accent);
-        color: #0B1120; box-shadow: 0 0 0 3px var(--accent-dim);
+        color: var(--text-primary); box-shadow: 0 0 0 3px var(--accent-dim);
     }
     .step-item.done .step-dot {
         border-color: var(--accent); background: var(--accent-dim); color: var(--accent);
     }
     .step-name {
-        font-size: 11px; font-weight: 600; color: var(--text-muted);
+        font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted);
         white-space: nowrap; text-align: center;
         transition: color 0.2s;
         position: relative; z-index: 1;
@@ -225,13 +234,13 @@
         border-bottom: 1px solid var(--card-border);
     }
     .step-panel-icon {
-        width: 34px; height: 34px; border-radius: 8px;
+        width: 34px; height: 34px; border-radius: var(--radius-sm);
         background: var(--accent-dim);
         display: flex; align-items: center; justify-content: center;
-        color: var(--accent); font-size: 14px; flex-shrink: 0;
+        color: var(--accent); font-size: var(--fs-base); flex-shrink: 0;
     }
-    .step-panel-title { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary); }
-    .step-panel-sub   { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+    .step-panel-title { font-family: 'Outfit', sans-serif; font-size: var(--fs-base); font-weight: 700; color: var(--text-primary); }
+    .step-panel-sub   { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 1px; }
 
     /* ── FIELD GRID (modal) ─────────────────────────────── */
     .mfield-grid {
@@ -241,33 +250,33 @@
     .mfield-grid .span-full { grid-column: 1 / -1; }
     .mfield-group { display: flex; flex-direction: column; gap: 0; }
     .mfield-label {
-        font-size: 11px; font-weight: 700; color: var(--text-secondary);
+        font-size: var(--fs-xs); font-weight: 700; color: var(--text-secondary);
         letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px;
         display: flex; align-items: center; gap: 3px;
     }
-    .mfield-label .req { color: var(--danger); font-size: 13px; line-height: 1; }
+    .mfield-label .req { color: var(--danger); font-size: var(--fs-base); line-height: 1; }
     .mfield-wrap { position: relative; }
     .mfield-icon {
         position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-        color: var(--text-muted); font-size: 12px; pointer-events: none; transition: color 0.2s;
+        color: var(--text-muted); font-size: var(--fs-sm); pointer-events: none; transition: color 0.2s;
     }
     .mfield-wrap:focus-within .mfield-icon { color: var(--accent); }
     .has-micon input, .has-micon select { padding-left: 34px; }
     .mfield-input, .mfield-select {
         width: 100%; padding: 9.5px 13px;
         border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-        background: #fff; color: var(--text-primary);
-        font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px;
+        background: var(--input-bg); color: var(--text-primary);
+        font-family: 'Plus Jakarta Sans', sans-serif; font-size: var(--fs-base);
         outline: none; appearance: none; -webkit-appearance: none;
         transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
     }
     .mfield-input::placeholder { color: var(--text-muted); opacity: 0.6; }
-    .mfield-input:hover, .mfield-select:hover { border-color: #B0BCCF; }
+    .mfield-input:hover, .mfield-select:hover { border-color: var(--input-border); }
     .mfield-input:focus, .mfield-select:focus {
-        border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: #FFFDF8;
+        border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: var(--tone-warning-bg);
     }
     .mfield-input.is-invalid, .mfield-select.is-invalid {
-        border-color: var(--danger); background: #FFF8F8;
+        border-color: var(--danger); background: var(--tone-danger-bg);
     }
     .mfield-input.is-invalid:focus, .mfield-select.is-invalid:focus {
         box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
@@ -278,36 +287,36 @@
     }
     .mfield-error {
         display: flex; align-items: center; gap: 4px; margin-top: 5px;
-        font-size: 11px; color: var(--danger); font-weight: 500;
+        font-size: var(--fs-xs); color: var(--danger); font-weight: 500;
     }
 
     /* ── CAPACITY TILES (modal) ─────────────────────────── */
     .capacity-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
     .cap-tile:focus-within {
-        border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: #FFFDF8;
+        border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: var(--tone-warning-bg);
     }
     .cap-tile-icon {
         width: 32px; height: 32px; border-radius: 7px;
         background: var(--accent-dim); display: flex; align-items: center; justify-content: center;
-        color: var(--accent); font-size: 13px;
+        color: var(--accent); font-size: var(--fs-base);
     }
     .cap-tile input {
         width: 100%; border: none; background: transparent; text-align: center;
-        font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 800;
+        font-family: 'Outfit', sans-serif; font-size: var(--fs-xl); font-weight: 800;
         color: var(--text-primary); outline: none; padding: 0; line-height: 1;
         -moz-appearance: textfield;
     }
     .cap-tile input::-webkit-outer-spin-button,
     .cap-tile input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .cap-tile input::placeholder { color: var(--text-muted); font-weight: 400; font-size: 18px; }
+    .cap-tile input::placeholder { color: var(--text-muted); font-weight: 400; font-size: var(--fs-lg); }
 
     /* ── MODAL FOOTER ───────────────────────────────────── */
     .modal-footer-left { display: flex; align-items: center; gap: 8px; }
     .modal-footer-right { display: flex; align-items: center; gap: 8px; }
     .step-counter {
-        font-size: 11.5px; font-weight: 600; color: var(--text-muted);
+        font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted);
         padding: 5px 10px; background: var(--page-bg);
-        border-radius: 20px; border: 1px solid var(--card-border);
+        border-radius: var(--radius-pill); border: 1px solid var(--card-border);
     }
     .step-counter strong { color: var(--accent); }
 
@@ -323,28 +332,6 @@
 @section('content')
 
 {{-- PAGE HEADER --}}
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Buildings</span>
-        </div>
-        <h1 class="page-header-title">Buildings</h1>
-        <p class="page-header-sub">Manage all building and property records</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('export.buildings', request()->only(['search','property_type','type_of_ownership'])) }}" class="btn btn-success">
-            <i class="fa-solid fa-file-excel"></i> Export
-        </a>
-        <button type="button" class="btn btn-outline" onclick="openImport_buildings()">
-            <i class="fa-solid fa-file-import"></i> Import
-        </button>
-        <button type="button" class="btn btn-primary" onclick="openBuildingModal()">
-            <i class="fa-solid fa-plus"></i> Add Building
-        </button>
-    </div>
-</div>
 
 {{-- ═══════════════════════ MOBILE SCREEN (Miknas Property Manager design) ═══════════════════════ --}}
 <div class="m-screen">
@@ -352,7 +339,7 @@
         <i class="fa-solid fa-magnifying-glass"></i>
         <form method="GET" action="{{ route('buildings.index') }}" style="flex:1;">
             <input type="text" name="search" value="{{ request('search') }}" placeholder="Search property name or code"
-                   style="width:100%;border:0;outline:none;font-size:13.5px;color:var(--pm-text);background:transparent;font-family:'Plus Jakarta Sans',sans-serif;"
+                   style="width:100%;border:0;outline:none;font-size:1rem;color:var(--ps-navy);background:transparent;font-family:'Poppins',system-ui,sans-serif;"
                    oninput="mDebounceSubmit(this)">
         </form>
     </div>
@@ -390,25 +377,26 @@
         @empty
             <div class="pm-empty is-lg">
                 <div class="pm-empty-icon-lg"><i class="fa-solid fa-building-circle-exclamation"></i></div>
-                <div style="font-size:14.5px;font-weight:700;color:var(--pm-text);margin-bottom:4px;">No buildings found</div>
-                <div style="margin-bottom:16px;">Try adjusting your search or add a new building.</div>
-                <button type="button" onclick="openBuildingModal()" class="pm-ripple" style="border:0;border-radius:12px;background:var(--pm-navy);color:#fff;font-weight:700;font-size:13px;padding:12px 20px;font-family:'Plus Jakarta Sans',sans-serif;">
-                    <i class="fa-solid fa-plus" style="margin-right:7px;color:var(--pm-gold);"></i>Add a property
+                <div class="m-empty-title">No buildings found</div>
+                <div class="m-empty-sub" style="margin-bottom:18px;">Try adjusting your search, or add a new building.</div>
+                <button type="button" onclick="openBuildingModal()" class="m-action-btn primary pm-ripple" style="flex:none;display:inline-flex;padding:0 24px;">
+                    <i class="fa-solid fa-plus"></i>Add a property
                 </button>
             </div>
         @endforelse
 
-        <div style="display:flex;gap:9px;margin-top:4px;">
-            <button type="button" onclick="openBuildingModal()" style="flex:1;padding:13px 0;border:1px dashed var(--pm-border-strong);border-radius:8px;background:var(--pm-surface);color:var(--pm-text-2);font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
-                <i class="fa-solid fa-plus" style="margin-right:7px;"></i>Add a property
+        <div class="m-action-row" style="margin-top:4px;">
+            <button type="button" onclick="openBuildingModal()" class="m-action-btn primary">
+                <i class="fa-solid fa-plus"></i>Add a property
             </button>
-            <button type="button" onclick="openImport_buildings()" style="flex:1;padding:13px 0;border:0;border-radius:8px;background:var(--pm-navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
-                <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--pm-gold);margin-right:7px;"></i>Smart import
+            <button type="button" onclick="openImport_buildings()" class="m-action-btn outline">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>Smart import
             </button>
         </div>
     </div>
 
-    <a href="{{ route('export.buildings', request()->only(['search','property_type','type_of_ownership'])) }}" style="text-align:center;font-size:12px;font-weight:600;color:var(--pm-text-3);text-decoration:none;padding:4px 0 8px;">
+    <a href="{{ route('export.buildings', request()->only(['search','property_type','type_of_ownership'])) }}"
+       style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;font-size:.85rem;font-weight:600;color:var(--ps-gold-text-deep);text-decoration:none;">
         <i class="fa-solid fa-file-excel"></i> Export all to Excel
     </a>
 
@@ -429,21 +417,30 @@
 {{-- STATS --}}
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-icon gold"><i class="fa-solid fa-building"></i></div>
-        <div><div class="stat-val">{{ $stats['total'] ?? 0 }}</div><div class="stat-lbl">Total Buildings</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon gold"><i class="fa-solid fa-building"></i></span>
+            <span class="stat-lbl">Total Buildings</span>
+        </div>
+        <div class="stat-val">{{ $stats['total'] ?? 0 }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon green"><i class="fa-solid fa-house"></i></div>
-        <div><div class="stat-val">{{ $stats['residential'] ?? 0 }}</div><div class="stat-lbl">Residential</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon green"><i class="fa-solid fa-house"></i></span>
+            <span class="stat-lbl">Residential</span>
+        </div>
+        <div class="stat-val">{{ $stats['residential'] ?? 0 }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon blue"><i class="fa-solid fa-store"></i></div>
-        <div><div class="stat-val">{{ $stats['commercial'] ?? 0 }}</div><div class="stat-lbl">Commercial</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon blue"><i class="fa-solid fa-store"></i></span>
+            <span class="stat-lbl">Commercial</span>
+        </div>
+        <div class="stat-val">{{ $stats['commercial'] ?? 0 }}</div>
     </div>
 </div>
 
 {{-- FILTER BAR + TABLE CARD --}}
-<div class="card m-hide-desktop-index" style="overflow:hidden;">
+<div class="table-card m-hide-desktop-index">
 
     <form method="GET" action="{{ route('buildings.index') }}" id="filterForm">
         <div class="filter-bar">
@@ -607,10 +604,10 @@
             @foreach($buildings as $building)
             @php
                 $typeColors = [
-                    'Residential'  => '#10B981',
+                    'Residential'  => 'var(--chart-income)',
                     'Commercial'   => '#3B82F6',
-                    'Mixed Use'    => '#8B5CF6',
-                    'Industrial'   => '#F59E0B',
+                    'Mixed Use'    => 'var(--chart-profit)',
+                    'Industrial'   => 'var(--chart-debits)',
                     'Retail'       => '#EC4899',
                 ];
                 $accentColor = $typeColors[$building->property_type ?? ''] ?? 'var(--accent)';
@@ -619,6 +616,16 @@
                 $occupiedCount = $building->occupied_units_count ?? 0;
                 $images        = $building->images ?? collect();
                 $cardId      = 'card-'.$building->id;
+                /* Same figures the mobile card and the building's own page use —
+                   one source for the maths (DashboardAnalyticsService), so the
+                   list and the detail page can never disagree. */
+                $fin        = $financials[$building->id] ?? null;
+                /* Gated on there being units at all: the snapshot reports 0%
+                   for an empty building, and rendering that as "0% occupied"
+                   states a fact about nothing. */
+                $occupancy  = $unitCount > 0
+                    ? (int) ($fin['occupancy_percent'] ?? round($occupiedCount / $unitCount * 100))
+                    : null;
             @endphp
             <div class="card is-interactive bldg-card" onclick="window.location='{{ route('buildings.show', $building) }}'">
 
@@ -653,11 +660,17 @@
                             <i class="fa-solid fa-camera" style="font-size:9px;"></i>
                             {{ $images->count() }}
                         </div>
+                        @isset($occupancy)
+                            <span class="card-media-pill bldg-occ-pill">{{ $occupancy }}% occupied</span>
+                        @endisset
                     @else
                         <div class="photo-placeholder">
                             <i class="fa-solid fa-building"></i>
                             <span>No photos yet</span>
                         </div>
+                        @isset($occupancy)
+                            <span class="card-media-pill bldg-occ-pill">{{ $occupancy }}% occupied</span>
+                        @endisset
                     @endif
                 </div>
 
@@ -706,12 +719,20 @@
                             <div class="stat-well-val">{{ $unitCount ?: '—' }}</div>
                             <div class="stat-well-lbl">Units</div>
                             @if($unitCount > 0)
-                            <div style="font-size:10px;margin-top:3px;line-height:1.3;">
-                                <span style="color:var(--tone-success-fg);font-weight:600;">{{ $occupiedCount }} occ</span>
-                                <span style="color:var(--text-muted);"> / {{ $unitCount - $occupiedCount }} vac</span>
+                            <div class="bldg-occ-split">
+                                <span class="is-let">{{ $occupiedCount }} let</span>
+                                <span> / {{ $unitCount - $occupiedCount }} vac</span>
                             </div>
                             @endif
                         </div>
+                        @if($fin)
+                        <div class="stat-well">
+                            <div class="stat-well-val {{ $fin['net_income'] < 0 ? 'val-negative' : '' }}">
+                                {{ number_format($fin['net_income'], 0) }}
+                            </div>
+                            <div class="stat-well-lbl">Net / mo</div>
+                        </div>
+                        @endif
                     </div>
                 </div>
 
@@ -745,21 +766,7 @@
             Showing <strong>{{ $buildings->firstItem() ?? 0 }}–{{ $buildings->lastItem() ?? 0 }}</strong>
             of <strong>{{ $buildings->total() }}</strong> buildings
         </div>
-        <div class="pagination">
-            @if($buildings->onFirstPage())
-                <span class="page-btn" style="opacity:0.4;cursor:default;"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></span>
-            @else
-                <a href="{{ $buildings->previousPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></a>
-            @endif
-            @foreach($buildings->getUrlRange(max(1, $buildings->currentPage()-2), min($buildings->lastPage(), $buildings->currentPage()+2)) as $page => $url)
-                <a href="{{ $url }}" class="page-btn {{ $page == $buildings->currentPage() ? 'active' : '' }}">{{ $page }}</a>
-            @endforeach
-            @if($buildings->hasMorePages())
-                <a href="{{ $buildings->nextPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></a>
-            @else
-                <span class="page-btn" style="opacity:0.4;cursor:default;"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></span>
-            @endif
-        </div>
+        {{ $buildings->links() }}
     </div>
 
 </div>
