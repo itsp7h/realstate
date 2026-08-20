@@ -553,24 +553,15 @@
                         @else <span style="color:var(--text-muted);">—</span> @endif
                     </td>
                     <td onclick="event.stopPropagation()">
-                        <div class="action-btns" style="justify-content:flex-end;">
-                            <a href="{{ route('buildings.show', $building) }}?tab=floors" class="btn btn-outline btn-sm" title="Floors">
-                                <i class="fa-solid fa-layer-group"></i>
-                            </a>
-                            <a href="{{ route('buildings.show', $building) }}" class="btn btn-outline btn-sm">
-                                <i class="fa-regular fa-eye"></i>
-                            </a>
-                            <a href="{{ route('buildings.edit', $building) }}" class="btn btn-outline btn-sm">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </a>
-                            <form method="POST" action="{{ route('buildings.destroy', $building) }}"
-                                  onsubmit="return confirm('Delete this building? This cannot be undone.')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </form>
-                        </div>
+                        @include('partials.row-actions', ['label' => 'Actions for '.$building->property_name, 'items' => [
+                            ['label' => 'View building',   'icon' => 'fa-eye', 'url' => route('buildings.show', $building)],
+                            ['label' => 'View floors',     'icon' => 'fa-layer-group', 'url' => route('buildings.show', $building).'?tab=floors'],
+                            ['label' => 'Edit building',   'icon' => 'fa-pen-to-square', 'url' => route('buildings.edit', $building)],
+                            ['sep' => true],
+                            ['label' => 'Delete building', 'icon' => 'fa-trash-can', 'tone' => 'danger',
+                             'action' => route('buildings.destroy', $building), 'method' => 'DELETE',
+                             'confirm' => 'Delete '.$building->property_name.'? This cannot be undone.'],
+                        ]])
                     </td>
                 </tr>
                 @empty

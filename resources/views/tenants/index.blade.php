@@ -311,21 +311,15 @@
                         @endif
                     </td>
                     <td class="col-actions" onclick="event.stopPropagation()">
-                        <div class="action-btns">
-                            <button type="button" class="btn btn-outline btn-sm" title="View" onclick="openTenantProfileModal('{{ route('tenants.show', $tenant) }}')">
-                                <i class="fa-regular fa-eye"></i>
-                            </button>
-                            <a href="{{ route('tenants.edit', $tenant) }}" class="btn btn-outline btn-sm" title="Edit">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </a>
-                            <form method="POST" action="{{ route('tenants.destroy', $tenant) }}"
-                                  onsubmit="return confirm('Delete {{ addslashes($tenant->name) }}? This cannot be undone.')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </form>
-                        </div>
+                        @include('partials.row-actions', ['label' => 'Actions for '.$tenant->name, 'items' => [
+                            ['label' => 'View profile',  'icon' => 'fa-eye',
+                             'onclick' => "openTenantProfileModal('".route('tenants.show', $tenant)."')"],
+                            ['label' => 'Edit tenant',   'icon' => 'fa-pen-to-square', 'url' => route('tenants.edit', $tenant)],
+                            ['sep' => true],
+                            ['label' => 'Delete tenant', 'icon' => 'fa-trash-can', 'tone' => 'danger',
+                             'action' => route('tenants.destroy', $tenant), 'method' => 'DELETE',
+                             'confirm' => 'Delete '.$tenant->name.'? This cannot be undone.'],
+                        ]])
                     </td>
                 </tr>
                 @empty

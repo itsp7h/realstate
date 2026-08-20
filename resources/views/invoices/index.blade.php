@@ -246,28 +246,20 @@
                             {{ $inv->status_label }}
                         </span>
                     </td>
-                    <td>
-                        <div style="display:flex;gap:6px;align-items:center" onclick="event.stopPropagation()">
-                            <button type="button" class="btn btn-outline btn-sm" title="Preview PDF"
-                                    onclick="openInvPdf('{{ route('invoices.pdf.preview', $inv) }}', '{{ $inv->invoice_number }}')">
-                                <i class="fa-solid fa-file-pdf"></i>
-                            </button>
-                            <a href="{{ route('invoices.show', $inv) }}" class="btn btn-outline btn-sm" title="View">
-                                <i class="fa-solid fa-eye"></i>
-                            </a>
-                            @if($inv->status !== 'paid' && $inv->status !== 'cancelled')
-                            <a href="{{ route('invoices.edit', $inv) }}" class="btn btn-outline btn-sm" title="Edit">
-                                <i class="fa-solid fa-pen"></i>
-                            </a>
-                            @endif
-                            <form method="POST" action="{{ route('invoices.destroy', $inv) }}"
-                                  onsubmit="return confirm('Delete invoice {{ $inv->invoice_number }}?')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </form>
-                        </div>
+                    <td class="col-actions" onclick="event.stopPropagation()">
+                        @include('partials.row-actions', ['label' => 'Actions for invoice '.$inv->invoice_number, 'items' => [
+                            ['label' => 'View invoice', 'icon' => 'fa-eye', 'url' => route('invoices.show', $inv)],
+                            ['label' => 'Preview PDF',  'icon' => 'fa-file-pdf',
+                             'onclick' => "openInvPdf('".route('invoices.pdf.preview', $inv)."', '".e($inv->invoice_number)."')"],
+                            /* A paid or cancelled invoice is a record, not a draft. */
+                            ($inv->status !== 'paid' && $inv->status !== 'cancelled')
+                                ? ['label' => 'Edit invoice', 'icon' => 'fa-pen', 'url' => route('invoices.edit', $inv)]
+                                : null,
+                            ['sep' => true],
+                            ['label' => 'Delete invoice', 'icon' => 'fa-trash', 'tone' => 'danger',
+                             'action' => route('invoices.destroy', $inv), 'method' => 'DELETE',
+                             'confirm' => 'Delete invoice '.$inv->invoice_number.'?'],
+                        ]])
                     </td>
                 </tr>
                 @endforeach

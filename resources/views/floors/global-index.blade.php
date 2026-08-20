@@ -171,24 +171,15 @@
                             <span style="color:var(--text-muted);">—</span>
                         @endif
                     </td>
-                    <td onclick="event.stopPropagation()">
-                        <div class="action-btns">
-                            <a href="{{ route('buildings.show', $floor->building) }}?tab=floors"
-                               class="btn btn-outline btn-sm" title="View in building">
-                                <i class="fa-regular fa-eye"></i>
-                            </a>
-                            <a href="{{ route('floors.edit', $floor) }}"
-                               class="btn btn-outline btn-sm" title="Edit">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </a>
-                            <form method="POST" action="{{ route('floors.destroy', $floor) }}"
-                                  onsubmit="return confirm('Delete floor {{ addslashes($floor->floor_name) }}?')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </form>
-                        </div>
+                    <td class="col-actions" onclick="event.stopPropagation()">
+                        @include('partials.row-actions', ['label' => 'Actions for '.$floor->floor_name, 'items' => [
+                            ['label' => 'View in building', 'icon' => 'fa-eye', 'url' => route('buildings.show', $floor->building).'?tab=floors'],
+                            ['label' => 'Edit floor',       'icon' => 'fa-pen-to-square', 'url' => route('floors.edit', $floor)],
+                            ['sep' => true],
+                            ['label' => 'Delete floor',     'icon' => 'fa-trash-can', 'tone' => 'danger',
+                             'action' => route('floors.destroy', $floor), 'method' => 'DELETE',
+                             'confirm' => 'Delete floor '.$floor->floor_name.'?'],
+                        ]])
                     </td>
                 </tr>
                 @empty

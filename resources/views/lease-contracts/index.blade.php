@@ -347,20 +347,15 @@
                         </span>
                     </td>
                     <td>
-                        <div class="action-btns" style="justify-content:flex-end;" onclick="event.stopPropagation()">
-                            <a href="{{ route('lease-contracts.show', $contract) }}" class="btn btn-outline btn-sm" title="View">
-                                <i class="fa-regular fa-eye"></i>
-                            </a>
-                            <a href="{{ route('lease-contracts.edit', $contract) }}" class="btn btn-outline btn-sm" title="Edit">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </a>
-                            <form method="POST" action="{{ route('lease-contracts.destroy', $contract) }}"
-                                  onsubmit="return confirm('Delete contract {{ addslashes($contract->lease_agreement_no) }}? This cannot be undone.')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </form>
+                        <div onclick="event.stopPropagation()">
+                        @include('partials.row-actions', ['label' => 'Actions for '.$contract->lease_agreement_no, 'items' => [
+                            ['label' => 'View agreement',   'icon' => 'fa-eye', 'url' => route('lease-contracts.show', $contract)],
+                            ['label' => 'Edit agreement',   'icon' => 'fa-pen-to-square', 'url' => route('lease-contracts.edit', $contract)],
+                            ['sep' => true],
+                            ['label' => 'Delete agreement', 'icon' => 'fa-trash-can', 'tone' => 'danger',
+                             'action' => route('lease-contracts.destroy', $contract), 'method' => 'DELETE',
+                             'confirm' => 'Delete contract '.$contract->lease_agreement_no.'? This cannot be undone.'],
+                        ]])
                         </div>
                     </td>
                 </tr>

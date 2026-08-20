@@ -101,18 +101,13 @@
                         @endif
                     </td>
                     <td data-label="Actions">
-                        <div class="action-btns" style="justify-content:flex-end;">
-                            <a href="{{ route('floors.edit', $floor) }}" class="btn btn-outline btn-sm">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </a>
-                            <form method="POST" action="{{ route('floors.destroy', $floor) }}"
-                                  onsubmit="return confirm('Delete this floor? This will only work if no units are linked.')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </form>
-                        </div>
+                        @include('partials.row-actions', ['label' => 'Actions for '.$floor->floor_name, 'items' => [
+                            ['label' => 'Edit floor',   'icon' => 'fa-pen-to-square', 'url' => route('floors.edit', $floor)],
+                            ['sep' => true],
+                            ['label' => 'Delete floor', 'icon' => 'fa-trash-can', 'tone' => 'danger',
+                             'action' => route('floors.destroy', $floor), 'method' => 'DELETE',
+                             'confirm' => 'Delete this floor? This will only work if no units are linked.'],
+                        ]])
                     </td>
                 </tr>
                 @empty

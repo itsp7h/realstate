@@ -318,14 +318,14 @@
                         @endif
                     </td>
                     <td class="col-actions" onclick="event.stopPropagation()">
-                        <div class="action-btns">
-                            <a href="{{ route('property-units.show', $unit) }}" class="btn btn-outline btn-sm"><i class="fa-regular fa-eye"></i></a>
-                            <a href="{{ route('property-units.edit', $unit) }}" class="btn btn-outline btn-sm"><i class="fa-regular fa-pen-to-square"></i></a>
-                            <form method="POST" action="{{ route('property-units.destroy', $unit) }}" onsubmit="return confirm('Delete this unit?')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm"><i class="fa-regular fa-trash-can"></i></button>
-                            </form>
-                        </div>
+                        @include('partials.row-actions', ['label' => 'Actions for unit '.$unit->unit_name, 'items' => [
+                            ['label' => 'View unit',   'icon' => 'fa-eye', 'url' => route('property-units.show', $unit)],
+                            ['label' => 'Edit unit',   'icon' => 'fa-pen-to-square', 'url' => route('property-units.edit', $unit)],
+                            ['sep' => true],
+                            ['label' => 'Delete unit', 'icon' => 'fa-trash-can', 'tone' => 'danger',
+                             'action' => route('property-units.destroy', $unit), 'method' => 'DELETE',
+                             'confirm' => 'Delete unit '.$unit->unit_name.'?'],
+                        ]])
                     </td>
                 </tr>
                 @empty

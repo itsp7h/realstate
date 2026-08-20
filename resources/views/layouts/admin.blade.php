@@ -983,6 +983,106 @@ function mDebounceSubmit(el) {
         try { localStorage.setItem('p7-nav', hidden ? 'collapsed' : 'open'); } catch (e) {}
     });
 
+    /* Row action menus (app-core §4.1b). Delegated, because rows are paginated
+       and re-rendered: binding per button would miss anything drawn later.
+
+       The panel is positioned here rather than in CSS because .table-wrap
+       scrolls horizontally — an absolutely positioned panel would be clipped
+       by its own cell. Fixed coordinates escape that, at the cost of having to
+       close on scroll and resize, which is what the listeners below do. */
+    var openRowMenu = null;
+
+    function closeRowMenu(refocus) {
+        if (!openRowMenu) return;
+        var btn = openRowMenu.btn, panel = openRowMenu.panel, home = openRowMenu.home;
+        panel.setAttribute('hidden', '');
+        panel.style.left = panel.style.top = '';
+        /* Put it back beside its trigger so the DOM stays where the markup says
+           it is, and a second open starts from a known place. */
+        if (home && panel.parentNode !== home) home.appendChild(panel);
+        btn.setAttribute('aria-expanded', 'false');
+        openRowMenu = null;
+        if (refocus && btn.focus) btn.focus();
+    }
+
+    function placeRowMenu(btn, panel) {
+        panel.removeAttribute('hidden');
+        var b = btn.getBoundingClientRect();
+        var w = panel.offsetWidth, h = panel.offsetHeight, gap = 6;
+
+        /* Right-aligned to the trigger, because the actions column sits at the
+           trailing edge and a left-aligned panel would hang off the page. */
+        var left = Math.max(8, Math.min(b.right - w, window.innerWidth - w - 8));
+        /* Below by default, above when there is not room — a menu opening off
+           the bottom of a long table is the common case. */
+        var top = (b.bottom + gap + h <= window.innerHeight) ? b.bottom + gap : Math.max(8, b.top - gap - h);
+
+        panel.style.left = Math.round(left) + 'px';
+        panel.style.top = Math.round(top) + 'px';
+    }
+
+    /* CAPTURE phase, deliberately. The actions cell carries an inline
+       onclick="event.stopPropagation()" — that is what stops a click on a
+       button from navigating the row — and it runs on the way up, before any
+       listener on document. A bubble-phase handler here never sees the click
+       at all. Capturing runs before the cell, so both behaviours survive. */
+    document.addEventListener('click', function (e) {
+        var toggle = e.target.closest('[data-rowmenu-toggle]');
+        if (toggle) {
+            /* The row itself navigates on click; the menu must not trigger it. */
+            e.stopPropagation();
+            e.preventDefault();
+            var panel = document.getElementById(toggle.getAttribute('aria-controls'));
+            if (!panel) return;
+            var wasOpen = openRowMenu && openRowMenu.panel === panel;
+            closeRowMenu(false);
+            if (wasOpen) return;
+            toggle.setAttribute('aria-expanded', 'true');
+            openRowMenu = { btn: toggle, panel: panel, home: panel.parentNode };
+
+            /* Reparent to <body> before positioning, and not for tidiness:
+               `position: fixed` resolves against the nearest ancestor that
+               establishes a containing block, and ANY non-none transform does
+               that. The card entrance animation (app-core §4.3, .card-reveal)
+               ends on transform: translateY(0) — still a transform — so a panel
+               left inside the card was being positioned relative to the card
+               and landed off-screen. In <body> there is nothing in the way. */
+            document.body.appendChild(panel);
+            placeRowMenu(toggle, panel);
+            return;
+        }
+        /* A click inside the panel is an action; anything else closes it. */
+        if (openRowMenu && !openRowMenu.panel.contains(e.target)) closeRowMenu(false);
+    }, true);
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && openRowMenu) closeRowMenu(true);
+    });
+
+    /* Fixed coordinates go stale the moment anything moves, so follow the
+       trigger rather than closing on sight.
+
+       Closing was the first attempt and it was wrong: clicking a row that is
+       only partly in view makes the browser scroll the button into view, which
+       fired this handler and shut the menu in the same gesture that opened it.
+       Only a trigger that has actually left the viewport closes now.
+
+       Capture is on so this hears scrolling inside .table-wrap and
+       .shell-content too — scroll events do not bubble. */
+    var rowMenuFrame = null;
+    function trackRowMenu() {
+        if (!openRowMenu || rowMenuFrame) return;
+        rowMenuFrame = requestAnimationFrame(function () {
+            rowMenuFrame = null;
+            if (!openRowMenu) return;
+            var b = openRowMenu.btn.getBoundingClientRect();
+            if (b.bottom < 0 || b.top > window.innerHeight) { closeRowMenu(false); return; }
+            placeRowMenu(openRowMenu.btn, openRowMenu.panel);
+        });
+    }
+    window.addEventListener('scroll', trackRowMenu, true);
+    window.addEventListener('resize', trackRowMenu);
+
     /* Top-bar dropdowns — the bell and the account chip. One handler: opening
        either closes the other, click-away and Esc close, and focus returns to
        the trigger so the keyboard does not get stranded in a hidden panel. */

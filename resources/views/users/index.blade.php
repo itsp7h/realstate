@@ -68,20 +68,16 @@
                     <td data-label="Role"><span class="status-badge {{ $user->role }}">{{ $user->role_label }}</span></td>
                     <td data-label="Joined" style="font-size:12.5px;color:var(--text-muted)">{{ $user->created_at->format('d M Y') }}</td>
                     <td data-label="Actions" onclick="event.stopPropagation()">
-                        <div class="action-btns" style="justify-content:flex-end;">
-                            <a href="{{ route('users.edit', $user) }}" class="btn btn-outline btn-sm" title="Edit">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </a>
-                            @if($user->id !== auth()->id())
-                            <form method="POST" action="{{ route('users.destroy', $user) }}"
-                                  onsubmit="return confirm('Delete {{ addslashes($user->name) }}? This cannot be undone.')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </form>
-                            @endif
-                        </div>
+                        @include('partials.row-actions', ['label' => 'Actions for '.$user->name, 'items' => [
+                            ['label' => 'Edit account', 'icon' => 'fa-pen-to-square', 'url' => route('users.edit', $user)],
+                            /* You cannot delete the account you are signed in as. */
+                            $user->id !== auth()->id() ? ['sep' => true] : null,
+                            $user->id !== auth()->id()
+                                ? ['label' => 'Delete account', 'icon' => 'fa-trash-can', 'tone' => 'danger',
+                                   'action' => route('users.destroy', $user), 'method' => 'DELETE',
+                                   'confirm' => 'Delete '.$user->name.'? This cannot be undone.']
+                                : null,
+                        ]])
                     </td>
                 </tr>
                 @endforeach
