@@ -13,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('invoices:send-overdue-reminders')->dailyAt('08:00');
+        // Weekly rather than daily: a lease ending in three weeks is not news
+        // every morning, and a digest nobody reads is the same as no watch.
+        $schedule->command('leases:report-expiring')->weeklyOn(1, '08:15');
     })
     ->withMiddleware(function (Middleware $middleware): void {
         // The app sits behind a reverse proxy (rs.p7h.me terminates HTTPS,
