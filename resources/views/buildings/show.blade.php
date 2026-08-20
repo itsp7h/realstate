@@ -119,6 +119,34 @@
        red fill, so the row still reads as a row. */
     .bd-danger-ink { color: var(--tone-danger-fg); }
 
+    /* ── Dashboard tab — section rhythm ────────────────────────────────────
+       The page's vertical rhythm comes from main.shell-content's flex `gap`,
+       which separates only its DIRECT children. These rows sit two levels
+       further down, inside the dashboard tab, so they inherited no separation
+       at all: the Financial Performance card sat flush on the Occupancy row,
+       and that row sat flush on the pair beneath it.
+
+       Fixed the way the shell does it one level up (app-core §7.5) rather than
+       by hanging a margin on each section: the panel owns the rhythm with one
+       gap, and its children carry no margin of their own. That also folds the
+       KPI strip's own 24px into the same 18px, so the whole tab reads on one
+       rhythm instead of two.
+
+       Scoped to .active because an id beats the display:none that hides an
+       inactive panel — without it every tab would render at once.
+
+       The tracks are deliberately left alone: is-3 and is-pair already resolve
+       to equal thirds and halves, and re-declaring them here would override
+       the shared collapse to two columns at 900px and one at 768px. */
+    @media (min-width: 769px) {
+        #panel-dashboard.active { display: flex; flex-direction: column; gap: 18px; }
+        #panel-dashboard > * { margin-bottom: 0; }
+        #panel-dashboard > .card-grid { gap: 18px; }
+        /* app-core §4.3: a container that spaces with `gap` switches the
+           stacked-card margin off, or a second card starts --sp-5 low. */
+        #panel-dashboard > .card + .card { margin-top: 0; }
+    }
+
     /* A table that runs to the card's edge has to follow its corners. */
     .card { overflow: hidden; }
 </style>
