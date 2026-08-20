@@ -192,6 +192,10 @@
     .login-brand-footer { position: relative; z-index: 2; }
 
     .login-logo { display: flex; align-items: center; gap: 14px; }
+    /* The brand panel is wide enough that this never truncated, but the site
+       name is editable under Settings → Branding, so it is given the room
+       rather than left to chance. */
+    .login-logo-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
     .login-logo img { width: 46px; height: 46px; border-radius: var(--radius-sm); }
     .login-logo-name {
         font-family: var(--font-display);
@@ -202,6 +206,7 @@
     }
     .login-logo-name span {
         display: block;
+        white-space: nowrap;
         font-size: var(--fs-2xs);
         font-weight: 600;
         color: var(--accent);
@@ -422,30 +427,44 @@
         --m-error-bg:      rgba(239,68,68,.14);
         --m-error-border:  rgba(239,68,68,.3);
         --m-error-text:    #FCA5A5;
-        --m-link:          #6FA8F5;
+        /* Same gold-as-text ink the light set uses, so the link reads the same
+           in both themes. The #6FA8F5 it replaces was as off-palette as the
+           light set's #1B62C4 — no token in app-core defines either. */
+        --m-link:          var(--tone-accent-fg);
         --m-legal:         rgba(255,255,255,.38);
         --m-home-indicator:rgba(255,255,255,.25);
     }
     :root[data-theme="light"] {
         /* "2b" design handoff — frosted-glass card over the building photo,
            rather than a flat card, so the hero photo stays visible/blurred
-           behind the sheet instead of being covered by an opaque panel. */
-        --m-body-bg:       #F6F4F0;
+           behind the sheet instead of being covered by an opaque panel.
+
+           The glass, the blur and Figtree are this layer's own. The ground and
+           the inks are not: they defer to app-core so the phone and the desktop
+           card read as one product, and so a token changed in app-core §1.1
+           reaches this page the way it reaches every other — the same reasoning
+           that de-pinned the desktop half in fb2b69b. Previously these were
+           literals that had drifted their own way: a warm cream ground against
+           the system's cool grey, near-black ink against the system's navy, and
+           a #1B62C4 link that is not in the palette at all. */
+        --m-body-bg:       var(--page-bg);
         --m-sheet-bg:      rgba(255,255,255,.4);
         --m-sheet-border:  rgba(255,255,255,.65);
         --m-sheet-shadow:  rgba(14,20,32,.18);
-        --m-heading:       #0E1420;
-        --m-subcopy:       rgba(14,20,32,.66);
+        --m-heading:       var(--text-primary);
+        --m-subcopy:       var(--text-muted);
         --m-field-bg:      rgba(255,255,255,.62);
         --m-field-border:  rgba(255,255,255,.7);
         --m-field-icon:    rgba(14,20,32,.42);
-        --m-field-text:    #0E1420;
+        --m-field-text:    var(--text-primary);
         --m-field-placeholder: rgba(14,20,32,.42);
         --m-field-error:   #DC2626;
         --m-error-bg:      #FEF2F2;
         --m-error-border:  #FECACA;
         --m-error-text:    #991B1B;
-        --m-link:          #1B62C4;
+        /* The app's gold-as-text ink. Raw --accent is a fill, not an ink, and
+           measures 1.34:1 on this glass. */
+        --m-link:          var(--tone-accent-fg);
         --m-legal:         rgba(14,20,32,.42);
         --m-home-indicator:rgba(14,20,32,.2);
         --m-toggle-pw:     #B87A05;
@@ -477,7 +496,11 @@
         .hero-top { position: absolute; top: 0; left: 0; right: 0; padding: calc(24px + env(safe-area-inset-top)) 24px 0; display: flex; align-items: center; justify-content: space-between; }
         .m-brand-row { display: flex; align-items: center; gap: 11px; margin-top: 16px; }
         .m-brand-row img { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
-        .m-brand-title { font-weight: 700; font-size: 14.5px; line-height: 1.1; color: #fff; }
+        .m-brand-row > div { flex: 1; min-width: 0; }
+        .m-brand-title {
+            display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            font-weight: 700; font-size: 14.5px; line-height: 1.25; color: #fff;
+        }
         .m-brand-sub { font-weight: 700; font-size: 9px; line-height: 1.4; letter-spacing: 1.6px; color: var(--accent); }
         /* Top-right of the hero, opposite the brand row. It sits in the
            scrim's darkest band, so a light wash over the photo is enough
