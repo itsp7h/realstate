@@ -3,22 +3,21 @@
 @section('title', 'Maintenance Requests')
 @section('topbar-title', 'Maintenance Management')
 
+@section('page-title', 'Maintenance Requests')
+@section('page-subtitle', 'Track and manage all property maintenance work orders')
+@section('page-actions')
+    <button type="button" class="btn btn-primary" onclick="openMaintenanceModal()">
+        <i class="fa-solid fa-plus"></i> New Request
+    </button>
+@endsection
+
 @push('styles')
 <style>
 /* ── STATS ─────────────────────────────────────────────── */
 
 /* ── FILTER BAR ─────────────────────────────────────────── */
-.filter-bar {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 14px 18px;
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px;
-}
 
 /* ── STATUS BADGES ──────────────────────────────────────── */
-.status-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
-}
 
 .actions-cell { display: flex; gap: 6px; align-items: center; }
 
@@ -28,7 +27,7 @@
 .modal-tabs { display:flex;gap:0;overflow-x:auto; }
 .modal-tabs::-webkit-scrollbar { display:none; }
 .mtab-btn {
-    padding:10px 16px;font-size:12px;font-weight:700;color:var(--text-muted);
+    padding:10px 16px;font-size: var(--fs-sm);font-weight:700;color:var(--text-muted);
     border:none;background:none;cursor:pointer;
     border-bottom:2px solid transparent;margin-bottom:-1px;
     white-space:nowrap;display:flex;align-items:center;gap:6px;
@@ -54,48 +53,32 @@
 .mfield-grid .span-2   { grid-column:span 2; }
 .mfield-group { display:flex;flex-direction:column; }
 .mfield-label {
-    font-size:11px;font-weight:700;color:var(--text-secondary);
+    font-size: var(--fs-xs);font-weight:700;color:var(--text-secondary);
     letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px;
     display:flex;align-items:center;gap:3px;
 }
-.mfield-label .req { color:var(--danger);font-size:13px;line-height:1; }
+.mfield-label .req { color:var(--danger);font-size: var(--fs-base);line-height:1; }
 .mfield-input, .mfield-select, .mfield-textarea {
     width:100%;padding:9px 12px;
     border:1.5px solid var(--input-border);border-radius:var(--radius-sm);
-    background:#fff;color:var(--text-primary);
-    font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;
+    background:var(--input-bg);color:var(--text-primary);
+    font-family:'Plus Jakarta Sans',sans-serif;font-size: var(--fs-base);
     outline:none;appearance:none;-webkit-appearance:none;
     transition:border-color .2s,box-shadow .2s;
 }
-.mfield-input:focus,.mfield-select:focus,.mfield-textarea:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);background:#FFFDF8; }
-.mfield-input.is-invalid,.mfield-select.is-invalid,.mfield-textarea.is-invalid { border-color:var(--danger);background:#FFF8F8; }
+.mfield-input:focus,.mfield-select:focus,.mfield-textarea:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);background:var(--tone-warning-bg); }
+.mfield-input.is-invalid,.mfield-select.is-invalid,.mfield-textarea.is-invalid { border-color:var(--danger);background:var(--tone-danger-bg); }
 .mfield-select {
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2394A3B8' d='M5 7L0.669873 2.5L9.33013 2.5L5 7Z'/%3E%3C/svg%3E");
-    background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;
+    background-repeat:no-repeat;background-position:right 12px center;padding-right: var(--sp-8);
 }
 .mfield-textarea { resize:vertical;min-height:80px; }
-.mfield-error { display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;color:var(--danger);font-weight:500; }
+.mfield-error { display:flex;align-items:center;gap:4px;margin-top: var(--sp-1);font-size: var(--fs-xs);color:var(--danger);font-weight:500; }
 
 /* ── JOB LINES IN MODAL ─────────────────────────────────── */
-.modal-job-lines-table { width:100%;border-collapse:collapse;margin-top:10px; }
-.modal-job-lines-table th {
-    padding:8px 10px;font-size:11px;font-weight:700;text-transform:uppercase;
-    letter-spacing:.06em;color:var(--text-muted);background:var(--page-bg);
-    border-bottom:1px solid var(--card-border);text-align:left;
-}
-.modal-job-lines-table td { padding:6px 4px;border-bottom:1px solid var(--tone-neutral-border);vertical-align:top; }
-.modal-job-lines-table tr:last-child td { border-bottom:none; }
-.modal-job-lines-table input,.modal-job-lines-table textarea {
-    width:100%;padding:7px 9px;font-size:13px;
-    border:1.5px solid var(--input-border);border-radius:var(--radius-sm);
-    background:#fff;color:var(--text-primary);outline:none;
-    transition:border-color .18s;font-family:'Plus Jakarta Sans',sans-serif;
-}
-.modal-job-lines-table input:focus,.modal-job-lines-table textarea:focus { border-color:var(--accent); }
-.modal-job-lines-table textarea { resize:vertical;min-height:54px; }
 .modal-remove-line-btn {
     background:none;border:none;color:var(--tone-danger-fg);cursor:pointer;
-    font-size:13px;padding:5px;border-radius:6px;transition:background .15s;
+    font-size: var(--fs-base);padding:5px;border-radius:6px;transition:background .15s;
 }
 .modal-remove-line-btn:hover { background:var(--tone-danger-bg); }
 
@@ -107,31 +90,17 @@
     display:flex;align-items:center;justify-content:center;
     background:none;border:none;border-left:1.5px solid var(--input-border);
     border-radius:0 var(--radius-sm) var(--radius-sm) 0;
-    color:var(--text-muted);cursor:pointer;font-size:12px;
+    color:var(--text-muted);cursor:pointer;font-size: var(--fs-sm);
     transition:color .15s,background .15s;
 }
 .mquot-clip-btn:hover { color:var(--accent);background:var(--accent-dim); }
 .mquot-clip-btn.has-file { color:var(--accent);background:var(--accent-dim); }
-.mquot-pill {
-    display:none;align-items:center;gap:5px;margin-top:5px;
-    padding:3px 8px 3px 6px;background:var(--accent-dim);
-    border-radius:20px;font-size:11px;font-weight:600;color:var(--accent);
-    max-width:100%;overflow:hidden;
-}
-.mquot-pill.show { display:flex; }
-.mquot-pill span { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0; }
-.mquot-pill button {
-    background:none;border:none;color:var(--accent);cursor:pointer;
-    font-size:11px;padding:0;line-height:1;flex-shrink:0;opacity:.7;transition:opacity .15s;
-}
-.mquot-pill button:hover { opacity:1; }
-
 /* ── QUOTATION RADIO CARDS ──────────────────────────────── */
 
 /* ── SIGNATURE PAD ──────────────────────────────────────── */
 .sig-pad-wrap {
     position: relative; border: 1.5px solid var(--input-border);
-    border-radius: var(--radius-sm); background: #fff;
+    border-radius: var(--radius-sm); background: var(--input-bg);
     overflow: hidden; cursor: crosshair; touch-action: none;
     transition: border-color 0.18s;
 }
@@ -140,7 +109,7 @@
 .sig-pad-canvas { display: block; width: 100%; height: 120px; }
 .sig-pad-hint {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    font-size: 12px; color: #CBD5E1; pointer-events: none; user-select: none;
+    font-size: var(--fs-sm); color: var(--card-border); pointer-events: none; user-select: none;
     font-style: italic; transition: opacity 0.2s;
 }
 .sig-pad-hint.hidden { opacity: 0; }
@@ -149,15 +118,15 @@
 .prop-dropdown { position:relative; }
 .prop-dropdown-trigger {
     display:flex; align-items:center; justify-content:space-between;
-    padding:9px 12px; font-size:13px; border:1.5px solid var(--input-border);
+    padding:9px 12px; font-size: var(--fs-base); border:1.5px solid var(--input-border);
     border-radius:var(--radius-sm); background:var(--card-bg); color:var(--text-primary);
     cursor:pointer; transition:border-color 0.18s, box-shadow 0.18s; user-select:none;
     font-family:'Plus Jakarta Sans',sans-serif; min-height:38px;
 }
 .prop-dropdown.open .prop-dropdown-trigger,
 .prop-dropdown-trigger:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); outline:none; }
-.prop-dropdown.is-invalid .prop-dropdown-trigger { border-color:var(--danger); background:#FFF8F8; }
-.prop-dropdown-arrow { font-size:10px; color:var(--text-muted); transition:transform 0.2s; flex-shrink:0; margin-left:8px; }
+.prop-dropdown.is-invalid .prop-dropdown-trigger { border-color:var(--danger); background:var(--tone-danger-bg); }
+.prop-dropdown-arrow { font-size: var(--fs-2xs); color:var(--text-muted); transition:transform 0.2s; flex-shrink:0; margin-left: var(--sp-2); }
 .prop-dropdown.open .prop-dropdown-arrow { transform:rotate(180deg); }
 .prop-dropdown-panel {
     display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:200;
@@ -165,9 +134,9 @@
     box-shadow:0 8px 24px rgba(0,0,0,0.12); overflow:hidden;
 }
 .prop-dropdown.open .prop-dropdown-panel { display:block; }
-.prop-dropdown-search-wrap { position:relative; padding:8px; border-bottom:1px solid var(--card-border); }
+.prop-dropdown-search-wrap { position:relative; padding: var(--sp-2); border-bottom:1px solid var(--card-border); }
 .prop-dropdown-search {
-    width:100%; padding:7px 10px 7px 28px; font-size:12px; border:1.5px solid var(--input-border);
+    width:100%; padding:7px 10px 7px 28px; font-size: var(--fs-sm); border:1.5px solid var(--input-border);
     border-radius:var(--radius-sm); background:var(--page-bg); color:var(--text-primary);
     font-family:'Plus Jakarta Sans',sans-serif; outline:none;
     transition:border-color 0.15s;
@@ -175,17 +144,17 @@
 .prop-dropdown-search:focus { border-color:var(--accent); }
 .prop-dropdown-options { max-height:200px; overflow-y:auto; }
 .prop-dropdown-options::-webkit-scrollbar { width:4px; }
-.prop-dropdown-options::-webkit-scrollbar-thumb { background:#CBD5E1; border-radius:10px; }
+.prop-dropdown-options::-webkit-scrollbar-thumb { background:var(--card-border); border-radius:10px; }
 .prop-option {
     display:flex; align-items:center; justify-content:space-between;
     padding:9px 12px; cursor:pointer; transition:background 0.12s; gap:8px;
 }
 .prop-option:hover { background:var(--accent-dim); }
 .prop-option.selected { background:var(--accent-dim); }
-.prop-option-name { font-size:13px; font-weight:600; color:var(--text-primary); }
-.prop-option-code { font-size:11px; font-weight:700; color:var(--text-muted); font-family:'Outfit',sans-serif; flex-shrink:0; }
+.prop-option-name { font-size: var(--fs-base); font-weight:600; color:var(--text-primary); }
+.prop-option-code { font-size: var(--fs-xs); font-weight:700; color:var(--text-muted); font-family:'Outfit',sans-serif; flex-shrink:0; }
 .prop-option.hidden { display:none; }
-.prop-no-results { padding:12px; font-size:12px; color:var(--text-muted); text-align:center; display:none; }
+.prop-no-results { padding: var(--sp-3); font-size: var(--fs-sm); color:var(--text-muted); text-align:center; display:none; }
 
 @media (max-width:600px) {
     .mfield-grid { grid-template-columns:1fr; }
@@ -196,24 +165,21 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Maintenance Requests</h1>
-        <p class="page-header-sub">Track and manage all property maintenance work orders</p>
-    </div>
-    <div class="page-header-actions">
-        <button type="button" class="btn btn-primary" onclick="openMaintenanceModal()">
-            <i class="fa-solid fa-plus"></i> New Request
-        </button>
-    </div>
-</div>
 
 {{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
 @php
     $mntStatusLabels = ['waiting_supervisor' => 'Pending Assessment','waiting_approval' => 'Pending Approval','approved' => 'Approved','in_progress' => 'In Progress','completed' => 'Completed','cancelled' => 'Cancelled'];
+    // Six status colours collapse onto four Promoseven tones — the
+    // language has one accent, so 'orange' and 'purple' stop being
+    // their own hues and read as warning / navy-info instead.
     $mntBadgeColors = [
-        'orange' => ['#FBF3E4', '#C08A2D'], 'purple' => ['#EFEBFD', '#7A5AF8'], 'green' => ['#E6F6EE', '#17A96C'],
-        'blue' => ['#E9F0FD', '#4A7DF0'], 'teal' => ['#E6F6EE', '#0F8A6E'], 'red' => ['#FCEBEB', '#D64545'], 'gray' => ['#F1F3F8', '#6B7688'],
+        'orange' => ['var(--ps-warning-bg)', 'var(--ps-warning)'],
+        'purple' => ['var(--ps-info-bg)',    'var(--ps-info)'],
+        'green'  => ['var(--ps-success-bg)', 'var(--ps-success)'],
+        'blue'   => ['var(--ps-info-bg)',    'var(--ps-info)'],
+        'teal'   => ['var(--ps-success-bg)', 'var(--ps-success)'],
+        'red'    => ['var(--ps-danger-bg)',  'var(--ps-danger)'],
+        'gray'   => ['var(--ps-bg)',         'var(--ps-muted-deep)'],
     ];
 @endphp
 <div class="m-screen">
@@ -225,13 +191,13 @@
     </div>
     <div class="m-row-list">
         @forelse($requests as $req)
-            @php [$bg, $fg] = $mntBadgeColors[$req->status_color] ?? ['#F1F3F8', '#6B7688']; @endphp
+            @php [$bg, $fg] = $mntBadgeColors[$req->status_color] ?? ['var(--ps-bg)', 'var(--ps-muted-deep)']; @endphp
             <a href="{{ route('maintenance.show', $req) }}" class="m-row-card" style="flex-direction:column;align-items:stretch;gap:9px;">
                 <div style="display:flex;align-items:center;gap:10px;">
                     <div class="m-row-title" style="flex:1;">{{ $req->job_order ?? 'Request #'.$req->id }}</div>
                     <span class="m-row-badge" style="background:{{ $bg }};color:{{ $fg }};">{{ $req->status_label }}</span>
                 </div>
-                <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--m-muted);flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--ps-muted-deep);flex-wrap:wrap;">
                     @if($req->flat)<span class="m-row-chip" style="font-size:10px;">{{ $req->flat }}</span>@endif
                     <span>{{ $req->property }}</span>
                     <span>{{ optional($req->date)->format('M j') }}</span>
@@ -250,84 +216,129 @@
 </div>
 
 {{-- STATS --}}
-<div class="stats-grid m-hide-desktop-index">
+<div class="stats-grid is-compact m-hide-desktop-index">
     <div class="stat-card">
-        <div class="stat-icon gray"><i class="fa-solid fa-clipboard-list"></i></div>
-        <div>
-            <div class="stat-val">{{ $stats['total'] }}</div>
-            <div class="stat-lbl">Total</div>
+        <div class="stat-card-top">
+            <span class="stat-icon gray"><i class="fa-solid fa-clipboard-list"></i></span>
+            <span class="stat-lbl">Total</span>
         </div>
+        <div class="stat-val">{{ $stats['total'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon amber"><i class="fa-solid fa-user-clock"></i></div>
-        <div>
-            <div class="stat-val">{{ $stats['waiting_supervisor'] }}</div>
-            <div class="stat-lbl">Pending Assessment</div>
+        <div class="stat-card-top">
+            <span class="stat-icon amber"><i class="fa-solid fa-user-clock"></i></span>
+            <span class="stat-lbl">Pending Assessment</span>
         </div>
+        <div class="stat-val">{{ $stats['waiting_supervisor'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon purple"><i class="fa-solid fa-stamp"></i></div>
-        <div>
-            <div class="stat-val">{{ $stats['waiting_approval'] }}</div>
-            <div class="stat-lbl">Pending Approval</div>
+        <div class="stat-card-top">
+            <span class="stat-icon purple"><i class="fa-solid fa-stamp"></i></span>
+            <span class="stat-lbl">Pending Approval</span>
         </div>
+        <div class="stat-val">{{ $stats['waiting_approval'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
-        <div>
-            <div class="stat-val">{{ $stats['approved'] }}</div>
-            <div class="stat-lbl">Approved</div>
+        <div class="stat-card-top">
+            <span class="stat-icon green"><i class="fa-solid fa-circle-check"></i></span>
+            <span class="stat-lbl">Approved</span>
         </div>
+        <div class="stat-val">{{ $stats['approved'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon blue"><i class="fa-solid fa-rotate"></i></div>
-        <div>
-            <div class="stat-val">{{ $stats['in_progress'] }}</div>
-            <div class="stat-lbl">In Progress</div>
+        <div class="stat-card-top">
+            <span class="stat-icon blue"><i class="fa-solid fa-rotate"></i></span>
+            <span class="stat-lbl">In Progress</span>
         </div>
+        <div class="stat-val">{{ $stats['in_progress'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon teal"><i class="fa-solid fa-flag-checkered"></i></div>
-        <div>
-            <div class="stat-val">{{ $stats['completed'] }}</div>
-            <div class="stat-lbl">Completed</div>
+        <div class="stat-card-top">
+            <span class="stat-icon teal"><i class="fa-solid fa-flag-checkered"></i></span>
+            <span class="stat-lbl">Completed</span>
         </div>
+        <div class="stat-val">{{ $stats['completed'] }}</div>
     </div>
 </div>
 
 {{-- FILTERS --}}
 
 {{-- TABLE --}}
+{{-- Board or list, same filtered query behind both. The board reads the shape
+     of the work; the table sorts, filters and paginates it. --}}
+<nav class="tab-bar m-hide-desktop-index" aria-label="Maintenance view">
+    <a href="{{ route('maintenance.index', array_merge(request()->except(['view','page']), ['view' => 'board'])) }}"
+       class="tab-btn {{ $view === 'board' ? 'active' : '' }}"
+       @if($view === 'board') aria-current="page" @endif>
+        <i class="fa-solid fa-table-columns"></i> Board
+    </a>
+    <a href="{{ route('maintenance.index', array_merge(request()->except(['view','page']), ['view' => 'list'])) }}"
+       class="tab-btn {{ $view === 'list' ? 'active' : '' }}"
+       @if($view === 'list') aria-current="page" @endif>
+        <i class="fa-solid fa-list"></i> List
+        <span class="tab-count">{{ $requests->total() }}</span>
+    </a>
+</nav>
+
+@if($view === 'board')
+<div class="filter-card m-hide-desktop-index">
+    <form method="GET" action="{{ route('maintenance.index') }}">
+        <div class="filter-bar">
+            <input type="hidden" name="view" value="board">
+            @include('maintenance._filter-fields')
+        </div>
+    </form>
+</div>
+
+<div class="board m-hide-desktop-index">
+    @foreach($board as $column)
+        <div class="board-col">
+            <div class="board-col-head">
+                <span class="board-dot is-{{ $column['tone'] }}" aria-hidden="true"></span>
+                <span>{{ $column['label'] }}</span>
+                <span class="board-count">{{ $column['total'] }}</span>
+            </div>
+
+            @forelse($column['items'] as $entry)
+                @php $req = $entry['model']; @endphp
+                <a class="board-card" href="{{ route('maintenance.show', $req) }}">
+                    <div class="board-card-top">
+                        <span class="board-card-title">{{ $req->job_order ?: 'Request #'.$req->id }}</span>
+                        <span class="status-badge {{ $req->status }}">{{ Str::headline($req->status) }}</span>
+                    </div>
+                    <div class="board-card-meta">
+                        <span>{{ $req->property }}</span>
+                        @if($req->flat)<span class="sep">·</span><span>{{ $req->flat }}</span>@endif
+                        <span class="sep">·</span>
+                        @if($entry['age'] === null)
+                            <span>No date</span>
+                        @elseif($entry['age'] === 0)
+                            <span>Today</span>
+                        @else
+                            <span class="board-age {{ $entry['isStale'] ? 'is-stale' : '' }}">
+                                {{ $entry['age'] }} {{ Str::plural('day', $entry['age']) }} old
+                            </span>
+                        @endif
+                    </div>
+                </a>
+            @empty
+                <div class="board-empty">Nothing here.</div>
+            @endforelse
+
+            @if($column['hidden'] > 0)
+                <a class="board-more" href="{{ $column['url'] }}">
+                    +{{ $column['hidden'] }} more in the list
+                </a>
+            @endif
+        </div>
+    @endforeach
+</div>
+@else
 <div class="table-card m-hide-desktop-index">
     <form method="GET" action="{{ route('maintenance.index') }}">
         <div class="filter-bar">
-            <div class="filter-group is-search">
-                <label for="f_search">Search</label>
-                <input type="search" id="f_search" name="search" value="{{ request('search') }}" placeholder="Search job order, property, tenant…">
-            </div>
-            <div class="filter-group">
-                <label for="f_status">Status</label>
-                <select id="f_status" name="status" onchange="this.form.submit()">
-                    <option value="">All Statuses</option>
-                    @foreach(['waiting_supervisor' => 'Pending Assessment','waiting_approval' => 'Pending Approval','approved' => 'Approved','in_progress' => 'In Progress','completed' => 'Completed','cancelled' => 'Cancelled'] as $val => $label)
-                    <option value="{{ $val }}" {{ request('status') === $val ? 'selected' : '' }}>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="f_date_from">From</label>
-                <input type="date" id="f_date_from" name="date_from" value="{{ request('date_from') }}">
-            </div>
-            <div class="filter-group">
-                <label for="f_date_to">To</label>
-                <input type="date" id="f_date_to" name="date_to" value="{{ request('date_to') }}">
-            </div>
-            <div class="filter-actions">
-                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-                @if(request()->hasAny(['search','status','date_from','date_to']))
-                <a href="{{ route('maintenance.index') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
-                @endif
-            </div>
+            <input type="hidden" name="view" value="list">
+            @include('maintenance._filter-fields')
         </div>
     </form>
     @if($requests->isEmpty())
@@ -410,12 +421,16 @@
             </tbody>
         </table>
     </div>
-    <div style="padding:14px 18px;border-top:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-muted)">
-        <div>Showing {{ $requests->firstItem() }}–{{ $requests->lastItem() }} of {{ $requests->total() }}</div>
-        <div>{{ $requests->links() }}</div>
+    <div class="table-footer">
+        <div class="result-count">
+            Showing <strong>{{ $requests->firstItem() ?? 0 }}–{{ $requests->lastItem() ?? 0 }}</strong>
+            of <strong>{{ number_format($requests->total()) }}</strong> requests
+        </div>
+        {{ $requests->links() }}
     </div>
     @endif
 </div>
+@endif
 
 {{-- ═══════════════════════════════════════════════════════
      NEW MAINTENANCE REQUEST MODAL
@@ -621,8 +636,8 @@
                         <i class="fa-solid fa-plus"></i> Add Line
                     </button>
                 </div>
-                <div style="overflow-x:auto">
-                    <table class="modal-job-lines-table">
+                <div class="table-wrap">
+                    <table class="is-editable">
                         <thead>
                             <tr>
                                 <th style="width:27%">Location</th>
@@ -666,7 +681,7 @@
                                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                                    class="mm-file-input" data-index="{{ $n }}" style="display:none">
                         </div>
-                        <div class="mquot-pill" id="mm_pill_{{ $n }}">
+                        <div class="file-chip" id="mm_pill_{{ $n }}">
                             <i class="fa-solid fa-paperclip" style="flex-shrink:0;font-size:10px"></i>
                             <span id="mm_fname_{{ $n }}"></span>
                             <button type="button" class="mm-pill-clear" data-index="{{ $n }}"><i class="fa-solid fa-xmark"></i></button>
@@ -802,7 +817,7 @@
     <div class="modal-box" style="--modal-w:820px;">
         <div class="modal-header">
             <div class="modal-header-top">
-                <div class="modal-header-icon" style="background:#F5F3FF;color:#7C3AED"><i class="fa-solid fa-stamp"></i></div>
+                <div class="modal-header-icon" style="background:var(--tone-info-bg);color:var(--tone-info-fg)"><i class="fa-solid fa-stamp"></i></div>
                 <div>
                     <div class="modal-header-title">Department Approval</div>
                     <div class="modal-header-sub" id="approveModalSub">Review and approve the supervisor's selection</div>
@@ -829,7 +844,7 @@
                                     <div id="apr-file-{{ $n }}" style="font-size:11px;margin-top:2px"></div>
                                 </div>
                             </div>
-                            <div id="apr-badge-{{ $n }}" style="font-size:10px;font-weight:700;color:#7C3AED;text-transform:uppercase;letter-spacing:.04em;display:none">Selected</div>
+                            <div id="apr-badge-{{ $n }}" style="font-size:10px;font-weight:700;color:var(--tone-info-fg);text-transform:uppercase;letter-spacing:.04em;display:none">Selected</div>
                             <div class="option-card-check"><i class="fa-solid fa-check"></i></div>
                         </div>
                         @endforeach
@@ -846,7 +861,7 @@
                     </div>
                     <div class="mfield-group span-full">
                         <label class="mfield-label">Supervisor's Signature</label>
-                        <div id="apr-super-sig-wrap" style="border:1.5px solid var(--input-border);border-radius:var(--radius-sm);background:#fff;padding:8px;display:none">
+                        <div id="apr-super-sig-wrap" style="border:1.5px solid var(--input-border);border-radius:var(--radius-sm);background:var(--input-bg);padding:8px;display:none">
                             <img id="apr-super-sig-img" src="" alt="Supervisor Signature" style="max-height:80px;display:block">
                         </div>
                         <div id="apr-super-sig-none" style="font-size:12px;color:var(--text-muted);padding:10px 12px;background:var(--page-bg);border-radius:var(--radius-sm);border:1px dashed var(--card-border)">No supervisor signature on file.</div>
@@ -876,7 +891,7 @@
             <div></div>
             <div style="display:flex;gap:8px">
                 <button type="button" class="btn btn-outline" onclick="closeApproveModal()">Cancel</button>
-                <button type="submit" form="approveForm" class="btn btn-primary" onclick="handleApproveSubmit(this)" style="background:#7C3AED;border-color:#7C3AED">
+                <button type="submit" form="approveForm" class="btn btn-primary" onclick="handleApproveSubmit(this)">
                     <i class="fa-solid fa-stamp"></i> Approve
                 </button>
             </div>
@@ -1007,7 +1022,7 @@ function handleAssessSubmit(btn) {
         canvas.width  = w * dpr;
         canvas.height = h * dpr;
         ctx.scale(dpr, dpr);
-        ctx.strokeStyle = '#1e293b';
+        ctx.strokeStyle = 'var(--sidebar-bg)';
         ctx.lineWidth   = 2;
         ctx.lineCap     = 'round';
         ctx.lineJoin    = 'round';
@@ -1183,7 +1198,7 @@ document.querySelectorAll('.mm-pill-clear').forEach(btn => {
         canvas.width  = w * dpr;
         canvas.height = h * dpr;
         ctx.scale(dpr, dpr);
-        ctx.strokeStyle = '#1e293b';
+        ctx.strokeStyle = 'var(--sidebar-bg)';
         ctx.lineWidth   = 2;
         ctx.lineCap     = 'round';
         ctx.lineJoin    = 'round';
