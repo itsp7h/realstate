@@ -3,89 +3,73 @@
 @section('title', 'Audit Log')
 @section('topbar-title', 'Audit Log')
 
+@section('page-title', 'Audit Log')
+@section('page-subtitle', 'Every record change and every sign-in attempt across the system')
+@section('page-actions')
+    <form method="POST" action="{{ route('admin.audit-log.clear') }}"
+          onsubmit="return confirm('Clear all audit log entries? This cannot be undone.')">
+        @csrf @method('DELETE')
+        <button type="submit" class="btn btn-danger btn-sm">
+            <i class="fa-solid fa-trash"></i> Clear Log
+        </button>
+    </form>
+@endsection
+
 @push('styles')
 <style>
 
-.audit-table { width: 100%; border-collapse: collapse; }
-.audit-table th {
-    padding: 10px 16px; font-size: 11px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.07em;
-    color: var(--text-muted); background: var(--page-bg);
-    border-bottom: 1px solid var(--card-border); text-align: left; white-space: nowrap;
-}
-.audit-table td {
-    padding: 11px 16px; font-size: 13px;
-    color: var(--text-secondary); border-bottom: 1px solid var(--row-border);
-    vertical-align: middle;
-}
-.audit-table tr:last-child td { border-bottom: none; }
-.audit-table tr:hover td { background: var(--row-hover); }
 
-.entity-pill {
-    display: inline-block;
-    padding: 2px 8px; border-radius: 6px;
-    font-size: 11px; font-weight: 600;
-    background: var(--page-bg); color: var(--text-muted);
-    border: 1px solid var(--card-border);
-}
 
 .changes-preview {
-    font-size: 11.5px; color: var(--text-muted);
+    font-size: var(--fs-xs); color: var(--text-muted);
     max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     cursor: default;
 }
 .changes-preview:hover { white-space: normal; overflow: visible; }
 
-.time-cell { white-space: nowrap; font-size: 12px; color: var(--text-muted); }
-.time-cell strong { display: block; font-size: 13px; color: var(--text-primary); }
+.time-cell { white-space: nowrap; font-size: var(--fs-sm); color: var(--text-muted); }
+.time-cell strong { display: block; font-size: var(--fs-base); color: var(--text-primary); }
 
 .pagination-wrap {
     display: flex; align-items: center; justify-content: space-between;
     padding: 14px 18px; border-top: 1px solid var(--card-border);
-    font-size: 12px; color: var(--text-muted);
+    font-size: var(--fs-sm); color: var(--text-muted);
 }
 </style>
 @endpush
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Audit Log</h1>
-        <p class="page-header-sub">All create, update, delete, and import activity across the system</p>
-    </div>
-    <div class="page-header-actions">
-        <form method="POST" action="{{ route('admin.audit-log.clear') }}"
-              onsubmit="return confirm('Clear all audit log entries? This cannot be undone.')">
-            @csrf @method('DELETE')
-            <button type="submit" class="btn btn-danger btn-sm">
-                <i class="fa-solid fa-trash"></i> Clear Log
-            </button>
-        </form>
-    </div>
-</div>
 
 {{-- STATS --}}
 <div class="stats-grid">
     <div class="stat-card is-figure">
+        <div class="stat-card-top"><span class="stat-lbl">Total Events</span></div>
         <div class="stat-val">{{ number_format($stats['total']) }}</div>
-        <div class="stat-lbl">Total Events</div>
     </div>
     <div class="stat-card is-figure">
-        <div class="stat-val" style="color:var(--tone-success-fg)">{{ number_format($stats['created']) }}</div>
-        <div class="stat-lbl">Created</div>
+        <div class="stat-card-top"><span class="stat-lbl">Created</span></div>
+        <div class="stat-val">{{ number_format($stats['created']) }}</div>
     </div>
     <div class="stat-card is-figure">
-        <div class="stat-val" style="color:var(--tone-info-fg)">{{ number_format($stats['updated']) }}</div>
-        <div class="stat-lbl">Updated</div>
+        <div class="stat-card-top"><span class="stat-lbl">Updated</span></div>
+        <div class="stat-val">{{ number_format($stats['updated']) }}</div>
     </div>
     <div class="stat-card is-figure">
-        <div class="stat-val" style="color:var(--tone-danger-fg)">{{ number_format($stats['deleted']) }}</div>
-        <div class="stat-lbl">Deleted</div>
+        <div class="stat-card-top"><span class="stat-lbl">Deleted</span></div>
+        <div class="stat-val">{{ number_format($stats['deleted']) }}</div>
     </div>
     <div class="stat-card is-figure">
-        <div class="stat-val" style="color:var(--tone-accent-fg)">{{ number_format($stats['imported']) }}</div>
-        <div class="stat-lbl">Imported</div>
+        <div class="stat-card-top"><span class="stat-lbl">Imported</span></div>
+        <div class="stat-val">{{ number_format($stats['imported']) }}</div>
+    </div>
+    <div class="stat-card is-figure">
+        <div class="stat-card-top"><span class="stat-lbl">Sign-ins</span></div>
+        <div class="stat-val">{{ number_format($stats['signed_in']) }}</div>
+    </div>
+    <div class="stat-card is-figure">
+        <div class="stat-card-top"><span class="stat-lbl">Failed sign-ins</span></div>
+        <div class="stat-val {{ $stats['sign_in_failed'] + $stats['locked_out'] > 0 ? 'val-negative' : '' }}">{{ number_format($stats['sign_in_failed'] + $stats['locked_out']) }}</div>
     </div>
 </div>
 
@@ -103,8 +87,8 @@
                 <label for="f_action">Action</label>
                 <select id="f_action" name="action" onchange="this.form.submit()">
                     <option value="">All Actions</option>
-                    @foreach(['created','updated','deleted','imported'] as $a)
-                    <option value="{{ $a }}" {{ request('action') === $a ? 'selected' : '' }}>{{ ucfirst($a) }}</option>
+                    @foreach(\App\Models\AuditLog::ACTIONS as $a)
+                    <option value="{{ $a }}" {{ request('action') === $a ? 'selected' : '' }}>{{ \Illuminate\Support\Str::ucfirst(str_replace('_', ' ', $a)) }}</option>
                     @endforeach
                 </select>
             </div>
@@ -135,7 +119,7 @@
     </div>
     @else
     <div class="table-wrap">
-        <table class="audit-table">
+        <table>
             <thead>
                 <tr>
                     <th>Time</th>
@@ -149,27 +133,24 @@
             <tbody>
                 @foreach($logs as $log)
                 <tr>
-                    <td class="time-cell">
+                    <td data-label="Time" class="time-cell">
                         <strong>{{ $log->created_at->format('d M Y') }}</strong>
                         {{ $log->created_at->format('H:i:s') }}
                     </td>
-                    <td>
+                    <td data-label="Action">
                         <span class="status-badge {{ $log->action }}">
-                            @php
-                                $icons = ['created'=>'fa-plus','updated'=>'fa-pen','deleted'=>'fa-trash','imported'=>'fa-file-import'];
-                            @endphp
-                            <i class="fa-solid {{ $icons[$log->action] ?? 'fa-circle' }}"></i>
-                            {{ ucfirst($log->action) }}
+                            <i class="fa-solid {{ $log->action_icon }}"></i>
+                            {{ $log->action_label }}
                         </span>
                     </td>
-                    <td><span class="entity-pill">{{ $log->entity_type }}</span></td>
-                    <td style="color:var(--text-primary);font-weight:600;font-size:13px;">
+                    <td data-label="Entity"><span class="badge">{{ $log->entity_type }}</span></td>
+                    <td data-label="Name / ID" style="color:var(--text-primary);font-weight:600;font-size:13px;">
                         {{ $log->entity_name ?? '—' }}
                         @if($log->entity_id)
                         <span style="font-weight:400;color:var(--text-muted);font-size:11px;">#{{ $log->entity_id }}</span>
                         @endif
                     </td>
-                    <td>
+                    <td data-label="Changes">
                         @if($log->changes)
                         <div class="changes-preview" title="{{ json_encode($log->changes, JSON_PRETTY_PRINT) }}">
                             @foreach($log->changes as $field => $change)
@@ -183,15 +164,18 @@
                         <span style="color:var(--text-muted)">—</span>
                         @endif
                     </td>
-                    <td style="font-family:monospace;font-size:12px;">{{ $log->ip_address ?? '—' }}</td>
+                    <td data-label="IP Address" style="font-family:monospace;font-size:12px;">{{ $log->ip_address ?? '—' }}</td>
                 </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
-    <div class="pagination-wrap">
-        <div>Showing {{ $logs->firstItem() }}–{{ $logs->lastItem() }} of {{ number_format($logs->total()) }} events</div>
-        <div>{{ $logs->links() }}</div>
+    <div class="table-footer">
+        <div class="result-count">
+            Showing <strong>{{ $logs->firstItem() ?? 0 }}–{{ $logs->lastItem() ?? 0 }}</strong>
+            of <strong>{{ number_format($logs->total()) }}</strong> events
+        </div>
+        {{ $logs->links() }}
     </div>
     @endif
 </div>
