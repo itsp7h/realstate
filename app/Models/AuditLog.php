@@ -19,7 +19,8 @@ class AuditLog extends Model
     public const ACTIONS = [
         'created', 'updated', 'deleted', 'imported',
         'signed_in', 'signed_out', 'sign_in_failed', 'locked_out',
-        'password_reset_requested', 'password_reset', 'leases_expiring',
+        'password_reset_requested', 'password_reset', 'password_changed',
+        'profile_updated', 'leases_expiring',
     ];
 
     /** Authentication events are not about a record, so they share one type. */
@@ -58,8 +59,9 @@ class AuditLog extends Model
     {
         return match ($this->action) {
             'created', 'signed_in',
-            'password_reset'                   => 'green',
-            'updated', 'password_reset_requested' => 'blue',
+            'password_reset', 'password_changed' => 'green',
+            'updated', 'password_reset_requested',
+            'profile_updated'                  => 'blue',
             'leases_expiring'                  => 'amber',
             'deleted', 'sign_in_failed',
             'locked_out'                       => 'red',
@@ -79,6 +81,8 @@ class AuditLog extends Model
             'signed_in'                => 'Signed in',
             'password_reset_requested' => 'Reset requested',
             'password_reset'           => 'Password reset',
+            'password_changed'         => 'Password changed',
+            'profile_updated'          => 'Profile updated',
             'leases_expiring'          => 'Leases ending',
             'signed_out'     => 'Signed out',
             'sign_in_failed' => 'Sign-in failed',
@@ -97,6 +101,8 @@ class AuditLog extends Model
             'signed_in'                => 'fa-right-to-bracket',
             'password_reset_requested' => 'fa-paper-plane',
             'password_reset'           => 'fa-key',
+            'password_changed'         => 'fa-key',
+            'profile_updated'          => 'fa-id-card',
             'leases_expiring'          => 'fa-calendar-xmark',
             'signed_out'     => 'fa-right-from-bracket',
             'sign_in_failed' => 'fa-triangle-exclamation',

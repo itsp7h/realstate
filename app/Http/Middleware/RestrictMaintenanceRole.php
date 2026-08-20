@@ -22,7 +22,13 @@ class RestrictMaintenanceRole
      * role, so the gate on content stays in the controller and this list only
      * decides whether the door opens at all.
      */
-    private const ALLOWED_PATHS = ['dashboard', 'maintenance', 'maintenance/*', 'search', 'logout'];
+    private const ALLOWED_PATHS = [
+        'dashboard', 'maintenance', 'maintenance/*', 'search',
+        // Its own account: this role is confined to a module, not barred from
+        // changing its own password.
+        'profile', 'profile/*',
+        'logout',
+    ];
 
     /**
      * Handle an incoming request.

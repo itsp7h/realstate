@@ -660,9 +660,18 @@
             </div>
         </div>
 
-        <button type="button" class="shell-iconbtn" title="Help" aria-label="Help">
-            <i class="fa-regular fa-circle-question" aria-hidden="true"></i>
-        </button>
+        {{-- Help. It was a button with nothing behind it; it opens the shortcuts
+             panel now, reusing the same [data-pop] machinery as the bell so
+             click-away, Esc and focus return come for free. --}}
+        <div class="shell-helpbtn" data-pop>
+            <button type="button" class="shell-iconbtn" data-pop-toggle
+                    aria-expanded="false" aria-controls="shell-help"
+                    aria-haspopup="true" title="Help" aria-label="Help">
+                <i class="fa-regular fa-circle-question" aria-hidden="true"></i>
+            </button>
+
+            @include('partials.help-panel', ['id' => 'shell-help', 'shortcuts' => true])
+        </div>
 
         <span class="shell-divider" aria-hidden="true"></span>
 
@@ -687,6 +696,10 @@
                     <strong>{{ auth()->user()->name ?? 'Guest' }}</strong>
                     <span>{{ auth()->user()->email ?? '' }}</span>
                 </div>
+                <a class="shell-menu-item" href="{{ route('profile.edit') }}">
+                    <i class="fa-regular fa-id-card" aria-hidden="true"></i>
+                    Your profile
+                </a>
                 <form method="POST" action="{{ route('logout') }}" id="shellLogout">
                     @csrf
                     <button type="submit" class="shell-menu-item is-danger">
@@ -707,7 +720,15 @@
             <div class="topbar-actions">
                 <button class="topbar-icon-btn theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode"><i class="fa-solid fa-moon"></i></button>
                 <button class="topbar-icon-btn"><i class="fa-regular fa-bell"></i></button>
-                <button class="topbar-icon-btn"><i class="fa-regular fa-circle-question"></i></button>
+                <div class="shell-helpbtn" data-pop>
+                    <button type="button" class="topbar-icon-btn" data-pop-toggle
+                            aria-expanded="false" aria-controls="topbar-help"
+                            aria-haspopup="true" title="Help" aria-label="Help">
+                        <i class="fa-regular fa-circle-question" aria-hidden="true"></i>
+                    </button>
+
+                    @include('partials.help-panel', ['id' => 'topbar-help', 'shortcuts' => false])
+                </div>
                 <div class="user-avatar" style="width:32px;height:32px;font-size:12px;cursor:pointer;">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
             </div>
         </header>

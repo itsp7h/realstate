@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PropertyUnitController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\FloorController;
@@ -80,6 +81,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/', fn() => redirect()->route('dashboard'));
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Your own account. Deliberately outside every role gate: the users
+    // resource is Admin-only, which left a User or Maintenance account unable
+    // to change even its own name. ProfileController acts on auth()->user()
+    // and never on an id from the request.
+    Route::get('/profile',           [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile',           [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password',  [ProfileController::class, 'updatePassword'])->name('profile.password');
 
     // The ⌘K palette's search. Server-side and role-gated; see SearchController.
     Route::get('/search', SearchController::class)->name('search');
