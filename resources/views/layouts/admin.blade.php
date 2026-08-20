@@ -540,10 +540,12 @@
                 <strong>{{ auth()->user()->name ?? 'Unknown' }}</strong>
                 <span>{{ auth()->user()->role_label ?? '' }}</span>
             </div>
-            <form method="POST" action="{{ route('logout') }}" style="margin-left:auto">
+            <form method="POST" action="{{ route('logout') }}" style="margin-left:auto"
+                  onsubmit="return confirm('Sign out of {{ addslashes(auth()->user()->email ?: (auth()->user()->name ?? 'this account')) }}?')">
                 @csrf
-                <button type="submit" class="topbar-icon-btn" style="width:28px;height:28px;font-size:12px" title="Sign out">
-                    <i class="fa-solid fa-right-from-bracket"></i>
+                <button type="submit" class="topbar-icon-btn" style="width:28px;height:28px;font-size:12px"
+                        title="Sign out" aria-label="Sign out of {{ auth()->user()->email ?? 'this account' }}">
+                    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
                 </button>
             </form>
         </div>
@@ -587,7 +589,15 @@
             <div class="more-sheet-icon" style="background:var(--m-navy-active);"><i class="fa-solid fa-bars" style="color:#fff;"></i></div>
             <div><div class="more-sheet-label">Full menu</div><div class="more-sheet-desc">All sections</div></div>
         </button>
-        <form method="POST" action="{{ route('logout') }}">
+        {{-- Asks first. A tap here used to end the session outright, and this
+             row sits directly under "Full menu" in a sheet reached by the tab
+             bar — the easiest thing on the phone to hit by mistake. Same
+             deliberate second step the desktop account menu now requires, and
+             the same confirm() every destructive action in the app uses. The
+             account is named in the question, because on a shared phone the
+             mistake worth preventing is signing the wrong person out. --}}
+        <form method="POST" action="{{ route('logout') }}"
+              onsubmit="return confirm('Sign out of {{ addslashes(auth()->user()->email ?: (auth()->user()->name ?? 'this account')) }}?')">
             @csrf
             <button type="submit" class="more-sheet-item danger">
                 <div class="more-sheet-icon" style="background:var(--m-red-tint);"><i class="fa-solid fa-right-from-bracket" style="color:var(--m-red);"></i></div>

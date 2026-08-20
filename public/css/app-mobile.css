@@ -148,7 +148,7 @@
     }
     .pm-push-back {
         flex: none; width: var(--ps-touch); height: var(--ps-touch); border-radius: var(--ps-r-btn);
-        border: 1px solid var(--ps-border); background: var(--ps-surface); color: var(--ps-navy);
+        border: 1px solid var(--ps-border); background: var(--ps-surface); color: var(--ps-ink);
         font-size: 15px; cursor: pointer; text-decoration: none;
         display: flex; align-items: center; justify-content: center;
     }
@@ -180,8 +180,14 @@
         from { opacity: 0; transform: scale(.55) rotate(-10deg); }
         to   { opacity: 1; transform: scale(1) rotate(0deg); }
     }
-    .logo-mobile-text strong { display: block; color: var(--ps-ink-inverse); font-weight: 600; font-size: .9375rem; }
-    .logo-mobile-text span { color: var(--ps-navy-text); font-size: .6rem; letter-spacing: .18em; text-transform: uppercase; font-weight: 600; }
+    /* One line, with the column claiming the width the mark leaves — the same
+       fix as the desktop sidebar's brand. */
+    .logo-mobile-text { flex: 1; min-width: 0; }
+    .logo-mobile-text strong {
+        display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        color: var(--ps-ink-inverse); font-weight: 600; font-size: .9375rem; line-height: 1.3;
+    }
+    .logo-mobile-text span { display: block; white-space: nowrap; color: var(--ps-navy-text); font-size: .6rem; letter-spacing: .18em; text-transform: uppercase; font-weight: 600; }
 
     .sidebar .nav-item { border-radius: 10px; font-family: 'Poppins', system-ui, sans-serif; min-height: 44px; }
     .sidebar .nav-item.active .nav-icon { color: var(--m-gold); }
@@ -191,7 +197,7 @@
          Reused across Buildings/Floors/Units/Tenants/Maintenance/
          Invoices/Reports so each page doesn't repeat this CSS. ── */
     .m-screen {
-        font-family: 'Poppins', system-ui, sans-serif; color: var(--ps-navy);
+        font-family: 'Poppins', system-ui, sans-serif; color: var(--ps-ink);
         font-size: 1rem; line-height: 1.65;
         padding: 18px 18px calc(28px + env(safe-area-inset-bottom));
         display: flex; flex-direction: column; gap: 16px;
@@ -209,7 +215,7 @@
         font-weight: 600; font-size: .95rem; letter-spacing: .03em;
         font-family: 'Poppins', system-ui, sans-serif; cursor: pointer; display: flex;
         align-items: center; justify-content: center; gap: 8px; text-decoration: none;
-        border: none; background: none; color: var(--ps-navy);
+        border: none; background: none; color: var(--ps-ink);
     }
     .m-action-btn.primary {
         flex: 1.4; background: var(--ps-btn-grad); color: var(--ps-navy);
@@ -237,7 +243,7 @@
         display: flex; flex-direction: column; align-items: center; gap: 4px;
         box-shadow: var(--ps-card-shadow);
     }
-    .m-mini-stat .v { font-size: clamp(1.05rem, 5vw, 1.35rem); line-height: 1.25; font-weight: 700; letter-spacing: -.01em; color: var(--ps-navy); overflow-wrap: break-word; }
+    .m-mini-stat .v { font-size: clamp(1.05rem, 5vw, 1.35rem); line-height: 1.25; font-weight: 700; letter-spacing: -.01em; color: var(--ps-ink); overflow-wrap: break-word; }
     /* A word-shaped value ("Commercial") in a slot sized for a number. */
     .m-mini-stat .v.is-word { font-size: clamp(.75rem, 3.6vw, .9rem); }
     .m-mini-stat .l {
@@ -301,7 +307,7 @@
     .m-search-input {
         min-height: var(--ps-h-btn); border: 1px solid var(--ps-border); border-radius: var(--ps-r-btn);
         padding: 0 16px; font-size: 1rem; font-family: 'Poppins', system-ui, sans-serif;
-        background: var(--ps-surface); outline: none; color: var(--ps-navy); width: 100%;
+        background: var(--ps-surface); outline: none; color: var(--ps-ink); width: 100%;
         transition: border-color .15s ease, box-shadow .15s ease;
     }
     .m-search-input::placeholder { color: var(--ps-muted); }
@@ -334,7 +340,7 @@
        Restaurant/Store/Pastry" has no spaces around its slashes — and at 320px
        that pushed the card 45px past its box and the page 27px past the
        viewport. Let those break rather than widen the layout. */
-    .m-row-title { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-navy); overflow-wrap: anywhere; }
+    .m-row-title { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-ink); overflow-wrap: anywhere; }
     .m-row-sub { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); margin-top: 2px; overflow-wrap: anywhere; }
     .m-row-chip {
         padding: 6px 11px; border-radius: var(--ps-r-pill); background: var(--ps-gold-tint);
@@ -351,7 +357,7 @@
         display: flex; align-items: center; justify-content: center; font-size: 22px;
         color: var(--ps-gold-text); margin: 0 auto 16px;
     }
-    .m-empty-title { font-size: 1.05rem; font-weight: 600; letter-spacing: -.01em; color: var(--ps-navy); margin-bottom: 6px; }
+    .m-empty-title { font-size: 1.05rem; font-weight: 600; letter-spacing: -.01em; color: var(--ps-ink); margin-bottom: 6px; }
     .m-empty-sub { font-size: .875rem; line-height: 1.65; color: var(--ps-muted-deep); }
 
     /* Desktop list-page chrome each redesigned mobile screen replaces —
@@ -384,7 +390,11 @@
        ═══════════════════════════════════════════════════════════ */
     :root {
         /* Core */
-        --ps-navy:            #1e2c4f;   /* headings, body ink, button labels, icons  */
+        --ps-navy:            #1e2c4f;   /* navy FILLS, and ink on a gold button      */
+        /* Body ink, split out from --ps-navy because that token was doing two
+           opposite jobs: the ink on a white card and the ink on a gold fill.
+           Only the first can flip for dark. */
+        --ps-ink:             #1e2c4f;
         --ps-navy-deep:       #0b132b;   /* dark gradient stop, image placeholders    */
         --ps-navy-line:       #2b3a60;   /* hairlines drawn on navy                   */
         --ps-navy-text:       #a8b3c7;   /* muted text on navy — 6.50 on --ps-navy    */
@@ -467,7 +477,7 @@
 
         --m-bg:            var(--ps-bg);
         --m-card:          var(--ps-surface);
-        --m-ink:           var(--ps-navy);
+        --m-ink:           var(--ps-ink);
         --m-muted:         var(--ps-muted);
         --m-faint:         var(--ps-faint);
         --m-line:          var(--ps-bg);
@@ -497,6 +507,55 @@
         --m-shadow-float: var(--ps-card-shadow-lift);
     }
 
+    /* ── Dark ────────────────────────────────────────────────────────────────
+         The mobile app was built as a fixed light system and said so: the tone
+         tokens are redeclared on .m-screen / .m-dash precisely so that
+         :root[data-theme="dark"] could not reach inside. The result on a phone
+         was chrome that flipped and content that did not — white cards on a
+         dark ground, and gold-as-text at #8a6d20 sitting under 2:1.
+
+         Everything below is a token swap, so no component rule changes. The
+         pinned tones read through --ps-success / --ps-danger / … and therefore
+         follow from here too. Gold fills and geometry are untouched: they carry
+         both grounds already.
+
+         Values are app-core's dark set, so a card on a phone and a card on a
+         desktop are the same surface across the 768px boundary. ── */
+    :root[data-theme="dark"] {
+        --ps-ink:             #e9edf5;
+        --ps-navy-text:       #97a1b4;
+
+        --ps-muted:           #a8b3c9;
+        --ps-muted-deep:      #b3bdd0;
+        --ps-faint:           #6b7691;
+
+        --ps-bg:              #0e1526;
+        --ps-bg-alt:          #101728;
+        --ps-surface:         #16203a;
+        --ps-border:          #233150;
+        --ps-border-soft:     #1c2740;
+        --ps-border-strong:   #2c3c5f;
+        --ps-track:           #1c2740;
+
+        /* Gold as TEXT needs the light end of the ramp on a dark ground. */
+        --ps-gold-text:       #edcd85;
+        --ps-gold-text-deep:  #e3c079;
+        --ps-gold-tint:       rgba(216,178,95,.16);
+
+        /* Tone foregrounds lift; backgrounds go translucent so a pill sits on
+           the card instead of punching a light hole in it. */
+        --ps-success:         #57ae80;   --ps-success-bg: rgba(87,174,128,.16);
+        --ps-danger:          #e28575;   --ps-danger-bg:  rgba(226,133,117,.16);
+        --ps-warning:         #edcd85;   --ps-warning-bg: rgba(216,178,95,.16);
+        --ps-info:            #7fa0d4;   --ps-info-bg:    rgba(127,160,212,.16);
+
+        /* On a dark ground a drop shadow reads as grime; depth comes from the
+           surface being lighter than the page. */
+        --ps-card-shadow:      0 8px 24px rgba(0,0,0,.34);
+        --ps-card-shadow-lift: 0 12px 30px rgba(0,0,0,.44);
+    }
+
+
     .pm-header {
         flex: none; display: flex; align-items: center; gap: 12px;
         padding: calc(14px + env(safe-area-inset-top)) 18px 12px;
@@ -506,7 +565,7 @@
     .pm-header-text { flex: 1; min-width: 0; }
     .pm-title {
         font-family: 'Poppins', system-ui, sans-serif; font-weight: 700; font-size: 1.35rem;
-        line-height: 1.25; letter-spacing: -.01em; color: var(--ps-navy);
+        line-height: 1.25; letter-spacing: -.01em; color: var(--ps-ink);
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .pm-subtitle { font-size: .8rem; font-weight: 500; color: var(--ps-muted); margin-top: 2px; }
@@ -515,7 +574,7 @@
     .pm-icon-btn {
         position: relative; flex: none; width: var(--ps-touch); height: var(--ps-touch);
         border-radius: var(--ps-r-btn);
-        border: 1px solid var(--ps-border); background: var(--ps-surface); color: var(--ps-navy);
+        border: 1px solid var(--ps-border); background: var(--ps-surface); color: var(--ps-ink);
         font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
     .pm-icon-btn:active { background: var(--ps-bg); }
@@ -558,7 +617,7 @@
     .pm-kpi-value {
         font-family: 'Poppins', system-ui, sans-serif; font-weight: 700;
         font-size: clamp(1.15rem, 5.6vw, 1.55rem);
-        line-height: 1.2; letter-spacing: -.01em; color: var(--ps-navy); margin-top: 8px;
+        line-height: 1.2; letter-spacing: -.01em; color: var(--ps-ink); margin-top: 8px;
         overflow-wrap: anywhere;
     }
     .pm-kpi-sub { font-size: .8rem; font-weight: 500; color: var(--ps-muted); margin-top: 4px; }
@@ -580,13 +639,13 @@
         font-size: .6rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
     }
     .pm-property-body { padding: 16px; }
-    .pm-property-name { font-family: 'Poppins', system-ui, sans-serif; font-weight: 600; font-size: 1.05rem; line-height: 1.35; letter-spacing: -.01em; color: var(--ps-navy); }
+    .pm-property-name { font-family: 'Poppins', system-ui, sans-serif; font-weight: 600; font-size: 1.05rem; line-height: 1.35; letter-spacing: -.01em; color: var(--ps-ink); }
     .pm-property-address { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); margin-top: 4px; }
     .pm-property-address i { color: var(--ps-gold-dark); }
     .pm-property-wells { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 14px; }
     .pm-well { background: var(--ps-bg); border-radius: 10px; padding: 10px 11px; }
     .pm-well-label { font-size: .6rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--ps-gold-text-deep); line-height: 1.4; }
-    .pm-well-value { font-family: 'Poppins', system-ui, sans-serif; font-weight: 700; font-size: clamp(.85rem, 3.6vw, 1rem); line-height: 1.3; color: var(--ps-navy); margin-top: 3px; overflow-wrap: anywhere; }
+    .pm-well-value { font-family: 'Poppins', system-ui, sans-serif; font-weight: 700; font-size: clamp(.85rem, 3.6vw, 1rem); line-height: 1.3; color: var(--ps-ink); margin-top: 3px; overflow-wrap: anywhere; }
 
     /* ── Action / list rows (needs-you-today, empty states, etc.) ── */
     .pm-action-list { display: flex; flex-direction: column; gap: 10px; }
@@ -601,7 +660,7 @@
         background: var(--ps-gold-tint); color: var(--ps-gold-text);
         display: flex; align-items: center; justify-content: center; font-size: 14px;
     }
-    .pm-action-title { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-navy); }
+    .pm-action-title { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-ink); }
     .pm-action-sub { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); }
     .pm-action-chevron { color: var(--ps-faint); font-size: 12px; }
 
@@ -628,7 +687,7 @@
         /* min-width:0 is load-bearing: an <input>'s default intrinsic width
            (size=20) is its flex min-content, which pushed the page 53px past
            a 320px viewport before this. */
-        flex: 1; min-width: 0; border: 0; outline: none; font-size: 1rem; color: var(--ps-navy);
+        flex: 1; min-width: 0; border: 0; outline: none; font-size: 1rem; color: var(--ps-ink);
         background: transparent; font-family: 'Poppins', system-ui, sans-serif;
     }
     .pm-search-field input::placeholder { color: var(--ps-muted); }
@@ -691,7 +750,7 @@
         border-bottom: 1px solid var(--ps-border);
     }
     .pm-floor-row.is-open { border-bottom-color: transparent; }
-    .pm-floor-name { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-navy); }
+    .pm-floor-name { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-ink); }
     .pm-floor-meta { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); margin-top: 2px; }
     .pm-floor-units { display: flex; flex-direction: column; gap: 10px; padding: 12px 0 16px; }
     .pm-unit-card {
@@ -707,7 +766,7 @@
     }
     .pm-unit-tile.is-let { background: var(--ps-navy); color: var(--ps-gold); }
     .pm-unit-tile.is-vacant { background: var(--ps-bg); color: var(--ps-muted); }
-    .pm-unit-name { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pm-unit-name { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pm-unit-rent { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); margin-top: 2px; }
     .pm-unit-badge { padding: 5px 11px; border-radius: var(--ps-r-pill); font-size: .625rem; font-weight: 600; letter-spacing: .04em; flex-shrink: 0; }
     .pm-unit-more {
@@ -908,7 +967,7 @@
     }
     .topbar-title {
         font-size: 1.35rem; font-weight: 700; letter-spacing: -.01em;
-        font-family: 'Poppins', system-ui, sans-serif; color: var(--ps-navy);
+        font-family: 'Poppins', system-ui, sans-serif; color: var(--ps-ink);
     }
     #menuBtn, .topbar-actions .topbar-icon-btn {
         width: var(--ps-touch); height: var(--ps-touch); border-radius: var(--ps-r-btn);
@@ -928,7 +987,7 @@
         width: var(--ps-touch); height: var(--ps-touch); border-radius: 13px; flex-shrink: 0;
         display: flex; align-items: center; justify-content: center; font-size: 17px;
     }
-    .more-sheet-label { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-navy); }
+    .more-sheet-label { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-ink); }
     .more-sheet-desc { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); margin-top: 2px; }
     .more-sheet-item.danger .more-sheet-label { color: var(--ps-danger); }
 
