@@ -4,16 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Dashboard') — RealEstate Admin</title>
+    @php
+        $branding = \App\Models\BrandingSetting::current();
+    @endphp
+    <title>@yield('title', 'Dashboard') — {{ $branding->displaySiteName() }}</title>
 
     <link rel="manifest" href="{{ asset('manifest.json') }}">
-    <meta name="theme-color" content="#0B1120">
-    <link rel="icon" type="image/png" href="{{ asset('icons/favicon-32.png') }}">
+    <meta name="theme-color" content="#1E2C4F">
+    <link rel="icon" type="image/png" href="{{ $branding->faviconUrl() ?: asset('icons/favicon-32.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="P7H Real Estate">
+    <meta name="apple-mobile-web-app-title" content="{{ $branding->displaySiteName() }}">
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
@@ -25,6 +28,11 @@
             var saved = localStorage.getItem('p7-theme');
             var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
             document.documentElement.setAttribute('data-theme', theme);
+            // The sidebar's collapsed state, same before-paint treatment as
+            // the theme so the frame does not jump on load.
+            if (localStorage.getItem('p7-nav') === 'collapsed') {
+                document.documentElement.classList.add('nav-collapsed-boot');
+            }
         })();
     </script>
     <script>
@@ -92,6 +100,88 @@
     <link rel="stylesheet" href="{{ $css('css/app-mobile.css') }}">
 </head>
 @php
+    /* ── Desktop shell nav model — DASHBOARD-SPEC.md §1 ───────────────────
+       The spec's three groups, superseding DESKTOP-UI.md §4.1's six-group
+       icon rail. Two deviations from its item list, both deliberate: every
+       page in the app has an entry here — a page reachable only by ⌘K or a
+       typed URL is a page users cannot find — and the spec's single
+       'Bills & Payments' item is the five accounting pages it stands for
+       (Invoices, Payments, EWA bills, Expenses, Revenue), since collapsing
+       them into one label leaves four of them with no way in.
+
+       Route names appear here and nowhere else, and every one is resolved
+       through Route::has(). Two items — Roles & Permissions, Settings — have
+       no route in this build; they render dimmed and inert (.is-missing) so
+       the gap is visible instead of silently absent.
+
+       'when' gates an item on the signed-in user's role, mirroring the
+       ≤768px drawer below. ── */
+    $railUser  = auth()->user();
+    $railAll   = ! $railUser?->isMaintenance();
+    $railAdmin = (bool) $railUser?->isAdmin();
+
+    $navGroups = [
+        'OVERVIEW' => [
+            ['route' => 'dashboard',       'label' => 'Dashboard',     'icon' => 'fa-gauge-high'],
+            ['route' => 'admin.audit-log', 'label' => 'Activity Feed', 'icon' => 'fa-clock-rotate-left', 'when' => $railAdmin],
+        ],
+        'PORTFOLIO' => [
+            ['route' => 'buildings.index',       'label' => 'Buildings',   'icon' => 'fa-building',      'when' => $railAll, 'count' => $stats['buildings'] ?? null],
+            ['route' => 'floors.global',         'label' => 'Floors',      'icon' => 'fa-layer-group',   'when' => $railAll, 'count' => $stats['floors'] ?? null],
+            ['route' => 'property-units.index',  'label' => 'Units',       'icon' => 'fa-door-open',     'when' => $railAll, 'count' => $stats['units'] ?? null],
+            ['route' => 'tenants.index',         'label' => 'Tenants',     'icon' => 'fa-users',         'when' => $railAll],
+            ['route' => 'lease-contracts.index', 'label' => 'Leases',      'icon' => 'fa-file-contract', 'when' => $railAll],
+            /* One item, five destinations. The five accounting pages are one
+               piece of work to the user, so they are one row that opens —
+               not five top-level rows competing with Buildings. */
+            ['label' => 'Bills & Payments', 'icon' => 'fa-file-invoice-dollar', 'when' => $railAll, 'children' => [
+                ['route' => 'invoices.index',  'label' => 'Invoices'],
+                ['route' => 'payments.index',  'label' => 'Payments'],
+                ['route' => 'ewa-bills.index', 'label' => 'EWA Bills'],
+                ['route' => 'expenses.index',  'label' => 'Expenses'],
+                ['route' => 'revenues.index',  'label' => 'Revenue'],
+            ]],
+            ['route' => 'maintenance.index',     'label' => 'Maintenance', 'icon' => 'fa-screwdriver-wrench'],
+            ['route' => 'reports.index',         'label' => 'Reports',     'icon' => 'fa-chart-pie',     'when' => (bool) $railUser?->canViewReports()],
+        ],
+        'CONFIGURATION' => [
+            ['route' => 'users.index',              'label' => 'Users',               'icon' => 'fa-user-shield', 'when' => $railAdmin],
+            ['route' => 'roles.index',              'label' => 'Roles & Permissions', 'icon' => 'fa-user-lock',   'when' => $railAdmin],
+            ['label' => 'Settings', 'icon' => 'fa-gear', 'when' => $railAll, 'children' => [
+                ['route' => 'form-configs.index',       'label' => 'Forms & Templates'],
+                ['route' => 'data.index',               'label' => 'Import & Export'],
+                ['route' => 'settings.branding.edit',   'label' => 'Branding',       'when' => $railAdmin],
+                ['route' => 'settings.azure-mail.edit', 'label' => 'Mail Settings',  'when' => $railAdmin],
+                ['route' => 'admin.error-log',          'label' => 'Error Log',      'when' => $railAdmin],
+            ]],
+        ],
+    ];
+
+    foreach ($navGroups as $group => $items) {
+        $items = array_values(array_filter($items, fn ($i) => $i['when'] ?? true));
+        foreach ($items as $k => $item) {
+            if (isset($item['children'])) {
+                $items[$k]['children'] = array_values(array_filter(
+                    $item['children'], fn ($c) => $c['when'] ?? true
+                ));
+                if ($items[$k]['children'] === []) {
+                    unset($items[$k]);
+                }
+            }
+        }
+        $navGroups[$group] = array_values($items);
+    }
+    $navGroups = array_filter($navGroups, fn ($items) => $items !== []);
+
+    /* Same resource family counts as active, so buildings.create still lights
+       up Buildings. */
+    $railCurrent = Route::currentRouteName() ?? '';
+    $railIsOn = function (string $name) use ($railCurrent) {
+        $base = Str::beforeLast($name, '.');
+        return $railCurrent === $name || ($base !== '' && Str::startsWith($railCurrent, $base.'.'));
+    };
+    $railHref = fn (string $name) => Route::has($name) ? route($name) : null;
+
     $mobileRedesignedRoutes = [
         'buildings.index', 'floors.global', 'property-units.index', 'tenants.index',
         'maintenance.index', 'invoices.index', 'reports.index', 'tenants.show', 'buildings.show',
@@ -102,7 +192,7 @@
     $pushedScreenRoutes = ['tenants.show', 'buildings.show'];
     $isPushedScreen = request()->routeIs($pushedScreenRoutes);
 @endphp
-<body class="{{ request()->routeIs('dashboard') ? 'is-dashboard' : '' }} {{ $isMobileScreen ? 'is-mobile-screen' : '' }} {{ $isPushedScreen ? 'is-pushed-screen' : '' }}">
+<body class="app-shell {{ request()->routeIs('dashboard') ? 'is-dashboard' : '' }} {{ $isMobileScreen ? 'is-mobile-screen' : '' }} {{ $isPushedScreen ? 'is-pushed-screen' : '' }}">
 
 {{-- ── EXPERIMENT: "Depth & Motion" shared helpers ─────────────────────
      Declared immediately after <body> opens (before @yield('content')
@@ -236,20 +326,110 @@
 })();
 </script>
 
-<!-- SIDEBAR -->
+{{-- ══════════════════════ DESKTOP SHELL ══════════════════════
+     DASHBOARD-SPEC.md §1. Rendered on every page, hidden ≤768px where the
+     mobile app layer owns the screen. The palette opens and closes but does
+     not search real records yet (DESKTOP-UI.md §6). ── --}}
+<aside class="shell-sidebar" aria-label="Main navigation">
+    <a href="{{ url('/dashboard') }}" class="shell-brand">
+        <span class="shell-brand-mark">
+            @if($branding->logoUrl())
+                <img src="{{ $branding->logoUrl() }}" alt="{{ $branding->displaySiteName() }}">
+            @else
+                {{ $branding->initials() }}
+            @endif
+        </span>
+        <span class="shell-brand-text">
+            <span class="shell-brand-name">{{ $branding->displaySiteName() }}</span>
+            <span class="shell-brand-sub">{{ $branding->tagline ?: 'Management Suite' }}</span>
+        </span>
+    </a>
+
+    <nav class="shell-nav">
+        @foreach ($navGroups as $group => $items)
+            <div class="shell-nav-group">{{ $group }}</div>
+
+            @foreach ($items as $item)
+                @if (isset($item['children']))
+                    @php
+                        /* Open if the current page is one of its children, so
+                           landing on Payments from anywhere shows where you
+                           are without a click. */
+                        $childOn = collect($item['children'])->contains(fn ($c) => $railIsOn($c['route']));
+                    @endphp
+                    <details class="shell-navgroup"{{ $childOn ? ' open' : '' }}>
+                        <summary class="shell-navitem {{ $childOn ? 'is-open' : '' }}">
+                            <i class="fa-solid {{ $item['icon'] }}" aria-hidden="true"></i>
+                            <span class="shell-navitem-label">{{ $item['label'] }}</span>
+                            <i class="fa-solid fa-chevron-down shell-navitem-caret" aria-hidden="true"></i>
+                        </summary>
+                        <div class="shell-subnav">
+                            @foreach ($item['children'] as $child)
+                                @php $curl = $railHref($child['route']); @endphp
+                                <a href="{{ $curl ?? '#' }}"
+                                   class="shell-subitem {{ $railIsOn($child['route']) ? 'is-active' : '' }} {{ $curl ? '' : 'is-disabled' }}"
+                                   @unless($curl) tabindex="-1" aria-disabled="true" title="Coming soon" @endunless
+                                   @if($railIsOn($child['route'])) aria-current="page" @endif>
+                                    {{ $child['label'] }}
+                                    @unless($curl)<span class="shell-soon">Soon</span>@endunless
+                                </a>
+                            @endforeach
+                        </div>
+                    </details>
+                @else
+                    @php $url = $railHref($item['route']); @endphp
+                    <a href="{{ $url ?? '#' }}"
+                       class="shell-navitem {{ $railIsOn($item['route']) ? 'is-active' : '' }} {{ $url ? '' : 'is-disabled' }}"
+                       @unless($url) tabindex="-1" aria-disabled="true" title="Coming soon" @endunless
+                       @if($railIsOn($item['route'])) aria-current="page" @endif>
+                        <i class="fa-solid {{ $item['icon'] }}" aria-hidden="true"></i>
+                        <span class="shell-navitem-label">{{ $item['label'] }}</span>
+                        @if(! $url)
+                            <span class="shell-soon">Soon</span>
+                        @elseif(isset($item['count']))
+                            <span class="shell-navitem-count">{{ $item['count'] }}</span>
+                        @endif
+                    </a>
+                @endif
+            @endforeach
+        @endforeach
+    </nav>
+
+    <a href="{{ route('reports.index') }}" class="shell-help">
+        <span class="shell-help-icon"><i class="fa-regular fa-circle-question" aria-hidden="true"></i></span>
+        <span>
+            <span class="shell-help-title">Need help?</span>
+            <span class="shell-help-sub">Visit our help center</span>
+        </span>
+    </a>
+</aside>
+
+<!-- SIDEBAR (≤768px drawer; the shell rail + contextual sidebar replace it above) -->
 <aside class="sidebar" id="sidebar">
     <a href="{{ url('/') }}" class="sidebar-logo logo-desktop">
-        <div class="sidebar-logo-icon"><i class="fa-solid fa-building-columns"></i></div>
+        <div class="sidebar-logo-icon">
+            @if($branding->logoUrl())
+                <img src="{{ $branding->logoUrl() }}" alt="{{ $branding->displaySiteName() }}">
+            @else
+                <i class="fa-solid fa-building-columns"></i>
+            @endif
+        </div>
         <div class="sidebar-logo-text">
-            <strong>RealEstate</strong>
-            <span>Management Suite</span>
+            <strong>{{ $branding->displaySiteName() }}</strong>
+            <span>{{ $branding->tagline ?: 'Management Suite' }}</span>
         </div>
     </a>
     <a href="{{ url('/') }}" class="logo-mobile" style="text-decoration:none;">
-        <div class="logo-mobile-tile">P7</div>
+        <div class="logo-mobile-tile">
+            @if($branding->logoUrl())
+                <img src="{{ $branding->logoUrl() }}" alt="{{ $branding->displaySiteName() }}">
+            @else
+                {{ $branding->initials() }}
+            @endif
+        </div>
         <div class="logo-mobile-text">
-            <strong>Promoseven RE</strong>
-            <span>MANAGEMENT SUITE</span>
+            <strong>{{ $branding->displaySiteName() }}</strong>
+            <span>{{ Str::upper($branding->tagline ?: 'Management Suite') }}</span>
         </div>
     </a>
 
@@ -343,6 +523,9 @@
         <a href="{{ route('admin.error-log') }}" class="nav-item {{ request()->is('admin/error-log*') ? 'active' : '' }}">
             <i class="fa-solid fa-triangle-exclamation nav-icon"></i> Error Log
         </a>
+        <a href="{{ route('settings.branding.edit') }}" class="nav-item {{ request()->is('settings/branding*') ? 'active' : '' }}">
+            <i class="fa-solid fa-palette nav-icon"></i> Branding
+        </a>
         <a href="{{ route('settings.azure-mail.edit') }}" class="nav-item {{ request()->is('settings/azure-mail*') ? 'active' : '' }}">
             <i class="fa-solid fa-envelope nav-icon"></i> Mail Settings
         </a>
@@ -390,7 +573,7 @@
             <div><div class="more-sheet-label">Invoices</div><div class="more-sheet-desc">View and manage invoices</div></div>
         </a>
         <a href="{{ route('payments.index') }}" class="more-sheet-item">
-            <div class="more-sheet-icon" style="background:#E6F6EE;"><i class="fa-solid fa-money-bill-transfer" style="color:#17A96C;"></i></div>
+            <div class="more-sheet-icon" style="background:var(--tone-success-bg);"><i class="fa-solid fa-money-bill-transfer" style="color:var(--tone-success-fg);"></i></div>
             <div><div class="more-sheet-label">Payments</div><div class="more-sheet-desc">Track received payments</div></div>
         </a>
         @endunless
@@ -414,40 +597,138 @@
     </div>
 </div>
 
-<!-- MAIN WRAP -->
-<div class="main-wrap">
-    <!-- TOPBAR -->
-    <header class="topbar">
-        <button class="topbar-icon-btn" style="display:none" id="menuBtn">
-            <i class="fa-solid fa-bars"></i>
+<div class="shell-frame">
+
+    {{-- 60px top bar. Search leads the bar rather than sitting in the icon
+         cluster: it is the bar's primary affordance, and the account block is
+         the only thing that belongs on the trailing edge. --}}
+    <div class="shell-topbar">
+        <button class="shell-hamburger" type="button" data-sidebar-toggle
+                title="Hide navigation" aria-label="Hide navigation" aria-expanded="true">
+            <i class="fa-solid fa-bars" aria-hidden="true"></i>
         </button>
-        <div class="topbar-title">@yield('topbar-title', 'Dashboard')</div>
-        <div class="topbar-actions">
-            <button class="topbar-icon-btn theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode"><i class="fa-solid fa-moon"></i></button>
-            <button class="topbar-icon-btn"><i class="fa-regular fa-bell"></i></button>
-            <button class="topbar-icon-btn"><i class="fa-regular fa-circle-question"></i></button>
-            <div class="user-avatar" style="width:32px;height:32px;font-size:12px;cursor:pointer;">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
+
+        <button type="button" class="shell-search" data-palette-open aria-label="Search anything — Command K">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <span class="shell-search-label">Search buildings, tenants, units…</span>
+            <kbd class="shell-kbd">⌘K</kbd>
+        </button>
+
+        <div class="shell-topbar-spacer"></div>
+
+        <button type="button" class="shell-iconbtn theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode">
+            <i class="fa-solid fa-moon" aria-hidden="true"></i>
+        </button>
+
+        {{-- Bell + panel. Items come from App\Services\AttentionFeed via a view
+             composer, and every one deep-links into the already-filtered list
+             it describes. --}}
+        <div class="shell-bell" data-bell>
+            <button type="button" class="shell-iconbtn" data-bell-toggle
+                    aria-expanded="false" aria-controls="shell-notif"
+                    title="Notifications"
+                    aria-label="Notifications{{ $attentionCount ? ' — '.$attentionCount.' need attention' : '' }}">
+                <i class="fa-regular fa-bell" aria-hidden="true"></i>
+                @if($attentionCount)
+                    <span class="shell-bell-badge">{{ $attentionCount > 99 ? '99+' : $attentionCount }}</span>
+                @endif
+            </button>
+
+            <div class="shell-notif" id="shell-notif" hidden role="dialog" aria-label="Needs attention">
+                <div class="shell-notif-head">
+                    <span>Needs attention</span>
+                    @if($attentionCount)<span class="shell-notif-count">{{ $attentionCount }}</span>@endif
+                </div>
+
+                @forelse($attentionItems as $item)
+                    <a class="shell-notif-item" href="{{ $item['url'] }}">
+                        <span class="shell-notif-icon is-{{ $item['tone'] }}"><i class="fa-solid {{ $item['icon'] }}"></i></span>
+                        <span class="shell-notif-text">
+                            <span class="shell-notif-title">{{ $item['title'] }}</span>
+                            <span class="shell-notif-sub">{{ $item['sub'] }}</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right shell-notif-chev" aria-hidden="true"></i>
+                    </a>
+                @empty
+                    <div class="shell-notif-empty">
+                        <i class="fa-regular fa-circle-check"></i>
+                        Nothing needs your attention.
+                    </div>
+                @endforelse
+
+                <a class="shell-notif-foot" href="{{ route('dashboard') }}">Open the dashboard</a>
+            </div>
         </div>
-    </header>
 
-    <!-- PAGE CONTENT -->
-    <main class="page-content">
-        @if(session('success'))
-            <div class="alert alert-success">
-                <i class="fa-solid fa-circle-check"></i>
-                {{ session('success') }}
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="alert alert-danger">
-                <i class="fa-solid fa-circle-exclamation"></i>
-                {{ session('error') }}
-            </div>
-        @endif
+        <button type="button" class="shell-iconbtn" title="Help" aria-label="Help">
+            <i class="fa-regular fa-circle-question" aria-hidden="true"></i>
+        </button>
 
-        @yield('content')
-    </main>
-</div>
+        <span class="shell-divider" aria-hidden="true"></span>
+
+        <form method="POST" action="{{ route('logout') }}" id="shellLogout">@csrf</form>
+        <button type="submit" form="shellLogout" class="shell-user" title="Sign out" aria-label="Sign out">
+            <span class="shell-avatar">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</span>
+            <span>
+                <span class="shell-user-name">{{ auth()->user()->name ?? 'Guest' }}</span>
+                <span class="shell-user-role">{{ auth()->user()->role_label ?? '' }}</span>
+            </span>
+            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+        </button>
+    </div>
+
+        <!-- TOPBAR (≤768px only; the shell toolbar and page header replace it above) -->
+        <header class="topbar">
+            <button class="topbar-icon-btn" style="display:none" id="menuBtn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="topbar-title">@yield('topbar-title', 'Dashboard')</div>
+            <div class="topbar-actions">
+                <button class="topbar-icon-btn theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode"><i class="fa-solid fa-moon"></i></button>
+                <button class="topbar-icon-btn"><i class="fa-regular fa-bell"></i></button>
+                <button class="topbar-icon-btn"><i class="fa-regular fa-circle-question"></i></button>
+                <div class="user-avatar" style="width:32px;height:32px;font-size:12px;cursor:pointer;">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
+            </div>
+        </header>
+
+        <!-- PAGE CONTENT -->
+        <main class="page-content shell-content">
+@hasSection('page-title')
+            {{-- Page header — §2: inside the content column, not a fixed bar.
+                 Rendered only for pages that have moved onto it. A page still
+                 drawing its own .page-header would otherwise show two titles,
+                 and its primary action lives in that block, so migrating a
+                 page means defining these three sections and deleting its
+                 .page-header. --}}
+            <header class="shell-pagehead">
+                <div class="shell-pagehead-text">
+@hasSection('page-breadcrumb')
+                    <nav class="breadcrumb" aria-label="Breadcrumb">@yield('page-breadcrumb')</nav>
+@endif
+                    <h1 class="shell-pagehead-title">@yield('page-title')</h1>
+                    <div class="shell-pagehead-sub">@yield('page-subtitle')</div>
+                </div>
+                <div class="shell-pagehead-actions">@yield('page-actions')</div>
+            </header>
+@endif
+
+            @if(session('success'))
+
+                <div class="alert alert-success">
+                    <i class="fa-solid fa-circle-check"></i>
+                    {{ session('success') }}
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="alert alert-danger">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            @yield('content')
+        </main>
+    </div>
 
 <!-- BOTTOM TAB BAR -->
 @php
@@ -632,6 +913,183 @@ function mDebounceSubmit(el) {
             localStorage.setItem('p7-theme', next);
             syncIcons();
         });
+    });
+})();
+</script>
+
+@include('partials.command-palette')
+
+<script>
+/* ── Command palette (⌘K) and row density ─────────────────────
+   Open/close and a client-side filter over the rows the partial
+   rendered. Searching real records is later work (§6). */
+(function () {
+    var root = document.documentElement;
+
+    /* The top bar hamburger collapses the sidebar. Persisted, and applied
+       before paint by the head script so the frame does not jump. */
+    if (document.documentElement.classList.contains('nav-collapsed-boot')) {
+        document.body.classList.add('is-nav-collapsed');
+    }
+    var navBtn = document.querySelector('[data-sidebar-toggle]');
+    if (navBtn) navBtn.addEventListener('click', function () {
+        var hidden = document.body.classList.toggle('is-nav-collapsed');
+        document.documentElement.classList.toggle('nav-collapsed-boot', hidden);
+        navBtn.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+        navBtn.setAttribute('aria-label', hidden ? 'Show navigation' : 'Hide navigation');
+        navBtn.setAttribute('title', hidden ? 'Show navigation' : 'Hide navigation');
+        try { localStorage.setItem('p7-nav', hidden ? 'collapsed' : 'open'); } catch (e) {}
+    });
+
+    /* Notification bell. Click to open, click-away or Esc to close. */
+    var bell = document.querySelector('[data-bell]');
+    if (bell) {
+        var bellBtn   = bell.querySelector('[data-bell-toggle]');
+        var bellPanel = bell.querySelector('.shell-notif');
+        var bellOpen  = function () { return !bellPanel.hasAttribute('hidden'); };
+        var setBell   = function (open) {
+            if (open) { bellPanel.removeAttribute('hidden'); } else { bellPanel.setAttribute('hidden', ''); }
+            bellBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        };
+        bellBtn.addEventListener('click', function (e) { e.stopPropagation(); setBell(!bellOpen()); });
+        document.addEventListener('click', function (e) {
+            if (bellOpen() && !bell.contains(e.target)) setBell(false);
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && bellOpen()) { setBell(false); bellBtn.focus(); }
+        });
+    }
+
+    var palette = document.getElementById('command-palette');
+    if (!palette) return;
+    var input   = palette.querySelector('[data-palette-input]');
+    var empty   = palette.querySelector('[data-palette-empty]');
+    var rows    = palette.querySelectorAll('[data-palette-row]');
+    var jump    = palette.querySelector('[data-palette-jump]');
+    var results = palette.querySelector('[data-palette-results]');
+    var hint    = palette.querySelector('[data-palette-hint]');
+    var opener  = null;
+    var MIN     = 2;              /* mirrors SearchController::MIN_QUERY */
+    var timer   = null;
+    var seq     = 0;              /* drops a slow reply that a newer one has overtaken */
+
+    function filter(q) {
+        q = (q || '').toLowerCase();
+        var any = false;
+        rows.forEach(function (row) {
+            var hit = row.dataset.search.indexOf(q) !== -1;
+            row.hidden = !hit;
+            if (hit) any = true;
+        });
+        if (empty) empty.hidden = any;
+    }
+
+    function showJumpList(q) {
+        if (results) { results.hidden = true; results.innerHTML = ''; }
+        if (hint) hint.hidden = true;
+        if (jump) jump.hidden = false;
+        filter(q);
+    }
+
+    function render(groups) {
+        if (!results) return;
+        if (jump) jump.hidden = true;
+        if (hint) hint.hidden = true;
+        results.hidden = false;
+
+        if (!groups.length) {
+            results.innerHTML = '<div class="palette-empty">No records match.</div>';
+            return;
+        }
+
+        var html = '';
+        groups.forEach(function (g) {
+            html += '<div class="palette-group">' + esc(g.label) + '</div>';
+            g.items.forEach(function (it) {
+                html += '<a href="' + esc(it.url) + '" class="palette-row" data-palette-hit>'
+                     +  '<span class="palette-row-icon"><i class="fa-solid ' + esc(g.icon) + '"></i></span>'
+                     +  '<span class="palette-row-text">'
+                     +  '<span class="palette-row-title">' + esc(it.title) + '</span>'
+                     +  '<span class="palette-row-sub">' + esc(it.sub) + '</span>'
+                     +  '</span>'
+                     +  '<span class="palette-row-kind">OPEN</span>'
+                     +  '</a>';
+            });
+        });
+        results.innerHTML = html;
+    }
+
+    /* Server text into markup — escape it, or a tenant named with an angle
+       bracket becomes script. */
+    function esc(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    function search(q) {
+        var mine = ++seq;
+        if (hint) hint.hidden = false;
+
+        fetch('{{ route('search') }}?q=' + encodeURIComponent(q), {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin'
+        })
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) { if (mine === seq) render(data.groups || []); })
+            .catch(function () {
+                if (mine !== seq) return;
+                /* Offer the jump list rather than a dead end. */
+                showJumpList('');
+                if (empty) { empty.hidden = false; empty.textContent = 'Search is unavailable right now.'; }
+            });
+    }
+
+    function onQuery(q) {
+        clearTimeout(timer);
+        q = (q || '').trim();
+
+        if (q.length < MIN) { showJumpList(q); return; }
+        timer = setTimeout(function () { search(q); }, 200);
+    }
+    function open() {
+        opener = document.activeElement;
+        palette.removeAttribute('hidden');
+        palette.classList.add('is-open');
+        if (input) { input.value = ''; showJumpList(''); input.focus(); }
+    }
+    function close() {
+        palette.classList.remove('is-open');
+        palette.setAttribute('hidden', '');
+        if (opener && opener.focus) opener.focus();
+    }
+    var isOpen = function () { return !palette.hasAttribute('hidden'); };
+
+    document.querySelectorAll('[data-palette-open]').forEach(function (b) {
+        b.addEventListener('click', open);
+    });
+    palette.addEventListener('click', function (e) { if (e.target === palette) close(); });
+    if (input) input.addEventListener('input', function () { onQuery(input.value); });
+
+    document.addEventListener('keydown', function (e) {
+        if ((e.metaKey || e.ctrlKey) && (e.key || '').toLowerCase() === 'k') {
+            e.preventDefault();
+            isOpen() ? close() : open();
+            return;
+        }
+        if (e.key === 'Escape' && isOpen()) close();
+
+        /* Focus trap while the palette is open — §8 allows one only here. */
+        if (e.key === 'Tab' && isOpen()) {
+            var focusable = Array.prototype.filter.call(
+                palette.querySelectorAll('input, a[href]'),
+                function (el) { return !el.hidden && el.offsetParent !== null; }
+            );
+            if (!focusable.length) return;
+            var first = focusable[0], last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
     });
 })();
 </script>

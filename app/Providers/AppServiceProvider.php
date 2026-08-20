@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\AzureMailSetting;
+use App\Services\AttentionFeed;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Throwable;
 
@@ -23,6 +25,27 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->overrideAzureMailerFromDatabase();
+        $this->shareAttentionFeedWithTheShell();
+    }
+
+    /**
+     * The top bar's bell lives in the layout, so its data has to reach every
+     * page without each of the ~40 controllers passing it. A composer bound to
+     * the layout is the narrowest way to do that: it runs only when the shell
+     * actually renders, and the feed itself is cached for a minute, so this is
+     * not a query per page view.
+     */
+    private function shareAttentionFeedWithTheShell(): void
+    {
+        View::composer('layouts.admin', function ($view) {
+            $feed = app(AttentionFeed::class);
+            $user = auth()->user();
+
+            $view->with([
+                'attentionItems' => $feed->items($user),
+                'attentionCount' => $feed->count($user),
+            ]);
+        });
     }
 
     /**

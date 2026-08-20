@@ -15,7 +15,14 @@ class RestrictMaintenanceRole
     /**
      * Paths a Maintenance-role account is allowed to reach.
      */
-    private const ALLOWED_PATHS = ['dashboard', 'maintenance', 'maintenance/*', 'logout'];
+    /**
+     * `search` is here because the top bar — which this role does see, on its
+     * dashboard — carries the ⌘K palette. Allowing the route is not allowing
+     * the data: SearchController returns maintenance results only for this
+     * role, so the gate on content stays in the controller and this list only
+     * decides whether the door opens at all.
+     */
+    private const ALLOWED_PATHS = ['dashboard', 'maintenance', 'maintenance/*', 'search', 'logout'];
 
     /**
      * Handle an incoming request.
