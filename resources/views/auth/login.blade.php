@@ -626,9 +626,13 @@
             /* Stated, not inherited: a <button> carries its own line-height,
                which left the two chevrons 2px apart as the labels swapped. */
             line-height: 1;
-            /* Deeper than --accent on purpose: gold hint text over the gold
-               top line and the light frosted sheet measured 1.07:1. */
-            color: #8a6d20;
+            /* Per theme, because the two backdrops are opposites: near-black
+               navy in dark, a translucent sheet over the mid-grey building in
+               light. One ink cannot clear AA on both — gold measured 9.32:1
+               dark but 1.02:1 light, and the #8a6d20 compromise failed both
+               (3.82:1 / 2.50:1). Split, each side passes: see the light
+               override below. */
+            color: var(--accent);
         }
         /* .close-hint does something, so it is a button. */
         .close-hint {
@@ -723,6 +727,11 @@
             :root[data-theme="light"] .sheet { --m-sheet-bg: rgba(255,255,255,.82); }
         }
         :root[data-theme="light"] .field-wrap:focus-within { background: rgba(255,255,255,.78); }
+        /* 6.79:1 collapsed and 9.78:1 expanded, against gold's 1.34:1/1.02:1.
+           --m-heading is this layer's own ink, so it is the same black the
+           heading above it already uses. */
+        :root[data-theme="light"] .peek-hint,
+        :root[data-theme="light"] .close-hint { color: var(--m-heading); }
     }
 </style>
 </head>
