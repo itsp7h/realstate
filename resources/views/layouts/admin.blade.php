@@ -540,8 +540,7 @@
                 <strong>{{ auth()->user()->name ?? 'Unknown' }}</strong>
                 <span>{{ auth()->user()->role_label ?? '' }}</span>
             </div>
-            <form method="POST" action="{{ route('logout') }}" style="margin-left:auto"
-                  onsubmit="return confirm('Sign out of {{ addslashes(auth()->user()->email ?: (auth()->user()->name ?? 'this account')) }}?')">
+            <form method="POST" action="{{ route('logout') }}" style="margin-left:auto" data-signout-form>
                 @csrf
                 <button type="submit" class="topbar-icon-btn" style="width:28px;height:28px;font-size:12px"
                         title="Sign out" aria-label="Sign out of {{ auth()->user()->email ?? 'this account' }}">
@@ -591,19 +590,72 @@
         </button>
         {{-- Asks first. A tap here used to end the session outright, and this
              row sits directly under "Full menu" in a sheet reached by the tab
-             bar — the easiest thing on the phone to hit by mistake. Same
-             deliberate second step the desktop account menu now requires, and
-             the same confirm() every destructive action in the app uses. The
-             account is named in the question, because on a shared phone the
-             mistake worth preventing is signing the wrong person out. --}}
-        <form method="POST" action="{{ route('logout') }}"
-              onsubmit="return confirm('Sign out of {{ addslashes(auth()->user()->email ?: (auth()->user()->name ?? 'this account')) }}?')">
+             bar — the easiest thing on the phone to hit by mistake. It now
+             hands off to #signOutDialog; the form stays a real form so the
+             row still works with JS off. --}}
+        <form method="POST" action="{{ route('logout') }}" data-signout-form>
             @csrf
             <button type="submit" class="more-sheet-item danger">
                 <div class="more-sheet-icon" style="background:var(--m-red-tint);"><i class="fa-solid fa-right-from-bracket" style="color:var(--m-red);"></i></div>
                 <div><div class="more-sheet-label">Sign out</div><div class="more-sheet-desc">{{ auth()->user()->email ?? '' }}</div></div>
             </button>
         </form>
+    </div>
+</div>
+
+{{-- ═══════════════════ SIGN-OUT CONFIRMATION ═══════════════════
+     Replaces window.confirm() on every sign-out path. The native dialog was
+     the wrong layout for this question on a phone: it docks to the TOP of the
+     screen, a full hand's reach from the avatar the thumb just tapped; it
+     prefixes the question with the bare host ("192.168.0.50 says"); it can't
+     show which account is leaving, only spell the address into a sentence;
+     and it offers OK / Cancel, neither of which names the outcome.
+
+     This is the app's own dialog, so it inherits the theme, centres on
+     desktop, and becomes a bottom sheet under 768px via app-mobile.css —
+     the same conversion every other modal in the app gets. --}}
+<div class="modal-overlay" id="signOutDialog" role="dialog" aria-modal="true"
+     aria-labelledby="signOutTitle" aria-describedby="signOutIdentity">
+    <div class="modal-box" style="--modal-w:420px;">
+        <div class="modal-header">
+            <div class="modal-header-top">
+                <div class="modal-header-icon" style="background:var(--tone-danger-bg);color:var(--tone-danger-fg);border-color:var(--tone-danger-border)">
+                    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+                </div>
+                <div class="modal-header-text">
+                    <div class="modal-header-title" id="signOutTitle">Sign out?</div>
+                    <div class="modal-header-sub">You'll need your password to get back in.</div>
+                </div>
+                <button type="button" class="modal-close-btn" data-signout-cancel aria-label="Close">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        {{-- The account, shown rather than described. On a shared phone the
+             mistake worth preventing is signing the wrong person out. --}}
+        <div class="modal-body">
+            <div class="signout-identity" id="signOutIdentity">
+                <span class="signout-avatar">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</span>
+                <span class="signout-identity-text">
+                    <strong>{{ auth()->user()->name ?? 'Guest' }}</strong>
+                    <span>{{ auth()->user()->email ?? '' }}</span>
+                </span>
+            </div>
+        </div>
+
+        {{-- Buttons say what they do. Under 768px they stack full-width and
+             reverse, putting "Stay signed in" nearest the thumb and making
+             the destructive one the deliberate reach. --}}
+        <div class="modal-footer signout-actions">
+            <button type="button" class="btn btn-outline" data-signout-cancel>Stay signed in</button>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="btn btn-danger">
+                    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sign out
+                </button>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -941,6 +993,81 @@ function mDebounceSubmit(el) {
     }
 
     document.querySelectorAll('.modal-overlay .modal-box').forEach(attachSheetHandle);
+})();
+
+/* ── Sign-out confirmation ────────────────────────────────
+   Every sign-out control stays a real submit button inside a real POST
+   form — that is the no-JS fallback and it must keep working. This
+   intercepts the submit and asks in #signOutDialog instead, which the
+   dialog's own form then completes. */
+(function () {
+    const dialog = document.getElementById('signOutDialog');
+    const forms = document.querySelectorAll('form[data-signout-form]');
+    if (!dialog || !forms.length) return;
+
+    const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    let opener = null;
+
+    function open(trigger) {
+        opener = trigger || null;
+        dialog.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        // "Stay signed in" takes focus, not the destructive button: Enter on a
+        // dialog you did not mean to open should be the harmless answer.
+        dialog.querySelector('.btn-outline')?.focus();
+    }
+
+    function close() {
+        dialog.classList.remove('open');
+
+        // The nav drawer is deliberately left standing behind this dialog
+        // (cancelling should put you back where you were), and it owns the
+        // same scroll lock — so releasing it unconditionally would let the
+        // page scroll behind an open drawer.
+        const stillLocked = document.querySelector('.sidebar.open, .modal-overlay.open');
+        document.body.style.overflow = stillLocked ? 'hidden' : '';
+
+        // offsetParent guards against restoring focus into a sheet that was
+        // closed on the way in (the More sheet row).
+        if (opener && document.contains(opener) && opener.offsetParent !== null) opener.focus();
+        opener = null;
+    }
+
+    forms.forEach((form) => {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            // The More sheet sits on --z-sheet (1050), above --z-modal, so
+            // asking from inside it would put the question behind the sheet
+            // that asked — it has to close first. The nav drawer is below
+            // --z-modal and stays open on purpose: cancelling there should
+            // put you back in the drawer you were reading.
+            const host = form.closest('.modal-overlay.open');
+            if (host) {
+                host.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+
+            open(e.submitter || form.querySelector('[type="submit"]'));
+        });
+    });
+
+    dialog.querySelectorAll('[data-signout-cancel]').forEach((b) => b.addEventListener('click', close));
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) close(); });
+
+    document.addEventListener('keydown', (e) => {
+        if (!dialog.classList.contains('open')) return;
+        if (e.key === 'Escape') { close(); return; }
+        if (e.key !== 'Tab') return;
+
+        // Keep Tab inside the dialog — it is modal, and the page behind it
+        // still has a full tab order.
+        const items = [...dialog.querySelectorAll(FOCUSABLE)].filter((el) => el.offsetParent !== null);
+        if (!items.length) return;
+        const first = items[0], last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
 })();
 
 /* ── Theme toggle ─────────────────────────────────────── */

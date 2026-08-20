@@ -178,7 +178,11 @@
         <div class="pm-title">{{ $building->property_name }}</div>
         <div class="pm-subtitle">{{ $building->property_type ?? 'Property' }}</div>
     </div>
-    <button type="button" class="pm-icon-btn" title="Notifications — coming soon"><i class="fa-regular fa-bell"></i></button>
+    {{-- Same bell, same destination as the dashboard's: the alert list in the
+         Today segment. It carries no dot here because this screen doesn't
+         compute portfolio metrics — it's the way there, not the count. --}}
+    <a href="{{ route('dashboard') }}#today" class="pm-icon-btn" title="Alerts"
+       aria-label="Show what needs you today"><i class="fa-regular fa-bell" aria-hidden="true"></i></a>
     <div class="pm-avatar">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
 </div>
 

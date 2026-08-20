@@ -2903,6 +2903,49 @@ td.col-actions .action-btns { justify-content: flex-end; }
 }
 
 
+/* ── §4.11a  Sign-out confirmation ──────────────────────────────────────────
+     The one dialog the layout owns rather than a page, shared by all three
+     sign-out controls (sidebar footer, More sheet row, mobile dashboard
+     avatar). It exists because window.confirm() cannot show WHICH account is
+     leaving, and its OK/Cancel pair names neither outcome. */
+.signout-identity {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--page-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+}
+.signout-avatar {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: var(--radius-pill);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-dim);
+    color: var(--tone-accent-fg);
+    font-family: var(--font-display);
+    font-weight: 700;
+}
+/* min-width:0 so a long address ellipsises instead of widening the dialog. */
+.signout-identity-text { display: flex; flex-direction: column; min-width: 0; }
+.signout-identity-text strong,
+.signout-identity-text span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.signout-identity-text strong { font-size: var(--fs-md); color: var(--text-primary); }
+.signout-identity-text span { font-size: var(--fs-sm); color: var(--text-muted); margin-top: 1px; }
+
+/* The destructive button needs its own POST form; display:contents keeps it a
+   direct flex child of the footer so it sizes like the button beside it. */
+.signout-actions form { display: contents; }
+
+
 /* ── §4.11b  Document viewer ────────────────────────────────────────────────
      A PDF preview in an overlay: an invoice, a receipt, an EWA bill, a report.
      Was five copies under two names (.pdf-modal-box and .pdf-modal) that

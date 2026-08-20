@@ -578,6 +578,10 @@
         font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
     .pm-icon-btn:active { background: var(--ps-bg); }
+    /* The bell is an <a> on pushed screens (it links to the dashboard's alert
+       list) and a <button> on the dashboard itself — both must look identical. */
+    a.pm-icon-btn { text-decoration: none; }
+    .pm-icon-btn:focus-visible { outline: 2px solid var(--ps-gold); outline-offset: 2px; }
     .pm-dot { position: absolute; top: 8px; right: 9px; width: 8px; height: 8px; border-radius: var(--ps-r-pill); background: var(--ps-danger); border: 2px solid var(--ps-surface); }
     .pm-avatar {
         flex: none; width: var(--ps-touch); height: var(--ps-touch); border-radius: var(--ps-r-pill); border: 0;
@@ -586,6 +590,7 @@
         display: flex; align-items: center; justify-content: center; cursor: pointer;
         box-shadow: var(--ps-btn-shadow);
     }
+    .pm-avatar:focus-visible { outline: 2px solid var(--ps-navy); outline-offset: 2px; }
 
     .pm-scroll { position: relative; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
     .pm-bottom-space { height: calc(96px + env(safe-area-inset-bottom)); }
@@ -957,6 +962,34 @@
         touch-action: none;
     }
     .sheet-handle.dragging { transition: none; }
+
+    /* ── Dialog sheets: sign-out, alerts ────────────────────── */
+    /* Their footers run full-width stacked buttons rather than the desktop
+       trailing-edge row, and the shared 24px modal padding is desktop
+       rhythm — it leaves a phone-width row cramped. */
+    .signout-actions,
+    .alerts-footer {
+        align-items: stretch;
+        gap: 8px;
+        padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
+    }
+    .signout-actions .btn,
+    .alerts-footer .btn {
+        width: 100%;
+        min-height: var(--ps-touch);
+        font-size: .9375rem;
+    }
+    /* Reversed only where there are two: "Sign out" is last in the DOM (it
+       reads first on desktop, where the primary action sits on the trailing
+       edge), but on a sheet the button nearest the thumb must be the
+       harmless one. */
+    .signout-actions { flex-direction: column-reverse; }
+    .alerts-footer { flex-direction: column; }
+
+    #signOutDialog .modal-header,
+    #alertsSheet .modal-header { padding: 6px 18px 14px; }
+    #signOutDialog .modal-body { padding: 4px 18px 14px; }
+    #alertsSheet .modal-body { padding: 14px 18px; }
 
     /* ── Standard mobile header ───────────────────────────── */
     .topbar {

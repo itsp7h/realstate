@@ -528,6 +528,45 @@
     .pm-dash-layout { padding: 16px 18px 0; display: flex; flex-direction: column; gap: 14px; }
     .pm-dash-layout[hidden] { display: none; }
 
+    /* ── Alerts sheet (the bell) ──────────────────────────── */
+    /* The sheet's chrome — modal padding and footer buttons — lives in
+       app-mobile.css beside the sign-out sheet's, since restyling a shared
+       component from page CSS is what the cascade contract forbids. Only
+       the empty state is genuinely local to this page.
+
+       Empty state: centred, quiet, and specific about what was checked. */
+    .alerts-clear { text-align: center; padding: 18px 6px 10px; }
+    .alerts-clear-icon {
+        width: 52px; height: 52px; margin: 0 auto 14px;
+        border-radius: var(--ps-r-pill);
+        background: var(--ps-success-bg); color: var(--ps-success);
+        display: flex; align-items: center; justify-content: center; font-size: 22px;
+    }
+    .alerts-clear-title { font-size: 1rem; font-weight: 600; color: var(--ps-ink); }
+    /* balance, not a hard width: 32ch left "days." alone on a third line. */
+    .alerts-clear-sub {
+        font-size: .8125rem; line-height: 1.6; color: var(--ps-muted);
+        margin-top: 6px; max-width: 34ch; margin-left: auto; margin-right: auto;
+        text-wrap: balance;
+    }
+
+    /* One-shot highlight for the block the bell scrolls to: a gold ring that
+       fades to nothing, drawn with box-shadow so no layout shifts under the
+       finger. Only the ring animates — recolouring the gold eyebrow was the
+       obvious second cue and the wrong one, since the emphasis colour that
+       reads on the light page vanishes into the dark one. */
+    #pmNeedsToday.is-flash > .pm-action-list {
+        border-radius: var(--ps-r-card);
+        animation: pmFlashRing 1.4s ease-out;
+    }
+    @keyframes pmFlashRing {
+        0%, 40% { box-shadow: 0 0 0 3px var(--ps-gold-tint), 0 0 0 4px var(--ps-gold); }
+        100%    { box-shadow: 0 0 0 3px transparent, 0 0 0 4px transparent; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        #pmNeedsToday.is-flash > .pm-action-list { animation: none; }
+    }
+
     /* ── Today: navy hero ─────────────────────────────────── */
     /* The one dark surface in the mobile app: navy → navy-deep, gold
        accents, gold-dash eyebrow inverted to sit on the dark. */
@@ -743,6 +782,69 @@ function smartImportFileChosen(input) {
     show(localStorage.getItem(STORAGE_KEY) || 'cards');
 
     if (window.pmInitSegmentThumb) window.pmInitSegmentThumb(segment);
+
+    /* The bell (and a #today link arriving from another mobile screen) lands
+       on the same place: the Today segment, scrolled to the alert list, with
+       one brief highlight so the jump is legible rather than a silent
+       re-render. The segment choice is persisted like a manual tap, so the
+       tab bar doesn't snap back to Portfolio on the next visit. */
+    window.pmRevealAlerts = function () {
+        localStorage.setItem(STORAGE_KEY, 'pulse');
+        show('pulse');
+
+        const target = document.getElementById('pmNeedsToday');
+        const scroll = document.getElementById('pmDashScroll');
+        if (!target || !scroll) return;
+
+        requestAnimationFrame(function () {
+            const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            scroll.scrollTo({
+                top: Math.max(0, target.offsetTop - 12),
+                behavior: reduce ? 'auto' : 'smooth',
+            });
+            target.classList.remove('is-flash');
+            void target.offsetWidth;
+            target.classList.add('is-flash');
+            setTimeout(() => target.classList.remove('is-flash'), 1400);
+        });
+    };
+
+    if (window.location.hash === '#today') window.pmRevealAlerts();
+})();
+
+/* ── MOBILE DASHBOARD: the bell's alerts sheet ────────────────────
+   The bell opens a sheet rather than re-selecting a tab: switching to
+   Today is invisible when Today is already the remembered tab, which
+   made every tap after the first one look like nothing happened. */
+(function () {
+    const btn = document.getElementById('pmAlertsBtn');
+    const sheet = document.getElementById('alertsSheet');
+    if (!btn || !sheet) return;
+
+    function open() {
+        sheet.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        sheet.querySelector('.pm-action-row, [data-alerts-close]')?.focus();
+    }
+
+    function close() {
+        sheet.classList.remove('open');
+        document.body.style.overflow = document.querySelector('.sidebar.open, .modal-overlay.open') ? 'hidden' : '';
+        btn.focus();
+    }
+
+    btn.addEventListener('click', open);
+    sheet.querySelectorAll('[data-alerts-close]').forEach((b) => b.addEventListener('click', close));
+    sheet.addEventListener('click', (e) => { if (e.target === sheet) close(); });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && sheet.classList.contains('open')) close();
+    });
+
+    // The full list, for when the summary isn't enough.
+    document.getElementById('alertsOpenToday')?.addEventListener('click', () => {
+        close();
+        if (window.pmRevealAlerts) window.pmRevealAlerts();
+    });
 })();
 
 /* ── MOBILE DASHBOARD: collapsing large title + pull-to-refresh ──── */
@@ -766,32 +868,41 @@ function smartImportFileChosen(input) {
     $maintTotal = $buildingPerformance->sum(fn ($p) => $p['expenses']['maintenance']);
     $otherTotal = $buildingPerformance->sum(fn ($p) => $p['expenses']['other']);
 
-    $needsToday = array_filter([
+    // The real alerts, tone-tagged: these are what the mobile bell counts and
+    // lists. Smart import is appended below rather than being one of them —
+    // it is an always-present shortcut, not something that needs you.
+    $mAlerts = array_values(array_filter([
         $portfolioMetrics['overdueCount'] > 0 ? [
+            'tone' => 'danger',
             'icon' => 'fa-solid fa-sack-dollar',
             'title' => 'BHD ' . number_format($portfolioMetrics['outstanding'], 0) . ' overdue rent',
             'sub' => $portfolioMetrics['overdueCount'] . ' ' . \Illuminate\Support\Str::plural('tenant', $portfolioMetrics['overdueCount']) . ' overdue',
             'href' => route('invoices.index', ['status' => 'overdue']),
         ] : null,
         $portfolioMetrics['openMaintenance'] > 0 ? [
+            'tone' => 'warning',
             'icon' => 'fa-solid fa-screwdriver-wrench',
             'title' => $portfolioMetrics['openMaintenance'] . ' open ' . \Illuminate\Support\Str::plural('request', $portfolioMetrics['openMaintenance']),
             'sub' => 'Needs triage',
             'href' => route('maintenance.index'),
         ] : null,
         $portfolioMetrics['expiringLeases'] > 0 ? [
+            'tone' => 'info',
             'icon' => 'fa-solid fa-file-signature',
             'title' => $portfolioMetrics['expiringLeases'] . ' ' . \Illuminate\Support\Str::plural('lease', $portfolioMetrics['expiringLeases']) . ' ending soon',
             'sub' => 'Within 30 days',
             'href' => route('tenants.index'),
         ] : null,
-        [
-            'icon' => 'fa-solid fa-wand-magic-sparkles',
-            'title' => 'Smart import',
-            'sub' => 'Bring in properties from a spreadsheet',
-            'onclick' => 'openSmartImport()',
-        ],
-    ]);
+    ]));
+
+    $mAlertCount = count($mAlerts);
+
+    $needsToday = array_merge($mAlerts, [[
+        'icon' => 'fa-solid fa-wand-magic-sparkles',
+        'title' => 'Smart import',
+        'sub' => 'Bring in properties from a spreadsheet',
+        'onclick' => 'openSmartImport()',
+    ]]);
 @endphp
 
 {{-- ═══════════════════════════════ MOBILE DASHBOARD ═══════════════════════════════ --}}
@@ -807,15 +918,27 @@ function smartImportFileChosen(input) {
             <div class="pm-subtitle">{{ now()->format('F Y') }} &middot; {{ $stats['buildings'] }} {{ \Illuminate\Support\Str::plural('property', $stats['buildings']) }}</div>
         </div>
         <button type="button" class="pm-icon-btn theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode"><i class="fa-solid fa-moon"></i></button>
-        <button type="button" class="pm-icon-btn" title="Notifications — coming soon">
-            <i class="fa-regular fa-bell"></i>
-            @if($portfolioMetrics['overdueCount'] > 0 || $portfolioMetrics['openMaintenance'] > 0)
+        {{-- The bell was inert with a live red dot on it — it promised unread
+             items and did nothing when tapped. The alerts it was hinting at
+             already exist as "NEEDS YOU TODAY" in the Today segment, so the
+             bell now takes you straight there instead of to a dead tooltip. --}}
+        <button type="button" class="pm-icon-btn" id="pmAlertsBtn" title="Alerts"
+                aria-label="{{ $mAlertCount > 0
+                    ? $mAlertCount . ' ' . \Illuminate\Support\Str::plural('alert', $mAlertCount) . ' — show what needs you today'
+                    : 'No alerts — show what needs you today' }}">
+            <i class="fa-regular fa-bell" aria-hidden="true"></i>
+            @if($mAlertCount > 0)
                 <span class="pm-dot"></span>
             @endif
         </button>
-        <form method="POST" action="{{ route('logout') }}">
+        {{-- Asks first. This avatar is 44px from the notification bell and the
+             theme toggle, and a single tap used to end the session outright —
+             the same mistake the More sheet's sign-out row already guards
+             against, and it hands off to the same #signOutDialog sheet. --}}
+        <form method="POST" action="{{ route('logout') }}" data-signout-form>
             @csrf
-            <button type="submit" class="pm-avatar" title="Sign out">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</button>
+            <button type="submit" class="pm-avatar" title="Sign out"
+                    aria-label="Sign out of {{ auth()->user()->email ?? 'this account' }}">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</button>
         </form>
     </div>
 
@@ -899,7 +1022,7 @@ function smartImportFileChosen(input) {
                 </div>
             </div>
 
-            <div>
+            <div id="pmNeedsToday">
                 <div class="pm-section-label">NEEDS YOU TODAY</div>
                 <div class="pm-action-list">
                     @foreach($needsToday as $item)
@@ -1032,6 +1155,71 @@ function smartImportFileChosen(input) {
     </div>
 
     <button type="button" class="pm-fab" style="border:0;" onclick="openExpenseSheet()" title="Record expense"><i class="fa-solid fa-plus"></i></button>
+</div>
+
+{{-- ═══════════════════════ ALERTS SHEET (the bell) ═══════════════════════
+     Where the header bell goes. Tapping it used to switch the segmented
+     control to "Today" and scroll the alert list into view — which is a
+     silent no-op once Today is already the remembered tab, so from the
+     second tap onwards the bell looked dead. A sheet always answers.
+
+     It reads the same $mAlerts the Today segment does; the tones are the
+     app's six semantic ones, so overdue money is danger, an open request is
+     warning, and a lease running out is info. --}}
+<div class="modal-overlay" id="alertsSheet" role="dialog" aria-modal="true" aria-labelledby="alertsSheetTitle">
+    <div class="modal-box" style="--modal-w:440px;">
+        <div class="modal-header">
+            <div class="modal-header-top">
+                <div class="modal-header-icon"><i class="fa-regular fa-bell" aria-hidden="true"></i></div>
+                <div class="modal-header-text">
+                    <div class="modal-header-title" id="alertsSheetTitle">Alerts</div>
+                    <div class="modal-header-sub">
+                        @if($mAlertCount)
+                            {{ $mAlertCount }} {{ \Illuminate\Support\Str::plural('thing', $mAlertCount) }} {{ $mAlertCount === 1 ? 'needs' : 'need' }} you today
+                        @else
+                            {{ now()->format('l, j F') }}
+                        @endif
+                    </div>
+                </div>
+                <button type="button" class="modal-close-btn" data-alerts-close aria-label="Close">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            @if($mAlertCount)
+                <div class="pm-action-list">
+                    @foreach($mAlerts as $alert)
+                        <a href="{{ $alert['href'] }}" class="pm-action-row">
+                            <div class="pm-action-icon" style="background:var(--tone-{{ $alert['tone'] }}-bg);color:var(--tone-{{ $alert['tone'] }}-fg);">
+                                <i class="{{ $alert['icon'] }}" aria-hidden="true"></i>
+                            </div>
+                            <div style="flex:1;min-width:0;">
+                                <div class="pm-action-title">{{ $alert['title'] }}</div>
+                                <div class="pm-action-sub">{{ $alert['sub'] }}</div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right pm-action-chevron" aria-hidden="true"></i>
+                        </a>
+                    @endforeach
+                </div>
+            @else
+                {{-- An empty bell still has to say something. Naming the three
+                     things it checked is what makes "nothing" trustworthy. --}}
+                <div class="alerts-clear">
+                    <div class="alerts-clear-icon"><i class="fa-regular fa-circle-check" aria-hidden="true"></i></div>
+                    <div class="alerts-clear-title">You're all clear</div>
+                    <div class="alerts-clear-sub">No overdue rent, no open requests, and no leases ending in the next 30 days.</div>
+                </div>
+            @endif
+        </div>
+
+        <div class="modal-footer alerts-footer">
+            <button type="button" class="btn btn-outline" id="alertsOpenToday">
+                <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Open the Today view
+            </button>
+        </div>
+    </div>
 </div>
 
 @include('components.expense-sheet')
