@@ -1,0 +1,162 @@
+[
+    {
+        "name": "admin_audit-log",
+        "url": "\/admin\/audit-log"
+    },
+    {
+        "name": "admin_error-log",
+        "url": "\/admin\/error-log"
+    },
+    {
+        "name": "buildings_create",
+        "url": "\/buildings\/create"
+    },
+    {
+        "name": "buildings_index",
+        "url": "\/buildings"
+    },
+    {
+        "name": "dashboard",
+        "url": "\/dashboard"
+    },
+    {
+        "name": "data_index",
+        "url": "\/data"
+    },
+    {
+        "name": "ewa-bills_create",
+        "url": "\/ewa-bills\/create"
+    },
+    {
+        "name": "ewa-bills_index",
+        "url": "\/ewa-bills"
+    },
+    {
+        "name": "ewa-bills_summary_create",
+        "url": "\/ewa-bills\/summary"
+    },
+    {
+        "name": "expenses_create",
+        "url": "\/expenses\/create"
+    },
+    {
+        "name": "expenses_index",
+        "url": "\/expenses"
+    },
+    {
+        "name": "floors_global",
+        "url": "\/floors"
+    },
+    {
+        "name": "form-configs_index",
+        "url": "\/form-configs"
+    },
+    {
+        "name": "invoices_create",
+        "url": "\/invoices\/create"
+    },
+    {
+        "name": "invoices_index",
+        "url": "\/invoices"
+    },
+    {
+        "name": "lease-contracts_create",
+        "url": "\/lease-contracts\/create"
+    },
+    {
+        "name": "lease-contracts_index",
+        "url": "\/lease-contracts"
+    },
+    {
+        "name": "maintenance_create",
+        "url": "\/maintenance\/create"
+    },
+    {
+        "name": "maintenance_index",
+        "url": "\/maintenance"
+    },
+    {
+        "name": "payments_index",
+        "url": "\/payments"
+    },
+    {
+        "name": "property-units_create",
+        "url": "\/property-units\/create"
+    },
+    {
+        "name": "property-units_index",
+        "url": "\/property-units"
+    },
+    {
+        "name": "reports_bill-wise-statement",
+        "url": "\/reports\/bill-wise-statement"
+    },
+    {
+        "name": "reports_collection",
+        "url": "\/reports\/collection"
+    },
+    {
+        "name": "reports_financial-summary",
+        "url": "\/reports\/financial-summary"
+    },
+    {
+        "name": "reports_group-ageing",
+        "url": "\/reports\/group-ageing"
+    },
+    {
+        "name": "reports_index",
+        "url": "\/reports"
+    },
+    {
+        "name": "reports_profit-loss",
+        "url": "\/reports\/profit-loss"
+    },
+    {
+        "name": "reports_rent-schedule",
+        "url": "\/reports\/rent-schedule"
+    },
+    {
+        "name": "reports_tenant-ageing",
+        "url": "\/reports\/tenant-ageing"
+    },
+    {
+        "name": "reports_tenant-ledger",
+        "url": "\/reports\/tenant-ledger"
+    },
+    {
+        "name": "reports_tenant-statement",
+        "url": "\/reports\/tenant-statement"
+    },
+    {
+        "name": "reports_vat-return",
+        "url": "\/reports\/vat-return"
+    },
+    {
+        "name": "revenues_create",
+        "url": "\/revenues\/create"
+    },
+    {
+        "name": "revenues_index",
+        "url": "\/revenues"
+    },
+    {
+        "name": "settings_azure-mail_edit",
+        "url": "\/settings\/azure-mail"
+    },
+    {
+        "name": "tenants_create",
+        "url": "\/tenants\/create"
+    },
+    {
+        "name": "tenants_index",
+        "url": "\/tenants"
+    },
+    {
+        "name": "users_create",
+        "url": "\/users\/create"
+    },
+    {
+        "name": "users_index",
+        "url": "\/users"
+    }
+]
