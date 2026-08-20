@@ -89,14 +89,17 @@ class ShellAccountMenuTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_both_top_bar_dropdowns_use_the_shared_panel(): void
+    public function test_every_top_bar_dropdown_uses_the_shared_panel(): void
     {
         $topbar = $this->topbar();
 
-        // One handler drives both, keyed off these hooks; renaming one without
-        // the other silently leaves a panel that cannot be opened.
-        $this->assertSame(2, substr_count($topbar, 'data-pop>'), 'Expected exactly two top-bar dropdowns.');
-        $this->assertSame(2, substr_count($topbar, 'data-pop-toggle'));
-        $this->assertSame(2, substr_count($topbar, 'class="shell-pop '));
+        // Four: bell, help and account in the shell bar, plus the help panel in
+        // the ≤768px bar (this slice runs to the last </header>, so it covers
+        // both bars). One handler drives them all, keyed off these hooks;
+        // renaming one without the others silently leaves a panel that cannot
+        // be opened — which is exactly how the help button shipped inert.
+        $this->assertSame(4, substr_count($topbar, 'data-pop>'), 'Expected four top-bar dropdowns.');
+        $this->assertSame(4, substr_count($topbar, 'data-pop-toggle'));
+        $this->assertSame(4, substr_count($topbar, 'class="shell-pop '));
     }
 }
