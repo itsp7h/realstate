@@ -499,8 +499,16 @@
             /* Light touch — the scrim over the photo already carries most of
                the separation, and the heavier pair before this read as grubby. */
             text-shadow: 0 2px 12px rgba(0,0,0,.4);
+            transition: opacity .3s ease;
+            /* Decoration over the photo: taps belong to the photo underneath,
+               which is what collapses the sheet. */
+            pointer-events: none;
         }
         .m-headline em { font-style: normal; color: var(--accent); }
+        /* Expanded, the photo band shrinks and the building — sign and all —
+           rides up into the headline. Little of the photo is left to caption
+           by then, so the headline gets out of the way. */
+        .phone.is-sheet-open .m-headline { opacity: 0; }
 
         .theme-toggle-btn {
             width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.14);
@@ -541,14 +549,24 @@
         .sheet {
             border-radius: 24px 24px 0 0;
             /* The gold accent across the top edge — the mobile counterpart to
-               .login-card::before on the desktop card. Stated here because the
-               base .sheet rule above draws a 1px --m-sheet-border hairline in
-               its place, and this block is the one that wins. There is no
-               .sheet::before to collide with, so it is a real border rather
-               than a pinned bar, and the radius curves it round the corners.
+               .login-card::before on the desktop card.
+
+               A pinned bar, not a border: `border-top` gets mitred round the
+               24px radius and sweeps ~24px down both sides, which reads as a
+               gold box drawn around the header row. A background band is
+               clipped by the radius instead, so the line stops at the corners
+               and runs full width under them. background-attachment stays
+               `scroll` (the default), which on this scroll container pins the
+               band to the element rather than the content — so it does not
+               slide away when the form is scrolled.
+
                --accent is #D8B25F and is declared once, not per theme, so the
                line is the same gold in light and dark. */
-            border-top: 3px solid var(--accent);
+            border-top: 0;
+            background-image: linear-gradient(var(--accent), var(--accent));
+            background-repeat: no-repeat;
+            background-size: 100% 3px;
+            background-position: 0 0;
             transform: translateY(calc(100% - var(--sheet-peek, 140px)));
             transition: transform .35s cubic-bezier(.22,1,.36,1);
         }
@@ -582,13 +600,12 @@
             padding: 0; border: none; background: none; cursor: pointer;
             -webkit-tap-highlight-color: transparent;
         }
+        /* Plain in both states and both themes: a grip that turned gold on
+           open put a second gold element next to the hint and the top line. */
         .sheet-grip {
-            width: 40px; height: 4px; border-radius: 2px;
-            background: var(--m-home-indicator);
-            transition: background var(--dur-base, .18s) ease;
+            width: 44px; height: 5px; border-radius: 3px;
+            background: #d5dae3;
         }
-        .sheet-handle:hover .sheet-grip,
-        .phone.is-sheet-open .sheet-grip { background: var(--accent); }
         .sheet-handle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
         .sheet-head { flex: none; }
         /* The docked sheet has to say that it opens. Parked in the top-right
@@ -609,7 +626,9 @@
             /* Stated, not inherited: a <button> carries its own line-height,
                which left the two chevrons 2px apart as the labels swapped. */
             line-height: 1;
-            color: var(--accent);
+            /* Deeper than --accent on purpose: gold hint text over the gold
+               top line and the light frosted sheet measured 1.07:1. */
+            color: #8a6d20;
         }
         /* .close-hint does something, so it is a button. */
         .close-hint {
@@ -626,7 +645,7 @@
         /* Spec 4: no slide. The state change still happens, it just arrives
            rather than travels. */
         @media (prefers-reduced-motion: reduce) {
-            .sheet, .sheet-grip { transition: none; }
+            .sheet, .m-headline { transition: none; }
         }
         .sheet h1 { margin: 0 0 8px; font-weight: 700; font-size: 30px; line-height: 1.12; color: var(--m-heading); letter-spacing: -.6px; }
         .m-subcopy { margin: 0 0 24px; font-size: 14px; line-height: 1.5; color: var(--m-subcopy); }
