@@ -5,32 +5,22 @@
 
 @push('styles')
 <style>
-.role-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
-    padding: 3px 10px; border-radius: 20px;
-}
-.role-badge.admin       { background: var(--accent-dim); color: var(--accent); }
-.role-badge.user        { background: var(--tone-info-bg); color:var(--tone-info-fg); }
-.role-badge.maintenance { background: var(--page-bg); color: var(--text-muted); border: 1px solid var(--card-border); }
 </style>
 @endpush
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Users</h1>
-        <p class="page-header-sub">Accounts that can sign in to this system, and what each one is allowed to do</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('users.create') }}" class="btn btn-primary">
-            <i class="fa-solid fa-plus"></i> Add User
-        </a>
-    </div>
-</div>
+@section('page-title', 'Users')
+@section('page-subtitle', 'Accounts that can sign in to this system, and what each one is allowed to do')
+@section('page-actions')
+    <a href="{{ route('users.create') }}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Add User
+    </a>
+@endsection
 
-<div class="card" style="overflow:hidden;">
+@include('partials.access-tabs', ['active' => 'accounts'])
+
+<div class="table-card">
 
     <form method="GET" action="{{ route('users.index') }}">
         <div class="filter-bar">
@@ -73,11 +63,11 @@
             <tbody>
                 @foreach($users as $user)
                 <tr data-href="{{ route('users.edit', $user) }}" style="cursor:pointer">
-                    <td style="font-weight:600">{{ $user->name }}</td>
-                    <td style="color:var(--text-secondary)">{{ $user->email }}</td>
-                    <td><span class="role-badge {{ $user->role }}">{{ $user->role_label }}</span></td>
-                    <td style="font-size:12.5px;color:var(--text-muted)">{{ $user->created_at->format('d M Y') }}</td>
-                    <td onclick="event.stopPropagation()">
+                    <td data-label="Name" style="font-weight:600">{{ $user->name }}</td>
+                    <td data-label="Email" style="color:var(--text-secondary)">{{ $user->email }}</td>
+                    <td data-label="Role"><span class="status-badge {{ $user->role }}">{{ $user->role_label }}</span></td>
+                    <td data-label="Joined" style="font-size:12.5px;color:var(--text-muted)">{{ $user->created_at->format('d M Y') }}</td>
+                    <td data-label="Actions" onclick="event.stopPropagation()">
                         <div class="action-btns" style="justify-content:flex-end;">
                             <a href="{{ route('users.edit', $user) }}" class="btn btn-outline btn-sm" title="Edit">
                                 <i class="fa-regular fa-pen-to-square"></i>
@@ -98,7 +88,13 @@
             </tbody>
         </table>
     </div>
-    <div style="padding:16px 20px;">{{ $users->links() }}</div>
+    <div class="table-footer">
+        <div class="result-count">
+            Showing <strong>{{ $users->firstItem() ?? 0 }}–{{ $users->lastItem() ?? 0 }}</strong>
+            of <strong>{{ number_format($users->total()) }}</strong> users
+        </div>
+        {{ $users->links() }}
+    </div>
     @endif
 </div>
 

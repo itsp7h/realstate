@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\PropertyUnitController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\FloorController;
@@ -23,13 +24,24 @@ use App\Http\Controllers\InvoiceNoteController;
 use App\Http\Controllers\TenantNoteController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\AzureMailSettingController;
+use App\Http\Controllers\BrandingSettingController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\RevenueController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->name('login.attempt');
+
+    // Password reset by emailed link. Rate limited and audited in the
+    // controller; see PasswordResetController for why the responses are
+    // deliberately identical whether or not the address has an account.
+    Route::get('/forgot-password',        [PasswordResetController::class, 'request'])->name('password.request');
+    Route::post('/forgot-password',       [PasswordResetController::class, 'email'])->name('password.email');
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'reset'])->name('password.reset');
+    Route::post('/reset-password',        [PasswordResetController::class, 'update'])->name('password.update');
 
     // Temporary side-by-side design previews for the mobile login redesign
     // (options 1a/1b) — both post to the real login route, so they're fully
@@ -68,6 +80,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/', fn() => redirect()->route('dashboard'));
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // The ⌘K palette's search. Server-side and role-gated; see SearchController.
+    Route::get('/search', SearchController::class)->name('search');
 
     Route::get('/property-units/export', [PropertyUnitController::class, 'export'])->name('property-units.export');
     Route::get('/property-units/building/{building}/data', [PropertyUnitController::class, 'buildingData'])->name('property-units.building-data');
@@ -174,6 +189,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/settings/azure-mail',        [AzureMailSettingController::class, 'edit'])->name('settings.azure-mail.edit');
         Route::put('/settings/azure-mail',        [AzureMailSettingController::class, 'update'])->name('settings.azure-mail.update');
         Route::post('/settings/azure-mail/test',  [AzureMailSettingController::class, 'sendTest'])->name('settings.azure-mail.test');
+
+        Route::get('/settings/branding', [BrandingSettingController::class, 'edit'])->name('settings.branding.edit');
+        Route::put('/settings/branding', [BrandingSettingController::class, 'update'])->name('settings.branding.update');
     });
 
     Route::get('/form-configs', [FormConfigController::class, 'index'])->name('form-configs.index');
@@ -185,6 +203,11 @@ Route::middleware('auth')->group(function () {
     // User management — Admin only
     Route::middleware('role:admin')->group(function () {
         Route::resource('users', UserController::class);
+
+        // Roles & Permissions — a read-only reference for what each role can
+        // reach. Roles are code-defined (App\Support\RoleCatalog), so there is
+        // no store/update/destroy here by design.
+        Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
     });
 
 });
