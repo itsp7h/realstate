@@ -623,8 +623,8 @@
         {{-- Bell + panel. Items come from App\Services\AttentionFeed via a view
              composer, and every one deep-links into the already-filtered list
              it describes. --}}
-        <div class="shell-bell" data-bell>
-            <button type="button" class="shell-iconbtn" data-bell-toggle
+        <div class="shell-bell" data-pop>
+            <button type="button" class="shell-iconbtn" data-pop-toggle
                     aria-expanded="false" aria-controls="shell-notif"
                     title="Notifications"
                     aria-label="Notifications{{ $attentionCount ? ' — '.$attentionCount.' need attention' : '' }}">
@@ -634,10 +634,10 @@
                 @endif
             </button>
 
-            <div class="shell-notif" id="shell-notif" hidden role="dialog" aria-label="Needs attention">
-                <div class="shell-notif-head">
+            <div class="shell-pop shell-notif" id="shell-notif" hidden role="dialog" aria-label="Needs attention">
+                <div class="shell-pop-head">
                     <span>Needs attention</span>
-                    @if($attentionCount)<span class="shell-notif-count">{{ $attentionCount }}</span>@endif
+                    @if($attentionCount)<span class="shell-pop-count">{{ $attentionCount }}</span>@endif
                 </div>
 
                 @forelse($attentionItems as $item)
@@ -666,15 +666,36 @@
 
         <span class="shell-divider" aria-hidden="true"></span>
 
-        <form method="POST" action="{{ route('logout') }}" id="shellLogout">@csrf</form>
-        <button type="submit" form="shellLogout" class="shell-user" title="Sign out" aria-label="Sign out">
-            <span class="shell-avatar">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</span>
-            <span>
-                <span class="shell-user-name">{{ auth()->user()->name ?? 'Guest' }}</span>
-                <span class="shell-user-role">{{ auth()->user()->role_label ?? '' }}</span>
-            </span>
-            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
-        </button>
+        {{-- The chevron said "menu" and the click said "goodbye": the whole chip
+             was a submit button for the logout form, so one stray click ended
+             the session with nothing asked. It opens a menu now, and signing
+             out is a deliberate second click inside it. --}}
+        <div class="shell-account" data-pop>
+            <button type="button" class="shell-user" data-pop-toggle
+                    aria-expanded="false" aria-controls="shell-account-menu"
+                    aria-haspopup="true" title="Account">
+                <span class="shell-avatar">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</span>
+                <span>
+                    <span class="shell-user-name">{{ auth()->user()->name ?? 'Guest' }}</span>
+                    <span class="shell-user-role">{{ auth()->user()->role_label ?? '' }}</span>
+                </span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+
+            <div class="shell-pop shell-account-menu" id="shell-account-menu" hidden>
+                <div class="shell-pop-identity">
+                    <strong>{{ auth()->user()->name ?? 'Guest' }}</strong>
+                    <span>{{ auth()->user()->email ?? '' }}</span>
+                </div>
+                <form method="POST" action="{{ route('logout') }}" id="shellLogout">
+                    @csrf
+                    <button type="submit" class="shell-menu-item is-danger">
+                        <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+                        Sign out
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 
         <!-- TOPBAR (≤768px only; the shell toolbar and page header replace it above) -->
@@ -941,22 +962,41 @@ function mDebounceSubmit(el) {
         try { localStorage.setItem('p7-nav', hidden ? 'collapsed' : 'open'); } catch (e) {}
     });
 
-    /* Notification bell. Click to open, click-away or Esc to close. */
-    var bell = document.querySelector('[data-bell]');
-    if (bell) {
-        var bellBtn   = bell.querySelector('[data-bell-toggle]');
-        var bellPanel = bell.querySelector('.shell-notif');
-        var bellOpen  = function () { return !bellPanel.hasAttribute('hidden'); };
-        var setBell   = function (open) {
-            if (open) { bellPanel.removeAttribute('hidden'); } else { bellPanel.setAttribute('hidden', ''); }
-            bellBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        };
-        bellBtn.addEventListener('click', function (e) { e.stopPropagation(); setBell(!bellOpen()); });
+    /* Top-bar dropdowns — the bell and the account chip. One handler: opening
+       either closes the other, click-away and Esc close, and focus returns to
+       the trigger so the keyboard does not get stranded in a hidden panel. */
+    var pops = Array.prototype.map.call(document.querySelectorAll('[data-pop]'), function (root) {
+        return { root: root, btn: root.querySelector('[data-pop-toggle]'), panel: root.querySelector('.shell-pop') };
+    }).filter(function (p) { return p.btn && p.panel; });
+
+    function popIsOpen(p) { return !p.panel.hasAttribute('hidden'); }
+    function popSet(p, open) {
+        if (open) { p.panel.removeAttribute('hidden'); } else { p.panel.setAttribute('hidden', ''); }
+        p.btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function popCloseAll(except) {
+        pops.forEach(function (p) { if (p !== except && popIsOpen(p)) popSet(p, false); });
+    }
+
+    pops.forEach(function (p) {
+        p.btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var willOpen = !popIsOpen(p);
+            popCloseAll(p);
+            popSet(p, willOpen);
+        });
+    });
+    if (pops.length) {
         document.addEventListener('click', function (e) {
-            if (bellOpen() && !bell.contains(e.target)) setBell(false);
+            pops.forEach(function (p) {
+                if (popIsOpen(p) && !p.root.contains(e.target)) popSet(p, false);
+            });
         });
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && bellOpen()) { setBell(false); bellBtn.focus(); }
+            if (e.key !== 'Escape') return;
+            pops.forEach(function (p) {
+                if (popIsOpen(p)) { popSet(p, false); p.btn.focus(); }
+            });
         });
     }
 

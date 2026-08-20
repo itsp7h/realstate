@@ -4195,15 +4195,19 @@ body.app-shell {
     color: var(--text-secondary);
 }
 
-/* ── §7.5b  Notification bell ───────────────────────────────────────────────
-     The bell was a button with no behaviour and no data behind it. It now
-     opens a panel of derived items (App\Services\AttentionFeed), each one a
-     link into the list it describes.
+/* ── §7.5b  Top-bar dropdowns ───────────────────────────────────────────────
+     Two things in the top bar open a panel: the notification bell and the
+     account chip. Both hang off their trigger, so the chrome is shared
+     (.shell-pop) and only the contents differ.
 
-     A panel, not a page: everything in it is a count that belongs to a list
-     the app already has, so the bell's job is to point at the right filtered
-     list, never to become a fifth place where invoices live. */
-.shell-bell { position: relative; display: flex; }
+     A panel, not a page: everything in the bell is a count that belongs to a
+     list the app already has, so its job is to point at the right filtered
+     list, never to become a fifth place where invoices live. The account
+     panel's job is smaller still — it exists so that signing out takes an
+     intentional second click, and so the chevron on the chip is telling the
+     truth about what a click does. */
+.shell-bell,
+.shell-account { position: relative; display: flex; }
 /* Count riding the bell. Tabular figures so 3 and 11 sit the same, and the
    ring in --topbar-bg keeps it legible where it overlaps the glyph. */
 .shell-bell-badge {
@@ -4224,7 +4228,7 @@ body.app-shell {
     text-align: center;
     pointer-events: none;
 }
-.shell-notif {
+.shell-pop {
     position: absolute;
     top: calc(100% + 9px);
     right: 0;
@@ -4237,7 +4241,7 @@ body.app-shell {
     box-shadow: var(--shadow-lg);
     overflow: hidden;
 }
-.shell-notif-head {
+.shell-pop-head {
     display: flex;
     align-items: center;
     gap: var(--sp-2);
@@ -4249,7 +4253,7 @@ body.app-shell {
     font-weight: 700;
     color: var(--text-primary);
 }
-.shell-notif-count {
+.shell-pop-head .shell-pop-count {
     margin-left: auto;
     padding: 1px 8px;
     border-radius: var(--radius-pill);
@@ -4259,6 +4263,38 @@ body.app-shell {
     font-weight: 700;
     font-variant-numeric: tabular-nums;
 }
+/* A menu row: a link, or a form's submit. Full width so the whole row is the
+   target, and the destructive one is toned rather than shouted. */
+.shell-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    border: none;
+    background: none;
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+}
+.shell-menu-item:hover { background: var(--page-bg); }
+.shell-menu-item:focus-visible { outline: var(--focus-outline); outline-offset: -2px; }
+.shell-menu-item > i { width: 14px; text-align: center; color: var(--text-muted); flex: none; }
+.shell-menu-item.is-danger { color: var(--tone-danger-fg); }
+.shell-menu-item.is-danger:hover { background: var(--tone-danger-bg); }
+.shell-menu-item.is-danger > i { color: var(--tone-danger-fg); }
+/* Identity block at the head of the account panel. */
+.shell-pop-identity { padding: 12px 14px; border-bottom: 1px solid var(--card-border); }
+.shell-pop-identity strong { display: block; font-size: var(--fs-sm); color: var(--text-primary); }
+.shell-pop-identity span { display: block; font-size: var(--fs-xs); color: var(--text-muted); margin-top: 1px; overflow-wrap: anywhere; }
+/* The chevron points at the state it will move to. */
+.shell-user > .fa-chevron-down { transition: transform var(--dur-base) ease; }
+[aria-expanded="true"] > .fa-chevron-down { transform: rotate(180deg); }
+
 .shell-notif-item {
     display: flex;
     align-items: center;
@@ -4316,7 +4352,7 @@ body.app-shell {
 .shell-notif-foot:hover { color: var(--tone-accent-fg); }
 /* On a phone the panel would run off the edge; pin it to the viewport. */
 @media (max-width: 600px) {
-    .shell-notif { position: fixed; top: 64px; right: var(--sp-3); left: var(--sp-3); width: auto; }
+    .shell-pop { position: fixed; top: 64px; right: var(--sp-3); left: var(--sp-3); width: auto; }
 }
 
 /* ── §7.6  Focus, per §8 ────────────────────────────────────────────────── */
