@@ -283,8 +283,24 @@ class AuthTest extends TestCase
     {
         $this->actingAs(User::factory()->maintenance()->create());
 
-        $response = $this->delete('/maintenance/1');
+        // Against a real record on purpose. This used to pass with a
+        // hardcoded id and nothing behind it, because the restriction
+        // middlewares sat on the global stack and answered before route
+        // binding could 404. They run inside the web group now — after
+        // SubstituteBindings — so a missing record is a 404 and the rule this
+        // test is about would never be reached.
+        $request = \App\Models\MaintenanceRequest::create([
+            'date'               => '2026-05-21',
+            'property'           => 'Tower A',
+            'tenant'             => 'Ahmed Ali',
+            'flat'               => '3B',
+            'contact_no'         => '+973 3300 0000',
+            'available_datetime' => '2026-05-22 10:00:00',
+            'apartment_status'   => 'occupied',
+        ]);
 
-        $response->assertForbidden();
+        $this->delete('/maintenance/'.$request->id)->assertForbidden();
+
+        $this->assertDatabaseHas('maintenance_requests', ['id' => $request->id]);
     }
 }
