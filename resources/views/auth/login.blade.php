@@ -25,12 +25,19 @@
 </script>
 <script>
     (function () {
-        // Applied before first paint to avoid a flash of the wrong theme.
-        // Shares the same storage key as the app, but defaults to dark here
-        // (the mobile login's photo hero is designed dark-first) unless the
-        // user has explicitly chosen light somewhere.
+        // Applied before first paint to avoid a flash of the wrong theme, and
+        // resolved exactly as layouts/admin.blade.php resolves it: saved
+        // choice, else the OS preference. Sign-in used to force dark unless
+        // light had been chosen explicitly, which meant a light-mode user met a
+        // dark sign-in page and then a light app — and a dark-mode user got a
+        // sign-in page pinned light while the app around it went dark.
+        //
+        // The mobile hero does not need the override: its --m-* block already
+        // carries a full light set (the frosted-glass treatment) alongside the
+        // dark one, so it reads correctly either way.
         var saved = localStorage.getItem('p7-theme');
-        document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : 'dark');
+        var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
     })();
 </script>
 
@@ -99,44 +106,32 @@
         display: flex;
         min-height: 100vh;
 
-        /* ── Ink and surfaces ─────────────────────────────────────────── */
-        --page-bg:        #EEF1F6;
-        --card-bg:        #FFFFFF;
-        --card-border:    #D5DAE3;
-        --text-primary:   #1E2C4F;   /* headings + body ink */
-        --text-secondary: #6B7689;   /* field labels */
-        --text-muted:     #6B7689;
-        --text-faint:     #97A1B4;   /* footnotes */
-        --ink-gold:       #8A6D20;   /* eyebrows + links: gold as text, 5.3:1 on white */
+        /* ── NO COLOUR IS DECLARED HERE, deliberately ──────────────────────
+           This block used to re-type twenty-six of app-core's tokens as
+           literals to pin the desktop half light. Sixteen matched the real
+           token; ten had drifted — --text-secondary #6B7689 against the
+           system's #5D6880, --text-muted #6B7689 against #626E85, gold-as-text
+           #8A6D20 against #84681E, and --input-border #D5DAE3 against #848FA6,
+           which is the darker value app-core picked for contrast.
 
-        /* ── Gold ─────────────────────────────────────────────────────── */
-        --accent:            #D8B25F;
-        --accent-strong:     #CAA14F;
-        --accent-glow:       rgba(216,178,95,.22);   /* the focus ring */
-        --accent-gradient:   linear-gradient(100deg, #EDCD85 0%, #D0A854 100%);
-        --accent-lift:       0 8px 20px rgba(202,161,79,.32);
-        --accent-lift-hover: 0 12px 26px rgba(202,161,79,.42);
-        --on-accent:         #1E2C4F;
+           Pinning also meant the page could only ever be light: in dark mode
+           the app went dark and sign-in stayed white, on the light gold
+           gradient while every button in the app had switched to the dark one.
 
-        /* Alerts and field errors. Pinned to the light tone set so a
-           validation message stays readable on the white card even while the
-           document carries data-theme="dark" for the mobile screen. */
-        --danger:             #B4483C;
-        --tone-danger-fg:     #B4483C;
-        --tone-danger-bg:     #F9E9E7;
-        --tone-danger-border: #F0CFCB;
+           Inheriting instead means both themes match by construction, and a
+           token changed in app-core §1.1 reaches this page like any other.
+           Gold as text is --tone-accent-fg, which app-core already fixes at
+           6.4:1 in light and lifts to #EDCD85 in dark.
+
+           What stays below is geometry, not colour: sign-in has one job and
+           its fields are deliberately taller and softer than a data form's. */
 
         /* ── Geometry ─────────────────────────────────────────────────── */
         --card-radius:    16px;
-        --radius:         12px;
         --radius-sm:      12px;   /* fields and buttons share the 12px corner */
         --h-control:      50px;   /* fields */
         --h-control-lg:   52px;   /* the submit */
         --border-control: 1px;
-
-        --input-bg:       #FFFFFF;
-        --input-border:   #D5DAE3;
-        --input-focus:    #CAA14F;
     }
 
     .login-brand {
@@ -150,7 +145,9 @@
            off the panel's own baseline. */
         justify-content: space-between;
         padding: var(--sp-10) 60px;
-        background: linear-gradient(165deg, #1E2C4F 0%, #0B132B 100%);
+        /* The same navy the sidebar is painted in, so the panel you sign in
+           against is the panel you land beside. */
+        background: linear-gradient(165deg, var(--sidebar-active) 0%, var(--sidebar-bg) 100%);
     }
     /* The photo is the panel's picture, not its texture — the gradient below
        is the ground it sits on and the scrim above is what makes it readable.
@@ -303,7 +300,7 @@
         position: absolute;
         top: 0; left: 0; right: 0;
         height: 3px;
-        background: linear-gradient(90deg, #EDCD85, #CAA14F, #EDCD85);
+        background: linear-gradient(90deg, var(--accent), var(--accent-strong), var(--accent));
         background-size: 200% 100%;
         transform: scaleX(0);
         transform-origin: center;
@@ -323,7 +320,7 @@
         font-weight: 600;
         letter-spacing: 0.16em;
         text-transform: uppercase;
-        color: var(--ink-gold);
+        color: var(--tone-accent-fg);
     }
     .login-eyebrow::before {
         content: '';
@@ -426,11 +423,6 @@
         --m-error-border:  rgba(239,68,68,.3);
         --m-error-text:    #FCA5A5;
         --m-link:          #6FA8F5;
-        --m-divider-line:  rgba(255,255,255,.1);
-        --m-divider-label: rgba(255,255,255,.4);
-        --m-social-bg:     rgba(255,255,255,.05);
-        --m-social-border: rgba(255,255,255,.11);
-        --m-social-text:   #fff;
         --m-legal:         rgba(255,255,255,.38);
         --m-home-indicator:rgba(255,255,255,.25);
     }
@@ -454,11 +446,6 @@
         --m-error-border:  #FECACA;
         --m-error-text:    #991B1B;
         --m-link:          #1B62C4;
-        --m-divider-line:  rgba(14,20,32,.14);
-        --m-divider-label: rgba(14,20,32,.42);
-        --m-social-bg:     rgba(255,255,255,.5);
-        --m-social-border: rgba(255,255,255,.7);
-        --m-social-text:   #0E1420;
         --m-legal:         rgba(14,20,32,.42);
         --m-home-indicator:rgba(14,20,32,.2);
         --m-toggle-pw:     #B87A05;
@@ -487,22 +474,40 @@
             position: absolute; top: 0; left: 0; right: 0; height: 430px;
             background: linear-gradient(180deg, rgba(6,11,20,.62) 0%, rgba(6,11,20,.15) 40%, rgba(6,11,20,.75) 100%);
         }
-        .watermark {
-            position: absolute; top: 236px; left: 0; right: 0; text-align: center;
-            font-family: 'Figtree', sans-serif; font-weight: 800; font-size: 132px; line-height: 0.8;
-            letter-spacing: -6px; color: transparent; -webkit-text-stroke: 1.5px var(--accent);
-            pointer-events: none; user-select: none;
-        }
         .hero-top { position: absolute; top: 0; left: 0; right: 0; padding: calc(24px + env(safe-area-inset-top)) 24px 0; display: flex; align-items: center; justify-content: space-between; }
         .m-brand-row { display: flex; align-items: center; gap: 11px; margin-top: 16px; }
         .m-brand-row img { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
         .m-brand-title { font-weight: 700; font-size: 14.5px; line-height: 1.1; color: #fff; }
         .m-brand-sub { font-weight: 700; font-size: 9px; line-height: 1.4; letter-spacing: 1.6px; color: var(--accent); }
+        /* Top-right of the hero, opposite the brand row. It sits in the
+           scrim's darkest band, so a light wash over the photo is enough
+           chrome — with the blur to keep the glyph off busy glass. */
+        /* The brand statement over the photo — the mobile echo of the desktop
+           brand panel, gold accent on the last line and all. Parked above the
+           342px sheet lip so expanding the sheet never covers it, and shadowed
+           because it sits on sky, which is the lightest part of the photo. */
+        .m-headline {
+            position: absolute; z-index: 2;
+            top: 122px; left: 26px; right: 26px;
+            /* Breathing room from the brand header above it. */
+            margin: 40px 0 0;
+            max-width: 300px;
+            font-family: 'Figtree', sans-serif;
+            font-size: 28px; font-weight: 700;
+            line-height: 1.2; letter-spacing: -.02em;
+            color: #fff;
+            /* Light touch — the scrim over the photo already carries most of
+               the separation, and the heavier pair before this read as grubby. */
+            text-shadow: 0 2px 12px rgba(0,0,0,.4);
+        }
+        .m-headline em { font-style: normal; color: var(--accent); }
+
         .theme-toggle-btn {
-            width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.12);
-            border: 1px solid rgba(255,255,255,.16); color: #fff; font-size: 14px;
+            width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.14);
+            border: 1px solid rgba(255,255,255,.2); color: #fff; font-size: 14px;
             display: flex; align-items: center; justify-content: center; cursor: pointer;
             margin-top: 16px; flex-shrink: 0;
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
         }
 
         .sheet {
@@ -512,7 +517,117 @@
             box-shadow: 0 -26px 60px var(--m-sheet-shadow);
             overflow-y: auto;
         }
-        .sheet-inner { margin: auto 0; width: 100%; }
+        /* Top-aligned, not centred. This was `margin: auto 0` from when the
+           heading lived inside it and the content always overflowed, so the
+           auto margins resolved to nothing. The heading is now its own block
+           that has to sit flush against the sheet's top edge — it is the part
+           that peeks when docked — and with the form shorter than the sheet on
+           a tall phone, centring the remainder opened a ~57px hole under the
+           subtitle and pushed the collapsed peek from 159px to 194px. */
+        .sheet-inner { margin: 0; width: 100%; }
+
+        /* ── Collapsible sheet ─────────────────────────────────────────────
+             Docked, the sheet shows only its handle and heading so the
+             building photo owns the screen; expanded, it sits exactly where
+             it always did (top: 342px), so the open state is the design as
+             shipped and only the closed state is new.
+
+             The travel is a percentage of the sheet's own height less the
+             peek, so it stays correct at any viewport height without JS
+             recomputing it on resize. --sheet-peek is measured in the script
+             from the handle plus the heading, so a subtitle that wraps to a
+             third line still clears the fold; 140px is the design's figure
+             and the fallback if the script never runs. */
+        .sheet {
+            border-radius: 24px 24px 0 0;
+            /* The gold accent across the top edge — the mobile counterpart to
+               .login-card::before on the desktop card. Stated here because the
+               base .sheet rule above draws a 1px --m-sheet-border hairline in
+               its place, and this block is the one that wins. There is no
+               .sheet::before to collide with, so it is a real border rather
+               than a pinned bar, and the radius curves it round the corners.
+               --accent is #D8B25F and is declared once, not per theme, so the
+               line is the same gold in light and dark. */
+            border-top: 3px solid var(--accent);
+            transform: translateY(calc(100% - var(--sheet-peek, 140px)));
+            transition: transform .35s cubic-bezier(.22,1,.36,1);
+        }
+        .phone.is-sheet-open .sheet { transform: translateY(0); }
+        /* Docked, a drag on the sheet is a disclosure gesture, so the hidden
+           form must not swallow it as a scroll. */
+        .phone:not(.is-sheet-open) .sheet { overflow: hidden; }
+
+        /* Normally a 430px band with the sheet over its foot; docked, the
+           photo is the whole viewport. */
+        .phone:not(.is-sheet-open) .photo,
+        .phone:not(.is-sheet-open) .photo-scrim { height: 100%; }
+
+        /* A real button, so the disclosure is reachable by keyboard and
+           announced — with a 28px target around the 4px bar, and the bar
+           itself borrowing the home-indicator token it visually echoes. */
+        /* The row carries the height and margins the handle used to, and is
+           the hints' positioning context — so "vertically aligned with the
+           handle" is align-items, not a hand-tuned top offset. The hint was
+           previously absolute against the sheet, landing 2.5px off the grip's
+           centre, which is what made it read as a second line. */
+        .sheet-hrow {
+            position: relative;
+            flex: none;
+            display: flex; align-items: center; justify-content: center;
+            height: 28px; margin: -10px 0 6px;
+        }
+        .sheet-handle {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; height: 100%;
+            padding: 0; border: none; background: none; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .sheet-grip {
+            width: 40px; height: 4px; border-radius: 2px;
+            background: var(--m-home-indicator);
+            transition: background var(--dur-base, .18s) ease;
+        }
+        .sheet-handle:hover .sheet-grip,
+        .phone.is-sheet-open .sheet-grip { background: var(--accent); }
+        .sheet-handle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+        .sheet-head { flex: none; }
+        /* The docked sheet has to say that it opens. Parked in the top-right
+           corner and out of flow, so it neither pushes the heading down nor
+           moves the fold. Retired once the sheet is open — "Tap to sign in"
+           over an open form would be nonsense. */
+        .peek-hint,
+        .close-hint {
+            position: absolute; top: 50%; right: 0;
+            transform: translateY(-50%);
+            display: inline-flex; align-items: center; gap: 5px;
+            /* Vertical hit area for the button — 10.5px of text is a 14px-tall
+               target. Applied to both so the two stay pixel-identical as they
+               swap, and symmetric so it does not shift the optical centre. */
+            padding: 8px 0;
+            font-family: 'Figtree', sans-serif;
+            font-size: 10.5px; font-weight: 600; letter-spacing: .02em;
+            /* Stated, not inherited: a <button> carries its own line-height,
+               which left the two chevrons 2px apart as the labels swapped. */
+            line-height: 1;
+            color: var(--accent);
+        }
+        /* .close-hint does something, so it is a button. */
+        .close-hint {
+            border: none; background: none; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .close-hint:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+        .peek-hint svg,
+        .close-hint svg { display: block; }
+        /* One slot, two labels, swapped by the sheet's state. */
+        .phone.is-sheet-open .peek-hint { display: none; }
+        .phone:not(.is-sheet-open) .close-hint { display: none; }
+
+        /* Spec 4: no slide. The state change still happens, it just arrives
+           rather than travels. */
+        @media (prefers-reduced-motion: reduce) {
+            .sheet, .sheet-grip { transition: none; }
+        }
         .sheet h1 { margin: 0 0 8px; font-weight: 700; font-size: 30px; line-height: 1.12; color: var(--m-heading); letter-spacing: -.6px; }
         .m-subcopy { margin: 0 0 24px; font-size: 14px; line-height: 1.5; color: var(--m-subcopy); }
 
@@ -563,18 +678,6 @@
         .sheet .btn-submit:active { transform: scale(.99); }
         .sheet .btn-submit:disabled { opacity: .65; cursor: not-allowed; }
 
-        .divider { display: flex; align-items: center; gap: 12px; margin: 22px 0 16px; }
-        .divider span.line { flex: 1; height: 1px; background: var(--m-divider-line); }
-        .divider span.label { font-size: 12px; color: var(--m-divider-label); white-space: nowrap; }
-
-        .social-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .btn-social {
-            height: 50px; border-radius: 14px; background: var(--m-social-bg); border: 1px solid var(--m-social-border);
-            color: var(--m-social-text); font-family: 'Figtree', sans-serif; font-weight: 500; font-size: 14px; cursor: not-allowed;
-            display: flex; align-items: center; justify-content: center; gap: 9px; opacity: .7;
-        }
-        .btn-social svg { width: 17px; height: 17px; flex-shrink: 0; }
-
         .legal { margin: 18px 0 12px; text-align: center; font-size: 11.5px; line-height: 1.5; color: var(--m-legal); }
         .legal span { color: var(--m-link); }
         .home-indicator { height: 5px; width: 134px; border-radius: 3px; background: var(--m-home-indicator); margin: 0 auto 10px; }
@@ -583,20 +686,6 @@
              over the building photo, instead of dark mode's opaque navy
              sheet. Every rule below is scoped to [data-theme="light"] so
              dark mode (the original, unaffected) keeps its own look. ── */
-        .photo-behind {
-            position: absolute; left: 0; right: 0; top: 342px; bottom: 0; overflow: hidden;
-            display: none; pointer-events: none;
-        }
-        :root[data-theme="light"] .photo-behind { display: block; }
-        :root[data-theme="light"] .photo-behind::before {
-            content: ''; position: absolute; left: 0; top: -114px; width: 100%; height: 520px;
-            background: url('{{ asset('images/login-building.jpg') }}') 50% 78% / cover no-repeat;
-            filter: brightness(1.25) saturate(.6) contrast(.9); opacity: .55;
-        }
-        :root[data-theme="light"] .photo-behind::after {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(180deg, rgba(246,244,240,.15), rgba(246,244,240,.5));
-        }
         :root[data-theme="light"] .photo {
             filter: brightness(1.22) saturate(.72) contrast(.92);
         }
@@ -605,7 +694,6 @@
                 rgba(14,20,32,.42) 0%, rgba(14,20,32,.06) 30%,
                 rgba(246,244,240,.06) 55%, rgba(246,244,240,.35) 100%);
         }
-        :root[data-theme="light"] .watermark { display: none; }
         :root[data-theme="light"] .sheet {
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         }
@@ -709,11 +797,18 @@
     </div>
 </div>
 
+@php
+    /* The sheet starts open when there is something in it the user must see or
+       finish — a rejected attempt, a field error, or text already typed — so a
+       failed sign-in never lands behind a collapsed panel. Mirrors the
+       "keep it open while a field has focus or text" rule in the script. */
+    $sheetOpen = $errors->any() || filled(old('login'));
+@endphp
+
 <div class="mobile-shell">
-    <div class="phone">
+    <div class="phone{{ $sheetOpen ? ' is-sheet-open' : '' }}">
         <div class="photo"></div>
         <div class="photo-scrim"></div>
-        <div class="watermark">P7H</div>
 
         <div class="hero-top">
             <div class="m-brand-row">
@@ -726,12 +821,37 @@
             <button type="button" class="theme-toggle-btn" id="loginThemeToggle" title="Switch theme" aria-label="Switch to light mode"><i class="fa-solid fa-sun"></i></button>
         </div>
 
-        <div class="photo-behind"></div>
+        {{-- The brand statement, mirroring the desktop panel's headline. Sits
+             above the expanded sheet's top edge so it reads in both states. --}}
+        <h2 class="m-headline">Every building,<br>every tenant,<br><em>one ledger.</em></h2>
 
-        <div class="sheet">
+        <div class="sheet" id="loginSheet" aria-expanded="{{ $sheetOpen ? 'true' : 'false' }}">
+            {{-- One row: grip centred, hint pinned right and centred against it. --}}
+            <div class="sheet-hrow">
+                <button type="button" class="sheet-handle" id="sheetHandle"
+                        aria-controls="loginSheet" aria-expanded="{{ $sheetOpen ? 'true' : 'false' }}"
+                        aria-label="{{ $sheetOpen ? 'Collapse sign-in form' : 'Expand sign-in form' }}">
+                    <span class="sheet-grip" aria-hidden="true"></span>
+                </button>
+
+                <span class="peek-hint">Tap to sign in
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"></path></svg>
+                </span>
+
+                <button type="button" class="close-hint" id="closeHint">Tap to close
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+                </button>
+            </div>
+
+            {{-- The only part that stays on screen when the sheet is docked. --}}
+            <div class="sheet-head">
+                <h1>Welcome back.</h1>
+                <p class="m-subcopy">Buildings, leases, invoices and reports — all in one place.</p>
+            </div>
+
             <div class="sheet-inner">
-            <h1>Welcome back.</h1>
-            <p class="m-subcopy">Buildings, leases, invoices and reports — all in one place.</p>
 
             @error('auth')
             <div class="alert-error" role="alert">
@@ -766,18 +886,6 @@
                 </button>
             </form>
 
-            <div class="divider"><span class="line"></span><span class="label">or continue with</span><span class="line"></span></div>
-            <div class="social-row">
-                <button type="button" class="btn-social" disabled title="Not available yet">
-                    <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2.5 24 .5 14.6.5 6.5 5.9 2.6 13.7l7.8 6.1C12.3 13.9 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 7.1-10 7.1-17.5z"/><path fill="#FBBC05" d="M10.4 28.2a14.6 14.6 0 010-8.4l-7.8-6.1a24 24 0 000 20.6l7.8-6.1z"/><path fill="#34A853" d="M24 47.5c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.4 2.3-6.3 0-11.7-4.4-13.6-10.3l-7.8 6.1C6.5 42.1 14.6 47.5 24 47.5z"/></svg>
-                    Google
-                </button>
-                <button type="button" class="btn-social" disabled title="Not available yet">
-                    <svg viewBox="0 0 23 23"><path fill="#F25022" d="M1 1h10v10H1z"/><path fill="#7FBA00" d="M12 1h10v10H12z"/><path fill="#00A4EF" d="M1 12h10v10H1z"/><path fill="#FFB900" d="M12 12h10v10H12z"/></svg>
-                    Microsoft
-                </button>
-            </div>
-
             <p class="legal">By signing in you agree to our <span>Terms</span> and <span>Privacy Policy</span>.</p>
             <div class="home-indicator"></div>
             </div>
@@ -786,6 +894,125 @@
 </div>
 
 <script>
+/* ── Collapsible sign-in sheet (=<768px) ────────────────────────────────────
+     Docked by default so the building photo stays visible; the form is one
+     tap away. Everything here is a no-op above 768px, where .mobile-shell is
+     display:none and none of these nodes are laid out. */
+(function () {
+    const phone  = document.querySelector('.phone');
+    const sheet  = document.getElementById('loginSheet');
+    const handle = document.getElementById('sheetHandle');
+    const inner  = sheet && sheet.querySelector('.sheet-inner');
+    const closeHint = document.getElementById('closeHint');
+    const form   = document.getElementById('loginFormMobile');
+    if (!phone || !sheet || !handle || !inner || !form) return;
+
+    const isOpen = () => phone.classList.contains('is-sheet-open');
+
+    /* Measure the peek from the real boxes rather than trusting the 140px in
+       the stylesheet: the subtitle wraps to two lines on a narrow phone and
+       three on the narrowest, and a clipped heading is the one thing the
+       collapsed state cannot afford.
+
+       The fold lands on the form's top edge, so the visible strip is exactly
+       handle + heading + subtitle and not a sliver of the first field. The
+       breathing room under the subtitle is its own 24px bottom margin, which
+       sits inside the measured box. */
+    function measure() {
+        const peek = Math.round(
+            inner.getBoundingClientRect().top - sheet.getBoundingClientRect().top
+        );
+        if (peek > 0) sheet.style.setProperty('--sheet-peek', peek + 'px');
+    }
+
+    /* Spec 3: a field that is focused or already carries text means the user
+       is mid-task, and the sheet must not close under them. Hidden inputs are
+       excluded deliberately — @csrf puts a permanently non-empty _token in
+       this form, and counting it would wedge the sheet open forever. */
+    function fieldBusy() {
+        return Array.prototype.some.call(form.querySelectorAll('input'), function (el) {
+            if (el.type === 'hidden') return false;
+            return el === document.activeElement || (el.value || '').trim() !== '';
+        });
+    }
+
+    function setOpen(open) {
+        if (open === isOpen()) return;
+        if (!open && fieldBusy()) return;
+        phone.classList.toggle('is-sheet-open', open);
+        /* Cheap, and keeps the peek honest if the head's height ever turns
+           out to depend on the state (a themed or translated subtitle that
+           wraps differently). Must run after the class lands, never before. */
+        measure();
+        sheet.setAttribute('aria-expanded', open ? 'true' : 'false');
+        handle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        handle.setAttribute('aria-label', open ? 'Collapse sign-in form' : 'Expand sign-in form');
+        if (!open) sheet.scrollTop = 0;
+    }
+
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('orientationchange', measure);
+
+    /* The handle toggles; the rest of a docked sheet is a big "open me". A tap
+       inside an open sheet belongs to the form, not to the disclosure. */
+    handle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        setOpen(!isOpen());
+    });
+    sheet.addEventListener('click', function () {
+        if (!isOpen()) setOpen(true);
+    });
+
+    /* The close hint. stopPropagation is load-bearing: without it the click
+       bubbles to the handler above, which — now that setOpen(false) has
+       already run — would see a closed sheet and re-open it instantly.
+       setOpen carries the no-focus/no-text guard, so a half-filled form
+       refuses to close here exactly as it does everywhere else. */
+    if (closeHint) {
+        closeHint.addEventListener('click', function (e) {
+            e.stopPropagation();
+            setOpen(false);
+        });
+    }
+
+    /* Tapping the photo above the sheet collapses it — but not the theme
+       toggle sitting up there in .hero-top. */
+    phone.addEventListener('click', function (e) {
+        if (sheet.contains(e.target) || e.target.closest('.hero-top')) return;
+        setOpen(false);
+    });
+
+    /* Spec 3: the keyboard opening must not leave the field behind the fold.
+       focusin also covers a keyboard user tabbing into the docked form — but
+       not the handle, which lives inside the sheet and takes focus on the
+       pointer press *before* its own click lands. Opening here first turned
+       the click's toggle into a close, so a docked sheet could not be opened
+       by clicking its handle at all. The handle speaks for itself. */
+    sheet.addEventListener('focusin', function (e) {
+        if (e.target.closest('.sheet-handle')) return;
+        setOpen(true);
+    });
+
+    /* Swipe down to dismiss, swipe up to open — a handle you can only drag one
+       way reads as broken. Down only counts from the top of the scroll, or it
+       would fight scrolling back up through the form. */
+    let y0 = null;
+    sheet.addEventListener('touchstart', function (e) {
+        y0 = e.touches.length === 1 ? e.touches[0].clientY : null;
+    }, { passive: true });
+    sheet.addEventListener('touchend', function (e) {
+        if (y0 === null) return;
+        const dy = e.changedTouches[0].clientY - y0;
+        y0 = null;
+        if (isOpen()) {
+            if (dy > 56 && sheet.scrollTop <= 0) setOpen(false);
+        } else if (dy < -40) {
+            setOpen(true);
+        }
+    }, { passive: true });
+})();
+
 document.getElementById('togglePwMobile').addEventListener('click', function () {
     const input = document.getElementById('passwordMobile');
     const showing = input.type === 'text';
