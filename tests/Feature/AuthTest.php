@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\MaintenanceRequest;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -283,7 +284,17 @@ class AuthTest extends TestCase
     {
         $this->actingAs(User::factory()->maintenance()->create());
 
-        $response = $this->delete('/maintenance/1');
+        $record = MaintenanceRequest::create([
+            'date'               => '2026-05-21',
+            'property'           => 'Tower A',
+            'tenant'             => 'Ahmed Ali',
+            'flat'               => '3B',
+            'contact_no'         => '+973 3300 0000',
+            'available_datetime' => '2026-05-22 10:00:00',
+            'apartment_status'   => 'occupied',
+        ]);
+
+        $response = $this->delete("/maintenance/{$record->id}");
 
         $response->assertForbidden();
     }

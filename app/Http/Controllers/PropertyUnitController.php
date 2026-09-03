@@ -16,25 +16,24 @@ class PropertyUnitController extends Controller
     {
         $filters = $request->only(['search', 'property_code', 'unit_type', 'unit_condition']);
 
-        $today = \Carbon\Carbon::today()->toDateString();
-
         $query = PropertyUnit::with(['floor', 'activeContract'])
             ->filter($filters);
 
+        // A unit counts as occupied while it has any non-terminated lease —
+        // an expired end date alone doesn't vacate it, only an explicit
+        // termination does.
         if ($occupancy = $request->input('occupancy')) {
             if ($occupancy === 'occupied') {
-                $query->whereExists(function ($q) use ($today) {
+                $query->whereExists(function ($q) {
                     $q->selectRaw(1)->from('lease_contracts')
                       ->whereColumn('lease_contracts.unit_id', 'property_units.id')
-                      ->whereDate('lease_start_date', '<=', $today)
-                      ->whereDate('lease_end_date', '>=', $today);
+                      ->whereNull('lease_contracts.terminated_at');
                 });
             } elseif ($occupancy === 'vacant') {
-                $query->whereNotExists(function ($q) use ($today) {
+                $query->whereNotExists(function ($q) {
                     $q->selectRaw(1)->from('lease_contracts')
                       ->whereColumn('lease_contracts.unit_id', 'property_units.id')
-                      ->whereDate('lease_start_date', '<=', $today)
-                      ->whereDate('lease_end_date', '>=', $today);
+                      ->whereNull('lease_contracts.terminated_at');
                 });
             }
         }
@@ -45,11 +44,10 @@ class PropertyUnitController extends Controller
             ->withQueryString();
         $stats = [
             'total'      => PropertyUnit::count(),
-            'occupied'   => PropertyUnit::whereExists(function ($q) use ($today) {
+            'occupied'   => PropertyUnit::whereExists(function ($q) {
                 $q->selectRaw(1)->from('lease_contracts')
                   ->whereColumn('lease_contracts.unit_id', 'property_units.id')
-                  ->whereDate('lease_start_date', '<=', $today)
-                  ->whereDate('lease_end_date', '>=', $today);
+                  ->whereNull('lease_contracts.terminated_at');
             })->count(),
             'furnished'  => PropertyUnit::where('unit_condition', 'Furnished')->count(),
             'fitted'     => PropertyUnit::where('unit_condition', 'Fitted')->count(),

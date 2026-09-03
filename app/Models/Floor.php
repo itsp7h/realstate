@@ -15,6 +15,7 @@ class Floor extends Model
 
     protected $fillable = [
         'building_id',
+        'block_id',
         'floor_name',
         'floor_code',
         'block_name',
@@ -29,6 +30,11 @@ class Floor extends Model
     public function building()
     {
         return $this->belongsTo(Building::class);
+    }
+
+    public function block()
+    {
+        return $this->belongsTo(Block::class);
     }
 
     public function units()

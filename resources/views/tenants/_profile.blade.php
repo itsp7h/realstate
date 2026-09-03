@@ -78,7 +78,8 @@
     .status-badge.paid           { background: #ECFDF5; color: #059669; }
     .status-badge.overdue        { background: #FEF2F2; color: #DC2626; }
     .status-badge.cancelled      { background: #F8FAFC; color: #94A3B8; }
-    .status-badge.expired        { background: #FEF2F2; color: #DC2626; }
+    .status-badge.for_renewal    { background: #F1F5F9; color: #64748B; }
+    .status-badge.terminated     { background: #FEF2F2; color: #DC2626; }
     .status-badge.upcoming       { background: #EFF6FF; color: #2563EB; }
     .status-badge.expiring       { background: #FFFBEB; color: #D97706; }
     .status-badge.active         { background: #ECFDF5; color: #059669; }
@@ -254,6 +255,16 @@
     </div>
 
     <div class="detail-item">
+        <div class="detail-icon"><i class="fa-solid fa-user"></i></div>
+        <div>
+            <div class="detail-label">Contact Person</div>
+            <div class="detail-value {{ $tenant->contact_person ? '' : 'empty' }}">
+                {{ $tenant->contact_person ?? 'Not provided' }}
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-item">
         <div class="detail-icon"><i class="fa-solid fa-phone"></i></div>
         <div>
             <div class="detail-label">Phone</div>
@@ -343,7 +354,7 @@
                 <td>{{ $contract->property_name }}{{ $contract->unit ? ' / '.$contract->unit : '' }}</td>
                 <td>{{ $contract->lease_start_date->format('d M Y') }} &rarr; {{ $contract->lease_end_date->format('d M Y') }}</td>
                 <td class="right tp-money">{{ $contract->rent_per_month !== null ? number_format($contract->rent_per_month, 3) : '—' }}</td>
-                <td><span class="status-badge {{ $contract->status }}">{{ ucfirst($contract->status) }}</span></td>
+                <td><span class="status-badge {{ $contract->status }}">{{ str($contract->status)->replace('_', ' ')->title() }}</span></td>
             </tr>
             @endforeach
         </tbody>

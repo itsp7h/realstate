@@ -31,7 +31,7 @@ class StorePropertyUnitRequest extends FormRequest
             // Unit Level
             'unit_name'        => ['required', 'string', 'max:255'],
             'description'      => ['nullable', 'string', 'max:255'],
-            'unit_type'        => ['nullable', 'string', 'in:Studio,1BHK,2BHK,3BHK,4BHK,Penthouse,Commercial,Office'],
+            'unit_type'        => ['nullable', 'string', 'in:Studio,1BHK,2BHK,3BHK,4BHK,Penthouse,Commercial,Office,Shop'],
             'creation_date'    => ['nullable', 'date'],
             'unit_condition'   => ['nullable', 'string', 'in:Furnished,Fitted,Semi-Furnished,Unfurnished,Shell & Core'],
             'view'             => ['nullable', 'string', 'max:100'],
@@ -51,6 +51,7 @@ class StorePropertyUnitRequest extends FormRequest
             'water_installation_date'       => ['nullable', 'date'],
             'water_meter_no'                => ['nullable', 'string', 'max:100'],
             'electricity_ac_no'             => ['nullable', 'string', 'max:100'],
+            'ewa_share_percent'             => ['nullable', 'numeric', 'min:0', 'max:100'],
         ];
     }
 }

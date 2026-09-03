@@ -61,6 +61,17 @@
                 </div>
 
                 <div class="form-group">
+                    <label>Block</label>
+                    <select name="block_id" class="{{ $errors->has('block_id') ? 'error' : '' }}">
+                        <option value="">— None —</option>
+                        @foreach($blocks as $b)
+                            <option value="{{ $b->id }}" {{ (string) old('block_id', $floor->block_id) === (string) $b->id ? 'selected' : '' }}>{{ $b->block_name }}</option>
+                        @endforeach
+                    </select>
+                    @error('block_id') <span class="field-error">{{ $message }}</span> @enderror
+                </div>
+
+                <div class="form-group">
                     <label>Block Name</label>
                     <input type="text" name="block_name"
                         value="{{ old('block_name', $floor->block_name) }}"

@@ -19,6 +19,7 @@ class Building extends Model
         'type_of_ownership',
         'property_type',
         'land_lord_name',
+        'company_name',
         'building_no',
         'road',
         'block',
@@ -48,21 +49,30 @@ class Building extends Model
         return $this->hasMany(PropertyUnit::class);
     }
 
+    /**
+     * A unit counts as occupied while it has any non-terminated lease,
+     * regardless of whether that lease's end date has passed — expiry
+     * alone just means the agreement needs renewal, not that the tenant
+     * has moved out. Only an explicit termination frees up the unit.
+     */
     public function occupiedUnits()
     {
-        $today = \Carbon\Carbon::today()->toDateString();
-        return $this->hasMany(PropertyUnit::class)->whereExists(function ($q) use ($today) {
+        return $this->hasMany(PropertyUnit::class)->whereExists(function ($q) {
             $q->selectRaw(1)
               ->from('lease_contracts')
               ->whereColumn('lease_contracts.unit_id', 'property_units.id')
-              ->whereDate('lease_start_date', '<=', $today)
-              ->whereDate('lease_end_date', '>=', $today);
+              ->whereNull('lease_contracts.terminated_at');
         });
     }
 
     public function floors()
     {
         return $this->hasMany(Floor::class);
+    }
+
+    public function blocks()
+    {
+        return $this->hasMany(Block::class);
     }
 
     public function images()
@@ -111,5 +121,6 @@ class Building extends Model
 
         $query->when($filters['property_type'] ?? null,      fn($q, $v) => $q->where('property_type', $v));
         $query->when($filters['type_of_ownership'] ?? null,  fn($q, $v) => $q->where('type_of_ownership', $v));
+        $query->when($filters['company_name'] ?? null,       fn($q, $v) => $q->where('company_name', $v));
     }
 }

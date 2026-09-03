@@ -272,7 +272,7 @@
                 </div>
                 <div style="flex:1;min-width:0;">
                     <div class="m-row-title">{{ $tenant->name }}</div>
-                    <div class="m-row-sub">{{ $lease?->unit?->unit_name ?? '—' }}{{ $lease?->property_code ? ' · '.$lease->property_code : '' }}</div>
+                    <div class="m-row-sub">{{ $lease?->propertyUnit?->unit_name ?? '—' }}{{ $lease?->property_code ? ' · '.$lease->property_code : '' }}</div>
                 </div>
                 <div style="display:flex;gap:8px;" onclick="event.stopPropagation()">
                     @if($tenant->phone)
@@ -570,6 +570,21 @@
                                 placeholder="e.g. Bahraini" maxlength="100">
                         </div>
                         @error('nationality_country')
+                            <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    {{-- CONTACT PERSON --}}
+                    <div class="mfield-group span-full">
+                        <label class="mfield-label">Contact Person</label>
+                        <div class="mfield-wrap has-micon">
+                            <i class="fa-solid fa-user mfield-icon"></i>
+                            <input type="text" name="contact_person"
+                                class="mfield-input {{ $errors->has('contact_person') ? 'is-invalid' : '' }}"
+                                value="{{ old('contact_person') }}"
+                                placeholder="e.g. Fadhel (for company tenants)" maxlength="255">
+                        </div>
+                        @error('contact_person')
                             <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div>
                         @enderror
                     </div>

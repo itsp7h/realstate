@@ -450,6 +450,10 @@
                 <div class="field-value {{ $unit->electricity_ac_no ? '' : 'empty' }}">{{ $unit->electricity_ac_no ?: '—' }}</div>
             </div>
             <div class="field-item">
+                <div class="field-label">EWA Share %</div>
+                <div class="field-value {{ $unit->ewa_share_percent ? '' : 'empty' }}">{{ $unit->ewa_share_percent !== null ? number_format($unit->ewa_share_percent, 2) . '%' : '—' }}</div>
+            </div>
+            <div class="field-item">
                 <div class="field-label">Water Meter No.</div>
                 <div class="field-value {{ $unit->water_meter_no ? '' : 'empty' }}">{{ $unit->water_meter_no ?: '—' }}</div>
             </div>

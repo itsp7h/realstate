@@ -34,6 +34,7 @@ class FloorController extends Controller
     public function index(Building $building)
     {
         $floors = $building->floors()
+            ->with('block')
             ->orderBy('floor_name')
             ->paginate(20)
             ->withQueryString();
@@ -49,7 +50,8 @@ class FloorController extends Controller
     public function create(Building $building)
     {
         $floor = new Floor();
-        return view('floors.create', compact('building', 'floor'));
+        $blocks = $building->blocks()->orderBy('block_name')->get();
+        return view('floors.create', compact('building', 'floor', 'blocks'));
     }
 
     public function store(Building $building, Request $request)
@@ -57,6 +59,7 @@ class FloorController extends Controller
         $validated = $request->validate([
             'floor_name'        => ['required', 'string', 'max:100'],
             'floor_code'        => ['nullable', 'string', 'max:50'],
+            'block_id'          => ['nullable', 'exists:blocks,id'],
             'block_name'        => ['nullable', 'string', 'max:100'],
             'block_code'        => ['nullable', 'string', 'max:50'],
             'total_no_of_units' => ['nullable', 'integer', 'min:1'],
@@ -73,7 +76,8 @@ class FloorController extends Controller
     public function edit(Floor $floor)
     {
         $building = $floor->building;
-        return view('floors.edit', compact('building', 'floor'));
+        $blocks = $building->blocks()->orderBy('block_name')->get();
+        return view('floors.edit', compact('building', 'floor', 'blocks'));
     }
 
     public function update(Request $request, Floor $floor)
@@ -81,6 +85,7 @@ class FloorController extends Controller
         $validated = $request->validate([
             'floor_name'        => ['required', 'string', 'max:100'],
             'floor_code'        => ['nullable', 'string', 'max:50'],
+            'block_id'          => ['nullable', 'exists:blocks,id'],
             'block_name'        => ['nullable', 'string', 'max:100'],
             'block_code'        => ['nullable', 'string', 'max:50'],
             'total_no_of_units' => ['nullable', 'integer', 'min:1'],

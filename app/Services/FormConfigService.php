@@ -18,6 +18,7 @@ class FormConfigService
             ['name' => 'type_of_ownership',   'label' => 'Type of Ownership',    'required' => false, 'section' => 'Property Info'],
             ['name' => 'property_type',       'label' => 'Property Type',        'required' => false, 'section' => 'Property Info'],
             ['name' => 'land_lord_name',      'label' => 'Land Lord Name',       'required' => false, 'section' => 'Property Info'],
+            ['name' => 'company_name',        'label' => 'Company',              'required' => false, 'section' => 'Property Info'],
             ['name' => 'building_no',         'label' => 'Building No.',         'required' => false, 'section' => 'Address'],
             ['name' => 'road',                'label' => 'Road',                 'required' => false, 'section' => 'Address'],
             ['name' => 'block',               'label' => 'Block',                'required' => false, 'section' => 'Address'],
@@ -73,6 +74,7 @@ class FormConfigService
             ['name' => 'water_installation_date',     'label' => 'Water Installation Date',     'required' => false, 'section' => 'Utilities'],
             ['name' => 'water_meter_no',              'label' => 'Water Meter No.',             'required' => false, 'section' => 'Utilities'],
             ['name' => 'electricity_ac_no',           'label' => 'Electricity A/c No.',         'required' => false, 'section' => 'Utilities'],
+            ['name' => 'ewa_share_percent',           'label' => 'EWA Share %',                 'required' => false, 'section' => 'Utilities'],
         ],
     ];
 

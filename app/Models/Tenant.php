@@ -14,6 +14,7 @@ class Tenant extends Model
         'name',
         'tenant_type',
         'company_name',
+        'contact_person',
         'tenant_code',
         'id_cr_number',
         'phone',
@@ -47,12 +48,15 @@ class Tenant extends Model
         return $this->hasMany(LeaseContract::class);
     }
 
+    /**
+     * The tenant's current lease — a lease only stops counting once it's
+     * explicitly terminated, not merely once its end date has passed.
+     */
     public function activeLease(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        $today = \Carbon\Carbon::today()->toDateString();
         return $this->hasOne(LeaseContract::class)
-            ->whereDate('lease_start_date', '<=', $today)
-            ->whereDate('lease_end_date', '>=', $today);
+            ->whereNull('terminated_at')
+            ->latest('lease_start_date');
     }
 
     public function invoices(): HasMany

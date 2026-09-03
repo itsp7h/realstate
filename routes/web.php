@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\PropertyUnitController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\FloorController;
+use App\Http\Controllers\BlockController;
 use App\Http\Controllers\FormConfigController;
 use App\Http\Controllers\CustomFieldController;
 use App\Http\Controllers\DashboardController;
@@ -88,6 +89,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/lease-contracts/tenant/{tenant}/active', [LeaseContractController::class, 'activeForTenant'])->name('lease-contracts.active-for-tenant');
     Route::get('/lease-contracts/tenant/{tenant}/search', [LeaseContractController::class, 'searchForTenant'])->name('lease-contracts.search-for-tenant');
     Route::resource('lease-contracts', LeaseContractController::class);
+    Route::post('/lease-contracts/{leaseContract}/terminate', [LeaseContractController::class, 'terminate'])->name('lease-contracts.terminate');
+    Route::post('/lease-contracts/{leaseContract}/renew', [LeaseContractController::class, 'renew'])->name('lease-contracts.renew');
 
     // Accounting
     Route::post('/invoices/generate-monthly', [InvoiceController::class, 'generateMonthly'])->name('invoices.generate-monthly');
@@ -156,6 +159,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/buildings/{building}/settings', [BuildingController::class, 'updateSettings'])->name('buildings.settings.update');
     Route::get('/floors', [FloorController::class, 'globalIndex'])->name('floors.global');
     Route::resource('buildings.floors', FloorController::class)->shallow()->except(['show']);
+    Route::resource('buildings.blocks', BlockController::class)->shallow()->except(['show']);
 
     // Custom field definitions apply app-wide (every building/unit form for
     // every user), so creating/removing one is kept to Admin only.

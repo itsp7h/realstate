@@ -558,6 +558,25 @@
                     </div>
                     @endif
 
+                    @if($show('company_name'))
+                    <div class="field-group span-2">
+                        <label class="field-label">Company</label>
+                        <div class="field-input-wrap has-icon">
+                            <i class="fa-solid fa-building-user field-input-icon"></i>
+                            <input
+                                type="text"
+                                name="company_name"
+                                class="field-input {{ $errors->has('company_name') ? 'is-invalid' : '' }}"
+                                value="{{ $val('company_name') }}"
+                                placeholder="e.g. Promoseven"
+                                maxlength="255">
+                        </div>
+                        @error('company_name')
+                            <div class="field-error-msg"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div>
+                        @enderror
+                    </div>
+                    @endif
+
                 </div>
             </div>
         </div>

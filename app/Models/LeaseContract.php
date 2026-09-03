@@ -28,6 +28,9 @@ class LeaseContract extends Model
         'lease_start_date',
         'lease_end_date',
         'lease_break_date',
+        'terminated_at',
+        'renewed_at',
+        'renewed_from_id',
         'notice_period',
         'rental_income_ledger',
         'currency',
@@ -50,6 +53,8 @@ class LeaseContract extends Model
         'lease_start_date'   => 'date',
         'lease_end_date'     => 'date',
         'lease_break_date'   => 'date',
+        'terminated_at'      => 'datetime',
+        'renewed_at'         => 'datetime',
         'rent_start_date'    => 'date',
         'rent_end_date'      => 'date',
         'service_start_date' => 'date',
@@ -64,12 +69,25 @@ class LeaseContract extends Model
         return $this->vat_enabled ? (float) $this->vat_rate : 0.0;
     }
 
+    /**
+     * A unit only becomes vacant when a lease is explicitly terminated —
+     * an expired end date alone just means the agreement needs renewal,
+     * not that the tenant has moved out. "renewed" (superseded by a
+     * follow-on contract) and "terminated" always win over the
+     * date-based states below.
+     */
     protected function status(): Attribute
     {
         return Attribute::make(get: function () {
+            if ($this->renewed_at) {
+                return 'renewed';
+            }
+            if ($this->terminated_at) {
+                return 'terminated';
+            }
             $today = Carbon::today();
-            if ($this->lease_end_date < $today) return 'expired';
             if ($this->lease_start_date > $today) return 'upcoming';
+            if ($this->lease_end_date < $today) return 'for_renewal';
             if ($this->lease_end_date <= $today->copy()->addDays(30)) return 'expiring';
             return 'active';
         });
@@ -83,6 +101,16 @@ class LeaseContract extends Model
     public function propertyUnit(): BelongsTo
     {
         return $this->belongsTo(PropertyUnit::class, 'unit_id');
+    }
+
+    public function renewedFrom(): BelongsTo
+    {
+        return $this->belongsTo(LeaseContract::class, 'renewed_from_id');
+    }
+
+    public function renewedInto(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(LeaseContract::class, 'renewed_from_id');
     }
 
     public static function generateNumber(): string

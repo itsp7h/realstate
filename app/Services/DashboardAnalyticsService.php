@@ -87,7 +87,7 @@ class DashboardAnalyticsService
         $unitConditions = $units->groupBy(fn ($u) => $u->unit_condition ?: 'Unspecified')
             ->map->count()->sortDesc();
 
-        $leaseStatusCounts = collect(['active', 'expiring', 'upcoming', 'expired'])
+        $leaseStatusCounts = collect(['active', 'expiring', 'upcoming', 'for_renewal', 'terminated'])
             ->mapWithKeys(fn ($status) => [$status => $contracts->where('status', $status)->count()]);
 
         $upcomingExpirations = $contracts
@@ -127,14 +127,11 @@ class DashboardAnalyticsService
     {
         $pl = $this->profitLoss->build($from, $to, $building->id);
 
-        $today = Carbon::today();
-
         $totalUnits    = $building->units()->count();
         $occupiedUnits = $building->occupiedUnits()->count();
 
         $tenantCount = LeaseContract::whereIn('unit_id', $building->units()->pluck('id'))
-            ->whereDate('lease_start_date', '<=', $today)
-            ->whereDate('lease_end_date', '>=', $today)
+            ->whereNull('terminated_at')
             ->distinct('tenant_id')
             ->count('tenant_id');
 

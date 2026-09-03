@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\Building;
 use App\Models\EwaBill;
 use App\Models\Invoice;
 use App\Models\InvoiceNote;
 use App\Models\LeaseContract;
 use App\Models\Payment;
+use App\Models\PropertyUnit;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -33,6 +35,31 @@ class TenantTest extends TestCase
 
         $this->get(route('tenants.index'))
             ->assertSee('Ahmed Al-Khalifa');
+    }
+
+    public function test_index_renders_with_an_active_lease_and_unit(): void
+    {
+        // Regression: TenantController::index eager-loads 'activeLease.propertyUnit'.
+        // Eloquent only validates a nested relation's method exists once there's an
+        // actual related model to load it on, so a tenant with a genuinely active
+        // lease (unlike the other index tests here) is required to catch this.
+        $building = Building::create(['property_name' => 'Tower A', 'property_code' => 'TA1']);
+        $unit = PropertyUnit::create([
+            'building_id' => $building->id, 'property_name' => 'Tower A', 'property_code' => 'TA1', 'unit_name' => 'Flat 1',
+        ]);
+        $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+        LeaseContract::create([
+            'date' => now()->format('Y-m-d'), 'lease_agreement_no' => 'LA-TEST-1',
+            'tenant_id' => $tenant->id, 'tenant_name' => $tenant->name, 'property_name' => 'Tower A',
+            'unit_id' => $unit->id, 'unit' => 'Flat 1',
+            'lease_start_date' => now()->subMonth()->format('Y-m-d'), 'lease_end_date' => now()->addYear()->format('Y-m-d'),
+        ]);
+
+        $response = $this->get(route('tenants.index'));
+
+        $response->assertOk();
+        $response->assertSee('Ahmed Al-Khalifa');
+        $response->assertSee('Flat 1');
     }
 
     public function test_index_filters_by_search(): void

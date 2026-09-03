@@ -292,7 +292,7 @@
                 <label>Unit Type</label>
                 <select name="unit_type" onchange="this.form.submit()">
                     <option value="">All Types</option>
-                    @foreach(['Studio','1BHK','2BHK','3BHK','4BHK','Commercial'] as $type)
+                    @foreach(['Studio','1BHK','2BHK','3BHK','4BHK','Penthouse','Commercial','Office','Shop'] as $type)
                         <option value="{{ $type }}" {{ request('unit_type') == $type ? 'selected' : '' }}>{{ $type }}</option>
                     @endforeach
                 </select>
@@ -633,7 +633,7 @@
                             <div class="mfield-wrap">
                                 <select name="unit_type" class="mselect {{ $errors->has('unit_type') ? 'is-invalid' : '' }}">
                                     <option value="">Select type…</option>
-                                    @foreach(['Studio','1BHK','2BHK','3BHK','4BHK','Penthouse','Commercial','Office'] as $opt)
+                                    @foreach(['Studio','1BHK','2BHK','3BHK','4BHK','Penthouse','Commercial','Office','Shop'] as $opt)
                                         <option value="{{ $opt }}" {{ $mv('unit_type') == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                                     @endforeach
                                 </select>

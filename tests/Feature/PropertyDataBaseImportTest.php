@@ -34,7 +34,7 @@ class PropertyDataBaseImportTest extends TestCase
         }
     }
 
-    private function buildWorkbook(array $sheets): UploadedFile
+    private function buildWorkbook(array $sheets, string $filename = 'Data Base P7H 2026.xlsx'): UploadedFile
     {
         $spreadsheet = new Spreadsheet();
         $index = 0;
@@ -46,7 +46,7 @@ class PropertyDataBaseImportTest extends TestCase
         $tmp = tempnam(sys_get_temp_dir(), 'pdb') . '.xlsx';
         (new Xlsx($spreadsheet))->save($tmp);
 
-        return new UploadedFile($tmp, 'Data Base P7H 2026.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
+        return new UploadedFile($tmp, $filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
     }
 
     private function mp1Rows(): array
@@ -66,6 +66,26 @@ class PropertyDataBaseImportTest extends TestCase
         // Appended separately so the contract-period column can be tested
         // (kept short above to mirror the real sheet's sparse layout).
         return [];
+    }
+
+    public function test_smart_import_does_not_duplicate_leases_on_re_import(): void
+    {
+        // lease_start_date is stored as a full datetime string but the parsed
+        // date is bare — re-importing the exact same file used to always
+        // create a duplicate lease because the dedup check never matched.
+        $rows = [
+            ['Building 1130N - Ground Floor'],
+            ['SN', 'Off/Shop', 'Company', 'Contact Details', 'SIZE /SQM', 'Contract Period', 'Rate/ SQM', 'Rent', 'Service Charge', 'Monthly'],
+            [1, 'Shop 2', 'Bahrain Insurance Co.', 'Fadhel', 170.73, '01.03.2025 - 28.02.2028', 11.49, 1961.688, 0.15, 2285.365],
+        ];
+
+        $file = fn () => $this->buildWorkbook(['P7H Aug 2026' => $rows]);
+
+        $this->post(route('import.smart'), ['file' => $file()])->assertRedirect(route('dashboard'));
+        $this->post(route('import.smart'), ['file' => $file()])->assertRedirect(route('dashboard'));
+
+        $unit = PropertyUnit::where('unit_name', 'P7H-1130N - Shop 2')->first();
+        $this->assertEquals(1, LeaseContract::where('unit_id', $unit->id)->count());
     }
 
     public function test_smart_import_detects_multi_sheet_workbook_and_reconciles_existing_units(): void
@@ -205,6 +225,42 @@ class PropertyDataBaseImportTest extends TestCase
         $this->assertNotNull($office);
     }
 
+    public function test_smart_import_routes_single_sheet_commercial_workbook_to_pdb_parser(): void
+    {
+        // Real monthly P7H files sometimes arrive as ONE sheet packing multiple
+        // buildings via row headers, not one sheet per building — the routing
+        // in smart() must catch this from row content, not just sheet-name count.
+        $rows = [
+            ['Building 1130N - Ground Floor'],
+            ['SN', 'Off/Shop', 'Company', 'Contact Details', 'SIZE /SQM', 'Contract Period', 'Rate/ SQM', 'Rent', 'Service Charge', 'Monthly'],
+            [1, 'Shop 2', 'Bahrain Insurance Co.', 'Fadhel', 170.73, '01.03.2025 - 28.02.2028', 11.49, 1961.688, 0.15, 2285.365],
+        ];
+
+        $file = $this->buildWorkbook(['P7H Aug 2026' => $rows]);
+
+        $response = $this->post(route('import.smart'), ['file' => $file]);
+        $response->assertRedirect(route('dashboard'));
+
+        $this->assertNull(session('smart_import_error'));
+        $this->assertNotNull(PropertyUnit::where('unit_name', 'P7H-1130N - Shop 2')->first());
+    }
+
+    public function test_smart_import_routes_single_sheet_residential_workbook_to_pdb_parser(): void
+    {
+        // Residential (Miknas Plaza) sheets mark themselves with a
+        // "<Property> - Data Base - <Month>" title row instead of the
+        // commercial "Building ... - <Floor>" row headers — a single-sheet
+        // residential file must be recognized by that shape too.
+        $file = $this->buildWorkbook(['MP3 Aug 2026' => $this->mp1Rows()]);
+
+        $response = $this->post(route('import.smart'), ['file' => $file]);
+        $response->assertRedirect(route('dashboard'));
+
+        $this->assertNull(session('smart_import_error'));
+        $this->assertNotNull(Building::where('property_code', 'MP3')->first());
+        $this->assertNotNull(PropertyUnit::where('unit_name', 'MP3 - S702')->first());
+    }
+
     public function test_smart_import_skips_older_duplicate_p7h_summary_sheet(): void
     {
         $duplicateRows = [
@@ -263,6 +319,159 @@ class PropertyDataBaseImportTest extends TestCase
         $this->assertNotNull($individualTenant);
         $this->assertEquals('individual', $individualTenant->tenant_type);
         $this->assertNull($individualTenant->company_name);
+    }
+
+    public function test_smart_import_tags_tenant_as_company_from_underscore_sheet_name_convention(): void
+    {
+        $companyRows = [
+            ['Building 1130N - Ground Floor'],
+            ['SN', 'Off/Shop', 'Company', 'Contact Details', 'SIZE /SQM', 'Contract Period', 'Rate/ SQM', 'Rent', 'Service Charge', 'Monthly'],
+            [1, 'Shop 2', 'Bahrain Insurance Co.', 'Fadhel', 170.73, '01.03.2025 - 28.02.2028', 11.49, 1961.688, 0.15, 2285.365],
+        ];
+
+        $file = $this->buildWorkbook([
+            'Company_Promoseven_P7H_Aug2026' => $companyRows,
+        ]);
+
+        $this->post(route('import.smart'), ['file' => $file])->assertRedirect(route('dashboard'));
+
+        $tenant = Tenant::whereRaw('LOWER(name) = ?', ['bahrain insurance co.'])->first();
+        $this->assertNotNull($tenant);
+        $this->assertEquals('company', $tenant->tenant_type);
+        $this->assertEquals('Promoseven', $tenant->company_name);
+    }
+
+    public function test_smart_import_splits_contact_details_across_continuation_rows(): void
+    {
+        // Real files spread "Contact Details" across the shop's main row (a
+        // contact person's name) and continuation rows below (email, then
+        // phone) — must classify by shape, not treat the main row as a phone.
+        $rows = [
+            ['Building 1130N - Ground Floor'],
+            ['SN', 'Off/Shop', 'Company', 'Contact Details', 'SIZE /SQM', 'Contract Period', 'Rate/ SQM', 'Rent', 'Service Charge', 'Monthly'],
+            [1, 'Shop 2', 'Bahrain Insurance Co.', 'Fadhel', 170.73, '01.03.2025', 11.49, 1961.688, 0.15, 2285.365],
+            [null, null, null, 'Adel.Hejres@bnhgroup.com'],
+            [null, null, null, '17587314, 17587313', null, '28.02.2028'],
+        ];
+
+        $file = $this->buildWorkbook(['P7H Aug 2026' => $rows]);
+
+        $this->post(route('import.smart'), ['file' => $file])->assertRedirect(route('dashboard'));
+
+        $tenant = Tenant::whereRaw('LOWER(name) = ?', ['bahrain insurance co.'])->first();
+        $this->assertNotNull($tenant);
+        $this->assertEquals('17587314, 17587313', $tenant->phone);
+        $this->assertEquals('Adel.Hejres@bnhgroup.com', $tenant->email);
+        $this->assertEquals('Fadhel', $tenant->contact_person);
+    }
+
+    public function test_smart_import_reads_dedicated_contact_name_phone_email_columns(): void
+    {
+        // Newer files split contact info into its own columns instead of one
+        // combined "Contact Details" blob — must read them directly and not
+        // fall back to the continuation-row scanning heuristic.
+        $rows = [
+            ['Building 1130N - Ground Floor'],
+            ['SN', 'Off/Shop', 'Company', 'Contact Name', 'Phone', 'Email', 'SIZE /SQM', 'Contract Period', 'Rate/ SQM', 'Rent', 'Service Charge', 'Monthly'],
+            [1, 'Shop 2', 'Bahrain Insurance Co.', 'Fadhel', '17587314, 17587313', 'Adel.Hejres@bnhgroup.com', 170.73, '01.03.2025 - 28.02.2028', 11.49, 1961.688, 0.15, 2285.365],
+        ];
+
+        $file = $this->buildWorkbook(['P7H Aug 2026' => $rows]);
+
+        $this->post(route('import.smart'), ['file' => $file])->assertRedirect(route('dashboard'));
+
+        $tenant = Tenant::whereRaw('LOWER(name) = ?', ['bahrain insurance co.'])->first();
+        $this->assertNotNull($tenant);
+        $this->assertEquals('Fadhel', $tenant->contact_person);
+        $this->assertEquals('17587314, 17587313', $tenant->phone);
+        $this->assertEquals('Adel.Hejres@bnhgroup.com', $tenant->email);
+    }
+
+    public function test_smart_import_tags_tenant_as_company_from_uploaded_filename(): void
+    {
+        // The sheet TAB itself carries no company tag ("P7H Aug 2026") — only
+        // the uploaded FILE name does. One company can own multiple buildings
+        // across several sheets in one file without renaming every tab.
+        $rows = [
+            ['Building 1130N - Ground Floor'],
+            ['SN', 'Off/Shop', 'Company', 'Contact Details', 'SIZE /SQM', 'Contract Period', 'Rate/ SQM', 'Rent', 'Service Charge', 'Monthly'],
+            [1, 'Shop 2', 'Bahrain Insurance Co.', 'Fadhel', 170.73, '01.03.2025 - 28.02.2028', 11.49, 1961.688, 0.15, 2285.365],
+        ];
+
+        $file = $this->buildWorkbook(['P7H Aug 2026' => $rows], 'Company_Promoseven_P7H_Aug2026.xlsx');
+
+        $this->post(route('import.smart'), ['file' => $file])->assertRedirect(route('dashboard'));
+
+        $tenant = Tenant::whereRaw('LOWER(name) = ?', ['bahrain insurance co.'])->first();
+        $this->assertNotNull($tenant);
+        $this->assertEquals('company', $tenant->tenant_type);
+        $this->assertEquals('Promoseven', $tenant->company_name);
+    }
+
+    public function test_smart_import_tags_building_as_company_from_uploaded_filename(): void
+    {
+        $rows = [
+            ['Building 1130N - Ground Floor'],
+            ['SN', 'Off/Shop', 'Company', 'Contact Details', 'SIZE /SQM', 'Contract Period', 'Rate/ SQM', 'Rent', 'Service Charge', 'Monthly'],
+            [1, 'Shop 2', 'Bahrain Insurance Co.', 'Fadhel', 170.73, '01.03.2025 - 28.02.2028', 11.49, 1961.688, 0.15, 2285.365],
+        ];
+
+        $file = $this->buildWorkbook(['P7H Aug 2026' => $rows], 'Company_Promoseven_P7H_Aug2026.xlsx');
+
+        $this->post(route('import.smart'), ['file' => $file])->assertRedirect(route('dashboard'));
+
+        $building = Building::where('property_code', 'P7H-1130N')->first();
+        $this->assertNotNull($building);
+        $this->assertEquals('Promoseven', $building->company_name);
+    }
+
+    public function test_smart_import_carries_over_column_map_when_a_section_has_no_header_row(): void
+    {
+        // Some floor sections continue the same table layout as the section
+        // above them with no header row of their own — data starts right
+        // after the "Building ... - <Floor>" title row. The parser must not
+        // mistake that first data row for a header and silently drop the
+        // whole section.
+        $rows = [
+            ['Building 1130M - Mezzanine Floor'],
+            ['No.', 'Office Number', 'Company Name', 'Area (m²)', 'Contract Period', 'Rate / m²', 'Rent', 'Monthly', 'Occupancy'],
+            [1, 'K1130MB', 'Seven Interiors', 50.9, '01.05.2021 - 30.04.2025', 7.7, 391.93, 391.93, 'Occupied'],
+            ['Building 1130M - Second Floor'],
+            [11, 'Office 21', 'Energy Cycle', 18.21, '01.04.2022 - 31.03.2025', 5.0, 91.05, 91.05, 'Occupied'],
+        ];
+
+        $file = $this->buildWorkbook(['P7H Aug 2026' => $rows]);
+
+        $this->post(route('import.smart'), ['file' => $file])->assertRedirect(route('dashboard'));
+
+        $secondFloorUnit = PropertyUnit::where('unit_name', 'P7H-1130M - Office 21')->first();
+        $this->assertNotNull($secondFloorUnit);
+        $this->assertEquals('Second Floor', $secondFloorUnit->floor->floor_name);
+
+        $tenant = Tenant::whereRaw('LOWER(name) = ?', ['energy cycle'])->first();
+        $this->assertNotNull($tenant);
+    }
+
+    public function test_smart_import_stops_a_section_at_its_total_row(): void
+    {
+        // Footer notes ("Legend", "Registered Office") sit below a section's
+        // "Total Rent Amount" row and must not be imported as units.
+        $rows = [
+            ['Building 1130M - Second Floor'],
+            ['No.', 'Office Number', 'Company Name', 'Area (m²)', 'Contract Period', 'Rate / m²', 'Rent', 'Monthly', 'Occupancy'],
+            [11, 'Office 21', 'Energy Cycle', 18.21, '01.04.2022 - 31.03.2025', 5.0, 91.05, 91.05, 'Occupied'],
+            [null, null, null, null, null, null, 'Total Rent Amount', 6003.349],
+            [null, 'Legend'],
+            [null, 'Registered Office'],
+        ];
+
+        $file = $this->buildWorkbook(['P7H Aug 2026' => $rows]);
+
+        $this->post(route('import.smart'), ['file' => $file])->assertRedirect(route('dashboard'));
+
+        $this->assertNotNull(PropertyUnit::where('unit_name', 'P7H-1130M - Office 21')->first());
+        $this->assertNull(PropertyUnit::where('unit_name', 'P7H-1130M - Legend')->first());
+        $this->assertNull(PropertyUnit::where('unit_name', 'P7H-1130M - Registered Office')->first());
     }
 
     public function test_single_sheet_workbook_still_uses_original_smart_import_path(): void

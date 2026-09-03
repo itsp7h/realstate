@@ -81,6 +81,7 @@ class InvoiceController extends Controller
 
         $contracts = LeaseContract::whereNotNull('rent_per_month')
             ->where('rent_per_month', '>', 0)
+            ->whereNull('terminated_at')
             ->whereDate('lease_start_date', '<=', $lastDay)
             ->whereDate('lease_end_date',   '>=', $firstDay)
             ->whereNotNull('tenant_id')

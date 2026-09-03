@@ -521,7 +521,7 @@
         <p class="page-header-sub">Manage all building and property records</p>
     </div>
     <div class="page-header-actions">
-        <a href="{{ route('export.buildings', request()->only(['search','property_type','type_of_ownership'])) }}" class="btn btn-success">
+        <a href="{{ route('export.buildings', request()->only(['search','property_type','type_of_ownership','company_name'])) }}" class="btn btn-success">
             <i class="fa-solid fa-file-excel"></i> Export
         </a>
         <button type="button" class="btn btn-outline" onclick="openImport_buildings()">
@@ -536,7 +536,7 @@
 {{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
 <div class="m-screen">
     <div class="m-action-row">
-        <a href="{{ route('export.buildings', request()->only(['search','property_type','type_of_ownership'])) }}" class="m-action-btn green-outline">Export</a>
+        <a href="{{ route('export.buildings', request()->only(['search','property_type','type_of_ownership','company_name'])) }}" class="m-action-btn green-outline">Export</a>
         <button type="button" class="m-action-btn outline" onclick="openImport_buildings()">Import</button>
         <button type="button" class="m-action-btn primary" onclick="openBuildingModal()">+ Add Building</button>
     </div>
@@ -626,8 +626,19 @@
                     @endforeach
                 </select>
             </div>
+            @if($companies->isNotEmpty())
+            <div class="filter-group">
+                <label>Company</label>
+                <select name="company_name" onchange="this.form.submit()">
+                    <option value="">All Companies</option>
+                    @foreach($companies as $company)
+                        <option value="{{ $company }}" {{ request('company_name') === $company ? 'selected' : '' }}>{{ $company }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
             <div class="filter-actions">
-                @if(request()->hasAny(['search','property_type','type_of_ownership']))
+                @if(request()->hasAny(['search','property_type','type_of_ownership','company_name']))
                     <a href="{{ route('buildings.index') }}" class="btn btn-outline btn-sm">
                         <i class="fa-solid fa-xmark"></i> Clear
                     </a>
@@ -655,6 +666,7 @@
                     <th>Type</th>
                     <th>Ownership</th>
                     <th>Land Lord</th>
+                    <th>Company</th>
                     <th>Building No. / Road</th>
                     <th>Block / Area</th>
                     <th>Floors</th>
@@ -680,6 +692,11 @@
                     <td>
                         @if($building->land_lord_name)
                             <div style="font-size:13px;">{{ $building->land_lord_name }}</div>
+                        @else <span style="color:var(--text-muted);">—</span> @endif
+                    </td>
+                    <td>
+                        @if($building->company_name)
+                            <div style="font-size:13px;">{{ $building->company_name }}</div>
                         @else <span style="color:var(--text-muted);">—</span> @endif
                     </td>
                     <td>
@@ -838,6 +855,12 @@
                         <div class="bldg-card-meta-row">
                             <i class="fa-solid fa-user-tie"></i>
                             <span>{{ $building->land_lord_name }}</span>
+                        </div>
+                        @endif
+                        @if($building->company_name)
+                        <div class="bldg-card-meta-row">
+                            <i class="fa-solid fa-building-user"></i>
+                            <span>{{ $building->company_name }}</span>
                         </div>
                         @endif
                         @if($building->building_no || $building->road)
@@ -1063,6 +1086,23 @@
                                     maxlength="255">
                             </div>
                             @error('land_lord_name')
+                                <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div>
+                            @enderror
+                        </div>
+                        @endif
+
+                        @if($mshow('company_name'))
+                        <div class="mfield-group span-2">
+                            <label class="mfield-label">Company</label>
+                            <div class="mfield-wrap has-micon">
+                                <i class="fa-solid fa-building-user mfield-icon"></i>
+                                <input type="text" name="company_name"
+                                    class="mfield-input {{ $errors->has('company_name') ? 'is-invalid' : '' }}"
+                                    value="{{ $mval('company_name') }}"
+                                    placeholder="e.g. Promoseven"
+                                    maxlength="255">
+                            </div>
+                            @error('company_name')
                                 <div class="mfield-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div>
                             @enderror
                         </div>
@@ -1459,7 +1499,7 @@ if (codeInput) {
 @if($errors->any())
 (function () {
     // Determine which step has the first error
-    const step1Fields = ['property_name','property_code','type_of_ownership','property_type','land_lord_name'];
+    const step1Fields = ['property_name','property_code','type_of_ownership','property_type','land_lord_name','company_name'];
     const step2Fields = ['building_no','block','road','area','city'];
     const errorKeys = @json($errors->keys());
     let startStep = 3; // default to last

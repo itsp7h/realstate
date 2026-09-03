@@ -124,6 +124,15 @@
             <div class="card-body">
                 <div class="form-grid">
 
+                    <div class="form-group col-span-2">
+                        <label>Contact Person</label>
+                        <input type="text" name="contact_person"
+                            class="{{ $errors->has('contact_person') ? 'error' : '' }}"
+                            value="{{ old('contact_person', $tenant->contact_person) }}"
+                            placeholder="e.g. Fadhel (for company tenants)" maxlength="255">
+                        @error('contact_person') <span class="field-error">{{ $message }}</span> @enderror
+                    </div>
+
                     <div class="form-group">
                         <label>Phone</label>
                         <input type="text" name="phone"

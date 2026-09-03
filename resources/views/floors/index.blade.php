@@ -174,15 +174,15 @@
                         @endif
                     </td>
                     <td>
-                        @if($floor->block_name)
-                            <span style="font-size:13px;">{{ $floor->block_name }}</span>
+                        @if($floor->block?->block_name ?? $floor->block_name)
+                            <span style="font-size:13px;">{{ $floor->block?->block_name ?? $floor->block_name }}</span>
                         @else
                             <span style="color:var(--text-muted);">—</span>
                         @endif
                     </td>
                     <td>
-                        @if($floor->block_code)
-                            <span class="badge badge-gray">{{ $floor->block_code }}</span>
+                        @if($floor->block?->block_code ?? $floor->block_code)
+                            <span class="badge badge-gray">{{ $floor->block?->block_code ?? $floor->block_code }}</span>
                         @else
                             <span style="color:var(--text-muted);">—</span>
                         @endif

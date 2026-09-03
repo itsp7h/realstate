@@ -19,6 +19,7 @@ class StoreBuildingRequest extends FormRequest
             'type_of_ownership'  => ['nullable', 'string', 'max:100', 'in:Owned,Leased,Joint Venture,Managed'],
             'property_type'      => ['nullable', 'string', 'max:100', 'in:Residential,Commercial,Mixed Use,Industrial,Retail'],
             'land_lord_name'     => ['nullable', 'string', 'max:255'],
+            'company_name'       => ['nullable', 'string', 'max:255'],
             'building_no'        => ['nullable', 'integer', 'min:0'],
             'road'               => ['nullable', 'string', 'max:255'],
             'block'              => ['nullable', 'integer', 'min:0'],

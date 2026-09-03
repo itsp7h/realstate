@@ -18,6 +18,7 @@
     .stat-icon.green  { background:#ECFDF5; color:var(--success); }
     .stat-icon.amber  { background:#FFFBEB; color:var(--warning); }
     .stat-icon.gray   { background:#F1F5F9; color:var(--text-muted); }
+    .stat-icon.violet { background:#F5F3FF; color:#7C3AED; }
     .stat-val { font-family:'Outfit',sans-serif; font-size:24px; font-weight:800; color:var(--text-primary); line-height:1; }
     .stat-lbl { font-size:12px; color:var(--text-muted); margin-top:3px; }
 
@@ -54,6 +55,9 @@
     .status-expiring { background:#FFFBEB;color:var(--warning);border:1px solid #FDE68A; }
     .status-expired  { background:#F1F5F9;color:var(--text-muted);border:1px solid var(--card-border); }
     .status-upcoming { background:#EFF6FF;color:var(--info);border:1px solid #BFDBFE; }
+    .status-for_renewal { background:#F1F5F9;color:var(--text-muted);border:1px solid var(--card-border); }
+    .status-renewed  { background:#F5F3FF;color:#7C3AED;border:1px solid #DDD6FE; }
+    .status-terminated { background:#FEF2F2;color:var(--danger);border:1px solid #FECACA; }
 
     /* ── FOOTER / PAGINATION ────────────────────────────────── */
     .table-footer { padding:14px 20px;border-top:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px; }
@@ -245,8 +249,16 @@
         <div><div class="stat-val">{{ $stats['expiring'] }}</div><div class="stat-lbl">Expiring (30 days)</div></div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon gray"><i class="fa-solid fa-clock-rotate-left"></i></div>
-        <div><div class="stat-val">{{ $stats['expired'] }}</div><div class="stat-lbl">Expired</div></div>
+        <div class="stat-icon gray"><i class="fa-solid fa-arrows-rotate"></i></div>
+        <div><div class="stat-val">{{ $stats['for_renewal'] }}</div><div class="stat-lbl">For Renewal</div></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon violet"><i class="fa-solid fa-rotate"></i></div>
+        <div><div class="stat-val">{{ $stats['renewed'] }}</div><div class="stat-lbl">Renewed</div></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon gray"><i class="fa-solid fa-ban"></i></div>
+        <div><div class="stat-val">{{ $stats['terminated'] }}</div><div class="stat-lbl">Terminated</div></div>
     </div>
 </div>
 
@@ -276,7 +288,9 @@
                     <option value="active"   {{ request('status') === 'active'   ? 'selected' : '' }}>Active</option>
                     <option value="expiring" {{ request('status') === 'expiring' ? 'selected' : '' }}>Expiring Soon</option>
                     <option value="upcoming" {{ request('status') === 'upcoming' ? 'selected' : '' }}>Upcoming</option>
-                    <option value="expired"  {{ request('status') === 'expired'  ? 'selected' : '' }}>Expired</option>
+                    <option value="for_renewal" {{ request('status') === 'for_renewal' ? 'selected' : '' }}>For Renewal</option>
+                    <option value="renewed"    {{ request('status') === 'renewed'    ? 'selected' : '' }}>Renewed</option>
+                    <option value="terminated"  {{ request('status') === 'terminated'  ? 'selected' : '' }}>Terminated</option>
                 </select>
             </div>
             <div class="filter-group">
@@ -314,16 +328,20 @@
                 @php
                     $status = $contract->status;
                     $statusLabel = match($status) {
-                        'active'   => 'Active',
-                        'expiring' => 'Expiring',
-                        'upcoming' => 'Upcoming',
-                        'expired'  => 'Expired',
+                        'active'      => 'Active',
+                        'expiring'    => 'Expiring',
+                        'upcoming'    => 'Upcoming',
+                        'for_renewal' => 'For Renewal',
+                        'renewed'     => 'Renewed',
+                        'terminated'  => 'Terminated',
                     };
                     $statusIcon = match($status) {
-                        'active'   => 'fa-circle-check',
-                        'expiring' => 'fa-triangle-exclamation',
-                        'upcoming' => 'fa-clock',
-                        'expired'  => 'fa-circle-xmark',
+                        'active'      => 'fa-circle-check',
+                        'expiring'    => 'fa-triangle-exclamation',
+                        'upcoming'    => 'fa-clock',
+                        'for_renewal' => 'fa-arrows-rotate',
+                        'renewed'     => 'fa-rotate',
+                        'terminated'  => 'fa-ban',
                     };
                     $start = $contract->lease_start_date->timestamp;
                     $end   = $contract->lease_end_date->timestamp;
@@ -359,7 +377,7 @@
                             {{ $contract->lease_end_date->format('d M Y') }}
                         </div>
                         <div class="period-bar" style="width:120px;">
-                            <div class="period-fill" style="width:{{ $pct }}%;background:{{ $status === 'expired' ? 'var(--text-muted)' : ($status === 'expiring' ? 'var(--warning)' : 'var(--accent)') }};"></div>
+                            <div class="period-fill" style="width:{{ $pct }}%;background:{{ in_array($status, ['for_renewal', 'renewed', 'terminated']) ? 'var(--text-muted)' : ($status === 'expiring' ? 'var(--warning)' : 'var(--accent)') }};"></div>
                         </div>
                     </td>
                     <td>

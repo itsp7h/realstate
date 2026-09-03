@@ -17,6 +17,7 @@ class UpdateTenantRequest extends FormRequest
             'name'                => ['required', 'string', 'max:255'],
             'tenant_type'         => ['required', 'in:individual,company'],
             'company_name'        => ['nullable', 'string', 'max:255'],
+            'contact_person'      => ['nullable', 'string', 'max:255'],
             'id_cr_number'        => ['nullable', 'string', 'max:100'],
             'phone'               => ['nullable', 'string', 'max:50'],
             'email'               => ['nullable', 'email', 'max:255'],

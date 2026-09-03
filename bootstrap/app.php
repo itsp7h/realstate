@@ -27,10 +27,15 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
         ]);
 
-        // Applied globally (not just inside the authenticated route group)
-        // so every DELETE request is covered, including any added later.
-        $middleware->append(\App\Http\Middleware\RestrictDestructiveActions::class);
-        $middleware->append(\App\Http\Middleware\RestrictMaintenanceRole::class);
+        // Appended to the "web" group (not the global stack) so these run
+        // AFTER session/auth middleware has resolved $request->user() — the
+        // global stack runs before sessions even exist, which silently broke
+        // both checks (destructive-action blocked everyone including admins;
+        // maintenance-role restriction never fired for anyone at all).
+        $middleware->web(append: [
+            \App\Http\Middleware\RestrictDestructiveActions::class,
+            \App\Http\Middleware\RestrictMaintenanceRole::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

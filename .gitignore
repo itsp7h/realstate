@@ -32,3 +32,16 @@ Thumbs.db
 # not project assets, and some have contained real email addresses baked in.
 /draft
 graphify-out/cache/
+
+# Agent worktrees — full throwaway clones of this repo (hundreds of MB, and
+# each carries its own .env). Was only in .git/info/exclude, which is local to
+# one machine and doesn't survive a clone, so it lives here instead.
+**/.claude/worktrees/
+
+# Playwright MCP debug dumps (page snapshots / console logs) from browser
+# automation runs — scratch output, not project files.
+/.playwright-mcp
+
+# Throwaway UI verification screenshots taken at the repo root during
+# browser testing.
+/*.png

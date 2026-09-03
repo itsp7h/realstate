@@ -16,7 +16,7 @@ class TenantController extends Controller
 
     public function index(Request $request)
     {
-        $query = Tenant::query()->with('activeLease.unit');
+        $query = Tenant::query()->with('activeLease.propertyUnit');
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {

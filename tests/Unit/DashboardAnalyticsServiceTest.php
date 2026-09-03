@@ -258,10 +258,12 @@ class DashboardAnalyticsServiceTest extends TestCase
         $result = $this->service->buildingDashboard($building, $units, $contracts, now()->year);
 
         $this->assertEquals(2, $result['kpis']['total_units']);
-        $this->assertEquals(50, $result['kpis']['occupancy_percent']);
+        // Both units count as occupied — a lease past its end date still
+        // holds the unit occupied ("for renewal") until explicitly terminated.
+        $this->assertEquals(100, $result['kpis']['occupancy_percent']);
         $this->assertEquals(['Furnished' => 1, 'Fitted' => 1], $result['unit_conditions']->toArray());
         $this->assertEquals(1, $result['lease_status_counts']['expiring']);
-        $this->assertEquals(1, $result['lease_status_counts']['expired']);
+        $this->assertEquals(1, $result['lease_status_counts']['for_renewal']);
         $this->assertCount(1, $result['upcoming_expirations']);
         $this->assertTrue($result['upcoming_expirations']->first()->is($activeContract));
         $this->assertCount(1, $result['recent_maintenance']);

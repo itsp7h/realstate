@@ -272,6 +272,18 @@ a.dash-stat { text-decoration: none; cursor: pointer; }
 .smart-detect-note {
     font-size: 12px; color: var(--text-muted); margin: 0; line-height: 1.6;
 }
+.smart-template-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: var(--page-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    margin-bottom: 16px;
+}
+.smart-template-label-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--text-secondary);
+}
 
 /* ── FINANCIAL OVERVIEW CHART ───────────────────────────── */
 .finance-card {
@@ -577,12 +589,100 @@ a.dash-stat { text-decoration: none; cursor: pointer; }
 
     .m-dash-bottom-space { height: 26px; }
 }
+
+/* ── TOAST NOTIFICATIONS ─────────────────────────────────── */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 380px;
+}
+.toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--radius, 12px);
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--card-border, #E5E7EB);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    animation: toastIn 0.25s ease-out;
+}
+.toast.toast-leaving { animation: toastOut 0.2s ease-in forwards; }
+@keyframes toastIn {
+    from { opacity: 0; transform: translateX(24px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes toastOut {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(24px); }
+}
+.toast-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.toast.toast-success .toast-icon { color: #10B981; }
+.toast.toast-error   .toast-icon { color: #EF4444; }
+.toast-body { flex: 1; min-width: 0; }
+.toast-title { font-size: 13.5px; font-weight: 700; color: var(--text-primary, #0B1120); margin-bottom: 2px; }
+.toast-message { font-size: 12.5px; color: var(--text-secondary, #4B5563); line-height: 1.5; }
+.toast-close { flex-shrink: 0; background: none; border: none; color: var(--text-muted, #9CA3AF); cursor: pointer; font-size: 13px; padding: 2px; }
+.toast-close:hover { color: var(--text-primary, #0B1120); }
 </style>
 @endpush
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
+function showToast(type, title, message, duration = 6000) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark' };
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <i class="fa-solid ${icons[type] || 'fa-circle-info'} toast-icon"></i>
+        <div class="toast-body">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button type="button" class="toast-close" aria-label="Dismiss"><i class="fa-solid fa-xmark"></i></button>
+    `;
+
+    const dismiss = () => {
+        toast.classList.add('toast-leaving');
+        setTimeout(() => toast.remove(), 200);
+    };
+    toast.querySelector('.toast-close').addEventListener('click', dismiss);
+    if (duration > 0) setTimeout(dismiss, duration);
+
+    container.appendChild(toast);
+}
+
+// Called inline (not on DOMContentLoaded) — by the time this script tag near
+// the end of the body runs, #toastContainer (defined near the top of the
+// page) already exists, and waiting for DOMContentLoaded risks missing it
+// entirely if the event has already fired by this point in some navigations.
+@if(session('smart_import_results'))
+    @php
+        $toastErrors = collect(session('smart_import_results'))->sum(fn($r) => count($r['errors']));
+        $toastParts  = collect(session('smart_import_results'))
+            ->filter(fn($r) => $r['imported'] > 0)
+            ->map(fn($r, $entity) => $r['imported'] . ' ' . $entity)
+            ->values()
+            ->join(', ');
+        $toastType    = $toastErrors > 0 ? 'error' : 'success';
+        $toastTitle   = $toastErrors > 0 ? 'Import completed with issues' : 'Import successful';
+        $toastMessage = ($toastParts !== '' ? $toastParts . ' imported' : 'Nothing new to import')
+            . ($toastErrors > 0 ? ". {$toastErrors} row(s) skipped — see details below." : '.');
+    @endphp
+    showToast(@json($toastType), @json($toastTitle), @json($toastMessage));
+@elseif(session('smart_import_error'))
+    showToast(@json('error'), @json('Import failed'), @json(session('smart_import_error')));
+@endif
+
 function importDragOver(e, dropId) {
     e.preventDefault();
     document.getElementById(dropId).classList.add('drag-over');
@@ -784,6 +884,8 @@ document.querySelectorAll('.property-carousel').forEach(function (carousel) {
 @endpush
 
 @section('content')
+
+<div class="toast-container" id="toastContainer"></div>
 
 @php
     $portfolioIncome = $buildingPerformance->sum('total_income');
@@ -1244,6 +1346,17 @@ document.querySelectorAll('.property-carousel').forEach(function (carousel) {
                     A lease contracts file automatically imports both <strong>Tenants</strong> and <strong>Contracts</strong> in one pass.
                     Duplicate records are skipped, not overwritten.
                 </p>
+            </div>
+
+            {{-- Template download --}}
+            <div class="smart-template-bar">
+                <div class="smart-template-label-row">
+                    <i class="fa-solid fa-file-spreadsheet" style="color:var(--accent);"></i>
+                    <span>Not sure where to start? Download one template with a tab for each type.</span>
+                </div>
+                <a href="{{ route('import.template', ['smart', 'xlsx']) }}" class="btn btn-outline btn-sm" download>
+                    <i class="fa-solid fa-file-excel"></i> Download Template (XLSX)
+                </a>
             </div>
 
             {{-- Upload form --}}

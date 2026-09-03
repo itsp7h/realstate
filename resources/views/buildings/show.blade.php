@@ -298,6 +298,12 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
+            <button class="nav-link" id="blocks-tab" data-bs-toggle="pill" data-bs-target="#panel-blocks" type="button" role="tab">
+                <i class="fa-solid fa-building me-2"></i> Blocks
+                <span class="badge rounded-pill">{{ $blocks->count() }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="units-tab" data-bs-toggle="pill" data-bs-target="#panel-units" type="button" role="tab">
                 <i class="fa-solid fa-door-open me-2"></i> Units
                 <span class="badge rounded-pill">{{ $units->count() }}</span>
@@ -339,7 +345,7 @@
                 $unitsUrl = fn ($extra = []) => route('property-units.index', array_merge(['property_code' => $building->property_code], $extra));
                 $conditionUrls = collect($dashboard['unit_conditions'])->keys()->map(fn ($l) => $unitsUrl(['unit_condition' => $l]))->values()->all();
                 $leaseUrl = fn ($status) => route('lease-contracts.index', ['property_code' => $building->property_code, 'status' => $status]);
-                $leaseStatusUrls = [$leaseUrl('active'), $leaseUrl('expiring'), $leaseUrl('upcoming'), $leaseUrl('expired')];
+                $leaseStatusUrls = [$leaseUrl('active'), $leaseUrl('expiring'), $leaseUrl('upcoming'), $leaseUrl('for_renewal')];
             @endphp
 
             {{-- KPI Grid --}}
@@ -638,7 +644,7 @@
                                     <tr>
                                         <td class="ps-4 fw-bold text-dark">{{ $floor->floor_name }}</td>
                                         <td>@if($floor->floor_code)<span class="badge badge-soft-secondary">{{ $floor->floor_code }}</span>@else<span class="text-muted">—</span>@endif</td>
-                                        <td>{{ $floor->block_name ?? '—' }}</td>
+                                        <td>{{ $floor->block?->block_name ?? $floor->block_name ?? '—' }}</td>
                                         <td><span class="badge bg-light text-dark border">{{ $floor->total_no_of_units ?? '—' }}</span></td>
                                         <td class="text-end pe-4">
                                             <div class="d-flex gap-2 justify-content-end">
@@ -660,6 +666,61 @@
                             <h6 class="fw-bold text-dark">No floors yet</h6>
                             <p class="text-muted small mb-4">Click Add Floor to define the first floor.</p>
                             <button class="btn btn-outline-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addFloorModal">Create Floor</button>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        {{-- ===================== 2b. BLOCKS TAB ===================== --}}
+        <div class="tab-pane fade" id="panel-blocks" role="tabpanel" tabindex="0">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">Building Blocks</h5>
+                    <button class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#addBlockModal">
+                        <i class="fa-solid fa-plus me-1"></i> Add Block
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    @if($blocks->isNotEmpty())
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-4">Block Name</th>
+                                        <th>Code</th>
+                                        <th>Total Floors</th>
+                                        <th>Floors Linked</th>
+                                        <th class="text-end pe-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($blocks as $block)
+                                    <tr>
+                                        <td class="ps-4 fw-bold text-dark">{{ $block->block_name }}</td>
+                                        <td>@if($block->block_code)<span class="badge badge-soft-secondary">{{ $block->block_code }}</span>@else<span class="text-muted">—</span>@endif</td>
+                                        <td><span class="badge bg-light text-dark border">{{ $block->total_no_of_floors ?? '—' }}</span></td>
+                                        <td><span class="badge bg-light text-dark border">{{ $block->floors_count }}</span></td>
+                                        <td class="text-end pe-4">
+                                            <div class="d-flex gap-2 justify-content-end">
+                                                <a href="{{ route('blocks.edit', $block) }}" class="btn btn-sm btn-light border text-secondary"><i class="fa-regular fa-pen-to-square"></i></a>
+                                                <form method="POST" action="{{ route('blocks.destroy', $block) }}" onsubmit="return confirm('Delete this block?')">
+                                                    @csrf @method('DELETE')
+                                                    <button class="btn btn-sm btn-light border text-danger"><i class="fa-regular fa-trash-can"></i></button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="text-center py-5">
+                            <i class="fa-solid fa-building fs-1 text-muted opacity-25 mb-3"></i>
+                            <h6 class="fw-bold text-dark">No blocks yet</h6>
+                            <p class="text-muted small mb-4">Only needed for compounds with multiple inner buildings — click Add Block to define one.</p>
+                            <button class="btn btn-outline-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addBlockModal">Create Block</button>
                         </div>
                     @endif
                 </div>
@@ -754,6 +815,9 @@
                                             </div>
                                         </td>
                                         <td>
+                                            @if($t->contact_person)
+                                                <div class="small text-dark mb-1"><i class="fa-solid fa-user text-muted me-1" style="width:14px;"></i> {{ $t->contact_person }}</div>
+                                            @endif
                                             <div class="small text-dark mb-1"><i class="fa-solid fa-phone text-muted me-1" style="width:14px;"></i> {{ $t->phone ?? '—' }}</div>
                                             <div class="small text-muted"><i class="fa-solid fa-envelope text-muted me-1" style="width:14px;"></i> {{ $t->email ?? '—' }}</div>
                                         </td>
@@ -941,6 +1005,15 @@
                             <input type="number" name="total_no_of_units" class="form-control" value="{{ old('total_no_of_units') }}" min="1">
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Block</label>
+                        <select name="block_id" class="form-select">
+                            <option value="">— None —</option>
+                            @foreach($blocks as $b)
+                                <option value="{{ $b->id }}" {{ (string) old('block_id') === (string) $b->id ? 'selected' : '' }}>{{ $b->block_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="row g-3">
                         <div class="col-6">
                             <label class="form-label small fw-bold text-muted text-uppercase">Block Name</label>
@@ -955,6 +1028,46 @@
                 <div class="modal-footer border-0 px-4 pb-4 pt-0">
                     <button type="button" class="btn btn-light border rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Save Floor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Block Modal -->
+<div class="modal fade" id="addBlockModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-0 px-4 pt-4 pb-0">
+                <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-building text-primary me-2"></i> Add Block</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ route('buildings.blocks.store', $building) }}">
+                @csrf
+                <input type="hidden" name="_modal" value="add_block">
+                <div class="modal-body p-4">
+                    @if($errors->any() && old('_modal') === 'add_block')
+                        <div class="alert alert-danger py-2 px-3 small rounded-3"><i class="fa-solid fa-circle-exclamation me-1"></i> Please fix errors below.</div>
+                    @endif
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Block Name <span class="text-danger">*</span></label>
+                        <input type="text" name="block_name" class="form-control form-control-lg fs-6 @error('block_name') is-invalid @enderror" value="{{ old('block_name') }}" placeholder="e.g. Block A" required>
+                        @error('block_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Block Code</label>
+                            <input type="text" name="block_code" class="form-control" value="{{ old('block_code') }}" placeholder="e.g. BLK-A">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Total Floors</label>
+                            <input type="number" name="total_no_of_floors" class="form-control" value="{{ old('total_no_of_floors') }}" min="1">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn btn-light border rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Save Block</button>
                 </div>
             </form>
         </div>
@@ -1052,7 +1165,7 @@
         // Render Donuts
         buildDonut('expenseChart', ['Electricity', 'Water', 'Maintenance', 'Other'], [{{ $dashboard['expenses']['electricity'] ?? 0 }}, {{ $dashboard['expenses']['water'] ?? 0 }}, {{ $dashboard['expenses']['maintenance'] ?? 0 }}, {{ $dashboard['expenses']['other'] ?? 0 }}], ['#f59e0b', '#3b82f6', '#ef4444', '#64748b']);
         buildDonut('occupancyChart', ['Occupied', 'Vacant'], [{{ $dashboard['kpis']['occupied_units'] }}, {{ $dashboard['kpis']['vacant_units'] }}], ['#10b981', '#e2e8f0']);
-        buildDonut('leaseChart', ['Active', 'Expiring', 'Upcoming', 'Expired'], [{{ $dashboard['lease_status_counts']['active'] }}, {{ $dashboard['lease_status_counts']['expiring'] }}, {{ $dashboard['lease_status_counts']['upcoming'] }}, {{ $dashboard['lease_status_counts']['expired'] }}], ['#10b981', '#f59e0b', '#3b82f6', '#94a3b8']);
+        buildDonut('leaseChart', ['Active', 'Expiring', 'Upcoming', 'For Renewal', 'Terminated'], [{{ $dashboard['lease_status_counts']['active'] }}, {{ $dashboard['lease_status_counts']['expiring'] }}, {{ $dashboard['lease_status_counts']['upcoming'] }}, {{ $dashboard['lease_status_counts']['for_renewal'] }}, {{ $dashboard['lease_status_counts']['terminated'] }}], ['#10b981', '#f59e0b', '#3b82f6', '#94a3b8', '#ef4444']);
 
         // Unit Condition Donut Data mapping
         const conditionLabels = {!! json_encode(array_keys($dashboard['unit_conditions']->toArray())) !!};

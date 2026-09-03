@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Building;
 use App\Models\LeaseContract;
+use App\Models\PropertyUnit;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -373,9 +374,140 @@ class LeaseContractTest extends TestCase
             ->assertStatus(404);
     }
 
+    // ── TERMINATE ──────────────────────────────────────────────────
+
+    public function test_terminate_sets_terminated_at_and_frees_the_unit(): void
+    {
+        $building = Building::create(['property_name' => 'Tower A', 'property_code' => 'TA1']);
+        $unit = PropertyUnit::create([
+            'building_id' => $building->id, 'property_name' => 'Tower A', 'property_code' => 'TA1', 'unit_name' => 'Flat 1',
+        ]);
+        $contract = LeaseContract::create($this->minimalData([
+            'unit_id' => $unit->id,
+            'lease_start_date' => now()->subMonth()->format('Y-m-d'),
+            'lease_end_date'   => now()->addMonth()->format('Y-m-d'),
+        ]));
+
+        $this->assertEquals(1, $building->occupiedUnits()->count());
+
+        $this->post(route('lease-contracts.terminate', $contract))
+            ->assertRedirect();
+
+        $contract->refresh();
+        $this->assertNotNull($contract->terminated_at);
+        $this->assertEquals('terminated', $contract->status);
+        $this->assertEquals(0, $building->occupiedUnits()->count());
+    }
+
+    public function test_terminate_is_idempotent_when_already_terminated(): void
+    {
+        $firstTerminatedAt = now()->subDay();
+        $contract = LeaseContract::create($this->minimalData(['terminated_at' => $firstTerminatedAt]));
+
+        $this->post(route('lease-contracts.terminate', $contract))
+            ->assertRedirect();
+
+        $contract->refresh();
+        $this->assertEquals($firstTerminatedAt->timestamp, $contract->terminated_at->timestamp);
+    }
+
+    public function test_lease_past_end_date_shows_for_renewal_not_terminated(): void
+    {
+        $contract = LeaseContract::create($this->minimalData([
+            'lease_start_date' => now()->subYear()->format('Y-m-d'),
+            'lease_end_date'   => now()->subMonth()->format('Y-m-d'),
+        ]));
+
+        $this->assertEquals('for_renewal', $contract->status);
+        $this->assertNull($contract->terminated_at);
+    }
+
+    // ── RENEW ───────────────────────────────────────────────────────
+
+    public function test_renew_creates_a_new_one_year_contract_and_marks_the_old_one_renewed(): void
+    {
+        $building = Building::create(['property_name' => 'Tower A', 'property_code' => 'TA1']);
+        $unit = PropertyUnit::create([
+            'building_id' => $building->id, 'property_name' => 'Tower A', 'property_code' => 'TA1', 'unit_name' => 'Flat 1',
+        ]);
+        $contract = LeaseContract::create($this->minimalData([
+            'unit_id'          => $unit->id,
+            'lease_start_date' => '2024-01-01',
+            'lease_end_date'   => '2025-01-01',
+            'rent_per_month'   => 500,
+        ]));
+
+        $response = $this->post(route('lease-contracts.renew', $contract));
+        $response->assertRedirect();
+
+        $contract->refresh();
+        $this->assertNotNull($contract->renewed_at);
+        $this->assertEquals('renewed', $contract->status);
+        $this->assertNull($contract->terminated_at);
+
+        $newContract = LeaseContract::where('renewed_from_id', $contract->id)->first();
+        $this->assertNotNull($newContract);
+        $this->assertEquals('2025-01-02', $newContract->lease_start_date->format('Y-m-d'));
+        $this->assertEquals('2026-01-01', $newContract->lease_end_date->format('Y-m-d'));
+        $this->assertEquals($unit->id, $newContract->unit_id);
+        $this->assertEquals($contract->tenant_id, $newContract->tenant_id);
+        $this->assertEquals(500, (float) $newContract->rent_per_month);
+        $this->assertNotEquals($contract->lease_agreement_no, $newContract->lease_agreement_no);
+
+        // The unit stays occupied — the renewal is the new active contract for it.
+        $this->assertEquals(1, $building->occupiedUnits()->count());
+        $this->assertEquals($newContract->id, $unit->fresh()->activeContract->id);
+    }
+
+    public function test_renew_cannot_be_applied_to_an_already_renewed_contract(): void
+    {
+        $contract = LeaseContract::create($this->minimalData(['renewed_at' => now()]));
+
+        $this->post(route('lease-contracts.renew', $contract))->assertRedirect();
+
+        $this->assertEquals(1, LeaseContract::count());
+    }
+
+    public function test_renew_cannot_be_applied_to_a_terminated_contract(): void
+    {
+        $contract = LeaseContract::create($this->minimalData(['terminated_at' => now()]));
+
+        $this->post(route('lease-contracts.renew', $contract))->assertRedirect();
+
+        $this->assertEquals(1, LeaseContract::count());
+    }
+
     // ── ACTIVE LEASES FOR TENANT (invoicing) ──────────────────────
 
-    public function test_active_for_tenant_returns_only_currently_active_leases(): void
+    public function test_active_for_tenant_includes_leases_past_their_end_date_but_not_terminated(): void
+    {
+        $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
+
+        LeaseContract::create($this->minimalData([
+            'tenant_id'        => $tenant->id,
+            'property_name'    => 'Active Property',
+            'lease_start_date' => now()->subMonth()->format('Y-m-d'),
+            'lease_end_date'   => now()->addMonth()->format('Y-m-d'),
+        ]));
+
+        // Past its end date but never terminated — still invoiceable ("for
+        // renewal"), not dropped from the tenant's active leases.
+        LeaseContract::create($this->minimalData([
+            'tenant_id'        => $tenant->id,
+            'property_name'    => 'For Renewal Property',
+            'lease_agreement_no' => 'LA-TEST-002',
+            'lease_start_date' => now()->subYear()->format('Y-m-d'),
+            'lease_end_date'   => now()->subMonth()->format('Y-m-d'),
+        ]));
+
+        $response = $this->getJson(route('lease-contracts.active-for-tenant', $tenant));
+        $response->assertStatus(200);
+        $response->assertJsonCount(2);
+        $response->assertJsonFragment(['property_name' => 'Active Property']);
+        $response->assertJsonFragment(['property_name' => 'For Renewal Property']);
+    }
+
+    public function test_active_for_tenant_excludes_terminated_leases(): void
     {
         $tenant = Tenant::create(['name' => 'Ahmed Al-Khalifa', 'tenant_type' => 'individual']);
 
@@ -387,11 +519,12 @@ class LeaseContractTest extends TestCase
         ]));
 
         LeaseContract::create($this->minimalData([
-            'tenant_id'        => $tenant->id,
-            'property_name'    => 'Expired Property',
-            'lease_agreement_no' => 'LA-TEST-002',
-            'lease_start_date' => now()->subYear()->format('Y-m-d'),
-            'lease_end_date'   => now()->subMonth()->format('Y-m-d'),
+            'tenant_id'          => $tenant->id,
+            'property_name'      => 'Terminated Property',
+            'lease_agreement_no' => 'LA-TEST-003',
+            'lease_start_date'   => now()->subMonth()->format('Y-m-d'),
+            'lease_end_date'     => now()->addMonth()->format('Y-m-d'),
+            'terminated_at'      => now(),
         ]));
 
         $response = $this->getJson(route('lease-contracts.active-for-tenant', $tenant));

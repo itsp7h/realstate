@@ -12,6 +12,7 @@ use App\Models\PropertyUnit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class LeaseContractController extends Controller
 {
@@ -36,12 +37,16 @@ class LeaseContractController extends Controller
 
         if ($status = $request->input('status')) {
             match ($status) {
-                'active'   => $query->where('lease_end_date', '>=', $asOf)
+                'active'      => $query->whereNull('terminated_at')->whereNull('renewed_at')
+                                    ->where('lease_end_date', '>=', $asOf)
                                     ->where('lease_start_date', '<=', $asOf),
-                'expiring' => $query->whereBetween('lease_end_date', [$asOf, $asOf->copy()->addDays(30)]),
-                'expired'  => $query->where('lease_end_date', '<', $asOf),
-                'upcoming' => $query->where('lease_start_date', '>', $asOf),
-                default    => null,
+                'expiring'    => $query->whereNull('terminated_at')->whereNull('renewed_at')
+                                    ->whereBetween('lease_end_date', [$asOf, $asOf->copy()->addDays(30)]),
+                'for_renewal' => $query->whereNull('terminated_at')->whereNull('renewed_at')->where('lease_end_date', '<', $asOf),
+                'upcoming'    => $query->whereNull('terminated_at')->whereNull('renewed_at')->where('lease_start_date', '>', $asOf),
+                'renewed'     => $query->whereNotNull('renewed_at'),
+                'terminated'  => $query->whereNotNull('terminated_at'),
+                default       => null,
             };
         }
 
@@ -54,10 +59,12 @@ class LeaseContractController extends Controller
         $contracts = $query->paginate(15)->withQueryString();
 
         $stats = [
-            'total'    => LeaseContract::count(),
-            'active'   => LeaseContract::where('lease_end_date', '>=', $asOf)->where('lease_start_date', '<=', $asOf)->count(),
-            'expiring' => LeaseContract::whereBetween('lease_end_date', [$asOf, $asOf->copy()->addDays(30)])->count(),
-            'expired'  => LeaseContract::where('lease_end_date', '<', $asOf)->count(),
+            'total'       => LeaseContract::count(),
+            'active'      => LeaseContract::whereNull('terminated_at')->whereNull('renewed_at')->where('lease_end_date', '>=', $asOf)->where('lease_start_date', '<=', $asOf)->count(),
+            'expiring'    => LeaseContract::whereNull('terminated_at')->whereNull('renewed_at')->whereBetween('lease_end_date', [$asOf, $asOf->copy()->addDays(30)])->count(),
+            'for_renewal' => LeaseContract::whereNull('terminated_at')->whereNull('renewed_at')->where('lease_end_date', '<', $asOf)->count(),
+            'renewed'     => LeaseContract::whereNotNull('renewed_at')->count(),
+            'terminated'  => LeaseContract::whereNotNull('terminated_at')->count(),
         ];
 
         $propertyCodes = LeaseContract::select('property_code')
@@ -101,7 +108,7 @@ class LeaseContractController extends Controller
 
     public function show(LeaseContract $leaseContract)
     {
-        $leaseContract->load('tenant', 'propertyUnit');
+        $leaseContract->load('tenant', 'propertyUnit', 'renewedFrom', 'renewedInto');
 
         return view('lease-contracts.show', compact('leaseContract'));
     }
@@ -131,6 +138,69 @@ class LeaseContractController extends Controller
 
         return redirect()->route('lease-contracts.index')
             ->with('success', 'Lease contract deleted successfully.');
+    }
+
+    /**
+     * The only action that actually frees up a unit — an expired end date
+     * alone leaves the lease (and the unit's occupancy) untouched, showing
+     * as "for renewal" instead of vacant.
+     */
+    public function terminate(LeaseContract $leaseContract)
+    {
+        if (! $leaseContract->terminated_at) {
+            $leaseContract->update(['terminated_at' => now()]);
+        }
+
+        return back()->with('success', 'Lease terminated — the unit is now marked vacant.');
+    }
+
+    /**
+     * One-click renewal: closes out the current contract (marks it
+     * "renewed", distinct from "terminated" since the unit never vacates)
+     * and opens a new one-year contract picking up the day after the old
+     * lease's end date, carrying over the same tenant/unit/rent terms.
+     */
+    public function renew(LeaseContract $leaseContract)
+    {
+        if ($leaseContract->terminated_at || $leaseContract->renewed_at) {
+            return back()->with('error', 'This contract has already been closed out and cannot be renewed.');
+        }
+
+        if (! $leaseContract->lease_end_date) {
+            return back()->with('error', 'This contract has no end date to renew from.');
+        }
+
+        $newStart = $leaseContract->lease_end_date->copy()->addDay();
+        $newEnd   = $newStart->copy()->addYear()->subDay();
+
+        $newContract = DB::transaction(function () use ($leaseContract, $newStart, $newEnd) {
+            $contract = LeaseContract::create([
+                ...$leaseContract->only([
+                    'tenant_id', 'tenant_name', 'property_name', 'property_code',
+                    'block_name', 'block_code', 'floor_name', 'floor_code',
+                    'unit_id', 'unit', 'description', 'notice_period',
+                    'rental_income_ledger', 'currency', 'security_deposit', 'ewa_cap',
+                    'invoicing_frequency', 'rent_per_month', 'service_frequency',
+                    'service_amount_bd_excl_vat', 'vat_enabled', 'vat_rate',
+                ]),
+                'date'                => now(),
+                'lease_agreement_no'  => LeaseContract::generateNumber(),
+                'lease_start_date'    => $newStart,
+                'lease_end_date'      => $newEnd,
+                'rent_start_date'     => $newStart,
+                'rent_end_date'       => $newEnd,
+                'service_start_date'  => $newStart,
+                'service_end_date'    => $newEnd,
+                'renewed_from_id'     => $leaseContract->id,
+            ]);
+
+            $leaseContract->update(['renewed_at' => now()]);
+
+            return $contract;
+        });
+
+        return redirect()->route('lease-contracts.show', $newContract)
+            ->with('success', "Lease renewed for one year — new agreement {$newContract->lease_agreement_no} runs {$newStart->format('d M Y')} to {$newEnd->format('d M Y')}.");
     }
 
     public function search(Request $request): JsonResponse
@@ -170,11 +240,10 @@ class LeaseContractController extends Controller
      */
     public function activeForTenant(Tenant $tenant): JsonResponse
     {
-        $today = Carbon::today();
-
+        // A tenant whose lease is past its end date but not terminated is
+        // still occupying and still invoiceable — "for renewal" isn't "gone".
         $contracts = LeaseContract::where('tenant_id', $tenant->id)
-            ->whereDate('lease_start_date', '<=', $today)
-            ->whereDate('lease_end_date', '>=', $today)
+            ->whereNull('terminated_at')
             ->orderBy('property_name')
             ->get(['id', 'lease_agreement_no', 'property_name', 'property_code', 'unit', 'rent_per_month', 'vat_enabled', 'vat_rate']);
 

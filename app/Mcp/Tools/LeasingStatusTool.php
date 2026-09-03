@@ -26,7 +26,11 @@ class LeasingStatusTool extends Tool
         $totalUnits    = PropertyUnit::count();
         $occupiedUnits = PropertyUnit::has('activeContract')->count();
 
-        $activeContracts = LeaseContract::where('lease_start_date', '<=', $today)
+        // "Active" here means currently within its date range AND not
+        // explicitly terminated — a terminated lease never counts, even if
+        // its dates would otherwise say it's current.
+        $activeContracts = LeaseContract::whereNull('terminated_at')
+            ->where('lease_start_date', '<=', $today)
             ->where('lease_end_date', '>=', $today);
 
         $expiringSoon = (clone $activeContracts)
@@ -42,7 +46,8 @@ class LeasingStatusTool extends Tool
                 'days_remaining'     => $today->diffInDays($c->lease_end_date),
             ]);
 
-        $recentlyStarted = LeaseContract::whereBetween('lease_start_date', [$today->copy()->subDays(30), $today])
+        $recentlyStarted = LeaseContract::whereNull('terminated_at')
+            ->whereBetween('lease_start_date', [$today->copy()->subDays(30), $today])
             ->orderByDesc('lease_start_date')
             ->get(['lease_agreement_no', 'tenant_name', 'property_name', 'unit', 'lease_start_date'])
             ->map(fn (LeaseContract $c) => [

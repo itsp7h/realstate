@@ -51,6 +51,7 @@ class PropertyUnit extends Model
         'water_installation_date',
         'water_meter_no',
         'electricity_ac_no',
+        'ewa_share_percent',
         'custom_fields',
     ];
 
@@ -66,6 +67,7 @@ class PropertyUnit extends Model
         'rate_per_area_unit'            => 'decimal:2',
         'rent_per_month'                => 'decimal:2',
         'security_deposit_amount'       => 'decimal:2',
+        'ewa_share_percent'             => 'decimal:2',
         'custom_fields'                 => 'array',
     ];
 
@@ -79,12 +81,17 @@ class PropertyUnit extends Model
         return $this->belongsTo(Floor::class);
     }
 
+    /**
+     * The unit's current lease — occupancy is decided by whether a lease
+     * has been explicitly terminated, not by whether today falls within
+     * its start/end dates. An expired-but-not-terminated lease still
+     * counts as occupied (its status shows "for renewal").
+     */
     public function activeContract()
     {
-        $today = \Carbon\Carbon::today()->toDateString();
         return $this->hasOne(LeaseContract::class, 'unit_id')
-            ->whereDate('lease_start_date', '<=', $today)
-            ->whereDate('lease_end_date', '>=', $today);
+            ->whereNull('terminated_at')
+            ->latest('lease_start_date');
     }
 
     public function expenses()

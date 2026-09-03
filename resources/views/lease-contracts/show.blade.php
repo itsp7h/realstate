@@ -77,6 +77,8 @@
 .status-expiring { background:#FFFBEB;color:var(--warning);border:1px solid #FDE68A; }
 .status-expired  { background:#F1F5F9;color:var(--text-muted);border:1px solid var(--card-border); }
 .status-upcoming { background:#EFF6FF;color:var(--info);border:1px solid #BFDBFE; }
+.status-terminated { background:#FEF2F2;color:var(--danger);border:1px solid #FECACA; }
+.status-renewed  { background:#F5F3FF;color:#7C3AED;border:1px solid #DDD6FE; }
 
 .lease-progress-wrap { margin-top: 12px; }
 .lease-progress-bar { height: 8px; border-radius: 8px; background: var(--card-border); position: relative; overflow: hidden; }
@@ -117,16 +119,35 @@
         <div class="contract-meta">
             @php
                 $statusMap = [
-                    'active'   => ['class'=>'status-active',   'icon'=>'fa-circle-check',   'label'=>'Active'],
-                    'expiring' => ['class'=>'status-expiring', 'icon'=>'fa-circle-exclamation','label'=>'Expiring Soon'],
-                    'expired'  => ['class'=>'status-expired',  'icon'=>'fa-circle-xmark',   'label'=>'Expired'],
-                    'upcoming' => ['class'=>'status-upcoming', 'icon'=>'fa-circle-arrow-right','label'=>'Upcoming'],
+                    'active'      => ['class'=>'status-active',   'icon'=>'fa-circle-check',   'label'=>'Active'],
+                    'expiring'    => ['class'=>'status-expiring', 'icon'=>'fa-circle-exclamation','label'=>'Expiring Soon'],
+                    'for_renewal' => ['class'=>'status-expired',  'icon'=>'fa-arrows-rotate',   'label'=>'For Renewal'],
+                    'upcoming'    => ['class'=>'status-upcoming', 'icon'=>'fa-circle-arrow-right','label'=>'Upcoming'],
+                    'renewed'     => ['class'=>'status-renewed',  'icon'=>'fa-rotate',          'label'=>'Renewed'],
+                    'terminated'  => ['class'=>'status-terminated', 'icon'=>'fa-ban',          'label'=>'Terminated'],
                 ];
-                $s = $statusMap[$leaseContract->status] ?? $statusMap['expired'];
+                $s = $statusMap[$leaseContract->status] ?? $statusMap['for_renewal'];
             @endphp
             <span class="status-badge {{ $s['class'] }}">
                 <i class="fa-solid {{ $s['icon'] }}"></i> {{ $s['label'] }}
             </span>
+            @if($leaseContract->terminated_at)
+                <span style="font-size:13px;color:var(--text-muted);">
+                    <i class="fa-solid fa-ban" style="margin-right:4px;"></i>Terminated {{ $leaseContract->terminated_at->format('d M Y') }}
+                </span>
+            @endif
+            @if($leaseContract->renewed_at && $leaseContract->renewedInto)
+                <span style="font-size:13px;color:#7C3AED;">
+                    <i class="fa-solid fa-rotate" style="margin-right:4px;"></i>Renewed into
+                    <a href="{{ route('lease-contracts.show', $leaseContract->renewedInto) }}" style="color:#7C3AED;font-weight:700;text-decoration:none;">{{ $leaseContract->renewedInto->lease_agreement_no }}</a>
+                </span>
+            @endif
+            @if($leaseContract->renewedFrom)
+                <span style="font-size:13px;color:var(--text-muted);">
+                    <i class="fa-solid fa-clock-rotate-left" style="margin-right:4px;"></i>Renewed from
+                    <a href="{{ route('lease-contracts.show', $leaseContract->renewedFrom) }}" style="color:var(--info);font-weight:700;text-decoration:none;">{{ $leaseContract->renewedFrom->lease_agreement_no }}</a>
+                </span>
+            @endif
             @if($leaseContract->property_name)
                 <span style="font-size:13px;color:var(--text-muted);">
                     <i class="fa-solid fa-building" style="margin-right:4px;"></i>{{ $leaseContract->property_name }}
@@ -163,6 +184,22 @@
         <a href="{{ route('lease-contracts.edit', $leaseContract) }}" class="btn btn-primary">
             <i class="fa-solid fa-pen"></i> Edit
         </a>
+        @if(!$leaseContract->terminated_at && !$leaseContract->renewed_at)
+        <form method="POST" action="{{ route('lease-contracts.renew', $leaseContract) }}"
+              onsubmit="return confirm('Renew this lease for one year? This will close out {{ $leaseContract->lease_agreement_no }} and open a new one-year contract starting {{ $leaseContract->lease_end_date?->copy()->addDay()->format('d M Y') ?? 'the day after this lease ends' }}.')" style="display:inline;">
+            @csrf
+            <button type="submit" class="btn btn-outline" style="border-color:#7C3AED;color:#7C3AED;">
+                <i class="fa-solid fa-rotate"></i> Renew for 1 Year
+            </button>
+        </form>
+        <form method="POST" action="{{ route('lease-contracts.terminate', $leaseContract) }}"
+              onsubmit="return confirm('Terminate this lease? The unit will be marked vacant immediately.')" style="display:inline;">
+            @csrf
+            <button type="submit" class="btn btn-outline" style="border-color:var(--danger);color:var(--danger);">
+                <i class="fa-solid fa-ban"></i> Terminate Lease
+            </button>
+        </form>
+        @endif
         <form method="POST" action="{{ route('lease-contracts.destroy', $leaseContract) }}"
               onsubmit="return confirm('Delete this contract permanently?')" style="display:inline;">
             @csrf @method('DELETE')

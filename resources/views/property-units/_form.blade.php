@@ -483,7 +483,7 @@
                         <div class="u-field-wrap">
                             <select name="unit_type" class="u-select {{ $errors->has('unit_type') ? 'is-invalid' : '' }}">
                                 <option value="">Select type…</option>
-                                @foreach(['Studio','1BHK','2BHK','3BHK','4BHK','Penthouse','Commercial','Office'] as $opt)
+                                @foreach(['Studio','1BHK','2BHK','3BHK','4BHK','Penthouse','Commercial','Office','Shop'] as $opt)
                                     <option value="{{ $opt }}" {{ $uval('unit_type') == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                                 @endforeach
                             </select>
@@ -676,7 +676,7 @@
                 </div>
                 @endif
 
-                @php $showElec = $showAll || count(array_intersect(['electricity_installation_date','electricity_meter_no','electricity_ac_no'], $visibleFields)) > 0; @endphp
+                @php $showElec = $showAll || count(array_intersect(['electricity_installation_date','electricity_meter_no','electricity_ac_no','ewa_share_percent'], $visibleFields)) > 0; @endphp
                 @if($showElec)
                 <div class="u-sub-divider"><i class="fa-solid fa-bolt" style="font-size:9px;"></i> Electricity</div>
                 <div class="u-field-grid" style="margin-bottom:8px;">
@@ -714,6 +714,18 @@
                                 value="{{ $uval('electricity_ac_no') }}" placeholder="Account number" maxlength="100">
                         </div>
                         @error('electricity_ac_no') <div class="u-field-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
+                    </div>
+                    @endif
+                    @if($ushow('ewa_share_percent'))
+                    <div class="u-field-group">
+                        <label class="u-field-label">EWA Share %</label>
+                        <div class="u-field-wrap u-has-icon">
+                            <i class="fa-solid fa-percent u-field-icon"></i>
+                            <input type="number" name="ewa_share_percent" step="0.01" min="0" max="100"
+                                class="u-input {{ $errors->has('ewa_share_percent') ? 'is-invalid' : '' }}"
+                                value="{{ $uval('ewa_share_percent') }}" placeholder="e.g. 9.00">
+                        </div>
+                        @error('ewa_share_percent') <div class="u-field-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>
                     @endif
                 </div>

@@ -323,6 +323,45 @@ class ImportController extends Controller
 
     public function template(string $type, string $format = 'csv'): StreamedResponse|BinaryFileResponse
     {
+        if ($type === 'smart') {
+            abort_if($format !== 'xlsx', 404, 'The Smart Import template is only available as XLSX (one tab per data type).');
+
+            $sheets = [
+                'Buildings' => [self::BUILDING_TEMPLATE_LABELS,  self::BUILDING_SAMPLE],
+                'Floors'    => [self::FLOOR_TEMPLATE_LABELS,     self::FLOOR_SAMPLE],
+                'Units'     => [self::UNIT_TEMPLATE_LABELS,      self::UNIT_SAMPLE],
+                'Tenants'   => [self::TENANT_TEMPLATE_LABELS,    self::TENANT_SAMPLE],
+                'Contracts' => [self::CONTRACT_TEMPLATE_LABELS,  self::CONTRACT_SAMPLE],
+            ];
+
+            return Excel::download(
+                new class($sheets) implements \Maatwebsite\Excel\Concerns\WithMultipleSheets {
+                    public function __construct(private array $sheets) {}
+                    public function sheets(): array
+                    {
+                        return array_map(
+                            fn(array $def, string $title) => new class(array_keys($def[0]), $def[1], $title) implements
+                                \Maatwebsite\Excel\Concerns\FromArray,
+                                \Maatwebsite\Excel\Concerns\WithTitle,
+                                \Maatwebsite\Excel\Concerns\WithStyles,
+                                \Maatwebsite\Excel\Concerns\ShouldAutoSize
+                            {
+                                public function __construct(private array $cols, private array $sampleRow, private string $title) {}
+                                public function array(): array { return [$this->cols, $this->sampleRow]; }
+                                public function title(): string { return $this->title; }
+                                public function styles(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet): array {
+                                    return [1 => ['font' => ['bold' => true, 'color' => ['argb' => 'FF0B1120']], 'fill' => ['fillType' => 'solid', 'color' => ['argb' => 'FFE8B86D']]]];
+                                }
+                            },
+                            $this->sheets,
+                            array_keys($this->sheets)
+                        );
+                    }
+                },
+                'import-smart-template.xlsx'
+            );
+        }
+
         [$labelMap, $sample] = match ($type) {
             'buildings' => [self::BUILDING_TEMPLATE_LABELS,  self::BUILDING_SAMPLE],
             'floors'    => [self::FLOOR_TEMPLATE_LABELS,     self::FLOOR_SAMPLE],
@@ -363,7 +402,7 @@ class ImportController extends Controller
 
     public function exportBuildings(Request $request): BinaryFileResponse
     {
-        $filters = $request->only(['search', 'property_type', 'type_of_ownership']);
+        $filters = $request->only(['search', 'property_type', 'type_of_ownership', 'company_name']);
         return Excel::download(new BuildingsExport($filters), 'buildings-' . now()->format('Y-m-d') . '.xlsx');
     }
 
@@ -608,8 +647,12 @@ class ImportController extends Controller
             // push the marker off the start of the string.
             $matches     = array_filter($sheetNames, fn($name) => preg_match('/MP\d|P7H|Plat/i', trim($name)));
 
-            if (count($matches) >= 2) {
-                $results = $this->smartImportPropertyDataBase($spreadsheet);
+            // Some commercial workbooks pack multiple buildings into ONE sheet
+            // via row headers ("Building 1130N - Ground Floor", ...) instead of
+            // one sheet per building — the sheet-name count alone misses those,
+            // so also check for that row-based shape directly.
+            if (count($matches) >= 2 || $this->pdbSheetHasBuildingSectionRows($spreadsheet)) {
+                $results = $this->smartImportPropertyDataBase($spreadsheet, $request->file('file')->getClientOriginalName());
                 return redirect()->route('dashboard')->with('smart_import_results', $results);
             }
         }
@@ -691,17 +734,37 @@ class ImportController extends Controller
         'off/shop'          => 'shop',
         'shop no'           => 'shop',
         'office no'         => 'shop',
+        'office number'     => 'shop',
         'company'           => 'company',
+        'company name'      => 'company',
         'size /sqm'         => 'size',
         'size/sqm'          => 'size',
         'size'              => 'size',
+        'area (m²)'         => 'size',
+        'area (m2)'         => 'size',
         'rate/ sqm'         => 'rate',
         'rate/sqm'          => 'rate',
+        'rate / m²'         => 'rate',
+        'rate/m²'           => 'rate',
         'rent'              => 'rent',
         'service charge'    => 'service_charge',
         'monthly'           => 'monthly',
         'contract period'   => 'contract_period',
         'contact details'   => 'contact',
+        'contact name'      => 'contact_name',
+        'phone'             => 'phone',
+        'email'             => 'email',
+        'occupancy'         => 'occupancy',
+    ];
+
+    // Shared/common spaces listed alongside real shops and offices in the
+    // commercial sheets — not leasable, so they shouldn't become units.
+    // "Store" is included because it's used here as a bundled note on an
+    // adjacent office's lease (e.g. "#108&Store"), not a standalone unit —
+    // importing its own "STORE" row creates a phantom unit and a duplicate
+    // tenant record for the same company under a different name.
+    private const PDB_NON_RENTABLE_LABELS = [
+        'pantry', 'server room', 'woman toilets', 'women toilets', 'men toilets', 'common area', 'store',
     ];
 
     private const PDB_PLATINUM_HEADER_ALIASES = [
@@ -716,12 +779,39 @@ class ImportController extends Controller
     ];
 
     /**
+     * True if any sheet has a row-header shape like "Building 1130N - Ground
+     * Floor" — the marker pdbParseCommercialSheet looks for. A single sheet
+     * can pack multiple buildings this way, so this check exists separately
+     * from the sheet-name-based multi-building detection in smart().
+     */
+    private function pdbSheetHasBuildingSectionRows(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet): bool
+    {
+        foreach ($spreadsheet->getSheetNames() as $name) {
+            $rows = $spreadsheet->getSheetByName($name)->toArray(null, true, true, false);
+            foreach ($rows as $row) {
+                $firstCell = trim((string) ($row[0] ?? ''));
+                if ($firstCell === '') {
+                    continue;
+                }
+                // Commercial sheets mark sections with "Building ... - <Floor>"
+                // row headers; residential (Miknas Plaza) sheets instead open
+                // with a "<Property> - Data Base - <Month>" title row. Either
+                // shape means this is a PDB workbook even as a single sheet.
+                if (preg_match('/building|bldg/i', $firstCell) || preg_match('/-\s*data base/i', $firstCell)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Entry point for the multi-sheet monthly "Property Data Base" workbook.
      * Each sheet is routed to the parser matching its known shape; sheets that
      * don't match any known shape are left untouched. Writes are committed
      * directly (no staging step) to match how the rest of smart() behaves.
      */
-    private function smartImportPropertyDataBase(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet): array
+    private function smartImportPropertyDataBase(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet, string $originalFilename = ''): array
     {
         $results = [
             'buildings' => ['imported' => 0, 'errors' => []],
@@ -736,15 +826,15 @@ class ImportController extends Controller
             $rows    = $spreadsheet->getSheetByName($sheetName)->toArray(null, true, true, false);
 
             if (preg_match('/MP(\d+)/i', $trimmed, $m)) {
-                $this->pdbParseResidentialSheet($rows, 'MP' . $m[1], $sheetName, $results);
+                $this->pdbParseResidentialSheet($rows, 'MP' . $m[1], $sheetName, $results, $originalFilename);
             } elseif (stripos($trimmed, 'P7H') !== false && str_contains($trimmed, '&')) {
                 // Older duplicate "rent allocation" summary of the same buildings/floors
                 // covered by the more detailed "P7H ... " sheet — deliberately skipped.
                 continue;
             } elseif (stripos($trimmed, 'P7H') !== false) {
-                $this->pdbParseCommercialSheet($rows, $sheetName, $results);
+                $this->pdbParseCommercialSheet($rows, $sheetName, $results, $originalFilename);
             } elseif (stripos($trimmed, 'Plat') !== false) {
-                $this->pdbParsePlatinumTowerSheet($rows, $sheetName, $results);
+                $this->pdbParsePlatinumTowerSheet($rows, $sheetName, $results, $originalFilename);
             }
         }
 
@@ -772,6 +862,32 @@ class ImportController extends Controller
     }
 
     /**
+     * Commercial sheets don't label the "EWA share" column with a fixed
+     * name — the header cell instead has that floor's shared EWA meter
+     * account number (a different number each section, e.g. "7164177"),
+     * with each office's row holding its fixed percentage share of that
+     * meter's bill underneath. Detect it by shape (a long digit-only
+     * header cell) rather than by text, since the text itself varies.
+     */
+    private function pdbDetectEwaShareColumn(array $headerRow, array $colMap): array
+    {
+        if (isset($colMap['ewa_share_percent'])) {
+            return $colMap;
+        }
+        $usedColumns = array_flip($colMap);
+        foreach ($headerRow as $colIdx => $label) {
+            if (isset($usedColumns[$colIdx])) {
+                continue;
+            }
+            if (preg_match('/^\d{5,}$/', trim((string) $label))) {
+                $colMap['ewa_share_percent'] = $colIdx;
+                break;
+            }
+        }
+        return $colMap;
+    }
+
+    /**
      * True for blank, "vacant", or a bare punctuation placeholder (e.g. "-")
      * that some commercial-sheet rows use for non-lettable common areas
      * (pantry, toilets, server room) instead of a real company name.
@@ -780,6 +896,53 @@ class ImportController extends Controller
     {
         $normalized = strtolower(trim($value));
         return $normalized === '' || $normalized === 'vacant' || (bool) preg_match('/^[-–—.]+$/', $normalized);
+    }
+
+    private function pdbIsNonRentableSpace(string $label): bool
+    {
+        $normalized = strtolower(trim($label));
+        foreach (self::PDB_NON_RENTABLE_LABELS as $needle) {
+            if ($normalized === $needle || str_starts_with($normalized, $needle)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Source files are inconsistent about how a vacant unit is marked: the
+     * Company/Name cell is sometimes left blank, sometimes has "Vacant"
+     * typed into it, and sometimes still has stale data from a past tenant.
+     * An explicit Occupancy/Status column (when present) is the most
+     * reliable signal, so it takes priority; the old blank-cell heuristic
+     * is only a fallback for files without that column. Conflicts between
+     * the two are still imported (trusting the explicit signal) but logged
+     * so the source file can be cleaned up.
+     */
+    private function pdbResolveVacancy(string $signalRaw, string $tenantNameRaw, string $sheetName, int $displayRow, array &$results): bool
+    {
+        $signal = strtolower(trim($signalRaw));
+        $blank  = $this->pdbIsBlankTenantMarker($tenantNameRaw);
+
+        if ($signal === 'vacant') {
+            if (!$blank) {
+                $results['units']['errors'][] =
+                    "Sheet '{$sheetName}' row {$displayRow}: Occupancy says Vacant but the Company/Name field still has '{$tenantNameRaw}' — treated as vacant, no tenant/lease created.";
+            }
+            return true;
+        }
+
+        if ($signal === 'occupied') {
+            if ($blank) {
+                $results['units']['errors'][] =
+                    "Sheet '{$sheetName}' row {$displayRow}: Occupancy says Occupied but the Company/Name field is empty — no tenant name to import, skipped.";
+                return true;
+            }
+            return false;
+        }
+
+        // No explicit signal on this row — fall back to inferring from the tenant name field.
+        return $blank;
     }
 
     private function pdbToDecimal(string $value): ?float
@@ -799,21 +962,116 @@ class ImportController extends Controller
      */
     private function pdbParseContractPeriod(string $text): array
     {
-        if (!preg_match_all('/\d{1,2}[.\/\-]\d{1,2}[.\/\-]\d{2,4}/', $text, $matches)) {
-            return [null, null];
-        }
-        if (count($matches[0]) < 2) {
+        $matches = $this->pdbExtractDateStrings($text);
+        if (count($matches) < 2) {
             return [null, null];
         }
 
-        $start = $this->parseDate($matches[0][0]);
-        $end   = $this->parseDate($matches[0][1]);
+        $start = $this->parseDate($matches[0]);
+        $end   = $this->parseDate($matches[1]);
 
         if (!$start || !$end) {
             return [null, null];
         }
 
         return $start <= $end ? [$start, $end] : [$end, $start];
+    }
+
+    private function pdbExtractDateStrings(string $text): array
+    {
+        preg_match_all('/\d{1,2}[.\/\-]\d{1,2}[.\/\-]\d{2,4}/', $text, $matches);
+        return $matches[0] ?? [];
+    }
+
+    /**
+     * Some monthly sheets wrap a shop/flat's row across two or three physical
+     * spreadsheet rows (the main row has the unit number and start date, a
+     * row underneath carries the contact/email, another the end date). When
+     * the main row's own Contract Period cell only has one date, scan the
+     * continuation rows directly below it — those with a blank identifier
+     * cell (shop/flat column) — for a second date in the same column, and
+     * stop at the next real entry or the next building/floor header.
+     */
+    private function pdbCompleteContractPeriod(array $rows, int $rowCount, int $mainRowIndex, string $mainText, ?int $identifierCol, ?int $periodCol): string
+    {
+        if ($periodCol === null || count($this->pdbExtractDateStrings($mainText)) >= 2) {
+            return $mainText;
+        }
+
+        $combined = $mainText;
+        for ($j = $mainRowIndex + 1; $j < $rowCount; $j++) {
+            $nextRow      = $rows[$j];
+            $nextFirstCell = trim((string) ($nextRow[0] ?? ''));
+            if ($nextFirstCell !== '' && preg_match('/building|bldg/i', $nextFirstCell)) {
+                break;
+            }
+            if ($identifierCol !== null && trim((string) ($nextRow[$identifierCol] ?? '')) !== '') {
+                break; // reached the next real shop/flat entry
+            }
+
+            $continuationText = trim((string) ($nextRow[$periodCol] ?? ''));
+            if ($continuationText !== '') {
+                $combined .= ' ' . $continuationText;
+            }
+            if (count($this->pdbExtractDateStrings($combined)) >= 2) {
+                break;
+            }
+        }
+
+        return $combined;
+    }
+
+    /**
+     * "Contact Details" in the commercial sheets is really three different
+     * things stacked across a shop's main row and its continuation rows: a
+     * contact person's name on the main row, then an email and/or phone
+     * number(s) on the row(s) underneath. Classify each candidate value by
+     * shape (has "@" → email, mostly digits → phone, otherwise the contact
+     * person's name) instead of assuming the main row's value is a phone.
+     *
+     * @return array{phone: ?string, email: ?string, contact_person: ?string}
+     */
+    private function pdbCompleteContactDetails(array $rows, int $rowCount, int $mainRowIndex, string $mainText, ?int $identifierCol, ?int $contactCol): array
+    {
+        if ($contactCol === null) {
+            return ['phone' => null, 'email' => null, 'contact_person' => null];
+        }
+
+        $candidates = $mainText !== '' ? [$mainText] : [];
+        for ($j = $mainRowIndex + 1; $j < $rowCount; $j++) {
+            $nextRow       = $rows[$j];
+            $nextFirstCell = trim((string) ($nextRow[0] ?? ''));
+            if ($nextFirstCell !== '' && preg_match('/building|bldg/i', $nextFirstCell)) {
+                break;
+            }
+            if ($identifierCol !== null && trim((string) ($nextRow[$identifierCol] ?? '')) !== '') {
+                break; // reached the next real shop/flat entry
+            }
+
+            $continuationText = trim((string) ($nextRow[$contactCol] ?? ''));
+            if ($continuationText !== '') {
+                $candidates[] = $continuationText;
+            }
+        }
+
+        $phone         = null;
+        $email         = null;
+        $contactPerson = null;
+        foreach ($candidates as $value) {
+            if ($email === null && preg_match('/[^\s@]+@[^\s@]+\.[^\s@]+/', $value, $m)) {
+                $email = $m[0];
+                continue;
+            }
+            if ($phone === null && preg_match('/^[\d+\-,\/\s]{6,}$/', $value)) {
+                $phone = $value;
+                continue;
+            }
+            if ($contactPerson === null) {
+                $contactPerson = $value;
+            }
+        }
+
+        return ['phone' => $phone, 'email' => $email, 'contact_person' => $contactPerson];
     }
 
     private function pdbFindHeaderRowIndex(array $rows, string $mustContainPattern): ?int
@@ -843,10 +1101,35 @@ class ImportController extends Controller
      */
     private function pdbCompanyFromSheetName(string $sheetName): array
     {
-        if (preg_match('/^(.+?)\s*-\s*(?:MP\d|P7H|Plat)/i', trim($sheetName), $m)) {
+        $trimmed = trim($sheetName);
+
+        // New convention: "Company_<Name>_P7H_Aug2026" — the segment right
+        // after "Company_" is the company name, whatever building/month follows.
+        if (preg_match('/^Company_([^_]+)_/i', $trimmed, $m)) {
             return ['company', trim($m[1])];
         }
+
+        // Older convention: "<Name> - P7H Aug 2026".
+        if (preg_match('/^(.+?)\s*-\s*(?:MP\d|P7H|Plat)/i', $trimmed, $m)) {
+            return ['company', trim($m[1])];
+        }
+
         return ['individual', null];
+    }
+
+    /**
+     * The uploaded file's own name is checked first (so one company owning
+     * multiple buildings/sheets in one file doesn't require renaming every
+     * sheet tab), falling back to the sheet tab name. Used to tag both the
+     * buildings and the tenants created from a PDB workbook.
+     */
+    private function pdbResolveCompanyName(string $originalFilename, string $sheetName): ?string
+    {
+        [, $companyName] = $this->pdbCompanyFromSheetName($originalFilename);
+        if ($companyName === null) {
+            [, $companyName] = $this->pdbCompanyFromSheetName($sheetName);
+        }
+        return $companyName;
     }
 
     private function pdbUpsertTenantAndLease(
@@ -860,17 +1143,28 @@ class ImportController extends Controller
         string $sheetName,
         int $displayRow,
         array &$results,
+        string $originalFilename = '',
+        ?string $contactPerson = null,
     ): void {
         $tenant = Tenant::whereRaw('LOWER(name) = ?', [strtolower($tenantName)])->first();
         if (!$tenant) {
-            [$tenantType, $companyName] = $this->pdbCompanyFromSheetName($sheetName);
+            // The uploaded file's own name can carry the company tag (e.g.
+            // "Company_Promoseven_P7H_Aug2026.xlsx") so one company's tenants
+            // across multiple buildings/sheets in the same file don't require
+            // renaming every individual sheet tab — it's checked first, with
+            // the sheet tab itself still usable as a per-sheet override.
+            [$tenantType, $companyName] = $this->pdbCompanyFromSheetName($originalFilename);
+            if ($tenantType === 'individual') {
+                [$tenantType, $companyName] = $this->pdbCompanyFromSheetName($sheetName);
+            }
             try {
                 $tenant = Tenant::create(array_filter([
-                    'name'         => $tenantName,
-                    'tenant_type'  => $tenantType,
-                    'company_name' => $companyName,
-                    'phone'        => $phone ?: null,
-                    'email'        => $email ?: null,
+                    'name'           => $tenantName,
+                    'tenant_type'    => $tenantType,
+                    'company_name'   => $companyName,
+                    'contact_person' => $contactPerson,
+                    'phone'          => $phone ?: null,
+                    'email'          => $email ?: null,
                 ]));
                 $results['tenants']['imported']++;
             } catch (\Exception $e) {
@@ -886,9 +1180,13 @@ class ImportController extends Controller
             return;
         }
 
+        // whereDate() (not where()) since lease_start_date is stored as a
+        // full datetime string ("2022-04-01 00:00:00") but $start here is a
+        // bare date ("2022-04-01") — a plain equality check never matched,
+        // so re-importing the same file kept creating duplicate leases.
         $exists = LeaseContract::where('unit_id', $unit->id)
             ->where('tenant_id', $tenant->id)
-            ->where('lease_start_date', $start)
+            ->whereDate('lease_start_date', $start)
             ->exists();
         if ($exists) {
             return;
@@ -915,7 +1213,7 @@ class ImportController extends Controller
         }
     }
 
-    private function pdbParseResidentialSheet(array $rows, string $propertyCode, string $sheetName, array &$results): void
+    private function pdbParseResidentialSheet(array $rows, string $propertyCode, string $sheetName, array &$results, string $originalFilename = ''): void
     {
         $building = Building::where('property_code', $propertyCode)->first();
         if (!$building) {
@@ -932,6 +1230,7 @@ class ImportController extends Controller
                 'property_name' => $propertyName,
                 'property_code' => $propertyCode,
                 'property_type' => 'Residential',
+                'company_name'  => $this->pdbResolveCompanyName($originalFilename, $sheetName),
             ]);
             $results['buildings']['imported']++;
         }
@@ -970,7 +1269,7 @@ class ImportController extends Controller
             }
 
             $name     = $get('name');
-            $isVacant = $this->pdbIsBlankTenantMarker($name);
+            $isVacant = $this->pdbResolveVacancy($get('status'), $name, $sheetName, $displayRow, $results);
 
             $unit = $units[strtolower(trim("{$propertyCode} - {$flatRaw}"))]
                 ?? $units[strtolower(trim("{$propertyCode} - S{$flatRaw}"))]
@@ -1021,9 +1320,13 @@ class ImportController extends Controller
                 continue;
             }
 
+            $contractPeriod = $this->pdbCompleteContractPeriod(
+                $rows, $rowCount, $i, $get('contract_period'), $colMap['flat'] ?? null, $colMap['contract_period'] ?? null,
+            );
+
             $this->pdbUpsertTenantAndLease(
                 $name, $get('contact'), $get('email'), $building, $unit,
-                $rent, $get('contract_period'), $sheetName, $displayRow, $results,
+                $rent, $contractPeriod, $sheetName, $displayRow, $results, $originalFilename,
             );
         }
     }
@@ -1039,7 +1342,7 @@ class ImportController extends Controller
         return [$code, $floorName !== '' ? $floorName : 'Ground Floor'];
     }
 
-    private function pdbParseCommercialSheet(array $rows, string $sheetName, array &$results): void
+    private function pdbParseCommercialSheet(array $rows, string $sheetName, array &$results, string $originalFilename = ''): void
     {
         $buildingCache = [];
         $floorCache    = [];
@@ -1068,6 +1371,7 @@ class ImportController extends Controller
                             'property_name' => "P7H Building {$code}",
                             'property_code' => $propertyCode,
                             'property_type' => 'Commercial',
+                            'company_name'  => $this->pdbResolveCompanyName($originalFilename, $sheetName),
                         ]);
                         $results['buildings']['imported']++;
                     }
@@ -1089,10 +1393,19 @@ class ImportController extends Controller
                 }
                 $floor = $floorCache[$floorKey];
 
-                // The header row for this section follows immediately.
+                // A header row normally follows immediately — but some
+                // sections (e.g. a floor that continues the same table layout
+                // as the section above it) have none, going straight to data.
+                // Only consume the next row as a header if it actually maps a
+                // shop/office identifier column; otherwise keep the current
+                // colMap (carried over from the previous section) and let
+                // that row be read as a normal data row on the next pass.
                 if (isset($rows[$i + 1])) {
-                    $colMap = $this->pdbMapHeaderRow($rows[$i + 1], self::PDB_COMMERCIAL_HEADER_ALIASES);
-                    $i++;
+                    $candidateMap = $this->pdbMapHeaderRow($rows[$i + 1], self::PDB_COMMERCIAL_HEADER_ALIASES);
+                    if (isset($candidateMap['shop'])) {
+                        $colMap = $this->pdbDetectEwaShareColumn($rows[$i + 1], $candidateMap);
+                        $i++;
+                    }
                 }
                 continue;
             }
@@ -1101,26 +1414,39 @@ class ImportController extends Controller
                 continue;
             }
 
+            // A "Total ... Amount" row marks the end of this section's real
+            // data — everything below it (legend notes, "Registered Office",
+            // running totals) isn't a unit. Clearing colMap here means every
+            // row until the next building/floor header gets skipped above.
+            foreach ($row as $cell) {
+                if (is_string($cell) && preg_match('/^total\b/i', trim($cell))) {
+                    $colMap = [];
+                    continue 2;
+                }
+            }
+
             $get     = fn(string $field) => isset($colMap[$field]) ? trim((string) ($row[$colMap[$field]] ?? '')) : '';
             $shopRaw = $get('shop');
-            if ($shopRaw === '' || stripos($shopRaw, 'total') !== false) {
+            if ($shopRaw === '' || stripos($shopRaw, 'total') !== false || $this->pdbIsNonRentableSpace($shopRaw)) {
                 continue;
             }
 
             $company  = $get('company');
-            $isVacant = $this->pdbIsBlankTenantMarker($company);
+            $isVacant = $this->pdbResolveVacancy($get('occupancy'), $company, $sheetName, $displayRow, $results);
             $unitName = trim($building->property_code . ' - ' . $shopRaw);
 
             $unit = PropertyUnit::where('building_id', $building->id)
                 ->whereRaw('LOWER(unit_name) = ?', [strtolower($unitName)])
                 ->first();
 
-            $rent = $this->pdbToDecimal($get('rent'));
-            $size = $this->pdbToDecimal($get('size'));
+            $rent     = $this->pdbToDecimal($get('rent'));
+            $size     = $this->pdbToDecimal($get('size'));
+            $ewaShare = $this->pdbToDecimal(str_replace('%', '', $get('ewa_share_percent')));
 
             $unitData = array_filter([
-                'rent_per_month' => $rent,
-                'area_inside'    => $size,
+                'rent_per_month'    => $rent,
+                'area_inside'       => $size,
+                'ewa_share_percent' => $ewaShare,
             ], fn($v) => $v !== null);
 
             if ($unit) {
@@ -1151,14 +1477,34 @@ class ImportController extends Controller
                 continue;
             }
 
+            $contractPeriod = $this->pdbCompleteContractPeriod(
+                $rows, $rowCount, $i, $get('contract_period'), $colMap['shop'] ?? null, $colMap['contract_period'] ?? null,
+            );
+
+            // Newer files split contact info into its own Contact Name / Phone /
+            // Email columns; older ones cram it all into one "Contact Details"
+            // column spread across continuation rows — support both.
+            if (isset($colMap['contact_name']) || isset($colMap['phone']) || isset($colMap['email'])) {
+                $contactDetails = [
+                    'contact_person' => $get('contact_name') ?: null,
+                    'phone'          => $get('phone') ?: null,
+                    'email'          => $get('email') ?: null,
+                ];
+            } else {
+                $contactDetails = $this->pdbCompleteContactDetails(
+                    $rows, $rowCount, $i, $get('contact'), $colMap['shop'] ?? null, $colMap['contact'] ?? null,
+                );
+            }
+
             $this->pdbUpsertTenantAndLease(
-                $company, $get('contact'), null, $building, $unit,
-                $rent, $get('contract_period'), $sheetName, $displayRow, $results,
+                $company, $contactDetails['phone'], $contactDetails['email'], $building, $unit,
+                $rent, $contractPeriod, $sheetName, $displayRow, $results, $originalFilename,
+                $contactDetails['contact_person'],
             );
         }
     }
 
-    private function pdbParsePlatinumTowerSheet(array $rows, string $sheetName, array &$results): void
+    private function pdbParsePlatinumTowerSheet(array $rows, string $sheetName, array &$results, string $originalFilename = ''): void
     {
         $propertyCode = 'PLATINUM-TOWER';
         $building     = Building::where('property_code', $propertyCode)->first();
@@ -1167,6 +1513,7 @@ class ImportController extends Controller
                 'property_name' => 'Platinum Tower',
                 'property_code' => $propertyCode,
                 'property_type' => 'Commercial',
+                'company_name'  => $this->pdbResolveCompanyName($originalFilename, $sheetName),
             ]);
             $results['buildings']['imported']++;
         }

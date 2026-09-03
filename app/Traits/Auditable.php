@@ -34,6 +34,7 @@ trait Auditable
         return $this->property_name
             ?? $this->property_code
             ?? $this->floor_name
+            ?? $this->block_name
             ?? $this->unit_name
             ?? $this->name
             ?? $this->lease_agreement_no
