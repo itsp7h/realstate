@@ -89,12 +89,16 @@ final class ShowcasePhotos
      * Renders one elevation and writes it as a JPEG. $index shifts the tower's
      * proportions and its neighbours so the five frames read as five views of
      * the same district rather than one drawing recoloured.
+     *
+     * $variant separates one building from another: three properties each with
+     * five photos would otherwise be fifteen pictures of the same tower, and a
+     * portfolio page showing them side by side is where that would show.
      */
-    public static function facade(string $look, int $index, string $path): void
+    public static function facade(string $look, int $index, string $path, int $variant = 0): void
     {
         $p = self::LOOKS[$look] ?? self::LOOKS['dusk'];
 
-        mt_srand(self::SEED + $index * 977);
+        mt_srand(self::SEED + $index * 977 + $variant * 31013);
 
         $img = imagecreatetruecolor(self::WIDTH, self::HEIGHT);
         imageantialias($img, true);
@@ -109,12 +113,20 @@ final class ShowcasePhotos
 
         // The subject tower. Narrower and taller as the index climbs, and
         // offset left or right so the composition changes frame to frame.
-        $bodyW = (int) (self::WIDTH * (0.40 - $index * 0.022));
-        $bodyH = (int) (self::HEIGHT * (0.56 + $index * 0.045));
+        // The variant sets the building's own build: a squat wide block, a
+        // mid-rise, or a slim tower.
+        $build = [
+            ['width' => 0.44, 'height' => 0.48, 'bays' => 5],  // wide, low
+            ['width' => 0.38, 'height' => 0.60, 'bays' => 4],  // mid-rise
+            ['width' => 0.30, 'height' => 0.74, 'bays' => 3],  // slim tower
+        ][$variant % 3];
+
+        $bodyW = (int) (self::WIDTH * ($build['width'] - $index * 0.018));
+        $bodyH = (int) (self::HEIGHT * ($build['height'] + $index * 0.040));
         $left  = (int) (self::WIDTH * (0.30 + ($index % 2 ? 0.10 : -0.06)));
         $top   = $horizon - $bodyH;
 
-        self::tower($img, $left, $top, $bodyW, $bodyH, $horizon, $p);
+        self::tower($img, $left, $top, $bodyW, $bodyH, $horizon, $p, $build['bays']);
         self::ground($img, $horizon, $p['ground'], $left, $left + $bodyW + (int) ($bodyW * 0.16));
         self::vignette($img);
         self::demoMark($img);
@@ -250,7 +262,7 @@ final class ShowcasePhotos
         }
     }
 
-    private static function tower($img, int $left, int $top, int $w, int $h, int $horizon, array $p): void
+    private static function tower($img, int $left, int $top, int $w, int $h, int $horizon, array $p, int $bays = 4): void
     {
         $face  = imagecolorallocate($img, ...$p['tower']);
         $side  = imagecolorallocate($img, ...$p['tower_shade']);
@@ -272,10 +284,10 @@ final class ShowcasePhotos
 
         imagefilledrectangle($img, $left, $top, $right, $horizon, $face);
 
-        // Window grid: 4 bays per floor, one floor every 46px, with a gold
-        // spandrel line under each — the accent the app uses for emphasis.
+        // Window grid: one floor every 46px, with a gold spandrel line under
+        // each — the accent the app uses for emphasis. Bay count comes from the
+        // building's build, so a wide block is not just a stretched tower.
         $floorH = 46;
-        $bays   = 4;
         $bayW   = (int) (($w - 40) / $bays);
 
         // Stops well clear of the retail band below, so the lowest row of

@@ -385,17 +385,29 @@ class ShowcaseSeederTest extends TestCase
      */
     public function test_it_issues_document_numbers_around_documents_that_already_exist(): void
     {
-        // Reassign one seeded invoice to another property. Its number stays
-        // issued, but purge() no longer has any claim on it — which is exactly
-        // the situation on a live database: a number in use by a property this
-        // seeder does not own.
+        // A tenant outside every prefix the seeder owns.
+        $outsider = Tenant::create([
+            'tenant_code' => 'Tenant-09999',
+            'name'        => 'Some Other Landlord Tenant',
+            'tenant_type' => 'company',
+        ]);
+
+        // Hand one seeded invoice over to that tenant and another property. Its
+        // number stays issued, but the seeder now has no claim on it by tenant
+        // or by property name — which is exactly the situation on a live
+        // database: a number in use by a record this seeder does not own.
         $planted = Invoice::where('property_name', self::NAME)
             ->where('type', 'rent')
             ->orderBy('id')
             ->skip(5)
             ->firstOrFail();
 
-        $planted->updateQuietly(['property_name' => 'Some Other Tower', 'unit' => 'OT - 11']);
+        $planted->updateQuietly([
+            'tenant_id'     => $outsider->id,
+            'tenant_name'   => $outsider->name,
+            'property_name' => 'Some Other Tower',
+            'unit'          => 'OT - 11',
+        ]);
 
         $this->seed(ShowcaseSeeder::class);
 
