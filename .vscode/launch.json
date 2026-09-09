@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Requires the Xdebug PHP extension with xdebug.mode=debug and
+      // xdebug.client_port=9003 in your php.ini.
+      "name": "Listen for Xdebug",
+      "type": "php",
+      "request": "launch",
+      "port": 9003,
+      "pathMappings": {
+        "${workspaceFolder}": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Debug current PHP file",
+      "type": "php",
+      "request": "launch",
+      "program": "${file}",
+      "cwd": "${workspaceFolder}",
+      "port": 9003
+    }
+  ]
+}

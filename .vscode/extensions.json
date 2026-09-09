@@ -1,0 +1,28 @@
+{
+  // Prompted on first open of this workspace: install these to get the
+  // formatting, IntelliSense and debugging this repo's settings assume.
+  "recommendations": [
+    // PHP / Laravel core
+    "bmewburn.vscode-intelephense-client",
+    "amiralizadeh9480.laravel-extra-intellisense",
+    "onecentlin.laravel-blade",
+    "shufo.vscode-blade-formatter",
+    "codingyu.laravel-goto-view",
+    "ryannaddy.laravel-artisan",
+    "xdebug.php-debug",
+    // Shared formatting + linting
+    "esbenp.prettier-vscode",
+    "editorconfig.editorconfig",
+    "usernamehw.errorlens",
+    // SQLite (database/database.sqlite)
+    "qwtel.sqlite-viewer",
+    // Git
+    "eamodio.gitlens"
+  ],
+  "unwantedRecommendations": [
+    // Superseded by Intelephense / Prettier — these fight the settings above.
+    "hookyqr.beautify",
+    "felixfbecker.php-intellisense",
+    "kokororin.vscode-phpfmt"
+  ]
+}

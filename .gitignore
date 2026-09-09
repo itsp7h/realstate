@@ -10,7 +10,13 @@
 /.idea
 /.nova
 /.phpunit.cache
-/.vscode
+# VS Code: ignore personal/local files but SHARE the workspace toolchain
+# config so every machine and clone gets the same formatting, IntelliSense
+# and Xdebug setup.
+/.vscode/*
+!/.vscode/settings.json
+!/.vscode/extensions.json
+!/.vscode/launch.json
 /.zed
 /auth.json
 /node_modules
