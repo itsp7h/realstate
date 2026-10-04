@@ -2,12 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Exports\ReportExport;
 use App\Models\Building;
+use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\PropertyUnit;
+use App\Models\Revenue;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Maatwebsite\Excel\Facades\Excel;
 use Tests\TestCase;
 
 class ProfitLossReportTest extends TestCase
@@ -172,5 +176,94 @@ class ProfitLossReportTest extends TestCase
         $response = $this->get(route('reports.profit-loss.export', ['building_id' => $building->id]));
         $response->assertStatus(200);
         $this->assertStringContainsString('spreadsheetml', $response->headers->get('Content-Type'));
+    }
+
+    private function seedEveryLine(Building $building): void
+    {
+        $tenant  = $this->makeTenant();
+        $invoice = $this->makeInvoice($tenant);
+        Payment::create([
+            'payment_number' => 'PAY-TEST-' . uniqid(),
+            'invoice_id'     => $invoice->id,
+            'amount'         => 100.000,
+            'payment_date'   => now()->format('Y-m-d'),
+            'method'         => 'cash',
+        ]);
+        Revenue::create([
+            'building_id'  => $building->id,
+            'category'     => 'parking_fee',
+            'amount'       => 36.500,
+            'revenue_date' => now()->format('Y-m-d'),
+        ]);
+        Expense::create([
+            'building_id'  => $building->id,
+            'category'     => 'cleaning',
+            'amount'       => 12.250,
+            'expense_date' => now()->format('Y-m-d'),
+        ]);
+    }
+
+    public function test_profit_loss_shows_manual_revenue_and_expense_lines(): void
+    {
+        $building = $this->makeBuilding();
+        $this->seedEveryLine($building);
+
+        $response = $this->get(route('reports.profit-loss', ['building_id' => $building->id]));
+        $response->assertStatus(200)
+            ->assertSee('Manually recorded revenue')
+            ->assertSee('36.500')
+            ->assertSee('Manually recorded expenses')
+            ->assertSee('12.250');
+    }
+
+    public function test_profit_loss_rendered_lines_add_up_to_totals(): void
+    {
+        $building = $this->makeBuilding();
+        $this->seedEveryLine($building);
+
+        $response  = $this->get(route('reports.profit-loss', ['building_id' => $building->id]));
+        $statement = $response->viewData('statement');
+        $html      = $response->getContent();
+
+        // Every revenue/expense key the service sums into a total must be rendered,
+        // otherwise the breakdown silently stops adding up to the total shown.
+        $revenueShown = 0;
+        foreach ($statement['revenue'] as $key => $amount) {
+            $this->assertStringContainsString("['revenue']['{$key}']", $this->viewSource('reports.profit-loss'), "Revenue line '{$key}' is not rendered");
+            $this->assertStringContainsString("['revenue']['{$key}']", $this->viewSource('reports.profit-loss-pdf'), "Revenue line '{$key}' is not rendered in the PDF");
+            $revenueShown += $amount;
+        }
+        foreach ($statement['expenses'] as $key => $amount) {
+            $this->assertStringContainsString("['expenses']['{$key}']", $this->viewSource('reports.profit-loss'), "Expense line '{$key}' is not rendered");
+            $this->assertStringContainsString("['expenses']['{$key}']", $this->viewSource('reports.profit-loss-pdf'), "Expense line '{$key}' is not rendered in the PDF");
+        }
+
+        $this->assertEqualsWithDelta(136.500, $statement['total_revenue'], 0.0005);
+        $this->assertEqualsWithDelta($statement['total_revenue'], $revenueShown, 0.0005);
+        $this->assertEqualsWithDelta(12.250, $statement['total_expense'], 0.0005);
+        $this->assertStringContainsString('136.500', $html);
+    }
+
+    public function test_profit_loss_export_includes_manual_columns(): void
+    {
+        Excel::fake();
+        $building = $this->makeBuilding();
+        $this->seedEveryLine($building);
+
+        $this->get(route('reports.profit-loss.export', ['building_id' => $building->id]));
+
+        Excel::assertDownloaded('profit-and-loss-' . now()->format('Y-m-d') . '.xlsx', function (ReportExport $export) {
+            $headings = $export->headings();
+            $row      = array_combine($headings, $export->map($export->collection()->first()));
+
+            return $row['Manual Revenue (BHD)'] == 36.500
+                && $row['Manual Expense (BHD)'] == 12.250
+                && $row['Total Revenue (BHD)'] == 136.500;
+        });
+    }
+
+    private function viewSource(string $view): string
+    {
+        return file_get_contents(view($view)->getPath());
     }
 }
