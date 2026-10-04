@@ -33,5 +33,6 @@ Thumbs.db
 /draft
 graphify-out/cache/
 
-# DomPDF's font cache — regenerated on demand from public/fonts.
-/storage/fonts
+# DomPDF's font cache — regenerated on demand from public/fonts. The
+# directory itself is kept (storage/fonts/.gitignore) because DomPDF writes
+# into it but will not create it.
