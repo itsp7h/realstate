@@ -3,105 +3,106 @@
 @section('title', 'Tenant Ledger')
 @section('topbar-title', 'Reports')
 
-@push('styles')
-<style>
-.filter-bar {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 14px 18px;
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px;
-}
-.filter-bar select, .filter-bar input {
-    padding: 8px 12px; font-size: 13px;
-    border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-    background: var(--input-bg); color: var(--text-primary); outline: none;
-}
-.filter-bar select:focus, .filter-bar input:focus { border-color: var(--accent); }
-.filter-bar select[name="tenant_id"] { flex: 1; min-width: 220px; }
-.filter-bar input[type="date"] { min-width: 140px; }
-
-.table-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden; }
-.report-empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
-.report-empty i { font-size: 36px; display: block; margin-bottom: 12px; opacity: 0.3; }
-.right { text-align: right; }
-.money-col { font-family: 'Outfit', sans-serif; }
-.balance-row-owing  { color: #DC2626; font-weight: 700; }
-.balance-row-settled { color: #059669; font-weight: 700; }
-.closing-row td { background: var(--page-bg); }
-</style>
-@endpush
-
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Tenant Ledger</h1>
-        <p class="page-header-sub">Full transaction history for a single tenant, with a running balance</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
-        @if($tenant)
-        <button type="button" class="btn btn-outline"
-                onclick="openReportPdf('{{ route('reports.tenant-ledger.pdf', request()->only(['tenant_id','date_from','date_to'])) }}', 'Tenant Ledger — {{ $tenant->name }}')">
-            <i class="fa-solid fa-eye"></i> Preview
-        </button>
-        <a href="{{ route('reports.tenant-ledger.pdf', request()->only(['tenant_id','date_from','date_to'])) }}"
-           target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
-        <a href="{{ route('reports.tenant-ledger.export', request()->only(['tenant_id','date_from','date_to'])) }}"
-           class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
-        @endif
-    </div>
-</div>
+@section('page-title', 'Tenant Ledger')
+@section('page-subtitle', 'Full transaction history for a single tenant, with a running balance')
+@section('page-back')
+    <a href="{{ route('reports.index') }}" class="btn btn-outline" aria-label="Back to Reports">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Reports</span>
+    </a>
+@endsection
 
-<form method="GET" action="{{ route('reports.tenant-ledger') }}" class="filter-bar">
-    <select name="tenant_id" required>
-        <option value="">Select a tenant…</option>
-        @foreach($tenants as $t)
-        <option value="{{ $t->id }}" {{ $tenant && $tenant->id === $t->id ? 'selected' : '' }}>{{ $t->name }} @if($t->tenant_code)({{ $t->tenant_code }})@endif</option>
-        @endforeach
-    </select>
-    <input type="date" name="date_from" value="{{ $from->format('Y-m-d') }}" title="From">
-    <input type="date" name="date_to"   value="{{ $to->format('Y-m-d') }}"   title="To">
-    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> View Ledger</button>
+@section('page-actions')
+    @if($tenant)
+    <button type="button" class="btn btn-outline"
+            onclick="openReportPdf('{{ route('reports.tenant-ledger.pdf', request()->only(['tenant_id','date_from','date_to'])) }}', 'Tenant Ledger — {{ $tenant->name }}')">
+        <i class="fa-solid fa-eye"></i> Preview
+    </button>
+    <a href="{{ route('reports.tenant-ledger.pdf', request()->only(['tenant_id','date_from','date_to'])) }}"
+       target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+    <x-export-button href="{{ route('reports.tenant-ledger.export', request()->only(['tenant_id','date_from','date_to'])) }}" label="Export XLSX" icon="fa-file-excel" />
+    @endif
+@endsection
+
+
+<form method="GET" action="{{ route('reports.tenant-ledger') }}" class="filter-card">
+    <div class="filter-bar">
+        <div class="filter-group is-search">
+            <label for="f_tenant_id">Tenant</label>
+            <select id="f_tenant_id" name="tenant_id" required>
+                <option value="">Select a tenant…</option>
+                @foreach($tenants as $t)
+                <option value="{{ $t->id }}" {{ $tenant && $tenant->id === $t->id ? 'selected' : '' }}>{{ $t->name }} @if($t->tenant_code)({{ $t->tenant_code }})@endif</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="f_date_from">From</label>
+            <input type="date" id="f_date_from" name="date_from" value="{{ $from->format('Y-m-d') }}">
+        </div>
+        <div class="filter-group">
+            <label for="f_date_to">To</label>
+            <input type="date" id="f_date_to" name="date_to"   value="{{ $to->format('Y-m-d') }}">
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> View Ledger</button>
+        </div>
+    </div>
 </form>
 
 @if(!$tenant)
-<div class="table-card"><div class="report-empty"><i class="fa-solid fa-book"></i>Select a tenant to view their ledger.</div></div>
+<div class="table-card">
+    <div class="empty-state">
+        <div class="empty-icon" aria-hidden="true"><i class="fa-solid fa-book"></i></div>
+        <h4>Pick a tenant</h4>
+        <p>Choose a tenant above to see every charge and payment on their account.</p>
+    </div>
+</div>
 @elseif($rows->isEmpty())
-<div class="table-card"><div class="report-empty"><i class="fa-solid fa-circle-check"></i>{{ $tenant->name }} has no transactions in this date range.</div></div>
+<div class="table-card">
+    <div class="empty-state">
+        <div class="empty-icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></div>
+        <h4>No transactions</h4>
+        <p>Nothing was charged to or paid by {{ $tenant->name }} in this range.</p>
+    </div>
+</div>
 @else
 <div class="table-card">
-    <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead>
-            <tr style="background:var(--page-bg)">
-                <th style="text-align:left;padding:10px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Date</th>
-                <th style="text-align:left;padding:10px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Reference</th>
-                <th style="text-align:left;padding:10px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Description</th>
-                <th class="right" style="padding:10px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Debit (BHD)</th>
-                <th class="right" style="padding:10px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Credit (BHD)</th>
-                <th class="right" style="padding:10px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)">Balance (BHD)</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($rows as $row)
-            <tr style="border-bottom:1px solid var(--card-border)">
-                <td style="padding:9px 14px;white-space:nowrap">{{ $row['date']->format('d M Y') }}</td>
-                <td style="padding:9px 14px;font-weight:600">{{ $row['bill_ref'] }}</td>
-                <td style="padding:9px 14px;color:var(--text-muted)">{{ $row['description'] }}</td>
-                <td class="right money-col" style="padding:9px 14px">{{ $row['debit'] > 0.001 ? number_format($row['debit'], 3) : '—' }}</td>
-                <td class="right money-col" style="padding:9px 14px">{{ $row['credit'] > 0.001 ? number_format($row['credit'], 3) : '—' }}</td>
-                <td class="right money-col {{ $row['balance'] > 0.001 ? 'balance-row-owing' : 'balance-row-settled' }}" style="padding:9px 14px">
-                    {{ number_format(abs($row['balance']), 3) }}{{ $row['balance'] > 0.001 ? ' Dr' : ($row['balance'] < -0.001 ? ' Cr' : '') }}
-                </td>
-            </tr>
-            @endforeach
-            <tr class="closing-row">
-                <td colspan="5" style="padding:12px 14px;text-align:right;font-weight:700">Closing Balance</td>
-                <td class="right money-col {{ $rows->last()['balance'] > 0.001 ? 'balance-row-owing' : 'balance-row-settled' }}" style="padding:12px 14px">
-                    {{ number_format(abs($rows->last()['balance']), 3) }}{{ $rows->last()['balance'] > 0.001 ? ' Dr' : ($rows->last()['balance'] < -0.001 ? ' Cr' : '') }}
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="table-wrap is-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Reference</th>
+                    <th>Description</th>
+                    <th class="right">Debit (BHD)</th>
+                    <th class="right">Credit (BHD)</th>
+                    <th class="right">Balance (BHD)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($rows as $row)
+                <tr>
+                    <td class="nowrap">{{ $row['date']->format('d M Y') }}</td>
+                    <td class="cell-title">{{ $row['bill_ref'] }}</td>
+                    <td class="val-muted">{{ $row['description'] }}</td>
+                    <td class="right num">{{ $row['debit'] > 0.001 ? number_format($row['debit'], 3) : '—' }}</td>
+                    <td class="right num">{{ $row['credit'] > 0.001 ? number_format($row['credit'], 3) : '—' }}</td>
+                    <td class="right num {{ $row['balance'] > 0.001 ? 'val-negative' : 'val-positive' }}">
+                        {{ number_format(abs($row['balance']), 3) }}{{ $row['balance'] > 0.001 ? ' Dr' : ($row['balance'] < -0.001 ? ' Cr' : '') }}
+                    </td>
+                </tr>
+                @endforeach
+                <tr class="total-row">
+                    <td class="right cell-title" colspan="5">Closing Balance</td>
+                    <td class="right num {{ $rows->last()['balance'] > 0.001 ? 'val-negative' : 'val-positive' }}">
+                        {{ number_format(abs($rows->last()['balance']), 3) }}{{ $rows->last()['balance'] > 0.001 ? ' Dr' : ($rows->last()['balance'] < -0.001 ? ' Cr' : '') }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 @endif
 

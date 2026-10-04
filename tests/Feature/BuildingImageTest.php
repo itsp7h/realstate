@@ -21,6 +21,25 @@ class BuildingImageTest extends TestCase
         ]);
     }
 
+    /**
+     * Photo URLs must follow the host the request came in on, not APP_URL —
+     * staging is reached by IP while APP_URL names a subdomain the browser
+     * cannot resolve, which made every <img> fail with ERR_NAME_NOT_RESOLVED.
+     */
+    public function test_image_url_follows_request_host_not_app_url(): void
+    {
+        config(['app.url' => 'http://unresolvable.example']);
+        $building = $this->building();
+        $image = BuildingImage::create([
+            'building_id' => $building->id,
+            'path' => 'buildings/'.$building->id.'/img1.jpg',
+            'sort_order' => 0,
+        ]);
+
+        $this->assertStringNotContainsString('unresolvable.example', $image->url);
+        $this->assertStringEndsWith('/storage/buildings/'.$building->id.'/img1.jpg', $image->url);
+    }
+
     public function test_show_page_has_photos_tab(): void
     {
         $building = $this->building();

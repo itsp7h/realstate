@@ -7,6 +7,7 @@ use App\Http\Requests\ApproveMaintenanceRequest;
 use App\Http\Requests\StoreMaintenanceRequest;
 use App\Http\Requests\UpdateMaintenanceRequest;
 use App\Models\Building;
+use App\Support\MaintenanceBoard;
 use App\Models\MaintenanceRequest;
 use App\Models\PropertyUnit;
 use App\Models\Tenant;
@@ -34,6 +35,15 @@ class MaintenanceRequestController extends Controller
             $query->where('status', $status);
         }
 
+        // `stage` narrows to one board column — what a column's "+N more" link
+        // uses, so the list it opens is exactly the column you clicked.
+        if ($stage = $request->input('stage')) {
+            $statuses = MaintenanceBoard::COLUMNS[$stage]['statuses'] ?? null;
+            if ($statuses) {
+                $query->whereIn('status', $statuses);
+            }
+        }
+
         if ($buildingId = $request->input('building_id')) {
             $query->where('building_id', $buildingId);
         }
@@ -46,7 +56,19 @@ class MaintenanceRequestController extends Controller
             $query->whereDate('date', '<=', $to);
         }
 
-        $requests = $query->paginate(20)->withQueryString();
+        // Board by default — the handoff's composition, and the better read on
+        // "what needs doing". A request arriving with an explicit status filter
+        // (the notification bell links that way) wants the list instead: two of
+        // the three columns would be empty by construction.
+        $view = $request->input('view');
+        if (! in_array($view, ['board', 'list'], true)) {
+            $view = $request->filled('status') ? 'list' : 'board';
+        }
+
+        // Both read from the same filtered builder, so the filter bar means the
+        // same thing whichever view is showing.
+        $requests = (clone $query)->paginate(20)->withQueryString();
+        $board = $view === 'board' ? MaintenanceBoard::columns(clone $query) : [];
 
         $stats = [
             'total'              => MaintenanceRequest::count(),
@@ -66,7 +88,9 @@ class MaintenanceRequestController extends Controller
         $tenants = Tenant::orderBy('name')
             ->get(['id', 'name']);
 
-        return view('maintenance.index', compact('requests', 'stats', 'properties', 'units', 'tenants'));
+        return view('maintenance.index', compact(
+            'requests', 'stats', 'properties', 'units', 'tenants', 'board', 'view'
+        ));
     }
 
     public function create(): View

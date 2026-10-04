@@ -4,16 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Dashboard') — RealEstate Admin</title>
+    @php
+        $branding = \App\Models\BrandingSetting::current();
+    @endphp
+    <title>@yield('title', 'Dashboard') — {{ $branding->displaySiteName() }}</title>
 
     <link rel="manifest" href="{{ asset('manifest.json') }}">
-    <meta name="theme-color" content="#0B1120">
-    <link rel="icon" type="image/png" href="{{ asset('icons/favicon-32.png') }}">
+    <meta name="theme-color" content="#1E2C4F">
+    <link rel="icon" type="image/png" href="{{ $branding->faviconUrl() ?: asset('icons/favicon-32.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="P7H Real Estate">
+    <meta name="apple-mobile-web-app-title" content="{{ $branding->displaySiteName() }}">
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
@@ -25,45 +28,13 @@
             var saved = localStorage.getItem('p7-theme');
             var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
             document.documentElement.setAttribute('data-theme', theme);
+            // The sidebar's collapsed state, same before-paint treatment as
+            // the theme so the frame does not jump on load.
+            if (localStorage.getItem('p7-nav') === 'collapsed') {
+                document.documentElement.classList.add('nav-collapsed-boot');
+            }
         })();
     </script>
-
-    {{-- ── Native-style page transitions (progressive enhancement) ──────
-         Opts every same-origin navigation into the cross-document View
-         Transitions API. Unsupported browsers (older Safari/Firefox) just
-         ignore the @view-transition rule and keep today's hard navigation
-         — nothing to fall back to in JS. On mobile, navigating into or
-         out of a pushed screen (Tenant/Building detail) additionally gets
-         a directional slide via the `push`/`pop` transition types set in
-         the script below, instead of the browser's default cross-fade. --}}
-    <style>
-        @view-transition {
-            navigation: auto;
-        }
-        @media (prefers-reduced-motion: reduce) {
-            ::view-transition-group(*),
-            ::view-transition-old(*),
-            ::view-transition-new(*) {
-                animation: none !important;
-            }
-        }
-        @media (max-width: 768px) {
-            @supports selector(:active-view-transition-type(pop)) {
-                ::view-transition-group(root) { animation-duration: .32s; }
-                ::view-transition-old(root), ::view-transition-new(root) {
-                    animation-timing-function: cubic-bezier(.32,.72,0,1);
-                }
-                :root:active-view-transition-type(push)::view-transition-old(root) { animation-name: pm-push-out; }
-                :root:active-view-transition-type(push)::view-transition-new(root) { animation-name: pm-push-in; }
-                :root:active-view-transition-type(pop)::view-transition-old(root) { animation-name: pm-pop-out; }
-                :root:active-view-transition-type(pop)::view-transition-new(root) { animation-name: pm-pop-in; }
-            }
-        }
-        @keyframes pm-push-out { to   { transform: translateX(-28%); opacity: .55; } }
-        @keyframes pm-push-in  { from { transform: translateX(100%); } to { transform: translateX(0); } }
-        @keyframes pm-pop-out  { to   { transform: translateX(100%); } }
-        @keyframes pm-pop-in   { from { transform: translateX(-28%); opacity: .55; } to { transform: translateX(0); opacity: 1; } }
-    </style>
     <script>
         (function () {
             // The back-chevron on a pushed screen is the only place a
@@ -95,1199 +66,140 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    <style>
-        :root, :root[data-theme="light"] {
-            --sidebar-bg:       #0B1120;
-            --sidebar-border:   #1A2540;
-            --sidebar-hover:    #131E35;
-            --sidebar-active:   #1E2D4A;
-            --accent:           #E8B86D;
-            --accent-dim:       rgba(232,184,109,0.12);
-            --accent-glow:      rgba(232,184,109,0.25);
-            --page-bg:          #F1F5F9;
-            --card-bg:          #FFFFFF;
-            --card-border:      #E2E8F0;
-            --text-primary:     #0F172A;
-            --text-secondary:   #475569;
-            --text-muted:       #94A3B8;
-            --text-sidebar:     #8A9BBE;
-            --text-sidebar-active: #FFFFFF;
-            --input-bg:         #FFFFFF;
-            --input-border:     #CBD5E1;
-            --input-focus:      #E8B86D;
-            --danger:           #EF4444;
-            --success:          #10B981;
-            --info:             #3B82F6;
-            --warning:          #F59E0B;
-            --shadow-sm:        0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-            --shadow-md:        0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
-            --shadow-lg:        0 10px 40px rgba(0,0,0,0.10);
-            --radius:           12px;
-            --radius-sm:        8px;
-            --sidebar-width:    260px;
-            --sheet-radius:     22px;
-            --ease-spring:      cubic-bezier(.32,.72,0,1);
-            --duration-sheet:   380ms;
-            --scrim:            rgba(11,17,32,0.55);
+    {{-- ── Vendor CSS ────────────────────────────────────────────────────────
+         Third-party stylesheets go here, BEFORE the design system, so the
+         design system always wins on any class they share. Only one page uses
+         this (buildings/show pushes Bootstrap 5 for its grid, tabs and modal
+         JS); nothing new should. Loading a vendor sheet after app-core.css
+         means its .card/.btn/.badge/.table beat ours and that page stops
+         looking like the rest of the app. --}}
+    @stack('vendor-styles')
 
-            /* ── Mobile app design tokens (Promoseven RE mobile spec) ── */
-            --m-bg:            #F4F1EA;
-            --m-card:          #FFFFFF;
-            --m-ink:           #17203A;
-            --m-muted:         #8E9AAE;
-            --m-faint:         #A7B0C0;
-            --m-line:          #F1F3F8;
-            --m-border:        #E4E9F0;
+    {{-- ── Design system ────────────────────────────────────────────────────
+         Four slots, and the order between them matters:
 
-            --m-navy:          #10141F;
-            --m-navy-2:        #1E2842;
-            --m-navy-line:     #1A2540;
-            --m-navy-active:   #1E2D4A;
-            --m-navy-text:     #8A9BBE;
+           0. @stack('vendor-styles')  third-party CSS the design system overrides
+           1. app-core.css     tokens, app shell, every shared component
+           2. @stack('styles') per-page overrides
+           3. app-mobile.css   mobile app layer — intentionally loaded last
 
-            --m-gold:          #E7B266;
-            --m-gold-deep:     #D99A3D;
-            --m-gold-text:     #C08A2D;
-            --m-gold-tint:     #FBF3E4;
-            --m-gold-on:       #2A2312;
-            --m-gold-grad:     linear-gradient(135deg,#EDBE78,#DC9E45);
+         Step 3 is why the mobile layer can turn every .modal-overlay in the
+         app into a bottom sheet: at equal specificity the later rule wins, so
+         it beats a page's own modal CSS without needing an edit per page.
+         The full contract is documented at the top of app-core.css.
 
-            --m-green:  #17A96C;  --m-green-tint:  #E6F6EE;
-            --m-red:    #D64545;  --m-red-tint:    #FCEBEB;
-            --m-blue:   #4A7DF0;  --m-blue-tint:   #E9F0FD;
-            --m-purple: #7A5AF8;  --m-purple-tint: #EFEBFD;
-
-            --m-r-card: 18px;  --m-r-btn: 12px;  --m-r-chip: 10px;  --m-r-badge: 7px;
-            --m-shadow: 0 1px 3px rgba(23,32,58,.05);
-            --m-shadow-float: 0 8px 24px rgba(23,32,58,.10);
-        }
-
-        /* ── Dark mode ──────────────────────────────────────
-             Retheme's the shared shell (sidebar, topbar, page bg,
-             cards, tables, inputs, alerts) which every page builds
-             on. Pages' own colored accents (status badge tints,
-             chart series colors) intentionally stay as-is in both
-             modes, same as most dark-mode products keep their tag
-             colors vivid rather than desaturating them. ── */
-        :root[data-theme="dark"] {
-            --sidebar-bg:       #0B1120;
-            --sidebar-border:   #1A2540;
-            --sidebar-hover:    #131E35;
-            --sidebar-active:   #1E2D4A;
-            --accent:           #E8B86D;
-            --accent-dim:       rgba(232,184,109,0.12);
-            --accent-glow:      rgba(232,184,109,0.25);
-            --page-bg:          #0D1220;
-            --card-bg:          #131A2B;
-            --card-border:      #232C42;
-            --text-primary:     #F1F4F9;
-            --text-secondary:   #B7C0D1;
-            --text-muted:       #7E8AA3;
-            --text-sidebar:     #8A9BBE;
-            --text-sidebar-active: #FFFFFF;
-            --input-bg:         #0F1524;
-            --input-border:     #2A3348;
-            --input-focus:      #E8B86D;
-            --danger:           #F87171;
-            --success:          #34D399;
-            --info:             #60A5FA;
-            --warning:          #FBBF24;
-            --shadow-sm:        0 1px 3px rgba(0,0,0,0.30), 0 1px 2px rgba(0,0,0,0.20);
-            --shadow-md:        0 4px 16px rgba(0,0,0,0.36), 0 2px 6px rgba(0,0,0,0.24);
-            --shadow-lg:        0 10px 40px rgba(0,0,0,0.45);
-            --radius:           12px;
-            --radius-sm:        8px;
-            --sidebar-width:    260px;
-            --sheet-radius:     22px;
-            --ease-spring:      cubic-bezier(.32,.72,0,1);
-            --duration-sheet:   380ms;
-            --scrim:            rgba(0,0,0,0.65);
-        }
-        :root[data-theme="dark"] body { background: var(--page-bg); }
-        :root[data-theme="dark"] thead th { background: #0F1526; }
-        :root[data-theme="dark"] tbody tr:hover td { background: #171F33; }
-        :root[data-theme="dark"] input[type="text"],
-        :root[data-theme="dark"] input[type="number"],
-        :root[data-theme="dark"] input[type="date"],
-        :root[data-theme="dark"] input[type="email"],
-        :root[data-theme="dark"] select,
-        :root[data-theme="dark"] textarea {
-            color-scheme: dark;
-        }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: var(--page-bg);
-            color: var(--text-primary);
-            display: flex;
-            min-height: 100vh;
-            font-size: 14px;
-        }
-
-        /* ── SIDEBAR ─────────────────────────────────────── */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: var(--sidebar-bg);
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            top: 0; left: 0; bottom: 0;
-            z-index: 100;
-            overflow-y: auto;
-            overflow-x: hidden;
-            border-right: 1px solid var(--sidebar-border);
-            transition: transform 0.3s ease;
-        }
-
-        .sidebar-logo {
-            padding: 24px 20px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-bottom: 1px solid var(--sidebar-border);
-            text-decoration: none;
-        }
-        .sidebar-logo-icon {
-            width: 38px; height: 38px;
-            background: var(--accent);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px;
-            color: #0B1120;
-            flex-shrink: 0;
-            box-shadow: 0 0 20px var(--accent-glow);
-        }
-        .sidebar-logo-text { line-height: 1; }
-        .sidebar-logo-text strong {
-            font-family: 'Outfit', sans-serif;
-            font-size: 15px;
-            font-weight: 700;
-            color: #fff;
-            display: block;
-        }
-        .sidebar-logo-text span {
-            font-size: 10px;
-            color: var(--text-sidebar);
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
-
-        .sidebar-section {
-            padding: 20px 12px 8px;
-        }
-        .sidebar-section-label {
-            font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--text-sidebar);
-            padding: 0 8px;
-            margin-bottom: 6px;
-            opacity: 0.6;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            border-radius: var(--radius-sm);
-            text-decoration: none;
-            color: var(--text-sidebar);
-            font-size: 13.5px;
-            font-weight: 500;
-            transition: all 0.18s ease;
-            position: relative;
-            margin-bottom: 2px;
-        }
-        .nav-item:hover {
-            background: var(--sidebar-hover);
-            color: #C8D6F0;
-        }
-        .nav-item.active {
-            background: var(--sidebar-active);
-            color: var(--text-sidebar-active);
-        }
-        .nav-item.active::before {
-            content: '';
-            position: absolute;
-            left: 0; top: 20%; bottom: 20%;
-            width: 3px;
-            background: var(--accent);
-            border-radius: 0 3px 3px 0;
-        }
-        .nav-item .nav-icon {
-            width: 18px;
-            text-align: center;
-            font-size: 14px;
-            flex-shrink: 0;
-        }
-        .nav-item.active .nav-icon { color: var(--accent); }
-        .nav-badge {
-            margin-left: auto;
-            background: var(--accent-dim);
-            color: var(--accent);
-            font-size: 10px;
-            font-weight: 600;
-            padding: 2px 7px;
-            border-radius: 20px;
-        }
-
-
-        .sidebar-footer {
-            margin-top: auto;
-            padding: 16px 12px;
-            border-top: 1px solid var(--sidebar-border);
-        }
-        .sidebar-user {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: background 0.18s;
-        }
-        .sidebar-user:hover { background: var(--sidebar-hover); }
-        .user-avatar {
-            width: 34px; height: 34px;
-            background: linear-gradient(135deg, var(--accent), #C49040);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: 700;
-            color: #0B1120;
-            flex-shrink: 0;
-        }
-        .user-info strong { display: block; font-size: 13px; color: #fff; font-weight: 600; }
-        .user-info span { font-size: 11px; color: var(--text-sidebar); }
-
-        /* ── MAIN CONTENT ─────────────────────────────────── */
-        .main-wrap {
-            margin-left: var(--sidebar-width);
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-
-        .topbar {
-            background: var(--card-bg);
-            border-bottom: 1px solid var(--card-border);
-            padding: 0 28px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            position: sticky;
-            top: 0;
-            z-index: 90;
-        }
-        .topbar-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 17px;
-            font-weight: 700;
-            color: var(--text-primary);
-            flex: 1;
-        }
-        .topbar-actions { display: flex; align-items: center; gap: 10px; }
-        .topbar-icon-btn {
-            width: 36px; height: 36px;
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-sm);
-            background: transparent;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--text-secondary);
-            font-size: 14px;
-            transition: all 0.15s;
-        }
-        .topbar-icon-btn:hover { background: var(--page-bg); color: var(--text-primary); }
-
-        .page-content {
-            padding: 28px;
-            flex: 1;
-        }
-
-        /* ── CARDS ────────────────────────────────────────── */
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
-        }
-        .card-header {
-            padding: 18px 22px;
-            border-bottom: 1px solid var(--card-border);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .card-header-icon {
-            width: 34px; height: 34px;
-            border-radius: var(--radius-sm);
-            background: var(--accent-dim);
-            display: flex; align-items: center; justify-content: center;
-            color: var(--accent);
-            font-size: 15px;
-            flex-shrink: 0;
-        }
-        .card-header h3 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-        .card-header p {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 1px;
-        }
-        .card-body { padding: 22px; }
-
-        /* ── FORM ─────────────────────────────────────────── */
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 18px;
-        }
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .form-group.col-span-2 { grid-column: span 2; }
-        .form-group.col-span-full { grid-column: 1 / -1; }
-
-        label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            letter-spacing: 0.02em;
-        }
-        label .required { color: var(--danger); margin-left: 2px; }
-
-        input[type="text"],
-        input[type="number"],
-        input[type="date"],
-        input[type="email"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 9px 13px;
-            border: 1.5px solid var(--input-border);
-            border-radius: var(--radius-sm);
-            background: var(--input-bg);
-            color: var(--text-primary);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 13.5px;
-            transition: border-color 0.18s, box-shadow 0.18s;
-            outline: none;
-            appearance: none;
-            -webkit-appearance: none;
-        }
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--input-focus);
-            box-shadow: 0 0 0 3px var(--accent-dim);
-        }
-        input.error, select.error { border-color: var(--danger); }
-        .field-error { font-size: 11px; color: var(--danger); margin-top: 2px; }
-
-        select {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 36px;
-        }
-        textarea { resize: vertical; min-height: 80px; }
-
-        /* ── BUTTONS ──────────────────────────────────────── */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            padding: 9px 18px;
-            border-radius: var(--radius-sm);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 13.5px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: all 0.18s ease;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-        .btn-primary {
-            background: var(--accent);
-            color: #0B1120;
-        }
-        .btn-primary:hover { background: #D4A558; box-shadow: 0 4px 14px var(--accent-glow); transform: translateY(-1px); }
-        .btn-outline {
-            background: transparent;
-            border: 1.5px solid var(--card-border);
-            color: var(--text-secondary);
-        }
-        .btn-outline:hover { background: var(--page-bg); color: var(--text-primary); }
-        .btn-danger { background: #FEF2F2; color: var(--danger); border: 1.5px solid #FECACA; }
-        .btn-danger:hover { background: var(--danger); color: white; }
-        .btn-success { background: #ECFDF5; color: var(--success); border: 1.5px solid #A7F3D0; }
-        .btn-success:hover { background: var(--success); color: white; }
-        .btn-sm { padding: 6px 13px; font-size: 12px; }
-        .btn-lg { padding: 12px 24px; font-size: 14.5px; }
-        .btn:active { transform: translateY(0); }
-
-        /* ── TABLE ────────────────────────────────────────── */
-        .table-wrap { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        thead th {
-            padding: 11px 16px;
-            text-align: left;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            color: var(--text-muted);
-            background: var(--page-bg);
-            border-bottom: 1px solid var(--card-border);
-            white-space: nowrap;
-        }
-        tbody td {
-            padding: 13px 16px;
-            font-size: 13.5px;
-            color: var(--text-primary);
-            border-bottom: 1px solid #F1F5F9;
-            vertical-align: middle;
-        }
-        tbody tr:last-child td { border-bottom: none; }
-        tbody tr:hover td { background: #FAFBFC; }
-
-        /* ── BADGES ───────────────────────────────────────── */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 3px 9px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        .badge-gold  { background: var(--accent-dim); color: var(--accent); }
-        .badge-green { background: #ECFDF5; color: var(--success); }
-        .badge-blue  { background: #EFF6FF; color: var(--info); }
-        .badge-gray  { background: #F1F5F9; color: var(--text-secondary); }
-        .badge-red   { background: #FEF2F2; color: var(--danger); }
-
-        /* ── PAGE HEADER ──────────────────────────────────── */
-        .page-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-            gap: 14px;
-        }
-        .page-header-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--text-primary);
-            line-height: 1.2;
-        }
-        .page-header-sub {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-top: 3px;
-        }
-        .page-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-
-        /* ── BREADCRUMB ───────────────────────────────────── */
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-        .breadcrumb a { color: var(--text-muted); text-decoration: none; }
-        .breadcrumb a:hover { color: var(--accent); }
-        .breadcrumb i { font-size: 9px; }
-
-        /* ── SECTION DIVIDER ──────────────────────────────── */
-        .section-stack { display: flex; flex-direction: column; gap: 20px; }
-
-        /* ── ALERTS ───────────────────────────────────────── */
-        .alert {
-            padding: 13px 16px;
-            border-radius: var(--radius-sm);
-            font-size: 13.5px;
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .alert-success { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
-        .alert-danger  { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
-
-        /* ── RESPONSIVE ───────────────────────────────────── */
-        @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); }
-            .sidebar.open { transform: translateX(0); }
-            .main-wrap { margin-left: 0; }
-            .form-grid { grid-template-columns: 1fr; }
-            .form-group.col-span-2 { grid-column: span 1; }
-        }
-
-        /* ── SIDEBAR BACKDROP (scrim behind the drawer) ────── */
-        .sidebar-backdrop {
-            position: fixed;
-            inset: 0;
-            z-index: 99;
-            background: var(--scrim);
-            backdrop-filter: blur(2px);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        .sidebar-backdrop.show { opacity: 1; pointer-events: all; }
-
-        /* ── MORE SHEET (base positioning — this lives in the shared
-             layout, so unlike per-page modals it can't rely on that
-             page also defining .modal-overlay's fixed/centered base) ── */
-        #moreSheet {
-            position: fixed; inset: 0; z-index: 1050;
-            background: var(--scrim);
-            display: flex;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.25s ease;
-        }
-        #moreSheet.open { opacity: 1; pointer-events: all; }
-        /* The panel itself: same gap as #moreSheet above — pages that don't
-           define their own .modal-box (e.g. buildings.show, invoices.index,
-           payments.index, reports.index) leave this sheet with no background
-           at all, so the navy scrim shows straight through the "solid" card.
-           ID-scoped like #expenseModal's own copy of this rule so it can't
-           bleed into other pages' .modal-box instances. */
-        #moreSheet .modal-box {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            box-shadow: 0 -8px 32px rgba(0,0,0,0.18);
-        }
-
-        /* ── SCROLLBAR ────────────────────────────────────── */
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
-    </style>
+         Both files are static and cache-busted on their own mtime, so a
+         deploy invalidates them without a build step. --}}
+    @php
+        $css = fn (string $path) => asset($path).'?v='.(@filemtime(public_path($path)) ?: 0);
+    @endphp
+    <link rel="stylesheet" href="{{ $css('css/app-core.css') }}">
 
     @stack('styles')
 
-    {{-- ── MOBILE APP SYSTEM ──────────────────────────────────────────────
-         Loaded after @stack('styles') on purpose: at the same specificity,
-         later-in-source wins, so these rules override any per-page mobile
-         modal tweaks and give every .modal-overlay/.modal-box in the app
-         (buildings, units, tenants, floors, maintenance, leases, invoices,
-         EWA bills, dashboard import, form-configs, ...) one consistent
-         bottom-sheet behavior without editing each view. Drawer + sheet
-         share the same spring easing so they read as one native system. --}}
-    <style>
-        @media (max-width: 768px) {
-            #menuBtn { display: flex !important; }
-            body { font-family: 'Poppins', sans-serif; }
-            body.is-dashboard .topbar { display: none; }
-            body.is-dashboard .page-content,
-            body.is-mobile-screen .page-content { padding: 0 0 calc(78px + env(safe-area-inset-bottom)); }
-            body.is-pushed-screen .topbar { display: none; }
-
-            /* ── Touch/scroll physics — the tells that a page is "just a
-                 website" rather than an app. Kill the default blue/gray tap
-                 flash everywhere (chrome AND content — a stray highlight on
-                 a tenant note reads just as wrong as one on a button), and
-                 replace it with deliberate :active feedback below. Stop
-                 double-tap-to-zoom on anything interactive. Contain scroll
-                 so a drawer/sheet/list can't chain into the browser's
-                 pull-to-refresh. Text selection is only turned off on UI
-                 chrome (nav, buttons, tab bar) — real content stays
-                 selectable (tenant notes, addresses, invoice numbers, ...). ── */
-            * { -webkit-tap-highlight-color: transparent; }
-            a, button, [role="button"], input[type="submit"], input[type="button"] { touch-action: manipulation; }
-
-            html, body { overscroll-behavior-y: contain; }
-            .pm-scroll, .page-content, .sidebar, .modal-box, .m-chip-row, .pm-chip-row {
-                overscroll-behavior: contain;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .sidebar, .bottom-tabbar, .pm-header, .topbar, .pm-push-header,
-            .m-action-row, .m-mini-row, .m-chip-row, .pm-chip-row, .more-sheet-item,
-            .pm-fab, .pm-icon-btn, .pm-avatar, .tabbar-item {
-                -webkit-user-select: none; user-select: none;
-            }
-
-            /* ── Pressed-state feedback in place of the killed tap flash ── */
-            .m-action-btn, .pm-fab, .pm-icon-btn, .pm-avatar, .pm-chip, .m-chip,
-            .pm-row-icon, .m-row-card, .pm-property-card, .pm-action-row,
-            .more-sheet-item, .pm-push-back, .nav-item, a.pm-unit-card, .pm-hero-edit-btn {
-                transition: transform .12s ease, opacity .12s ease;
-            }
-            .m-action-btn:active, .pm-fab:active, .pm-icon-btn:active, .pm-avatar:active,
-            .pm-chip:active, .m-chip:active, .m-row-card:active, .pm-property-card:active,
-            .pm-action-row:active, .more-sheet-item:active, .pm-push-back:active, .nav-item:active,
-            a.pm-unit-card:active, .pm-hero-edit-btn:active {
-                transform: scale(0.96);
-                opacity: .8;
-            }
-            .tabbar-item:active { opacity: .55; }
-
-            /* ── Pushed-screen header (back chevron), e.g. Tenant detail ── */
-            .pm-push-header {
-                display: none;
-            }
-            body.is-pushed-screen .pm-push-header {
-                display: flex; align-items: center; gap: 12px;
-                padding: calc(14px + env(safe-area-inset-top)) 18px 12px;
-                background: var(--pm-surface); border-bottom: 1px solid var(--pm-border);
-                box-shadow: 0 1px 3px rgba(0,0,0,.06);
-            }
-            .pm-push-back {
-                flex: none; width: 34px; height: 34px; border-radius: 8px;
-                border: 1px solid var(--pm-border); background: var(--pm-surface); color: var(--pm-text-2);
-                font-size: 14px; cursor: pointer; text-decoration: none;
-                display: flex; align-items: center; justify-content: center;
-            }
-
-            .sidebar {
-                width: clamp(260px, 84vw, 300px);
-                background: var(--m-navy);
-                transition: transform var(--duration-sheet) var(--ease-spring);
-                box-shadow: none;
-            }
-            .sidebar.open { box-shadow: var(--shadow-lg); }
-            .logo-desktop { display: none; }
-            .logo-mobile {
-                display: flex; align-items: center; gap: 12px;
-                padding: 24px 20px 18px; border-bottom: 1px solid var(--m-navy-line);
-            }
-            .logo-mobile-tile {
-                width: 40px; height: 40px; border-radius: 11px;
-                background: var(--m-gold); color: var(--m-navy);
-                display: flex; align-items: center; justify-content: center;
-                font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 15px;
-                box-shadow: 0 0 20px rgba(231,178,102,.25); flex-shrink: 0;
-            }
-            .logo-mobile-text strong { display: block; color: #fff; font-weight: 700; font-size: 14px; }
-            .logo-mobile-text span { color: var(--m-navy-text); font-size: 9.5px; letter-spacing: 1.2px; font-weight: 600; }
-
-            .sidebar .nav-item { border-radius: 10px; font-family: 'Poppins', sans-serif; min-height: 44px; }
-            .sidebar .nav-item.active .nav-icon { color: var(--m-gold); }
-            .sidebar .nav-item.active::before { background: var(--m-gold); }
-
-            /* ── Shared mobile screen components (list pages) ───────
-                 Reused across Buildings/Floors/Units/Tenants/Maintenance/
-                 Invoices/Reports so each page doesn't repeat this CSS. ── */
-            .m-screen { font-family: 'Poppins', sans-serif; color: var(--m-ink); padding: 18px 18px calc(28px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; }
-
-            .m-action-row { display: flex; gap: 10px; }
-            .m-action-btn {
-                flex: 1; height: 46px; border-radius: var(--m-r-btn); font-weight: 600; font-size: 13px;
-                font-family: 'Poppins', sans-serif; cursor: pointer; display: flex; align-items: center;
-                justify-content: center; gap: 6px; text-decoration: none; border: none;
-            }
-            .m-action-btn.primary { background: var(--m-gold); color: var(--m-gold-on); font-weight: 700; flex: 1.4; }
-            .m-action-btn.outline { background: var(--m-card); border: 1.5px solid var(--m-border); color: #4A5568; }
-            .m-action-btn.green-outline { background: #F2FBF6; border: 1.5px solid #A8DFC6; color: var(--m-green); }
-
-            .m-mini-row { display: flex; gap: 10px; }
-            .m-mini-stat { flex: 1; background: var(--m-card); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; box-shadow: var(--m-shadow); }
-            .m-mini-stat .v { font-size: 19px; font-weight: 800; color: var(--m-ink); }
-            .m-mini-stat .l { font-size: 10.5px; color: var(--m-muted); }
-
-            .m-search-input {
-                height: 48px; border: 1.5px solid var(--m-border); border-radius: var(--m-r-btn);
-                padding: 0 16px; font-size: 13.5px; font-family: 'Poppins', sans-serif;
-                background: var(--m-card); outline: none; color: var(--m-ink); width: 100%;
-            }
-
-            .m-chip-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
-            .m-chip-row.no-sb::-webkit-scrollbar { display: none; }
-            .m-chip {
-                height: 40px; padding: 0 16px; border-radius: 11px; font-size: 12.5px; font-weight: 600;
-                font-family: 'Poppins', sans-serif; cursor: pointer; flex-shrink: 0; display: flex;
-                align-items: center; text-decoration: none; border: 1.5px solid var(--m-border);
-                background: var(--m-card); color: #6B7688;
-            }
-            .m-chip.active { border-color: var(--m-gold); background: var(--m-gold); color: var(--m-gold-on); }
-
-            .m-row-list { display: flex; flex-direction: column; gap: 10px; }
-            .m-row-card {
-                background: var(--m-card); border-radius: 15px; padding: 14px 16px; display: flex;
-                align-items: center; gap: 13px; box-shadow: var(--m-shadow); text-decoration: none; color: inherit;
-                border: none; width: 100%; text-align: left; font-family: 'Poppins', sans-serif; cursor: pointer;
-            }
-            .m-row-icon { width: 42px; height: 42px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 17px; }
-            .m-row-title { font-size: 13.5px; font-weight: 700; color: var(--m-ink); }
-            .m-row-sub { font-size: 11px; color: var(--m-muted); margin-top: 1px; }
-            .m-row-chip { padding: 6px 9px; border-radius: 9px; background: var(--m-gold-tint); color: var(--m-gold-text); font-size: 10.5px; font-weight: 700; flex-shrink: 0; }
-            .m-row-badge { padding: 4px 10px; border-radius: 8px; font-size: 10.5px; font-weight: 600; flex-shrink: 0; }
-            .m-row-chevron { color: #C3CBD8; font-size: 14px; flex-shrink: 0; }
-
-            .m-empty { text-align: center; padding: 60px 24px; }
-            .m-empty-icon { width: 64px; height: 64px; border-radius: 18px; background: var(--m-gold-tint); display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--m-gold-text); margin: 0 auto 14px; }
-            .m-empty-title { font-size: 15px; font-weight: 700; color: var(--m-ink); margin-bottom: 4px; }
-            .m-empty-sub { font-size: 12px; color: var(--m-muted); }
-
-            /* Desktop list-page chrome each redesigned mobile screen replaces —
-               scoped to body.is-mobile-screen so untouched pages (Lease
-               Contracts, Expenses, Payments, ...) keep their normal header. */
-            body.is-mobile-screen .page-header,
-            body.is-mobile-screen .stats-grid,
-            body.is-mobile-screen .m-hide-desktop-index { display: none !important; }
-
-            /* ── Shared "pm-" design system (Miknas Property Manager
-                 mobile redesign) — tokens + components reused across every
-                 screen migrated to the new design (Home, Properties, ...).
-                 Pages not yet migrated keep using the --m-* / .m-screen
-                 system above untouched. ── */
-            :root {
-                --pm-gold:        #E8B86D;
-                --pm-gold-dark:   #B98A2E;
-                --pm-gold-tint:   rgba(232,184,109,0.12);
-                --pm-gold-glow:   rgba(232,184,109,0.25);
-                --pm-navy:        #0B1120;
-                --pm-navy-800:    #1A2540;
-                --pm-navy-text:   #8A9BBE;
-                --pm-text:        #0F172A;
-                --pm-text-2:      #475569;
-                --pm-text-3:      #94A3B8;
-                --pm-border:      #E2E8F0;
-                --pm-border-strong: #CBD5E1;
-                --pm-surface:     #FFFFFF;
-                --pm-page:        #F1F5F9;
-                --pm-page-alt:    #F8FAFC;
-                --pm-green:       #10B981;
-                --pm-green-tint:  rgba(16,185,129,0.12);
-                --pm-green-text:  #0F766E;
-                --pm-red:         #EF4444;
-                --pm-red-tint:    rgba(239,68,68,0.12);
-                --pm-warn:        #F59E0B;
-                --pm-warn-tint:   rgba(245,158,11,0.12);
-                --pm-info:        #3B82F6;
-            }
-
-            .pm-header {
-                flex: none; display: flex; align-items: center; gap: 12px;
-                padding: calc(14px + env(safe-area-inset-top)) 18px 12px;
-                background: var(--pm-surface); border-bottom: 1px solid var(--pm-border);
-                box-shadow: 0 1px 3px rgba(0,0,0,.06);
-            }
-            .pm-header-text { flex: 1; min-width: 0; }
-            .pm-title { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 21px; letter-spacing: -.2px; color: var(--pm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .pm-subtitle { font-size: 11px; font-weight: 500; color: var(--pm-text-3); margin-top: 1px; }
-            .pm-icon-btn {
-                position: relative; flex: none; width: 38px; height: 38px; border-radius: 8px;
-                border: 1px solid var(--pm-border); background: var(--pm-surface); color: var(--pm-text-2);
-                font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            }
-            .pm-icon-btn:active { background: var(--pm-page); }
-            .pm-dot { position: absolute; top: 6px; right: 7px; width: 8px; height: 8px; border-radius: 9999px; background: var(--pm-red); border: 1.5px solid var(--pm-surface); }
-            .pm-avatar {
-                flex: none; width: 38px; height: 38px; border-radius: 9999px; border: 0;
-                background: var(--pm-gold); color: var(--pm-navy); font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px;
-                display: flex; align-items: center; justify-content: center; cursor: pointer;
-                box-shadow: 0 0 0 3px var(--pm-gold-glow);
-            }
-
-            .pm-scroll { position: relative; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
-            .pm-bottom-space { height: calc(96px + env(safe-area-inset-bottom)); }
-            .pm-section-label { font-size: 10px; font-weight: 700; letter-spacing: .7px; color: var(--pm-text-3); margin-bottom: 8px; }
-            .pm-empty { padding: 24px 16px; text-align: center; font-size: 12px; color: var(--pm-text-3); }
-
-            /* ── KPI cards (Home Portfolio, Property detail, ...) ──── */
-            .pm-kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-            .pm-kpi-card { background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-            .pm-kpi-label { font-size: 10px; font-weight: 700; letter-spacing: .7px; color: var(--pm-text-3); }
-            .pm-kpi-value { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 26px; color: var(--pm-text); margin-top: 6px; }
-            .pm-kpi-sub { font-size: 11px; font-weight: 600; color: var(--pm-text-2); margin-top: 2px; }
-            .pm-kpi-sub.is-green { color: var(--pm-green); }
-
-            /* ── Property card (Home/Properties) ──────────────────── */
-            .pm-property-card { background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,.08); text-decoration: none; color: inherit; display: block; }
-            .pm-property-photo { position: relative; height: 132px; background: var(--pm-border); background-size: cover; background-position: center; }
-            .pm-property-photo-fallback { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--pm-border-strong); font-size: 30px; }
-            .pm-property-kind { position: absolute; top: 10px; right: 10px; padding: 4px 9px; border-radius: 9999px; background: rgba(11,17,32,.72); color: var(--pm-gold); font-size: 10px; font-weight: 700; letter-spacing: .4px; }
-            .pm-property-body { padding: 14px; }
-            .pm-property-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 17px; color: var(--pm-text); }
-            .pm-property-address { font-size: 11.5px; color: var(--pm-text-2); margin-top: 3px; }
-            .pm-property-address i { color: var(--pm-gold); }
-            .pm-property-wells { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
-            .pm-well { background: var(--pm-page); border-radius: 8px; padding: 9px 10px; }
-            .pm-well-label { font-size: 9.5px; font-weight: 700; color: var(--pm-text-3); letter-spacing: .5px; }
-            .pm-well-value { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px; color: var(--pm-text); margin-top: 2px; }
-
-            /* ── Action / list rows (needs-you-today, empty states, etc.) ── */
-            .pm-action-list { display: flex; flex-direction: column; gap: 8px; }
-            .pm-action-row { display: flex; align-items: center; gap: 12px; background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; padding: 12px 14px; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-            .pm-action-icon { flex: none; width: 34px; height: 34px; border-radius: 8px; background: var(--pm-gold-tint); color: var(--pm-gold); display: flex; align-items: center; justify-content: center; font-size: 14px; }
-            .pm-action-title { font-size: 13.5px; font-weight: 600; color: var(--pm-text); }
-            .pm-action-sub { font-size: 11.5px; color: var(--pm-text-3); }
-            .pm-action-chevron { color: var(--pm-border-strong); font-size: 12px; }
-
-            /* ── FAB ──────────────────────────────────────────────── */
-            .pm-fab {
-                position: absolute; right: 18px; bottom: calc(112px + env(safe-area-inset-bottom));
-                width: 56px; height: 56px; border-radius: 9999px; border: 0; background: var(--pm-gold); color: var(--pm-navy);
-                font-size: 19px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center;
-                box-shadow: 0 10px 40px rgba(0,0,0,.10), 0 0 0 6px var(--pm-gold-glow); z-index: 20;
-            }
-
-            /* ── Search field + filter chips (Tenants, Property detail units) ── */
-            .pm-search-field {
-                display: flex; align-items: center; gap: 9px; background: var(--pm-surface);
-                border: 1px solid var(--pm-border-strong); border-radius: 8px; padding: 10px 12px;
-            }
-            .pm-search-field input {
-                flex: 1; border: 0; outline: none; font-size: 13.5px; color: var(--pm-text);
-                background: transparent; font-family: 'Plus Jakarta Sans', sans-serif;
-            }
-            .pm-search-field i { color: var(--pm-text-3); font-size: 13px; }
-            .pm-chip-row { display: flex; gap: 7px; overflow-x: auto; }
-            .pm-chip {
-                padding: 7px 13px; border-radius: 9999px; font-size: 12px; font-weight: 600;
-                text-decoration: none; white-space: nowrap; flex-shrink: 0;
-                border: 1px solid var(--pm-border); background: var(--pm-surface); color: var(--pm-text-2);
-            }
-            .pm-chip.active { border-color: var(--pm-navy); background: var(--pm-navy); color: #fff; }
-
-            /* ── Property detail: photo hero + floors & units native list ──
-                 Redesigned so the screen reads as an app detail screen (photo
-                 hero with identity baked into the image, a dark stat strip
-                 matching the Lease Contracts / Payments mobile screens, and
-                 a flat native row-card list) rather than a website's cropped
-                 photo + boxed accordion table. ── */
-            /* Horizontal-only bleed: cancels .m-screen's 18px side padding so the
-               hero photo spans edge-to-edge, but keeps the top margin at 0 so the
-               hero starts exactly at .m-screen's own top padding (see the
-               `.m-screen` top padding left in place in buildings/show.blade.php)
-               instead of being pulled up on top of the pm-push-header above it. */
-            .pm-hero-wrap { position: relative; margin: 0 -18px 0; }
-            .pm-hero-photo {
-                position: relative; height: 232px; background: var(--pm-navy-800);
-                background-size: cover; background-position: center;
-                overflow: hidden;
-            }
-            .pm-hero-scrim {
-                position: absolute; inset: 0;
-                background: linear-gradient(180deg, rgba(11,17,32,0) 40%, rgba(11,17,32,.90) 100%);
-                display: flex; flex-direction: column; justify-content: flex-end;
-                padding: 16px 18px 14px;
-            }
-            .pm-hero-topbar { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-            .pm-hero-occ-pill {
-                background: rgba(11,17,32,.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-                color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .2px;
-                padding: 7px 12px; border-radius: 9999px; display: flex; align-items: center; gap: 6px;
-                border: 1px solid rgba(255,255,255,.14);
-            }
-            .pm-hero-occ-pill i { color: var(--pm-gold); font-size: 9px; }
-            .pm-hero-edit-btn {
-                flex: none; width: 34px; height: 34px; border-radius: 9999px;
-                background: rgba(11,17,32,.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-                border: 1px solid rgba(255,255,255,.14); color: #fff;
-                display: flex; align-items: center; justify-content: center; font-size: 13px; text-decoration: none;
-            }
-            .pm-hero-name { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 22px; color: #fff; line-height: 1.15; text-shadow: 0 1px 8px rgba(0,0,0,.25); }
-            .pm-hero-address { font-size: 12px; color: rgba(255,255,255,.8); margin-top: 5px; display: flex; align-items: center; gap: 6px; }
-            .pm-hero-address i { color: var(--pm-gold); font-size: 11px; }
-
-            /* Floors & units — flat sections, no boxed accordion table */
-            .pm-floor-section { margin-bottom: 4px; }
-            .pm-floor-row {
-                display: flex; align-items: center; gap: 11px; padding: 12px 2px; cursor: pointer;
-                background: none; border: none; width: 100%; text-align: left; font-family: inherit;
-                border-bottom: 1px solid var(--pm-border);
-            }
-            .pm-floor-row.is-open { border-bottom-color: transparent; }
-            .pm-floor-name { font-size: 13.5px; font-weight: 700; color: var(--pm-text); }
-            .pm-floor-meta { font-size: 11px; color: var(--pm-text-3); margin-top: 1px; }
-            .pm-floor-units { display: flex; flex-direction: column; gap: 9px; padding: 12px 0 16px; }
-            .pm-unit-card {
-                display: flex; align-items: center; gap: 12px; padding: 12px 14px; text-decoration: none; color: inherit;
-                background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 14px;
-                box-shadow: 0 1px 3px rgba(0,0,0,.05);
-            }
-            div.pm-unit-card { cursor: default; }
-            .pm-unit-tile {
-                flex: none; width: 42px; height: 42px; border-radius: 12px; font-family: 'Outfit', sans-serif;
-                font-weight: 700; font-size: 12.5px; display: flex; align-items: center; justify-content: center;
-            }
-            .pm-unit-tile.is-let { background: var(--pm-navy); color: var(--pm-gold); }
-            .pm-unit-tile.is-vacant { background: var(--pm-page); color: var(--pm-text-3); }
-            .pm-unit-name { font-size: 13.5px; font-weight: 700; color: var(--pm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .pm-unit-rent { font-size: 11px; color: var(--pm-text-3); margin-top: 1px; }
-            .pm-unit-badge { padding: 4px 10px; border-radius: 9999px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
-            .pm-unit-more {
-                display: block; text-align: center; padding: 11px 0; margin-top: 2px;
-                color: var(--pm-gold-dark); font-size: 12.5px; font-weight: 700; text-decoration: none;
-                background: var(--pm-page-alt); border-radius: 12px;
-            }
-
-            /* ═══════════════════════════════════════════════════════════
-               EXPERIMENT: "Depth & Motion" mobile layer (native-feel v2)
-               ───────────────────────────────────────────────────────────
-               Additive, opt-in only — every rule below is either a brand
-               new class/selector, or gated behind a modifier class
-               (`.is-*`) that must be added explicitly in markup. Nothing
-               here changes the default `.pm-*` / `.m-*` base rules above,
-               so screens that don't opt in (tenants.show, property-units,
-               floors, invoices, payments, lease-contracts, maintenance,
-               reports) render pixel-identical to before. Scoped to
-               Dashboard + Buildings (index/show) for this proof of
-               concept. Direction: two-layer "tonal" elevation (Material 3
-               surface + shadow) combined with iOS-style large titles,
-               spring-eased collapsing headers, a true sliding segmented
-               control, Material ripple feedback, and a hero parallax —
-               reading as native on both platforms rather than leaning
-               hard into one. ═══════════════════════════════════════════ */
-
-            /* Two-layer elevation: a soft ambient shadow + a tighter key
-               shadow, the way Material 3 composes elevation instead of a
-               single flat rgba blur. Reused directly on pm-property-card /
-               pm-kpi-card / pm-unit-card since those three are exclusive
-               to the screens in scope. */
-            :root {
-                --pm-elev-1: 0 1px 2px rgba(23,32,58,.06), 0 4px 12px rgba(23,32,58,.05);
-                --pm-elev-2: 0 2px 4px rgba(23,32,58,.08), 0 12px 28px rgba(23,32,58,.10);
-                --pm-elev-3: 0 4px 10px rgba(23,32,58,.12), 0 20px 44px rgba(23,32,58,.16);
-            }
-            :root[data-theme="dark"] {
-                --pm-elev-1: 0 1px 2px rgba(0,0,0,.35), 0 4px 14px rgba(0,0,0,.30);
-                --pm-elev-2: 0 2px 5px rgba(0,0,0,.40), 0 14px 32px rgba(0,0,0,.38);
-                --pm-elev-3: 0 4px 12px rgba(0,0,0,.45), 0 22px 48px rgba(0,0,0,.48);
-            }
-            .pm-property-card { box-shadow: var(--pm-elev-2); transition: box-shadow .18s ease, transform .12s ease; }
-            .pm-kpi-card { box-shadow: var(--pm-elev-1); transition: box-shadow .18s ease, transform .12s ease; }
-            .pm-unit-card { box-shadow: var(--pm-elev-1); }
-
-            /* Material-style ripple: opt in per element with class
-               `pm-ripple`. JS (below) spawns a `.pm-ripple-wave` span at
-               the touch point on pointerdown; this alone provides the
-               expanding-circle feedback, layered on top of the existing
-               scale-press so it reads as one native system rather than
-               two competing effects. */
-            .pm-ripple { position: relative; overflow: hidden; }
-            .pm-ripple-wave {
-                position: absolute; border-radius: 50%; pointer-events: none;
-                background: radial-gradient(circle, rgba(232,184,109,.35) 0%, rgba(232,184,109,0) 72%);
-                transform: scale(0); opacity: .9;
-                animation: pm-ripple-expand .5s cubic-bezier(.22,.72,.24,1) forwards;
-            }
-            @keyframes pm-ripple-expand {
-                to { transform: scale(1); opacity: 0; }
-            }
-
-            /* Large title + collapsing header, opt-in via `.pm-title.is-lg`
-               and `.pm-header.is-collapsible`. JS toggles `.is-collapsed`
-               on the header once the scroll container passes a threshold,
-               shrinking the title and fading in a solid header background
-               — the same "large title deflates into a compact bar" motion
-               as iOS navigation bars / Android's collapsing toolbar. */
-            .pm-title.is-lg {
-                font-size: 28px; font-weight: 800; letter-spacing: -.4px;
-                transition: font-size .28s var(--ease-spring);
-            }
-            .pm-header.is-collapsible {
-                transition: box-shadow .22s ease, background-color .22s ease;
-            }
-            .pm-header.is-collapsible.is-collapsed .pm-title.is-lg { font-size: 17px; }
-            .pm-greeting {
-                font-size: 12.5px; font-weight: 600; color: var(--pm-text-3);
-                margin-bottom: 2px; transition: opacity .2s ease, max-height .2s ease;
-            }
-            .pm-header.is-collapsible.is-collapsed .pm-greeting { opacity: 0; max-height: 0; margin: 0; overflow: hidden; }
-
-            /* Sliding-pill segmented control — a real thumb element that
-               animates position/width via spring easing, instead of just
-               toggling each button's own background. Dashboard-only
-               (`#pmSegment` doesn't exist elsewhere). */
-            .pm-segment { position: relative; }
-            .pm-segment-thumb {
-                position: absolute; top: 4px; bottom: 4px; left: 4px;
-                background: var(--pm-surface); border-radius: 7px;
-                box-shadow: 0 1px 3px rgba(0,0,0,.06);
-                transition: transform .32s var(--ease-spring), width .32s var(--ease-spring);
-                will-change: transform;
-            }
-            .pm-seg-btn { position: relative; z-index: 1; transition: color .18s ease; }
-
-            /* Tonal KPI stat chip — a small icon badge + trend row that
-               gives the flat KPI numbers below in dashboard.blade.php more
-               visual hierarchy than plain stacked text. */
-            .pm-kpi-icon {
-                width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
-                display: flex; align-items: center; justify-content: center; font-size: 11px;
-            }
-            .pm-kpi-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-
-            /* Pull-to-refresh affordance — opt in with `data-pull-refresh`
-               on a `.pm-scroll` container. Pure CSS visual; JS below
-               drives the translateY/opacity via inline style + triggers
-               a real navigation refresh once the threshold is crossed. */
-            .pm-ptr-indicator {
-                position: absolute; top: 0; left: 0; right: 0; height: 64px;
-                display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px;
-                pointer-events: none; opacity: 0; transform: translateY(-100%);
-                z-index: 5;
-            }
-            .pm-ptr-spinner {
-                width: 26px; height: 26px; border-radius: 50%;
-                border: 2.5px solid var(--pm-border); border-top-color: var(--pm-gold);
-                transition: transform .1s linear;
-            }
-            .pm-ptr-spinner.is-loading { animation: pm-ptr-spin .6s linear infinite; }
-            @keyframes pm-ptr-spin { to { transform: rotate(360deg); } }
-
-            /* Pill-shaped iOS-style search field — opt in with
-               `.pm-search-field.is-pill` (buildings index only; the
-               default `.pm-search-field` used elsewhere is untouched). */
-            .pm-search-field.is-pill {
-                background: var(--pm-page); border: 1px solid transparent; border-radius: 12px;
-                padding: 11px 14px; box-shadow: inset 0 0 0 1px rgba(15,23,42,.04);
-            }
-            :root[data-theme="dark"] .pm-search-field.is-pill { box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); }
-
-            /* Roomier "big" empty state — opt in with `.pm-empty.is-lg`
-               (used only where explicitly added below). */
-            .pm-empty.is-lg { padding: 48px 24px; }
-            .pm-empty-icon-lg {
-                width: 60px; height: 60px; border-radius: 18px; margin: 0 auto 14px;
-                background: var(--pm-gold-tint); color: var(--pm-gold-dark);
-                display: flex; align-items: center; justify-content: center; font-size: 22px;
-            }
-
-            /* Hero parallax (Buildings detail) — the cover image lives in
-               its own layer (`.pm-hero-photo-img`) so the translate/scale
-               only ever moves pixels, never the topbar/scrim overlay
-               siblings sitting on top of it. Opt in with `.has-parallax`;
-               JS drives `--pm-parallax`. */
-            .pm-hero-photo-img {
-                position: absolute; inset: -20% 0; background-size: cover; background-position: center;
-            }
-            .pm-hero-photo-img.has-parallax {
-                transform: translateY(calc(var(--pm-parallax, 0) * 1px));
-                transition: transform .05s linear;
-            }
-
-            /* ── Bottom sheet (shared by modals + the More menu) ────── */
-            .modal-overlay {
-                align-items: flex-end;
-                padding: 0;
-                background: var(--scrim);
-            }
-            .modal-box {
-                width: 100%;
-                max-width: 100%;
-                max-height: 92vh;
-                margin: 0;
-                border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
-                transform: translateY(100%) scale(1);
-                transition: transform var(--duration-sheet) var(--ease-spring);
-                padding-top: 6px;
-                padding-bottom: env(safe-area-inset-bottom);
-            }
-            .modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
-
-            .sheet-handle {
-                width: 36px;
-                height: 4px;
-                border-radius: 3px;
-                background: var(--input-border);
-                margin: 10px auto 4px;
-                transition: background 0.15s ease, box-shadow 0.15s ease;
-                touch-action: none;
-            }
-            .sheet-handle.dragging { transition: none; }
-
-            /* ── Standard mobile header ───────────────────────────── */
-            .topbar {
-                height: auto;
-                padding: calc(18px + env(safe-area-inset-top)) 18px 12px;
-                gap: 10px;
-                font-family: 'Poppins', sans-serif;
-            }
-            .topbar-title { font-size: 19px; font-weight: 800; font-family: 'Poppins', sans-serif; }
-            #menuBtn, .topbar-actions .topbar-icon-btn { width: 40px; height: 40px; border-radius: 12px; }
-            .topbar .user-avatar { width: 40px; height: 40px; font-size: 14px; }
-
-            /* ── More sheet ───────────────────────────────────────── */
-            .more-sheet-item {
-                display: flex; align-items: center; gap: 14px;
-                width: 100%; padding: 12px 10px; border: none; background: none;
-                border-radius: 14px; cursor: pointer; text-align: left;
-                font-family: 'Poppins', sans-serif; min-height: 56px;
-                text-decoration: none; color: inherit;
-            }
-            .more-sheet-item:active { background: var(--m-line); }
-            .more-sheet-icon {
-                width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
-                display: flex; align-items: center; justify-content: center; font-size: 17px;
-            }
-            .more-sheet-label { font-size: 14px; font-weight: 700; color: var(--m-ink); }
-            .more-sheet-desc { font-size: 11px; color: var(--m-muted); margin-top: 1px; }
-            .more-sheet-item.danger .more-sheet-label { color: var(--m-red); }
-
-            /* ── Bottom tab bar ──────────────────────────────────── */
-            .page-content { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
-
-            .bottom-tabbar {
-                display: flex;
-                position: fixed;
-                left: 0; right: 0; bottom: 0;
-                z-index: 95;
-                background: var(--m-card);
-                border-top: 1px solid #E9EDF3;
-                padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
-                box-shadow: 0 -2px 16px rgba(0,0,0,0.05);
-            }
-            .tabbar-item {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 4px;
-                padding: 6px 2px;
-                border: none;
-                background: none;
-                color: #9AA5B8;
-                text-decoration: none;
-                font-family: 'Poppins', sans-serif;
-                font-size: 10px;
-                font-weight: 600;
-                transition: color 0.15s ease;
-            }
-            .tabbar-item i { font-size: 21px; transition: transform 0.15s var(--ease-spring); }
-            .tabbar-item.active { color: #B98A2E; }
-            .tabbar-item.active i { transform: translateY(-1px); }
-            .tabbar-item:active i { transform: scale(0.88); }
-        }
-
-        @media (min-width: 769px) {
-            .sheet-handle { display: none; }
-            .bottom-tabbar { display: none; }
-            .logo-mobile { display: none; }
-            #moreSheet { display: none !important; }
-            .m-screen { display: none !important; }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ $css('css/app-mobile.css') }}">
 </head>
 @php
+    /* ── Desktop shell nav model — DASHBOARD-SPEC.md §1 ───────────────────
+       The spec's three groups, superseding DESKTOP-UI.md §4.1's six-group
+       icon rail. Two deviations from its item list, both deliberate: every
+       page in the app has an entry here — a page reachable only by ⌘K or a
+       typed URL is a page users cannot find — and the spec's single
+       'Bills & Payments' item is the five accounting pages it stands for
+       (Invoices, Payments, EWA bills, Expenses, Revenue), since collapsing
+       them into one label leaves four of them with no way in.
+
+       Route names appear here and nowhere else, and every one is resolved
+       through Route::has(). Two items — Roles & Permissions, Settings — have
+       no route in this build; they render dimmed and inert (.is-missing) so
+       the gap is visible instead of silently absent.
+
+       'when' gates an item on the signed-in user's role, mirroring the
+       ≤768px drawer below. ── */
+    $railUser  = auth()->user();
+    $railAdmin = (bool) $railUser?->isAdmin();
+    /* Gates named after the area, not the role — see the capability methods on
+       App\Models\User. Two roles are now confined to a slice of the app
+       (Maintenance, Accountant), so "not Maintenance" is no longer the same
+       question as "may reach the portfolio". */
+    $railPortfolio   = (bool) $railUser?->canAccessPortfolio();
+    $railAccounting  = (bool) $railUser?->canAccessAccounting();
+    $railMaintenance = (bool) $railUser?->canAccessMaintenance();
+    $railConfig      = (bool) $railUser?->canOpenConfiguration();
+
+    $navGroups = [
+        'OVERVIEW' => [
+            ['route' => 'dashboard',       'label' => 'Dashboard',     'icon' => 'fa-gauge-high'],
+            ['route' => 'admin.audit-log', 'label' => 'Activity Feed', 'icon' => 'fa-clock-rotate-left', 'when' => $railAdmin],
+        ],
+        'PORTFOLIO' => [
+            ['route' => 'buildings.index',       'label' => 'Buildings',   'icon' => 'fa-building',      'when' => $railPortfolio, 'count' => $stats['buildings'] ?? null],
+            ['route' => 'floors.global',         'label' => 'Floors',      'icon' => 'fa-layer-group',   'when' => $railPortfolio, 'count' => $stats['floors'] ?? null],
+            ['route' => 'property-units.index',  'label' => 'Units',       'icon' => 'fa-door-open',     'when' => $railPortfolio, 'count' => $stats['units'] ?? null],
+            ['route' => 'tenants.index',         'label' => 'Tenants',     'icon' => 'fa-users',         'when' => $railPortfolio],
+            ['route' => 'lease-contracts.index', 'label' => 'Leases',      'icon' => 'fa-file-contract', 'when' => $railPortfolio],
+            /* One item, five destinations. The five accounting pages are one
+               piece of work to the user, so they are one row that opens —
+               not five top-level rows competing with Buildings. */
+            ['label' => 'Bills & Payments', 'icon' => 'fa-file-invoice-dollar', 'when' => $railAccounting, 'children' => [
+                ['route' => 'invoices.index',  'label' => 'Invoices'],
+                ['route' => 'payments.index',  'label' => 'Payments'],
+                ['route' => 'ewa-bills.index', 'label' => 'EWA Bills'],
+                ['route' => 'expenses.index',  'label' => 'Expenses'],
+                ['route' => 'revenues.index',  'label' => 'Revenue'],
+            ]],
+            ['route' => 'maintenance.index',     'label' => 'Maintenance', 'icon' => 'fa-screwdriver-wrench', 'when' => $railMaintenance],
+            ['route' => 'reports.index',         'label' => 'Reports',     'icon' => 'fa-chart-pie',     'when' => (bool) $railUser?->canViewReports()],
+        ],
+        'CONFIGURATION' => [
+            ['route' => 'users.index',              'label' => 'Users',               'icon' => 'fa-user-shield', 'when' => $railAdmin],
+            ['route' => 'roles.index',              'label' => 'Roles & Permissions', 'icon' => 'fa-user-lock',   'when' => $railAdmin],
+            ['label' => 'Settings', 'icon' => 'fa-gear', 'when' => $railConfig, 'children' => [
+                ['route' => 'form-configs.index',       'label' => 'Forms & Templates'],
+                ['route' => 'data.index',               'label' => 'Import & Export'],
+                ['route' => 'settings.branding.edit',   'label' => 'Branding',       'when' => $railAdmin],
+                ['route' => 'settings.azure-mail.edit', 'label' => 'Mail Settings',  'when' => $railAdmin],
+                ['route' => 'admin.error-log',          'label' => 'Error Log',      'when' => $railAdmin],
+            ]],
+        ],
+    ];
+
+    foreach ($navGroups as $group => $items) {
+        $items = array_values(array_filter($items, fn ($i) => $i['when'] ?? true));
+        foreach ($items as $k => $item) {
+            if (isset($item['children'])) {
+                $items[$k]['children'] = array_values(array_filter(
+                    $item['children'], fn ($c) => $c['when'] ?? true
+                ));
+                if ($items[$k]['children'] === []) {
+                    unset($items[$k]);
+                }
+            }
+        }
+        $navGroups[$group] = array_values($items);
+    }
+    $navGroups = array_filter($navGroups, fn ($items) => $items !== []);
+
+    /* Same resource family counts as active, so buildings.create still lights
+       up Buildings. */
+    $railCurrent = Route::currentRouteName() ?? '';
+    $railIsOn = function (string $name) use ($railCurrent) {
+        $base = Str::beforeLast($name, '.');
+        return $railCurrent === $name || ($base !== '' && Str::startsWith($railCurrent, $base.'.'));
+    };
+    $railHref = fn (string $name) => Route::has($name) ? route($name) : null;
+
     $mobileRedesignedRoutes = [
         'buildings.index', 'floors.global', 'property-units.index', 'tenants.index',
         'maintenance.index', 'invoices.index', 'reports.index', 'tenants.show', 'buildings.show',
         'lease-contracts.index', 'payments.index',
+        'ewa-bills.index', 'expenses.index', 'revenues.index',
     ];
     $isMobileScreen = request()->routeIs($mobileRedesignedRoutes);
     $pushedScreenRoutes = ['tenants.show', 'buildings.show'];
     $isPushedScreen = request()->routeIs($pushedScreenRoutes);
 @endphp
-<body class="{{ request()->routeIs('dashboard') ? 'is-dashboard' : '' }} {{ $isMobileScreen ? 'is-mobile-screen' : '' }} {{ $isPushedScreen ? 'is-pushed-screen' : '' }}">
+<body class="app-shell {{ request()->routeIs('dashboard') ? 'is-dashboard' : '' }} {{ $isMobileScreen ? 'is-mobile-screen' : '' }} {{ $isPushedScreen ? 'is-pushed-screen' : '' }}">
 
 {{-- ── EXPERIMENT: "Depth & Motion" shared helpers ─────────────────────
      Declared immediately after <body> opens (before @yield('content')
@@ -1298,30 +210,82 @@
      unaffected. ── --}}
 <script>
 (function () {
-    /* Material-style ripple on any `.pm-ripple` element. */
-    document.addEventListener('pointerdown', function (e) {
-        const el = e.target.closest('.pm-ripple');
-        if (!el) return;
-        const rect = el.getBoundingClientRect();
-        const size = Math.max(rect.width, rect.height) * 1.6;
-        const wave = document.createElement('span');
-        wave.className = 'pm-ripple-wave';
-        wave.style.width = wave.style.height = size + 'px';
-        wave.style.left = (e.clientX - rect.left - size / 2) + 'px';
-        wave.style.top = (e.clientY - rect.top - size / 2) + 'px';
-        el.appendChild(wave);
-        wave.addEventListener('animationend', () => wave.remove());
-    });
+    /* The ripple is gone: every tappable element already takes the
+       0.98 press scale from app-mobile.css, and two feedback systems
+       firing on one tap read as a glitch rather than as depth. */
+
+    /* Reduced motion is checked once, here, and every helper below
+       obeys it — an animation that respects the setting in CSS but not
+       in JS still moves. */
+    const psStill = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* Figures count up on arrival: 600ms, phone only, zeros skipped
+       (there is nothing to count to, and a "0" that ticks reads as a
+       loading state). The prefix and suffix around the number are kept
+       verbatim, so "BHD 24,850" and "63%" both survive. */
+    window.psInitCountUp = function (root) {
+        if (psStill || window.innerWidth > 768) return;
+        (root || document).querySelectorAll('.ps-stat-value, [data-countup]').forEach(function (el) {
+            if (el.dataset.countupDone) return;
+            const raw = el.textContent.trim();
+            const m = raw.match(/^(\D*?)([\d,]+(?:\.\d+)?)(\D*)$/);
+            if (!m) return;
+            const target = parseFloat(m[2].replace(/,/g, ''));
+            if (!isFinite(target) || target === 0) return;
+            const decimals = (m[2].split('.')[1] || '').length;
+            const grouped = m[2].includes(',');
+            el.dataset.countupDone = '1';
+            const start = performance.now();
+            (function step(now) {
+                const t = Math.min(1, (now - start) / 600);
+                /* ease-out cubic, so it decelerates into the real figure */
+                const v = target * (1 - Math.pow(1 - t, 3));
+                const shown = decimals ? v.toFixed(decimals) : String(Math.round(v));
+                el.textContent = m[1] + (grouped ? Number(shown).toLocaleString('en-US', {
+                    minimumFractionDigits: decimals, maximumFractionDigits: decimals,
+                }) : shown) + m[3];
+                if (t < 1) requestAnimationFrame(step);
+                else el.textContent = raw;
+            })(start);
+        });
+    };
+
+    /* The bell's count pops once, on the load where it went up — not on
+       every page view that happens to have a non-zero count. The last
+       seen number lives in sessionStorage, so it is per tab and never
+       leaves the device. */
+    window.psInitBellPop = function () {
+        if (psStill) return;
+        const badges = document.querySelectorAll('[data-bell-count]');
+        const count = badges.length ? parseInt(badges[0].dataset.bellCount, 10) || 0 : 0;
+        let seen = 0;
+        try { seen = parseInt(sessionStorage.getItem('psBellSeen'), 10) || 0; } catch (e) { seen = 0; }
+        if (count > seen) {
+            badges.forEach(function (b) {
+                b.classList.add('is-pop');
+                b.addEventListener('animationend', () => b.classList.remove('is-pop'), { once: true });
+            });
+        }
+        try { sessionStorage.setItem('psBellSeen', String(count)); } catch (e) { /* private mode */ }
+    };
 
     /* Collapsing large-title header: pass the header element, its
-       scroll container, and the pixel threshold to shrink at. */
+       scroll container, and the pixel threshold to shrink at.
+
+       Toggles two classes off one listener. `.is-scrolled` is the bottom
+       hairline, and appears as soon as anything has moved under the header —
+       that is the whole signal it carries, so its threshold is 0, not the
+       caller's. `.is-collapsed` is the title shrink at the caller's
+       threshold, and only .is-collapsible headers style it. */
     window.pmInitCollapsingHeader = function (header, scroller, threshold) {
         if (!header || !scroller) return;
         threshold = threshold || 36;
         const read = () => (scroller === window ? window.scrollY : scroller.scrollTop);
         let ticking = false;
         function update() {
-            header.classList.toggle('is-collapsed', read() > threshold);
+            const y = read();
+            header.classList.toggle('is-scrolled', y > 0);
+            header.classList.toggle('is-collapsed', y > threshold);
             ticking = false;
         }
         (scroller === window ? window : scroller).addEventListener('scroll', function () {
@@ -1421,20 +385,110 @@
 })();
 </script>
 
-<!-- SIDEBAR -->
+{{-- ══════════════════════ DESKTOP SHELL ══════════════════════
+     DASHBOARD-SPEC.md §1. Rendered on every page, hidden ≤768px where the
+     mobile app layer owns the screen. The palette opens and closes but does
+     not search real records yet (DESKTOP-UI.md §6). ── --}}
+<aside class="shell-sidebar" aria-label="Main navigation">
+    <a href="{{ url('/dashboard') }}" class="shell-brand">
+        <span class="shell-brand-mark">
+            @if($branding->logoUrl())
+                <img src="{{ $branding->logoUrl() }}" alt="{{ $branding->displaySiteName() }}">
+            @else
+                {{ $branding->initials() }}
+            @endif
+        </span>
+        <span class="shell-brand-text">
+            <span class="shell-brand-name">{{ $branding->displaySiteName() }}</span>
+            <span class="shell-brand-sub">{{ $branding->tagline ?: 'Management Suite' }}</span>
+        </span>
+    </a>
+
+    <nav class="shell-nav">
+        @foreach ($navGroups as $group => $items)
+            <div class="shell-nav-group">{{ $group }}</div>
+
+            @foreach ($items as $item)
+                @if (isset($item['children']))
+                    @php
+                        /* Open if the current page is one of its children, so
+                           landing on Payments from anywhere shows where you
+                           are without a click. */
+                        $childOn = collect($item['children'])->contains(fn ($c) => $railIsOn($c['route']));
+                    @endphp
+                    <details class="shell-navgroup"{{ $childOn ? ' open' : '' }}>
+                        <summary class="shell-navitem {{ $childOn ? 'is-open' : '' }}">
+                            <i class="fa-solid {{ $item['icon'] }}" aria-hidden="true"></i>
+                            <span class="shell-navitem-label">{{ $item['label'] }}</span>
+                            <i class="fa-solid fa-chevron-down shell-navitem-caret" aria-hidden="true"></i>
+                        </summary>
+                        <div class="shell-subnav">
+                            @foreach ($item['children'] as $child)
+                                @php $curl = $railHref($child['route']); @endphp
+                                <a href="{{ $curl ?? '#' }}"
+                                   class="shell-subitem {{ $railIsOn($child['route']) ? 'is-active' : '' }} {{ $curl ? '' : 'is-disabled' }}"
+                                   @unless($curl) tabindex="-1" aria-disabled="true" title="Coming soon" @endunless
+                                   @if($railIsOn($child['route'])) aria-current="page" @endif>
+                                    {{ $child['label'] }}
+                                    @unless($curl)<span class="shell-soon">Soon</span>@endunless
+                                </a>
+                            @endforeach
+                        </div>
+                    </details>
+                @else
+                    @php $url = $railHref($item['route']); @endphp
+                    <a href="{{ $url ?? '#' }}"
+                       class="shell-navitem {{ $railIsOn($item['route']) ? 'is-active' : '' }} {{ $url ? '' : 'is-disabled' }}"
+                       @unless($url) tabindex="-1" aria-disabled="true" title="Coming soon" @endunless
+                       @if($railIsOn($item['route'])) aria-current="page" @endif>
+                        <i class="fa-solid {{ $item['icon'] }}" aria-hidden="true"></i>
+                        <span class="shell-navitem-label">{{ $item['label'] }}</span>
+                        @if(! $url)
+                            <span class="shell-soon">Soon</span>
+                        @elseif(isset($item['count']))
+                            <span class="shell-navitem-count">{{ $item['count'] }}</span>
+                        @endif
+                    </a>
+                @endif
+            @endforeach
+        @endforeach
+    </nav>
+
+    <a href="{{ route('reports.index') }}" class="shell-help">
+        <span class="shell-help-icon"><i class="fa-regular fa-circle-question" aria-hidden="true"></i></span>
+        <span>
+            <span class="shell-help-title">Need help?</span>
+            <span class="shell-help-sub">Visit our help center</span>
+        </span>
+    </a>
+</aside>
+
+<!-- SIDEBAR (≤768px drawer; the shell rail + contextual sidebar replace it above) -->
 <aside class="sidebar" id="sidebar">
     <a href="{{ url('/') }}" class="sidebar-logo logo-desktop">
-        <div class="sidebar-logo-icon"><i class="fa-solid fa-building-columns"></i></div>
+        <div class="sidebar-logo-icon">
+            @if($branding->logoUrl())
+                <img src="{{ $branding->logoUrl() }}" alt="{{ $branding->displaySiteName() }}">
+            @else
+                <i class="fa-solid fa-building-columns"></i>
+            @endif
+        </div>
         <div class="sidebar-logo-text">
-            <strong>RealEstate</strong>
-            <span>Management Suite</span>
+            <strong>{{ $branding->displaySiteName() }}</strong>
+            <span>{{ $branding->tagline ?: 'Management Suite' }}</span>
         </div>
     </a>
     <a href="{{ url('/') }}" class="logo-mobile" style="text-decoration:none;">
-        <div class="logo-mobile-tile">P7</div>
+        <div class="logo-mobile-tile">
+            @if($branding->logoUrl())
+                <img src="{{ $branding->logoUrl() }}" alt="{{ $branding->displaySiteName() }}">
+            @else
+                {{ $branding->initials() }}
+            @endif
+        </div>
         <div class="logo-mobile-text">
-            <strong>Promoseven RE</strong>
-            <span>MANAGEMENT SUITE</span>
+            <strong>{{ $branding->displaySiteName() }}</strong>
+            <span>{{ Str::upper($branding->tagline ?: 'Management Suite') }}</span>
         </div>
     </a>
 
@@ -1445,7 +499,7 @@
         </a>
     </div>
 
-    @unless(auth()->user()?->isMaintenance())
+    @if(auth()->user()?->canAccessPortfolio())
     <div class="sidebar-section">
         <div class="sidebar-section-label">Property Management</div>
         <a href="{{ route('buildings.index') }}" class="nav-item {{ request()->is('buildings*') && !request()->is('floors') ? 'active' : '' }}">
@@ -1458,24 +512,28 @@
             <i class="fa-solid fa-door-open nav-icon"></i> Units
         </a>
     </div>
-    @endunless
+    @endif
 
+    @if(auth()->user()?->canAccessPortfolio() || auth()->user()?->canAccessMaintenance())
     <div class="sidebar-section">
         <div class="sidebar-section-label">Management</div>
-        @unless(auth()->user()?->isMaintenance())
+        @if(auth()->user()?->canAccessPortfolio())
         <a href="{{ route('tenants.index') }}" class="nav-item {{ request()->is('tenants*') ? 'active' : '' }}">
             <i class="fa-solid fa-users nav-icon"></i> Tenants
         </a>
         <a href="{{ route('lease-contracts.index') }}" class="nav-item {{ request()->is('lease-contracts*') ? 'active' : '' }}">
             <i class="fa-solid fa-file-contract nav-icon"></i> Lease Contracts
         </a>
-        @endunless
+        @endif
+        @if(auth()->user()?->canAccessMaintenance())
         <a href="{{ route('maintenance.index') }}" class="nav-item {{ request()->is('maintenance*') ? 'active' : '' }}">
             <i class="fa-solid fa-wrench nav-icon"></i> Maintenance
         </a>
+        @endif
     </div>
+    @endif
 
-    @unless(auth()->user()?->isMaintenance())
+    @if(auth()->user()?->canAccessAccounting())
     <div class="sidebar-section">
         <div class="sidebar-section-label">Accounting</div>
         <a href="{{ route('invoices.index') }}" class="nav-item {{ request()->is('invoices*') ? 'active' : '' }}">
@@ -1494,6 +552,7 @@
             <i class="fa-solid fa-sack-dollar nav-icon"></i> Revenue
         </a>
     </div>
+    @endif
 
     @if(auth()->user()?->canViewReports())
     <div class="sidebar-section">
@@ -1504,6 +563,7 @@
     </div>
     @endif
 
+    @if(auth()->user()?->canOpenConfiguration())
     <div class="sidebar-section">
         <div class="sidebar-section-label">Form / Template Management</div>
         <a href="{{ route('form-configs.index') }}?tab=forms"
@@ -1515,6 +575,7 @@
             <i class="fa-solid fa-layer-group nav-icon"></i> Template Management
         </a>
     </div>
+    @endif
 
     @if(auth()->user()?->isAdmin())
     <div class="sidebar-section">
@@ -1528,24 +589,27 @@
         <a href="{{ route('admin.error-log') }}" class="nav-item {{ request()->is('admin/error-log*') ? 'active' : '' }}">
             <i class="fa-solid fa-triangle-exclamation nav-icon"></i> Error Log
         </a>
+        <a href="{{ route('settings.branding.edit') }}" class="nav-item {{ request()->is('settings/branding*') ? 'active' : '' }}">
+            <i class="fa-solid fa-palette nav-icon"></i> Branding
+        </a>
         <a href="{{ route('settings.azure-mail.edit') }}" class="nav-item {{ request()->is('settings/azure-mail*') ? 'active' : '' }}">
             <i class="fa-solid fa-envelope nav-icon"></i> Mail Settings
         </a>
     </div>
     @endif
-    @endunless
 
     <div class="sidebar-footer">
         <div class="sidebar-user">
-            <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
+            <x-avatar class="user-avatar" tag="div" />
             <div class="user-info">
                 <strong>{{ auth()->user()->name ?? 'Unknown' }}</strong>
                 <span>{{ auth()->user()->role_label ?? '' }}</span>
             </div>
-            <form method="POST" action="{{ route('logout') }}" style="margin-left:auto">
+            <form method="POST" action="{{ route('logout') }}" style="margin-left:auto" data-signout-form>
                 @csrf
-                <button type="submit" class="topbar-icon-btn" style="width:28px;height:28px;font-size:12px" title="Sign out">
-                    <i class="fa-solid fa-right-from-bracket"></i>
+                <button type="submit" class="topbar-icon-btn" style="width:28px;height:28px;font-size:12px"
+                        title="Sign out" aria-label="Sign out of {{ auth()->user()->email ?? 'this account' }}">
+                    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
                 </button>
             </form>
         </div>
@@ -1557,82 +621,482 @@
 <!-- MORE SHEET (mobile bottom tab bar "More" destination) -->
 <div class="modal-overlay" id="moreSheet">
     <div class="modal-box" style="max-width:100%;padding:14px 10px 20px;">
-        @unless(auth()->user()?->isMaintenance())
+        @if(auth()->user()?->canAccessPortfolio())
         <a href="{{ route('floors.global') }}" class="more-sheet-item">
-            <div class="more-sheet-icon" style="background:var(--m-blue-tint);"><i class="fa-solid fa-layer-group" style="color:var(--m-blue);"></i></div>
+            <div class="more-sheet-icon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div>
             <div><div class="more-sheet-label">Floors</div><div class="more-sheet-desc">Browse all floors</div></div>
         </a>
         <a href="{{ route('property-units.index') }}" class="more-sheet-item">
-            <div class="more-sheet-icon" style="background:var(--m-green-tint);"><i class="fa-solid fa-door-open" style="color:var(--m-green);"></i></div>
+            <div class="more-sheet-icon"><i class="fa-solid fa-door-open" aria-hidden="true"></i></div>
             <div><div class="more-sheet-label">Property Units</div><div class="more-sheet-desc">Browse property units</div></div>
         </a>
         <a href="{{ route('lease-contracts.index') }}" class="more-sheet-item">
-            <div class="more-sheet-icon" style="background:var(--m-navy-active);"><i class="fa-solid fa-file-contract" style="color:#fff;"></i></div>
+            <div class="more-sheet-icon"><i class="fa-solid fa-file-contract" aria-hidden="true"></i></div>
             <div><div class="more-sheet-label">Lease Contracts</div><div class="more-sheet-desc">Browse lease agreements</div></div>
         </a>
+        @endif
+        @if(auth()->user()?->canAccessAccounting())
         <a href="{{ route('invoices.index') }}" class="more-sheet-item">
-            <div class="more-sheet-icon" style="background:var(--m-gold-tint);"><i class="fa-solid fa-file-invoice-dollar" style="color:var(--m-gold-text);"></i></div>
+            <div class="more-sheet-icon"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i></div>
             <div><div class="more-sheet-label">Invoices</div><div class="more-sheet-desc">View and manage invoices</div></div>
         </a>
         <a href="{{ route('payments.index') }}" class="more-sheet-item">
-            <div class="more-sheet-icon" style="background:#E6F6EE;"><i class="fa-solid fa-money-bill-transfer" style="color:#17A96C;"></i></div>
+            <div class="more-sheet-icon"><i class="fa-solid fa-money-bill-transfer" aria-hidden="true"></i></div>
             <div><div class="more-sheet-label">Payments</div><div class="more-sheet-desc">Track received payments</div></div>
         </a>
-        @endunless
+        @endif
         @if(auth()->user()?->canViewReports())
         <a href="{{ route('reports.index') }}" class="more-sheet-item">
-            <div class="more-sheet-icon" style="background:var(--m-purple-tint);"><i class="fa-solid fa-chart-bar" style="color:var(--m-purple);"></i></div>
+            <div class="more-sheet-icon"><i class="fa-solid fa-chart-bar" aria-hidden="true"></i></div>
             <div><div class="more-sheet-label">Reports</div><div class="more-sheet-desc">Export portfolio reports</div></div>
         </a>
         @endif
+        {{-- Help used to be a "?" popover in the top bar. The header now has
+             three fixed slots and no room for a fourth, and this sheet is
+             where the phone keeps everything that isn't a tab. --}}
+        <button type="button" class="more-sheet-item" id="moreHelpBtn"
+                aria-haspopup="dialog" aria-controls="helpSheet" aria-expanded="false">
+            <div class="more-sheet-icon"><i class="fa-regular fa-circle-question" aria-hidden="true"></i></div>
+            <div><div class="more-sheet-label">Help</div><div class="more-sheet-desc">How this app works</div></div>
+        </button>
+        {{-- Theme lives here now. It was a third 44px disc in the Home
+             header, beside two controls you reach for constantly, and it
+             pushed the title into an ellipsis at 320px. Same .theme-toggle-btn
+             class, so the one handler in this layout still drives it. --}}
+        <button type="button" class="more-sheet-item theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode">
+            <div class="more-sheet-icon"><i class="fa-solid fa-moon" aria-hidden="true"></i></div>
+            <div><div class="more-sheet-label">Theme</div><div class="more-sheet-desc">Switch between light and dark</div></div>
+        </button>
         <button type="button" class="more-sheet-item" id="moreMenuBtn">
-            <div class="more-sheet-icon" style="background:var(--m-navy-active);"><i class="fa-solid fa-bars" style="color:#fff;"></i></div>
+            <div class="more-sheet-icon"><i class="fa-solid fa-bars" aria-hidden="true"></i></div>
             <div><div class="more-sheet-label">Full menu</div><div class="more-sheet-desc">All sections</div></div>
         </button>
-        <form method="POST" action="{{ route('logout') }}">
+        {{-- Asks first. A tap here used to end the session outright, and this
+             row sits directly under "Full menu" in a sheet reached by the tab
+             bar — the easiest thing on the phone to hit by mistake. It now
+             hands off to #signOutDialog; the form stays a real form so the
+             row still works with JS off. --}}
+        <form method="POST" action="{{ route('logout') }}" data-signout-form>
             @csrf
             <button type="submit" class="more-sheet-item danger">
-                <div class="more-sheet-icon" style="background:var(--m-red-tint);"><i class="fa-solid fa-right-from-bracket" style="color:var(--m-red);"></i></div>
+                <div class="more-sheet-icon is-danger"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i></div>
                 <div><div class="more-sheet-label">Sign out</div><div class="more-sheet-desc">{{ auth()->user()->email ?? '' }}</div></div>
             </button>
         </form>
     </div>
 </div>
 
-<!-- MAIN WRAP -->
-<div class="main-wrap">
-    <!-- TOPBAR -->
-    <header class="topbar">
-        <button class="topbar-icon-btn" style="display:none" id="menuBtn">
-            <i class="fa-solid fa-bars"></i>
-        </button>
-        <div class="topbar-title">@yield('topbar-title', 'Dashboard')</div>
-        <div class="topbar-actions">
-            <button class="topbar-icon-btn theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode"><i class="fa-solid fa-moon"></i></button>
-            <button class="topbar-icon-btn"><i class="fa-regular fa-bell"></i></button>
-            <button class="topbar-icon-btn"><i class="fa-regular fa-circle-question"></i></button>
-            <div class="user-avatar" style="width:32px;height:32px;font-size:12px;cursor:pointer;">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
+{{-- ═══════════════════════════ HELP SHEET ═══════════════════════════
+     Where the top bar's "?" popover went. Same rows as
+     partials/help-panel (which the desktop shell still uses), redrawn in
+     the sheet language the phone already speaks — a .modal-overlay
+     becomes a bottom sheet under 768px. No keyboard block: there is no
+     keyboard here, and the command palette isn't rendered below 769px. --}}
+<div class="modal-overlay" id="helpSheet" role="dialog" aria-modal="true"
+     aria-labelledby="helpSheetTitle">
+    <div class="modal-box" style="--modal-w:440px;">
+        <div class="modal-header">
+            <div class="modal-header-top">
+                <div class="modal-header-icon"><i class="fa-regular fa-circle-question" aria-hidden="true"></i></div>
+                <div class="modal-header-text">
+                    <div class="modal-header-title" id="helpSheetTitle">Help</div>
+                    <div class="modal-header-sub">How this app works</div>
+                </div>
+                <button type="button" class="modal-close-btn" data-help-close aria-label="Close">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
         </div>
-    </header>
 
-    <!-- PAGE CONTENT -->
-    <main class="page-content">
-        @if(session('success'))
-            <div class="alert alert-success">
-                <i class="fa-solid fa-circle-check"></i>
-                {{ session('success') }}
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="alert alert-danger">
-                <i class="fa-solid fa-circle-exclamation"></i>
-                {{ session('error') }}
-            </div>
-        @endif
+        <div class="modal-body">
+            <p class="shell-helptip">
+                <i class="fa-regular fa-lightbulb" aria-hidden="true"></i>
+                <span>Tap any row in a list to open that record — the edit and delete buttons still work on their own.</span>
+            </p>
 
-        @yield('content')
-    </main>
+            <a href="{{ route('dashboard') }}" class="more-sheet-item">
+                <div class="more-sheet-icon"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i></div>
+                <div><div class="more-sheet-label">Start from the dashboard</div><div class="more-sheet-desc">Today, cash flow and the portfolio</div></div>
+            </a>
+
+            @if(auth()->user()?->canViewReports())
+                <a href="{{ route('reports.index') }}" class="more-sheet-item">
+                    <div class="more-sheet-icon"><i class="fa-regular fa-file-lines" aria-hidden="true"></i></div>
+                    <div><div class="more-sheet-label">Reports &amp; statements</div><div class="more-sheet-desc">Export what you need to send</div></div>
+                </a>
+            @endif
+
+            @if(auth()->user()?->isAdmin())
+                <a href="{{ route('roles.index') }}" class="more-sheet-item">
+                    <div class="more-sheet-icon"><i class="fa-solid fa-user-shield" aria-hidden="true"></i></div>
+                    <div><div class="more-sheet-label">Who can see what</div><div class="more-sheet-desc">Roles and permissions</div></div>
+                </a>
+            @endif
+        </div>
+    </div>
 </div>
+
+{{-- ═══════════════════ SIGN-OUT CONFIRMATION ═══════════════════
+     Replaces window.confirm() on every sign-out path. The native dialog was
+     the wrong layout for this question on a phone: it docks to the TOP of the
+     screen, a full hand's reach from the avatar the thumb just tapped; it
+     prefixes the question with the bare host ("192.168.0.50 says"); it can't
+     show which account is leaving, only spell the address into a sentence;
+     and it offers OK / Cancel, neither of which names the outcome.
+
+     This is the app's own dialog, so it inherits the theme, centres on
+     desktop, and becomes a bottom sheet under 768px via app-mobile.css —
+     the same conversion every other modal in the app gets. --}}
+<div class="modal-overlay" id="signOutDialog" role="dialog" aria-modal="true"
+     aria-labelledby="signOutTitle" aria-describedby="signOutIdentity">
+    <div class="modal-box" style="--modal-w:420px;">
+        <div class="modal-header">
+            <div class="modal-header-top">
+                <div class="modal-header-icon" style="background:var(--tone-danger-bg);color:var(--tone-danger-fg);border-color:var(--tone-danger-border)">
+                    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+                </div>
+                <div class="modal-header-text">
+                    <div class="modal-header-title" id="signOutTitle">Sign out?</div>
+                    <div class="modal-header-sub">You'll need your password to get back in.</div>
+                </div>
+                <button type="button" class="modal-close-btn" data-signout-cancel aria-label="Close">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        {{-- The account, shown rather than described. On a shared phone the
+             mistake worth preventing is signing the wrong person out. --}}
+        <div class="modal-body">
+            <div class="signout-identity" id="signOutIdentity">
+                <x-avatar class="signout-avatar" />
+                <span class="signout-identity-text">
+                    <strong>{{ auth()->user()->name ?? 'Guest' }}</strong>
+                    <span>{{ auth()->user()->email ?? '' }}</span>
+                </span>
+            </div>
+        </div>
+
+        {{-- Buttons say what they do. Under 768px they stack full-width and
+             reverse, putting "Stay signed in" nearest the thumb and making
+             the destructive one the deliberate reach. --}}
+        <div class="modal-footer signout-actions">
+            <button type="button" class="btn btn-outline" data-signout-cancel>Stay signed in</button>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="btn btn-danger">
+                    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sign out
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ═══════════════ MOBILE NOTIFICATIONS (the topbar bell) ═══════════════
+     The phone's counterpart to the shell bell, and the bell for every route
+     that draws the ≤768px .topbar — the dashboard and the pushed detail
+     screens hide that bar and carry their own. Same AttentionFeed behind it,
+     and the same rule: every row deep-links into the already-filtered list it
+     describes, so this never becomes a fifth place where invoices live.
+
+     A .modal-overlay rather than a .shell-pop dropdown, because app-mobile.css
+     converts one into a bottom sheet under 768px — which also hands it the
+     drag-to-dismiss handle and the safe-area padding every other sheet in the
+     app already has. --}}
+<div class="modal-overlay" id="topbarAlertsSheet" role="dialog" aria-modal="true"
+     aria-labelledby="topbarAlertsTitle">
+    <div class="modal-box" style="--modal-w:440px;">
+        <div class="modal-header">
+            <div class="modal-header-top">
+                <div class="modal-header-icon"><i class="fa-regular fa-bell" aria-hidden="true"></i></div>
+                <div class="modal-header-text">
+                    <div class="modal-header-title" id="topbarAlertsTitle">Needs attention</div>
+                    <div class="modal-header-sub">
+                        @if($attentionCount)
+                            {{ $attentionCount }} {{ \Illuminate\Support\Str::plural('thing', $attentionCount) }} {{ $attentionCount === 1 ? 'needs' : 'need' }} you today
+                        @else
+                            {{ now()->format('l, j F') }}
+                        @endif
+                    </div>
+                </div>
+                <button type="button" class="modal-close-btn" data-sheet-close aria-label="Close">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            @if($attentionCount)
+                <div class="pm-action-list">
+                    @foreach($attentionItems as $item)
+                        <a href="{{ $item['url'] }}" class="pm-action-row">
+                            <div class="pm-action-icon" style="background:var(--tone-{{ $item['tone'] }}-bg);color:var(--tone-{{ $item['tone'] }}-fg);">
+                                <i class="fa-solid {{ $item['icon'] }}" aria-hidden="true"></i>
+                            </div>
+                            <div style="flex:1;min-width:0;">
+                                <div class="pm-action-title">{{ $item['title'] }}</div>
+                                <div class="pm-action-sub">{{ $item['sub'] }}</div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right pm-action-chevron" aria-hidden="true"></i>
+                        </a>
+                    @endforeach
+                </div>
+            @else
+                {{-- An empty bell still has to say something. Naming what it
+                     checked is what makes "nothing" trustworthy. --}}
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fa-regular fa-circle-check" aria-hidden="true"></i></div>
+                    <h4>You're all clear</h4>
+                    <p>No overdue rent, no open requests, and no leases ending in the next 30 days.</p>
+                </div>
+            @endif
+        </div>
+
+        <div class="modal-footer alerts-footer">
+            <a class="btn btn-outline" href="{{ route('dashboard') }}">Open the dashboard</a>
+        </div>
+    </div>
+</div>
+
+<div class="shell-frame">
+
+    {{-- 60px top bar. Search leads the bar rather than sitting in the icon
+         cluster: it is the bar's primary affordance, and the account block is
+         the only thing that belongs on the trailing edge. --}}
+    <div class="shell-topbar">
+        <button class="shell-hamburger" type="button" data-sidebar-toggle
+                title="Hide navigation" aria-label="Hide navigation" aria-expanded="true">
+            <i class="fa-solid fa-bars" aria-hidden="true"></i>
+        </button>
+
+        <button type="button" class="shell-search" data-palette-open aria-label="Search anything — Command K">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <span class="shell-search-label">Search buildings, tenants, units…</span>
+            <kbd class="shell-kbd">⌘K</kbd>
+        </button>
+
+        <div class="shell-topbar-spacer"></div>
+
+        <button type="button" class="shell-iconbtn theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode">
+            <i class="fa-solid fa-moon" aria-hidden="true"></i>
+        </button>
+
+        {{-- Bell + panel. Items come from App\Services\AttentionFeed via a view
+             composer, and every one deep-links into the already-filtered list
+             it describes. --}}
+        <div class="shell-bell" data-pop>
+            <button type="button" class="shell-iconbtn" data-pop-toggle
+                    aria-expanded="false" aria-controls="shell-notif"
+                    title="Notifications"
+                    aria-label="Notifications{{ $attentionCount ? ' — '.$attentionCount.' need attention' : '' }}">
+                <i class="fa-regular fa-bell" aria-hidden="true"></i>
+                @include('partials.bell-badge', ['count' => $attentionCount])
+            </button>
+
+            <div class="shell-pop shell-notif" id="shell-notif" hidden role="dialog" aria-label="Needs attention">
+                <div class="shell-pop-head">
+                    <span>Needs attention</span>
+                    @if($attentionCount)<span class="shell-pop-count">{{ $attentionCount }}</span>@endif
+                </div>
+
+                @forelse($attentionItems as $item)
+                    <a class="shell-notif-item" href="{{ $item['url'] }}">
+                        <span class="shell-notif-icon is-{{ $item['tone'] }}"><i class="fa-solid {{ $item['icon'] }}"></i></span>
+                        <span class="shell-notif-text">
+                            <span class="shell-notif-title">{{ $item['title'] }}</span>
+                            <span class="shell-notif-sub">{{ $item['sub'] }}</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right shell-notif-chev" aria-hidden="true"></i>
+                    </a>
+                @empty
+                    <div class="shell-notif-empty">
+                        <i class="fa-regular fa-circle-check"></i>
+                        Nothing needs your attention.
+                    </div>
+                @endforelse
+
+                <a class="shell-notif-foot" href="{{ route('dashboard') }}">Open the dashboard</a>
+            </div>
+        </div>
+
+        {{-- Help. It was a button with nothing behind it; it opens the shortcuts
+             panel now, reusing the same [data-pop] machinery as the bell so
+             click-away, Esc and focus return come for free. --}}
+        <div class="shell-helpbtn" data-pop>
+            <button type="button" class="shell-iconbtn" data-pop-toggle
+                    aria-expanded="false" aria-controls="shell-help"
+                    aria-haspopup="true" title="Help" aria-label="Help">
+                <i class="fa-regular fa-circle-question" aria-hidden="true"></i>
+            </button>
+
+            @include('partials.help-panel', ['id' => 'shell-help', 'shortcuts' => true])
+        </div>
+
+        <span class="shell-divider" aria-hidden="true"></span>
+
+        {{-- The chevron said "menu" and the click said "goodbye": the whole chip
+             was a submit button for the logout form, so one stray click ended
+             the session with nothing asked. It opens a menu now, and signing
+             out is a deliberate second click inside it. --}}
+        <div class="shell-account" data-pop>
+            <button type="button" class="shell-user" data-pop-toggle
+                    aria-expanded="false" aria-controls="shell-account-menu"
+                    aria-haspopup="true" title="Account">
+                <x-avatar class="shell-avatar" />
+                <span>
+                    <span class="shell-user-name">{{ auth()->user()->name ?? 'Guest' }}</span>
+                    <span class="shell-user-role">{{ auth()->user()->role_label ?? '' }}</span>
+                </span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+
+            <div class="shell-pop shell-account-menu" id="shell-account-menu" hidden>
+                <div class="shell-pop-identity">
+                    <strong>{{ auth()->user()->name ?? 'Guest' }}</strong>
+                    <span>{{ auth()->user()->email ?? '' }}</span>
+                </div>
+                <a class="shell-menu-item" href="{{ route('profile.edit') }}">
+                    <i class="fa-regular fa-id-card" aria-hidden="true"></i>
+                    Your profile
+                </a>
+                <form method="POST" action="{{ route('logout') }}" id="shellLogout">
+                    @csrf
+                    <button type="submit" class="shell-menu-item is-danger">
+                        <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+                        Sign out
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+        <!-- TOPBAR (≤768px only; the shell toolbar and page header replace it above) -->
+        {{-- The compact header variant: one row, title left, the same three
+             controls right. There is no hamburger — the bottom tab bar is the
+             only navigation on a phone, and the drawer it used to open is
+             reached from More → Full menu. The help "?" left for the same
+             reason (More → Help): the header carries exactly two slots, in
+             one order, on every screen — notifications · avatar — so
+             switching tabs never moves them.
+
+             `topbar-count` is the optional number beside the title ("Buildings
+             4"). A screen that doesn't set the section renders no span. --}}
+        <header class="topbar">
+            <div class="topbar-title">
+                <span class="topbar-title-text">@yield('topbar-title', 'Dashboard')</span>
+                @hasSection('topbar-count')
+                    <span class="topbar-count">@yield('topbar-count')</span>
+                @endif
+            </div>
+            <div class="topbar-actions">
+                {{-- Two controls, and the same two on every screen: bell then
+                     avatar. Theme moved to More — see the note on the Home
+                     header, which lost the same third disc. --}}
+                {{-- The bell was a bare <button> with nothing behind it: no
+                     type (so it submitted any form it landed in), no label for
+                     a screen reader, no count, and no handler. It is the same
+                     control as the shell bell now, reading the same
+                     AttentionFeed — it just answers with #topbarAlertsSheet,
+                     because under 768px app-mobile.css turns a .modal-overlay
+                     into a bottom sheet, which is the phone's answer to a
+                     dropdown. --}}
+                <button type="button" class="pm-icon-btn" id="topbarAlertsBtn"
+                        data-sheet-open="topbarAlertsSheet"
+                        aria-haspopup="dialog" aria-controls="topbarAlertsSheet"
+                        aria-expanded="false" title="Notifications"
+                        aria-label="Notifications{{ $attentionCount ? ' — '.$attentionCount.' need attention' : ' — nothing needs your attention' }}">
+                    <i class="fa-regular fa-bell" aria-hidden="true"></i>
+                    @include('partials.bell-badge', ['count' => $attentionCount])
+                </button>
+                {{-- Was an inert <div> with cursor:pointer on it — it looked
+                     tappable and did nothing. It is the dashboard header's
+                     control now, down to the confirmation sheet, so the third
+                     slot means the same thing on every screen. --}}
+                <form method="POST" action="{{ route('logout') }}" data-signout-form>
+                    @csrf
+                    <x-avatar class="pm-avatar" tag="button" type="submit" title="Sign out"
+                              aria-label="Sign out of {{ auth()->user()->email ?? 'this account' }}" />
+                </form>
+            </div>
+        </header>
+
+        <!-- PAGE CONTENT -->
+        <main class="page-content shell-content">
+@hasSection('page-title')
+            {{-- Page header — §2: inside the content column, not a fixed bar.
+                 Rendered only for pages that have moved onto it. A page still
+                 drawing its own .page-header would otherwise show two titles,
+                 and its primary action lives in that block, so migrating a
+                 page means defining these three sections and deleting its
+                 .page-header.
+
+                 Four slots, in DOM order back · text · actions · overflow:
+
+                   page-back      the way up. First in the DOM so it is the
+                                  first thing after the landmark for a screen
+                                  reader and the first tab stop; CSS `order`
+                                  puts it back at the head of the action group
+                                  on desktop, and under 600px app-core lifts
+                                  it beside the title as a 44px icon button.
+                                  Every detail page defines this rather than
+                                  opening its action row with its own Back —
+                                  that is what makes the phone header the same
+                                  object on all of them.
+                   page-actions   the page's own actions.
+                   page-overflow  a phone-only trigger (a ⋯ opening a sheet)
+                                  for actions that do not fit that header.
+
+                 The has-* classes tell the CSS which slots are filled, so the
+                 phone grid can drop a row or a column instead of leaving a
+                 gap where an empty one would be. --}}
+            @php
+                /* Built in PHP rather than as three inline @hasSection blocks:
+                   Blade leaves a directive uncompiled when it sits flush
+                   against the @endif before it, which put a raw
+                   `@hasSection(...)` into the compiled class attribute and
+                   made the whole layout a parse error. */
+                $headSlots = collect([
+                    'page-back'     => 'has-back',
+                    'page-actions'  => 'has-actions',
+                    'page-overflow' => 'has-overflow',
+                ])->filter(fn ($class, $section) => trim($__env->yieldContent($section)) !== '')
+                  ->values()->implode(' ');
+            @endphp
+            <header class="shell-pagehead {{ $headSlots }}">
+@hasSection('page-back')
+                <div class="shell-pagehead-back">@yield('page-back')</div>
+@endif
+                <div class="shell-pagehead-text">
+@hasSection('page-breadcrumb')
+                    <nav class="breadcrumb" aria-label="Breadcrumb">@yield('page-breadcrumb')</nav>
+@endif
+                    <h1 class="shell-pagehead-title">@yield('page-title')</h1>
+                    <div class="shell-pagehead-sub">@yield('page-subtitle')</div>
+                </div>
+                <div class="shell-pagehead-actions">@yield('page-actions')</div>
+@hasSection('page-overflow')
+                <div class="shell-pagehead-more">@yield('page-overflow')</div>
+@endif
+            </header>
+@endif
+
+            @if(session('success'))
+
+                <div class="alert alert-success">
+                    <i class="fa-solid fa-circle-check"></i>
+                    {{ session('success') }}
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="alert alert-danger">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            @yield('content')
+        </main>
+    </div>
 
 <!-- BOTTOM TAB BAR -->
 @php
@@ -1640,27 +1104,63 @@
     $tabbarIsBuildings = request()->is('buildings*') && !request()->is('floors');
     $tabbarIsTenants = request()->is('tenants*');
     $tabbarIsMaintenance = request()->is('maintenance*');
-    $tabbarIsMore = !$tabbarIsMain && !$tabbarIsBuildings && !$tabbarIsTenants && !$tabbarIsMaintenance;
+    $tabbarIsInvoices = request()->is('invoices*');
+    $tabbarIsPayments = request()->is('payments*');
+    $tabbarUser = auth()->user();
+    /* A role without the portfolio gets its own two tabs rather than an empty
+       bar: Accountant lands on Invoices and Payments, which is its work. */
+    $tabbarPortfolio  = (bool) $tabbarUser?->canAccessPortfolio();
+    $tabbarAccounting = ! $tabbarPortfolio && (bool) $tabbarUser?->canAccessAccounting();
+    $tabbarMaintenance = (bool) $tabbarUser?->canAccessMaintenance();
+    $tabbarIsMore = !$tabbarIsMain
+        && !($tabbarPortfolio && ($tabbarIsBuildings || $tabbarIsTenants))
+        && !($tabbarAccounting && ($tabbarIsInvoices || $tabbarIsPayments))
+        && !($tabbarMaintenance && $tabbarIsMaintenance);
 @endphp
+{{-- The label is wrapped, not dropped, on inactive tabs: only the active tab
+     shows it, and the inactive ones clip theirs to zero width (see
+     .tabbar-label) rather than removing it, so the tab keeps its accessible
+     name and the expand has something to animate. --}}
+{{-- The fixed row that holds the tab pill and, when a screen asks for one,
+     the FAB. Both are static children of it, so the FAB sits beside the pill
+     instead of over it, and no screen has to position either. --}}
+<div class="ps-bottom-bar">
 <nav class="bottom-tabbar" id="bottomTabbar">
     <a href="{{ url('/dashboard') }}" class="tabbar-item {{ $tabbarIsMain ? 'active' : '' }}">
-        <i class="fa-solid fa-house"></i> Home
+        <i class="fa-solid fa-house"></i><span class="tabbar-label">Home</span>
     </a>
-    @unless(auth()->user()?->isMaintenance())
+    @if($tabbarPortfolio)
     <a href="{{ route('buildings.index') }}" class="tabbar-item {{ $tabbarIsBuildings ? 'active' : '' }}">
-        <i class="fa-solid fa-building"></i> Properties
+        <i class="fa-solid fa-building"></i><span class="tabbar-label">Properties</span>
     </a>
     <a href="{{ route('tenants.index') }}" class="tabbar-item {{ $tabbarIsTenants ? 'active' : '' }}">
-        <i class="fa-solid fa-users"></i> Tenants
+        <i class="fa-solid fa-users"></i><span class="tabbar-label">Tenants</span>
     </a>
-    @endunless
+    @elseif($tabbarAccounting)
+    <a href="{{ route('invoices.index') }}" class="tabbar-item {{ $tabbarIsInvoices ? 'active' : '' }}">
+        <i class="fa-solid fa-file-invoice-dollar"></i><span class="tabbar-label">Invoices</span>
+    </a>
+    <a href="{{ route('payments.index') }}" class="tabbar-item {{ $tabbarIsPayments ? 'active' : '' }}">
+        <i class="fa-solid fa-money-bill-transfer"></i><span class="tabbar-label">Payments</span>
+    </a>
+    @endif
+    @if($tabbarMaintenance)
     <a href="{{ route('maintenance.index') }}" class="tabbar-item {{ $tabbarIsMaintenance ? 'active' : '' }}">
-        <i class="fa-solid fa-screwdriver-wrench"></i> Requests
+        <i class="fa-solid fa-screwdriver-wrench"></i><span class="tabbar-label">Requests</span>
     </a>
+    @endif
     <button type="button" class="tabbar-item {{ $tabbarIsMore ? 'active' : '' }}" id="moreTabBtn">
-        <i class="fa-solid fa-ellipsis"></i> More
+        <i class="fa-solid fa-ellipsis"></i><span class="tabbar-label">More</span>
     </button>
 </nav>
+{{-- The FAB, rendered here or not at all. A screen opts in by defining
+     `mobile-fab`, and a screen whose own actions row already carries a
+     primary create button must not — two "+" buttons on one screen is the
+     duplicate-add-button the sweep is meant to end. --}}
+@hasSection('mobile-fab')
+    @yield('mobile-fab')
+@endif
+</div>
 
 <script>
 let mDebounceTimer;
@@ -1668,6 +1168,17 @@ function mDebounceSubmit(el) {
     clearTimeout(mDebounceTimer);
     mDebounceTimer = setTimeout(() => el.form.submit(), 500);
 }
+/* A chip row scrolls, and the chip that is doing the filtering is not always
+   in the first screenful of it — Buildings carries ten, Maintenance seven. A
+   filtered list whose row reads "All" because the active chip is 300px off
+   the right edge is a screen lying about its own state, so bring it into
+   view on arrival. Instant, not smooth: this is the page's starting
+   position, not a movement the reader should watch. */
+document.querySelectorAll('.m-chip-row').forEach(function (row) {
+    const on = row.querySelector('.m-chip.active');
+    if (! on || row.scrollWidth <= row.clientWidth) return;
+    row.scrollLeft = Math.max(0, on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2);
+});
 (function () {
     const MOBILE = 768;
     const sidebar = document.getElementById('sidebar');
@@ -1686,10 +1197,104 @@ function mDebounceSubmit(el) {
         backdrop.classList.remove('show');
         document.body.style.overflow = '';
     }
-    menuBtn.addEventListener('click', () => {
+    /* Optional since the header hamburger was removed: the drawer is opened
+       from More → Full menu now. The lookup stays so a future header that
+       wants one keeps working, and so this IIFE doesn't die on a null. */
+    menuBtn?.addEventListener('click', () => {
         sidebar.classList.contains('open') ? closeDrawer() : openDrawer();
     });
     backdrop.addEventListener('click', closeDrawer);
+
+    /* ── Compact header hairline (every tab except Home) ──────────
+       Home's header lives inside .m-dash and watches #pmDashScroll; this one
+       is sticky in normal flow, so the window is its scroller. Same helper,
+       so both variants gain and lose the hairline at the same moment. The
+       threshold is only for `.is-collapsed`, which this header doesn't
+       style — it is not .is-collapsible. */
+    /* All three header variants — compact, pushed-detail and Home — take the
+       hairline from the same helper, so it appears at the same moment on
+       each. (Home's lives inside .m-dash and is wired in dashboard.blade.php,
+       which owns its scroller.) */
+    ['header.topbar', '.pm-push-header'].forEach(function (sel) {
+        const header = document.querySelector(sel);
+        if (header && window.pmInitCollapsingHeader) {
+            window.pmInitCollapsingHeader(header, window, 24);
+        }
+    });
+
+    /* The two polish helpers every screen gets: figures count up, and the
+       bell's count pops on the load where it went up. */
+    if (window.psInitCountUp) window.psInitCountUp(document);
+    if (window.psInitBellPop) window.psInitBellPop();
+
+    /* ── Sheets, generically ──────────────────────────────────────
+       Any .modal-overlay opens from `[data-sheet-open="<its id>"]` and
+       closes from `[data-sheet-close]`, click-away or Escape. Four
+       screens had a hand-written copy of exactly this — open, aria-expanded,
+       scroll lock, focus the first row, hand focus back on close — and the
+       copies had drifted. The scroll-lock release checks for another open
+       overlay or drawer so closing one sheet cannot unlock the page under
+       a second. */
+    let psSheet = null;        /* the sheet this handler opened, if any */
+    let psSheetOpener = null;  /* the control that opened it, for focus return */
+    function psOpenSheet(sheet, opener) {
+        if (!sheet) return;
+        sheet.classList.add('open');
+        psSheet = sheet;
+        psSheetOpener = opener || null;
+        opener?.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+        sheet.querySelector('.more-sheet-item, .modal-close-btn')?.focus();
+    }
+    function psCloseSheet(sheet) {
+        if (!sheet) return;
+        sheet.classList.remove('open');
+        psSheetOpener?.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow =
+            document.querySelector('.sidebar.open, .modal-overlay.open') ? 'hidden' : '';
+        if (psSheetOpener && psSheetOpener.offsetParent !== null) psSheetOpener.focus();
+        if (sheet === psSheet) { psSheet = null; psSheetOpener = null; }
+    }
+    document.addEventListener('click', function (e) {
+        const opener = e.target.closest('[data-sheet-open]');
+        if (opener) {
+            psOpenSheet(document.getElementById(opener.dataset.sheetOpen), opener);
+            return;
+        }
+        const closer = e.target.closest('[data-sheet-close]');
+        if (closer) { psCloseSheet(closer.closest('.modal-overlay')); return; }
+        /* Click-away, but only on a sheet this handler opened — the page's own
+           modals keep their own scrim behaviour. */
+        if (psSheet && e.target === psSheet) psCloseSheet(psSheet);
+    });
+    /* Rotating the phone past the breakpoint can take a sheet's trigger away
+       with it — a sheet left open would then be an overlay with no way out. */
+    window.addEventListener('resize', function () {
+        if (window.innerWidth > 768 && psSheet?.classList.contains('open')) psCloseSheet(psSheet);
+    });
+
+    /* Escape closes only what this handler opened, for the same reason.
+       Tab is kept inside the open sheet: it is a modal dialog, and tabbing
+       out of one into the page behind it leaves a screen-reader user
+       reading a list they cannot see. */
+    document.addEventListener('keydown', function (e) {
+        if (! psSheet?.classList.contains('open')) return;
+        if (e.key === 'Escape') { psCloseSheet(psSheet); return; }
+        if (e.key !== 'Tab') return;
+
+        const focusable = [...psSheet.querySelectorAll(
+            'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
+        )].filter((el) => el.offsetParent !== null);
+        if (! focusable.length) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault(); last.focus();
+        } else if (! e.shiftKey && document.activeElement === last) {
+            e.preventDefault(); first.focus();
+        }
+    });
 
     // ── More sheet (bottom tab bar "More" destination) ───────────
     const moreSheet = document.getElementById('moreSheet');
@@ -1704,6 +1309,27 @@ function mDebounceSubmit(el) {
     document.getElementById('moreTabBtn')?.addEventListener('click', openMoreSheet);
     moreSheet.addEventListener('click', (e) => { if (e.target === moreSheet) closeMoreSheet(); });
     document.getElementById('moreMenuBtn')?.addEventListener('click', () => { closeMoreSheet(); openDrawer(); });
+
+    // ── Help sheet (More → Help; replaces the top bar's "?" popover) ──
+    const helpSheet = document.getElementById('helpSheet');
+    const helpBtn = document.getElementById('moreHelpBtn');
+    function closeHelpSheet() {
+        helpSheet.classList.remove('open');
+        document.body.style.overflow = '';
+        helpBtn?.setAttribute('aria-expanded', 'false');
+    }
+    helpBtn?.addEventListener('click', () => {
+        closeMoreSheet();
+        helpSheet.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        helpBtn.setAttribute('aria-expanded', 'true');
+    });
+    helpSheet.addEventListener('click', (e) => {
+        if (e.target === helpSheet || e.target.closest('[data-help-close]')) closeHelpSheet();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && helpSheet.classList.contains('open')) closeHelpSheet();
+    });
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && sidebar.classList.contains('open')) closeDrawer();
     });
@@ -1795,6 +1421,107 @@ function mDebounceSubmit(el) {
     document.querySelectorAll('.modal-overlay .modal-box').forEach(attachSheetHandle);
 })();
 
+/* ── Sign-out confirmation ────────────────────────────────
+   Every sign-out control stays a real submit button inside a real POST
+   form — that is the no-JS fallback and it must keep working. This
+   intercepts the submit and asks in #signOutDialog instead, which the
+   dialog's own form then completes. */
+(function () {
+    const dialog = document.getElementById('signOutDialog');
+    const forms = document.querySelectorAll('form[data-signout-form]');
+    if (!dialog || !forms.length) return;
+
+    const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    let opener = null;
+
+    function open(trigger) {
+        opener = trigger || null;
+        dialog.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        // "Stay signed in" takes focus, not the destructive button: Enter on a
+        // dialog you did not mean to open should be the harmless answer.
+        dialog.querySelector('.btn-outline')?.focus();
+    }
+
+    function close() {
+        dialog.classList.remove('open');
+
+        // The nav drawer is deliberately left standing behind this dialog
+        // (cancelling should put you back where you were), and it owns the
+        // same scroll lock — so releasing it unconditionally would let the
+        // page scroll behind an open drawer.
+        const stillLocked = document.querySelector('.sidebar.open, .modal-overlay.open');
+        document.body.style.overflow = stillLocked ? 'hidden' : '';
+
+        // offsetParent guards against restoring focus into a sheet that was
+        // closed on the way in (the More sheet row).
+        if (opener && document.contains(opener) && opener.offsetParent !== null) opener.focus();
+        opener = null;
+    }
+
+    forms.forEach((form) => {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            // The More sheet sits on --z-sheet (1050), above --z-modal, so
+            // asking from inside it would put the question behind the sheet
+            // that asked — it has to close first. The nav drawer is below
+            // --z-modal and stays open on purpose: cancelling there should
+            // put you back in the drawer you were reading.
+            const host = form.closest('.modal-overlay.open');
+            if (host) {
+                host.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+
+            open(e.submitter || form.querySelector('[type="submit"]'));
+        });
+    });
+
+    dialog.querySelectorAll('[data-signout-cancel]').forEach((b) => b.addEventListener('click', close));
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) close(); });
+
+    document.addEventListener('keydown', (e) => {
+        if (!dialog.classList.contains('open')) return;
+        if (e.key === 'Escape') { close(); return; }
+        if (e.key !== 'Tab') return;
+
+        // Keep Tab inside the dialog — it is modal, and the page behind it
+        // still has a full tab order.
+        const items = [...dialog.querySelectorAll(FOCUSABLE)].filter((el) => el.offsetParent !== null);
+        if (!items.length) return;
+        const first = items[0], last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+})();
+
+
+/* ── File-input preview ───────────────────────────────────
+   Any [type=file][data-preview] swaps the named box's contents for the chosen
+   image before upload — the branding logo and favicon, and the profile photo.
+   A round preview keeps its shape because .upload-preview.is-round owns that,
+   not the markup this writes. */
+(function () {
+    document.querySelectorAll('input[type="file"][data-preview]').forEach(function (input) {
+        input.addEventListener('change', function () {
+            var file = input.files[0];
+            var box = document.getElementById(input.dataset.preview);
+            if (!file || !box) return;
+
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                box.innerHTML = '<img src="' + e.target.result + '" alt="Preview">';
+                // Choosing a replacement and also ticking "remove" is a
+                // contradiction; the file wins, so untick it.
+                var remove = document.getElementById('remove_' + input.id);
+                if (remove) remove.checked = false;
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+})();
+
 /* ── Theme toggle ─────────────────────────────────────── */
 (function () {
     const btns = document.querySelectorAll('.theme-toggle-btn');
@@ -1817,6 +1544,302 @@ function mDebounceSubmit(el) {
             localStorage.setItem('p7-theme', next);
             syncIcons();
         });
+    });
+})();
+</script>
+
+@include('partials.command-palette')
+
+<script>
+/* ── Command palette (⌘K) and row density ─────────────────────
+   Open/close and a client-side filter over the rows the partial
+   rendered. Searching real records is later work (§6). */
+(function () {
+    var root = document.documentElement;
+
+    /* The top bar hamburger collapses the sidebar. Persisted, and applied
+       before paint by the head script so the frame does not jump. */
+    if (document.documentElement.classList.contains('nav-collapsed-boot')) {
+        document.body.classList.add('is-nav-collapsed');
+    }
+    var navBtn = document.querySelector('[data-sidebar-toggle]');
+    if (navBtn) navBtn.addEventListener('click', function () {
+        var hidden = document.body.classList.toggle('is-nav-collapsed');
+        document.documentElement.classList.toggle('nav-collapsed-boot', hidden);
+        navBtn.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+        navBtn.setAttribute('aria-label', hidden ? 'Show navigation' : 'Hide navigation');
+        navBtn.setAttribute('title', hidden ? 'Show navigation' : 'Hide navigation');
+        try { localStorage.setItem('p7-nav', hidden ? 'collapsed' : 'open'); } catch (e) {}
+    });
+
+    /* Row action menus (app-core §4.1b). Delegated, because rows are paginated
+       and re-rendered: binding per button would miss anything drawn later.
+
+       The panel is positioned here rather than in CSS because .table-wrap
+       scrolls horizontally — an absolutely positioned panel would be clipped
+       by its own cell. Fixed coordinates escape that, at the cost of having to
+       close on scroll and resize, which is what the listeners below do. */
+    var openRowMenu = null;
+
+    function closeRowMenu(refocus) {
+        if (!openRowMenu) return;
+        var btn = openRowMenu.btn, panel = openRowMenu.panel, home = openRowMenu.home;
+        panel.setAttribute('hidden', '');
+        panel.style.left = panel.style.top = '';
+        /* Put it back beside its trigger so the DOM stays where the markup says
+           it is, and a second open starts from a known place. */
+        if (home && panel.parentNode !== home) home.appendChild(panel);
+        btn.setAttribute('aria-expanded', 'false');
+        openRowMenu = null;
+        if (refocus && btn.focus) btn.focus();
+    }
+
+    function placeRowMenu(btn, panel) {
+        panel.removeAttribute('hidden');
+        var b = btn.getBoundingClientRect();
+        var w = panel.offsetWidth, h = panel.offsetHeight, gap = 6;
+
+        /* Right-aligned to the trigger, because the actions column sits at the
+           trailing edge and a left-aligned panel would hang off the page. */
+        var left = Math.max(8, Math.min(b.right - w, window.innerWidth - w - 8));
+        /* Below by default, above when there is not room — a menu opening off
+           the bottom of a long table is the common case. */
+        var top = (b.bottom + gap + h <= window.innerHeight) ? b.bottom + gap : Math.max(8, b.top - gap - h);
+
+        panel.style.left = Math.round(left) + 'px';
+        panel.style.top = Math.round(top) + 'px';
+    }
+
+    /* CAPTURE phase, deliberately. The actions cell carries an inline
+       onclick="event.stopPropagation()" — that is what stops a click on a
+       button from navigating the row — and it runs on the way up, before any
+       listener on document. A bubble-phase handler here never sees the click
+       at all. Capturing runs before the cell, so both behaviours survive. */
+    document.addEventListener('click', function (e) {
+        var toggle = e.target.closest('[data-rowmenu-toggle]');
+        if (toggle) {
+            /* The row itself navigates on click; the menu must not trigger it. */
+            e.stopPropagation();
+            e.preventDefault();
+            var panel = document.getElementById(toggle.getAttribute('aria-controls'));
+            if (!panel) return;
+            var wasOpen = openRowMenu && openRowMenu.panel === panel;
+            closeRowMenu(false);
+            if (wasOpen) return;
+            toggle.setAttribute('aria-expanded', 'true');
+            openRowMenu = { btn: toggle, panel: panel, home: panel.parentNode };
+
+            /* Reparent to <body> before positioning, and not for tidiness:
+               `position: fixed` resolves against the nearest ancestor that
+               establishes a containing block, and ANY non-none transform does
+               that. The card entrance animation (app-core §4.3, .card-reveal)
+               ends on transform: translateY(0) — still a transform — so a panel
+               left inside the card was being positioned relative to the card
+               and landed off-screen. In <body> there is nothing in the way. */
+            document.body.appendChild(panel);
+            placeRowMenu(toggle, panel);
+            return;
+        }
+        /* A click inside the panel is an action; anything else closes it. */
+        if (openRowMenu && !openRowMenu.panel.contains(e.target)) closeRowMenu(false);
+    }, true);
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && openRowMenu) closeRowMenu(true);
+    });
+
+    /* Fixed coordinates go stale the moment anything moves, so follow the
+       trigger rather than closing on sight.
+
+       Closing was the first attempt and it was wrong: clicking a row that is
+       only partly in view makes the browser scroll the button into view, which
+       fired this handler and shut the menu in the same gesture that opened it.
+       Only a trigger that has actually left the viewport closes now.
+
+       Capture is on so this hears scrolling inside .table-wrap and
+       .shell-content too — scroll events do not bubble. */
+    var rowMenuFrame = null;
+    function trackRowMenu() {
+        if (!openRowMenu || rowMenuFrame) return;
+        rowMenuFrame = requestAnimationFrame(function () {
+            rowMenuFrame = null;
+            if (!openRowMenu) return;
+            var b = openRowMenu.btn.getBoundingClientRect();
+            if (b.bottom < 0 || b.top > window.innerHeight) { closeRowMenu(false); return; }
+            placeRowMenu(openRowMenu.btn, openRowMenu.panel);
+        });
+    }
+    window.addEventListener('scroll', trackRowMenu, true);
+    window.addEventListener('resize', trackRowMenu);
+
+    /* Top-bar dropdowns — the bell and the account chip. One handler: opening
+       either closes the other, click-away and Esc close, and focus returns to
+       the trigger so the keyboard does not get stranded in a hidden panel. */
+    var pops = Array.prototype.map.call(document.querySelectorAll('[data-pop]'), function (root) {
+        return { root: root, btn: root.querySelector('[data-pop-toggle]'), panel: root.querySelector('.shell-pop') };
+    }).filter(function (p) { return p.btn && p.panel; });
+
+    function popIsOpen(p) { return !p.panel.hasAttribute('hidden'); }
+    function popSet(p, open) {
+        if (open) { p.panel.removeAttribute('hidden'); } else { p.panel.setAttribute('hidden', ''); }
+        p.btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function popCloseAll(except) {
+        pops.forEach(function (p) { if (p !== except && popIsOpen(p)) popSet(p, false); });
+    }
+
+    pops.forEach(function (p) {
+        p.btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var willOpen = !popIsOpen(p);
+            popCloseAll(p);
+            popSet(p, willOpen);
+        });
+    });
+    if (pops.length) {
+        document.addEventListener('click', function (e) {
+            pops.forEach(function (p) {
+                if (popIsOpen(p) && !p.root.contains(e.target)) popSet(p, false);
+            });
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            pops.forEach(function (p) {
+                if (popIsOpen(p)) { popSet(p, false); p.btn.focus(); }
+            });
+        });
+    }
+
+    var palette = document.getElementById('command-palette');
+    if (!palette) return;
+    var input   = palette.querySelector('[data-palette-input]');
+    var empty   = palette.querySelector('[data-palette-empty]');
+    var rows    = palette.querySelectorAll('[data-palette-row]');
+    var jump    = palette.querySelector('[data-palette-jump]');
+    var results = palette.querySelector('[data-palette-results]');
+    var hint    = palette.querySelector('[data-palette-hint]');
+    var opener  = null;
+    var MIN     = 2;              /* mirrors SearchController::MIN_QUERY */
+    var timer   = null;
+    var seq     = 0;              /* drops a slow reply that a newer one has overtaken */
+
+    function filter(q) {
+        q = (q || '').toLowerCase();
+        var any = false;
+        rows.forEach(function (row) {
+            var hit = row.dataset.search.indexOf(q) !== -1;
+            row.hidden = !hit;
+            if (hit) any = true;
+        });
+        if (empty) empty.hidden = any;
+    }
+
+    function showJumpList(q) {
+        if (results) { results.hidden = true; results.innerHTML = ''; }
+        if (hint) hint.hidden = true;
+        if (jump) jump.hidden = false;
+        filter(q);
+    }
+
+    function render(groups) {
+        if (!results) return;
+        if (jump) jump.hidden = true;
+        if (hint) hint.hidden = true;
+        results.hidden = false;
+
+        if (!groups.length) {
+            results.innerHTML = '<div class="palette-empty">No records match.</div>';
+            return;
+        }
+
+        var html = '';
+        groups.forEach(function (g) {
+            html += '<div class="palette-group">' + esc(g.label) + '</div>';
+            g.items.forEach(function (it) {
+                html += '<a href="' + esc(it.url) + '" class="palette-row" data-palette-hit>'
+                     +  '<span class="palette-row-icon"><i class="fa-solid ' + esc(g.icon) + '"></i></span>'
+                     +  '<span class="palette-row-text">'
+                     +  '<span class="palette-row-title">' + esc(it.title) + '</span>'
+                     +  '<span class="palette-row-sub">' + esc(it.sub) + '</span>'
+                     +  '</span>'
+                     +  '<span class="palette-row-kind">OPEN</span>'
+                     +  '</a>';
+            });
+        });
+        results.innerHTML = html;
+    }
+
+    /* Server text into markup — escape it, or a tenant named with an angle
+       bracket becomes script. */
+    function esc(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    function search(q) {
+        var mine = ++seq;
+        if (hint) hint.hidden = false;
+
+        fetch('{{ route('search') }}?q=' + encodeURIComponent(q), {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin'
+        })
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) { if (mine === seq) render(data.groups || []); })
+            .catch(function () {
+                if (mine !== seq) return;
+                /* Offer the jump list rather than a dead end. */
+                showJumpList('');
+                if (empty) { empty.hidden = false; empty.textContent = 'Search is unavailable right now.'; }
+            });
+    }
+
+    function onQuery(q) {
+        clearTimeout(timer);
+        q = (q || '').trim();
+
+        if (q.length < MIN) { showJumpList(q); return; }
+        timer = setTimeout(function () { search(q); }, 200);
+    }
+    function open() {
+        opener = document.activeElement;
+        palette.removeAttribute('hidden');
+        palette.classList.add('is-open');
+        if (input) { input.value = ''; showJumpList(''); input.focus(); }
+    }
+    function close() {
+        palette.classList.remove('is-open');
+        palette.setAttribute('hidden', '');
+        if (opener && opener.focus) opener.focus();
+    }
+    var isOpen = function () { return !palette.hasAttribute('hidden'); };
+
+    document.querySelectorAll('[data-palette-open]').forEach(function (b) {
+        b.addEventListener('click', open);
+    });
+    palette.addEventListener('click', function (e) { if (e.target === palette) close(); });
+    if (input) input.addEventListener('input', function () { onQuery(input.value); });
+
+    document.addEventListener('keydown', function (e) {
+        if ((e.metaKey || e.ctrlKey) && (e.key || '').toLowerCase() === 'k') {
+            e.preventDefault();
+            isOpen() ? close() : open();
+            return;
+        }
+        if (e.key === 'Escape' && isOpen()) close();
+
+        /* Focus trap while the palette is open — §8 allows one only here. */
+        if (e.key === 'Tab' && isOpen()) {
+            var focusable = Array.prototype.filter.call(
+                palette.querySelectorAll('input, a[href]'),
+                function (el) { return !el.hidden && el.offsetParent !== null; }
+            );
+            if (!focusable.length) return;
+            var first = focusable[0], last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
     });
 })();
 </script>

@@ -10,7 +10,7 @@
     display: flex;
     align-items: center;
     gap: 0;
-    margin-bottom: 28px;
+    margin-bottom: var(--sp-7);
     padding: 20px 24px;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
@@ -49,7 +49,7 @@
     align-items: center;
     justify-content: center;
     font-family: 'Outfit', sans-serif;
-    font-size: 14px;
+    font-size: var(--fs-base);
     font-weight: 700;
     color: var(--text-muted);
     flex-shrink: 0;
@@ -60,7 +60,7 @@
 .progress-step.active .step-bubble {
     border-color: var(--accent);
     background: var(--accent);
-    color: #0B1120;
+    color: var(--text-primary);
     box-shadow: 0 0 0 4px var(--accent-dim);
 }
 .progress-step.done .step-bubble {
@@ -71,95 +71,25 @@
 .step-meta { display: flex; flex-direction: column; gap: 1px; }
 .step-label {
     font-family: 'Outfit', sans-serif;
-    font-size: 13px;
+    font-size: var(--fs-base);
     font-weight: 700;
     color: var(--text-primary);
 }
 .step-sub {
-    font-size: 11px;
+    font-size: var(--fs-xs);
     color: var(--text-muted);
     white-space: nowrap;
 }
 .progress-step.active .step-label { color: var(--accent); }
 
 /* ── SECTION CARDS ─────────────────────────────────────── */
-.form-section-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
 
-.section-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-    opacity: 0;
-    transform: translateY(18px);
-    animation: cardReveal 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-.section-card:nth-child(1) { animation-delay: 0.05s; }
-.section-card:nth-child(2) { animation-delay: 0.15s; }
-.section-card:nth-child(3) { animation-delay: 0.25s; }
-.section-card:nth-child(4) { animation-delay: 0.35s; }
 
 @keyframes cardReveal {
     to { opacity: 1; transform: translateY(0); }
 }
 
-.section-card-header {
-    padding: 18px 24px;
-    border-bottom: 1px solid var(--card-border);
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    background: linear-gradient(to right, rgba(232,184,109,0.04), transparent);
-}
-.section-icon-wrap {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    background: var(--accent-dim);
-    border: 1px solid rgba(232,184,109,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent);
-    font-size: 16px;
-    flex-shrink: 0;
-}
-.section-header-text { flex: 1; }
-.section-title {
-    font-family: 'Outfit', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1;
-}
-.section-subtitle {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 3px;
-}
-.section-step-badge {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: #0B1120;
-    font-family: 'Outfit', sans-serif;
-    font-size: 11px;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
 
-.section-card-body {
-    padding: 24px;
-}
 
 /* ── FIELD GRID ────────────────────────────────────────── */
 .field-grid {
@@ -177,7 +107,7 @@
     gap: 0;
 }
 .field-label {
-    font-size: 11.5px;
+    font-size: var(--fs-xs);
     font-weight: 700;
     color: var(--text-secondary);
     letter-spacing: 0.04em;
@@ -189,7 +119,7 @@
 }
 .field-label .req {
     color: var(--danger);
-    font-size: 14px;
+    font-size: var(--fs-base);
     line-height: 1;
 }
 
@@ -202,7 +132,7 @@
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: var(--fs-base);
     pointer-events: none;
     transition: color 0.2s;
 }
@@ -218,10 +148,10 @@
     padding: 10px 14px;
     border: 1.5px solid var(--input-border);
     border-radius: var(--radius-sm);
-    background: var(--input-bg, #fff);
+    background: var(--input-bg);
     color: var(--text-primary);
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 13.5px;
+    font-size: var(--fs-base);
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     outline: none;
     appearance: none;
@@ -232,14 +162,14 @@
 .field-textarea::placeholder { color: var(--text-muted); opacity: 0.7; }
 
 .field-input:hover,
-.field-select:hover { border-color: #B0BCCF; }
+.field-select:hover { border-color: var(--input-border); }
 
 .field-input:focus,
 .field-select:focus,
 .field-textarea:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3.5px var(--accent-dim);
-    background: #FFFDF8;
+    background: var(--tone-warning-bg);
 }
 .field-input-wrap:focus-within .field-input-icon {
     color: var(--accent);
@@ -249,7 +179,7 @@
 .field-select.is-invalid,
 .field-textarea.is-invalid {
     border-color: var(--danger);
-    background: #FFF8F8;
+    background: var(--tone-danger-bg);
 }
 .field-input.is-invalid:focus,
 .field-select.is-invalid:focus {
@@ -261,11 +191,11 @@
     align-items: center;
     gap: 5px;
     margin-top: 5px;
-    font-size: 11.5px;
+    font-size: var(--fs-xs);
     color: var(--danger);
     font-weight: 500;
 }
-.field-error-msg i { font-size: 11px; }
+.field-error-msg i { font-size: var(--fs-xs); }
 
 .field-select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2394A3B8' d='M5 7L0.669873 2.5L9.33013 2.5L5 7Z'/%3E%3C/svg%3E");
@@ -285,37 +215,28 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
 }
-.capacity-item {
-    background: var(--page-bg);
-    border: 1.5px solid var(--card-border);
-    border-radius: var(--radius-sm);
-    padding: 18px 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    text-align: center;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    cursor: default;
-}
+/* `gap` already spaces these, so app-core's normal-flow card stacking margin
+   would only push every card after the first out of line. */
+.capacity-grid > .card + .card { margin-top: 0; }
+.capacity-item { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; transition: border-color 0.2s, box-shadow 0.2s; cursor: default; }
 .capacity-item:focus-within {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-dim);
-    background: #FFFDF8;
+    background: var(--tone-warning-bg);
 }
 .capacity-icon {
     width: 36px;
     height: 36px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: var(--accent-dim);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--accent);
-    font-size: 14px;
+    font-size: var(--fs-base);
 }
 .capacity-label {
-    font-size: 11px;
+    font-size: var(--fs-xs);
     font-weight: 700;
     color: var(--text-secondary);
     letter-spacing: 0.04em;
@@ -337,34 +258,9 @@
 }
 .capacity-item input::-webkit-outer-spin-button,
 .capacity-item input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.capacity-item input::placeholder { color: var(--text-muted); font-weight: 400; font-size: 20px; }
+.capacity-item input::placeholder { color: var(--text-muted); font-weight: 400; font-size: var(--fs-xl); }
 
 /* ── STICKY ACTIONS ────────────────────────────────────── */
-.form-actions-bar {
-    position: sticky;
-    bottom: 0;
-    background: var(--card-bg);
-    border-top: 1px solid var(--card-border);
-    padding: 14px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    z-index: 50;
-    border-radius: 0 0 var(--radius) var(--radius);
-    margin-top: 20px;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
-    backdrop-filter: blur(8px);
-}
-.actions-hint {
-    font-size: 12px;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.actions-hint i { color: var(--accent); }
-.actions-right { display: flex; align-items: center; gap: 10px; }
 
 /* ── DIVIDER ───────────────────────────────────────────── */
 .address-divider {
@@ -375,7 +271,7 @@
     margin: 4px 0 4px;
 }
 .divider-label {
-    font-size: 10.5px;
+    font-size: var(--fs-2xs);
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -393,11 +289,8 @@
     .field-grid { grid-template-columns: 1fr; }
     .field-grid .span-2 { grid-column: span 1; }
     .capacity-grid { grid-template-columns: 1fr; }
-    .form-actions-bar { padding: 12px 16px; }
-    .actions-hint { display: none; }
 }
-@media (max-width: 520px) {
-    .section-card-body { padding: 16px; }
+@media (max-width: 600px) {
 }
 </style>
 @endpush
@@ -443,21 +336,21 @@
     @csrf
     @if($method === 'PUT') @method('PUT') @endif
 
-    <div class="form-section-stack">
+    <div class="section-stack card-reveal">
 
         {{-- ── SECTION 1: PROPERTY INFORMATION ──────────────── --}}
-        <div class="section-card">
-            <div class="section-card-header">
-                <div class="section-icon-wrap">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon">
                     <i class="fa-solid fa-building"></i>
                 </div>
-                <div class="section-header-text">
-                    <div class="section-title">Property Information</div>
-                    <div class="section-subtitle">Core identity and ownership details</div>
+                <div class="card-header-text">
+                    <div class="card-title">Property Information</div>
+                    <div class="card-subtitle">Core identity and ownership details</div>
                 </div>
-                <div class="section-step-badge">1</div>
+                <div class="card-step-badge">1</div>
             </div>
-            <div class="section-card-body">
+            <div class="card-body">
                 <div class="field-grid">
 
                     @if($show('property_name'))
@@ -567,18 +460,18 @@
             $anyAddress = $show('building_no') || $show('road') || $show('block') || $show('area') || $show('city');
         @endphp
         @if($anyAddress)
-        <div class="section-card">
-            <div class="section-card-header">
-                <div class="section-icon-wrap">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon">
                     <i class="fa-solid fa-location-dot"></i>
                 </div>
-                <div class="section-header-text">
-                    <div class="section-title">Address</div>
-                    <div class="section-subtitle">Physical location of the building</div>
+                <div class="card-header-text">
+                    <div class="card-title">Address</div>
+                    <div class="card-subtitle">Physical location of the building</div>
                 </div>
-                <div class="section-step-badge">2</div>
+                <div class="card-step-badge">2</div>
             </div>
-            <div class="section-card-body">
+            <div class="card-body">
                 <div class="field-grid">
 
                     @if($show('building_no'))
@@ -686,22 +579,22 @@
             $anyCapacity = $show('total_no_of_blocks') || $show('total_no_of_floors') || $show('total_no_of_units');
         @endphp
         @if($anyCapacity)
-        <div class="section-card">
-            <div class="section-card-header">
-                <div class="section-icon-wrap">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon">
                     <i class="fa-solid fa-layer-group"></i>
                 </div>
-                <div class="section-header-text">
-                    <div class="section-title">Capacity</div>
-                    <div class="section-subtitle">Building size — enter 0 if not applicable</div>
+                <div class="card-header-text">
+                    <div class="card-title">Capacity</div>
+                    <div class="card-subtitle">Building size — enter 0 if not applicable</div>
                 </div>
-                <div class="section-step-badge">3</div>
+                <div class="card-step-badge">3</div>
             </div>
-            <div class="section-card-body">
+            <div class="card-body">
                 <div class="capacity-grid">
 
                     @if($show('total_no_of_blocks'))
-                    <div class="capacity-item {{ $errors->has('total_no_of_blocks') ? 'is-invalid' : '' }}">
+                    <div class="card is-nested capacity-item {{ $errors->has('total_no_of_blocks') ? 'is-invalid' : '' }}">
                         <div class="capacity-icon"><i class="fa-solid fa-cubes-stacked"></i></div>
                         <div class="capacity-label">Blocks</div>
                         <input
@@ -717,7 +610,7 @@
                     @endif
 
                     @if($show('total_no_of_floors'))
-                    <div class="capacity-item {{ $errors->has('total_no_of_floors') ? 'is-invalid' : '' }}">
+                    <div class="card is-nested capacity-item {{ $errors->has('total_no_of_floors') ? 'is-invalid' : '' }}">
                         <div class="capacity-icon"><i class="fa-solid fa-layer-group"></i></div>
                         <div class="capacity-label">Floors</div>
                         <input
@@ -733,7 +626,7 @@
                     @endif
 
                     @if($show('total_no_of_units'))
-                    <div class="capacity-item {{ $errors->has('total_no_of_units') ? 'is-invalid' : '' }}">
+                    <div class="card is-nested capacity-item {{ $errors->has('total_no_of_units') ? 'is-invalid' : '' }}">
                         <div class="capacity-icon"><i class="fa-solid fa-door-open"></i></div>
                         <div class="capacity-label">Units</div>
                         <input
@@ -755,17 +648,17 @@
 
         {{-- ── CUSTOM FIELDS ──────────────────────────────────── --}}
         @if(count($customFieldDefs ?? []) > 0)
-        <div class="section-card">
-            <div class="section-card-header">
-                <div class="section-icon-wrap">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-icon">
                     <i class="fa-solid fa-puzzle-piece"></i>
                 </div>
-                <div class="section-header-text">
-                    <div class="section-title">Custom Fields</div>
-                    <div class="section-subtitle">Additional fields configured for this form</div>
+                <div class="card-header-text">
+                    <div class="card-title">Custom Fields</div>
+                    <div class="card-subtitle">Additional fields configured for this form</div>
                 </div>
             </div>
-            <div class="section-card-body">
+            <div class="card-body">
                 <div class="field-grid">
                     @foreach($customFieldDefs as $def)
                         @if($showAll || in_array($def->name, $visibleFields))
@@ -804,15 +697,15 @@
         </div>
         @endif
 
-    </div>{{-- /form-section-stack --}}
+    </div>{{-- /section-stack --}}
 
     {{-- STICKY ACTIONS BAR --}}
-    <div class="form-actions-bar">
-        <div class="actions-hint">
+    <div class="form-sticky-actions">
+        <div class="form-sticky-actions-hint">
             <i class="fa-solid fa-circle-info"></i>
             Fields marked <span style="color:var(--danger);font-weight:700;margin:0 2px;">*</span> are required
         </div>
-        <div class="actions-right">
+        <div class="action-btns">
             <a href="{{ route('buildings.index') }}" class="btn btn-outline">
                 <i class="fa-solid fa-xmark"></i> Cancel
             </a>

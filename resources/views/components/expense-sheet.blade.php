@@ -14,6 +14,14 @@
         'management_fees'     => 'fa-solid fa-briefcase',
         'other'               => 'fa-solid fa-receipt',
     ];
+    /* A tile is ~63px wide at 320px, so the three long names are abbreviated
+       to keep every label inside its own tile. Anything not listed falls back
+       to the model's own label, so a new category still renders. */
+    $expenseCategoryShort = [
+        'repairs_maintenance' => 'Repairs & Maint.',
+        'municipality_fees'   => 'Municipal',
+        'management_fees'     => 'Mgmt Fees',
+    ];
     $expenseBuildings = \App\Models\Building::orderBy('property_name')->get(['id', 'property_name']);
 @endphp
 
@@ -48,10 +56,65 @@
         overflow: hidden;
     }
     #expenseModal.modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
+
+    /* Category picker — an icon tile grid rather than a chip wrap. Eight
+       chips of wildly different widths reflowed into four ragged rows and
+       the selected one was told apart only by a radio dot; four even columns
+       give the set a fixed shape, and the tile itself carries the selection.
+       Scoped to #expenseModal like everything else here. */
+    #expenseModal .cat-grid {
+        display: grid;
+        /* minmax(0,…), not a bare 1fr: a bare fr track refuses to shrink below
+           its content's min-content width, so "Municipality" pushed its own
+           column wider than the other three and the grid spilled out of the
+           sheet at 320px. */
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 18px;
+    }
+    #expenseModal .cat-tile {
+        position: relative;               /* holds the hidden input inside the tile */
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 6px;
+        padding: 12px 3px;
+        border: 1px solid var(--input-border);
+        border-radius: 12px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: border-color .15s ease, background .15s ease, color .15s ease;
+    }
+    #expenseModal .cat-tile i { font-size: 20px; }
+    #expenseModal .cat-tile span {
+        font-size: 9.5px; font-weight: 500; line-height: 1.25; text-align: center;
+        /* The app's body tracking costs ~2px across a nine-letter word, which
+           at 320px is the difference between "Insurance" and "Insuranc/e". */
+        letter-spacing: normal;
+        /* Now that the track can be narrower than the word, the word has to be
+           allowed to break rather than hang over the tile's edge. The two long
+           names are abbreviated above so this stays a backstop for a category
+           added later, not the thing holding the layout together. */
+        overflow-wrap: anywhere;
+    }
+    /* The radio stays in the DOM and stays focusable — it is only made
+       invisible, so the form still validates and arrow keys still move
+       between categories. */
+    #expenseModal .cat-tile input {
+        position: absolute; opacity: 0; pointer-events: none;
+    }
+    /* Selected state on the tile. Tokens, not the raw hexes: --tone-accent-*
+       and --text-primary already carry the gold tint and the ink for both
+       themes, so the chosen tile stays legible in dark mode too. */
+    #expenseModal .cat-tile:has(input:checked) {
+        border: 1.5px solid var(--accent);
+        background: var(--tone-accent-bg);
+        color: var(--text-primary);
+    }
+    #expenseModal .cat-tile:has(input:checked) span { font-weight: 600; }
+    #expenseModal .cat-tile:has(input:focus-visible) { box-shadow: var(--focus-ring); }
 </style>
 
 <div class="modal-overlay" id="expenseModal" role="dialog" aria-modal="true" aria-labelledby="expenseModalTitle">
-    <div class="modal-box" style="max-width:480px;">
+    <div class="modal-box" style="--modal-w:480px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:20px 22px 0;">
             <div>
                 <div id="expenseModalTitle" style="font-family:'Outfit',sans-serif;font-weight:700;font-size:19px;color:var(--text-primary);">Record expense</div>
@@ -77,11 +140,13 @@
             </select>
 
             <label style="display:block;font-size:11px;font-weight:700;letter-spacing:.6px;color:var(--text-muted);margin-bottom:8px;">CATEGORY</label>
-            <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px;">
+            <div class="cat-grid">
                 @foreach($expenseCategories as $key => $label)
-                    <label style="display:flex;align-items:center;gap:7px;padding:9px 12px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--input-border);color:var(--text-secondary);">
-                        <input type="radio" name="category" value="{{ $key }}" required style="accent-color:var(--accent);margin:0;" {{ $loop->first ? 'checked' : '' }}>
-                        <i class="{{ $expenseCategoryIcons[$key] ?? 'fa-solid fa-receipt' }}"></i> {{ $label }}
+                    <label class="cat-tile">
+                        <input type="radio" name="category" value="{{ $key }}" required {{ $loop->first ? 'checked' : '' }}
+                               aria-label="{{ $label }}">
+                        <i class="{{ $expenseCategoryIcons[$key] ?? 'fa-solid fa-receipt' }}" aria-hidden="true"></i>
+                        <span>{{ $expenseCategoryShort[$key] ?? $label }}</span>
                     </label>
                 @endforeach
             </div>

@@ -3,68 +3,50 @@
 @section('title', $record ? 'Edit Maintenance Request' : 'New Maintenance Request')
 @section('topbar-title', $record ? 'Edit Maintenance Request' : 'New Maintenance Request')
 
+@section('page-breadcrumb')
+    <a href="{{ route('maintenance.index') }}">Maintenance</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>{{ $record ? $record->job_order : 'New Request' }}</span>
+@endsection
+@section('page-title')
+    {{ $record ? 'Edit Request' : 'New Maintenance Request' }}
+@endsection
+@section('page-back')
+    <a href="{{ route('maintenance.index') }}" class="btn btn-outline" aria-label="Back">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back</span>
+    </a>
+@endsection
+
 @push('styles')
 <style>
 /* ── SECTION CARDS ───────────────────────────────────────── */
-.maint-section {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    margin-bottom: 20px;
-}
-.maint-section-header {
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px 20px;
-    border-bottom: 1px solid var(--card-border);
-    border-left: 3px solid var(--accent);
-    background: linear-gradient(90deg, var(--accent-dim) 0%, transparent 60%);
-}
-.maint-section-icon {
-    width: 34px; height: 34px; border-radius: var(--radius-sm);
-    background: var(--accent-dim); color: var(--accent);
-    display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
-}
-.maint-section-title {
-    font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 800;
-    color: var(--text-primary); letter-spacing: 0.02em;
-}
-.maint-section-body { padding: 20px; }
 
 /* ── FORM GRID ───────────────────────────────────────────── */
-.form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+
 @media (max-width: 900px) {
-    .form-grid-3 { grid-template-columns: repeat(2, 1fr); }
+
 }
 @media (max-width: 600px) {
-    .form-grid-3, .form-grid-2 { grid-template-columns: 1fr; }
+
 }
 .span-2 { grid-column: span 2; }
 .span-3 { grid-column: span 3; }
 
 /* ── JOB LINES TABLE ─────────────────────────────────────── */
 .job-lines-table { width: 100%; border-collapse: collapse; }
-.job-lines-table th {
-    padding: 9px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--text-muted); background: var(--page-bg);
-    border-bottom: 1px solid var(--card-border); text-align: left;
-}
-.job-lines-table td { padding: 8px 6px; border-bottom: 1px solid #F1F5F9; vertical-align: top; }
-.job-lines-table tr:last-child td { border-bottom: none; }
-.job-lines-table input, .job-lines-table textarea {
-    width: 100%; padding: 7px 10px; font-size: 13px;
-    border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-    background: var(--input-bg); color: var(--text-primary); outline: none;
-    transition: border-color 0.18s; font-family: 'Plus Jakarta Sans', sans-serif;
-}
-.job-lines-table input:focus, .job-lines-table textarea:focus { border-color: var(--accent); }
-.job-lines-table textarea { resize: vertical; min-height: 60px; }
 .remove-line-btn {
-    background: none; border: none; color: #DC2626; cursor: pointer;
-    font-size: 14px; padding: 6px; border-radius: 6px; transition: background 0.15s;
+    position: relative; background: none; border: none; color: var(--tone-danger-fg); cursor: pointer;
+    font-size: var(--fs-base); padding: 6px; border-radius: 6px; transition: background 0.15s;
 }
-.remove-line-btn:hover { background: #FEF2F2; }
+.remove-line-btn:hover { background: var(--tone-danger-bg); }
+@media (max-width: 768px) {
+    /* Invisible 44px hit area — the visible icon stays compact in the table row. */
+    .remove-line-btn::after {
+        content: ''; position: absolute; inset: 50% auto auto 50%;
+        width: var(--h-control-lg); height: var(--h-control-lg);
+        transform: translate(-50%, -50%);
+    }
+}
 
 /* ── QUOTATION INLINE ATTACHMENT ─────────────────────────── */
 .quot-input-wrap { position: relative; }
@@ -74,39 +56,24 @@
     width: 34px; display: flex; align-items: center; justify-content: center;
     background: none; border: none; border-left: 1.5px solid var(--input-border);
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    color: var(--text-muted); cursor: pointer; font-size: 12px;
+    color: var(--text-muted); cursor: pointer; font-size: var(--fs-sm);
     transition: color 0.15s, background 0.15s;
 }
 .quot-clip-btn:hover { color: var(--accent); background: var(--accent-dim); }
 .quot-clip-btn.has-file { color: var(--accent); background: var(--accent-dim); }
-.quot-file-pill {
-    display: none; align-items: center; gap: 5px;
-    margin-top: 5px; padding: 3px 8px 3px 6px;
-    background: var(--accent-dim); border-radius: 20px;
-    font-size: 11px; font-weight: 600; color: var(--accent);
-    max-width: 100%; overflow: hidden;
-}
-.quot-file-pill.show { display: flex; }
-.quot-file-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
-.quot-file-pill button {
-    background: none; border: none; color: var(--accent); cursor: pointer;
-    font-size: 11px; padding: 0; line-height: 1; flex-shrink: 0; opacity: .7;
-    transition: opacity .15s;
-}
-.quot-file-pill button:hover { opacity: 1; }
 .quot-existing-file {
     display: flex; align-items: center; gap: 6px; margin-top: 5px;
     padding: 3px 8px 3px 6px; background: var(--accent-dim);
-    border-radius: 20px; font-size: 11px; font-weight: 600; max-width: 100%;
+    border-radius: var(--radius-pill); font-size: var(--fs-xs); font-weight: 600; max-width: 100%;
 }
 .quot-existing-file a { color: var(--accent); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
 .quot-existing-file a:hover { text-decoration: underline; }
-.quot-remove-label { display: flex; align-items: center; gap: 4px; color: #DC2626; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
-.quot-remove-label input { accent-color: #DC2626; }
+.quot-remove-label { display: flex; align-items: center; gap: 4px; color: var(--tone-danger-fg); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+.quot-remove-label input { accent-color: var(--tone-danger-fg); }
 
 /* ── READONLY NOTE ───────────────────────────────────────── */
 .section-note {
-    font-size: 11px; color: var(--text-muted);
+    font-size: var(--fs-xs); color: var(--text-muted);
     background: var(--page-bg); border: 1px solid var(--card-border);
     border-radius: var(--radius-sm); padding: 8px 12px; margin-bottom: 14px;
     display: flex; gap: 6px; align-items: center;
@@ -116,21 +83,6 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ route('maintenance.index') }}">Maintenance</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>{{ $record ? $record->job_order : 'New Request' }}</span>
-        </div>
-        <h1 class="page-header-title">{{ $record ? 'Edit Request' : 'New Maintenance Request' }}</h1>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('maintenance.index') }}" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back
-        </a>
-    </div>
-</div>
 
 @if($errors->any())
 <div class="alert alert-danger" style="margin-bottom:20px">
@@ -150,11 +102,11 @@
     @if($record) @method('PUT') @endif
 
     {{-- ── SECTION 1: REQUEST HEADER ─────────────────────── --}}
-    <div class="maint-section">
-        <div class="maint-section-header">
-            <div class="maint-section-icon"><i class="fa-solid fa-clipboard"></i></div>
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon"><i class="fa-solid fa-clipboard"></i></div>
             <div>
-                <div class="maint-section-title">Request Details</div>
+                <div class="card-title">Request Details</div>
             </div>
             @if($record)
             <div style="margin-left:auto">
@@ -170,8 +122,8 @@
             <input type="hidden" name="status" value="waiting_supervisor">
             @endif
         </div>
-        <div class="maint-section-body">
-            <div class="form-grid-3">
+        <div class="card-body">
+            <div class="form-grid cols-3">
                 <div class="form-group">
                     <label>Date <span class="required">*</span></label>
                     <input type="date" name="date" value="{{ old('date', $record?->date?->format('Y-m-d') ?? today()->format('Y-m-d')) }}" required class="{{ $errors->has('date') ? 'error' : '' }}">
@@ -230,17 +182,17 @@
     </div>
 
     {{-- ── SECTION 2: JOB LINES ──────────────────────────── --}}
-    <div class="maint-section">
-        <div class="maint-section-header">
-            <div class="maint-section-icon"><i class="fa-solid fa-list-check"></i></div>
-            <div class="maint-section-title">Job Lines</div>
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon"><i class="fa-solid fa-list-check"></i></div>
+            <div class="card-title">Job Lines</div>
             <button type="button" class="btn btn-outline btn-sm" style="margin-left:auto" onclick="addJobLine()">
                 <i class="fa-solid fa-plus"></i> Add Line
             </button>
         </div>
-        <div class="maint-section-body" style="padding:0">
+        <div class="card-body" style="padding:0">
             <div class="table-wrap">
-                <table class="job-lines-table">
+                <table class="is-editable">
                     <thead>
                         <tr>
                             <th style="width:28%">Location</th>
@@ -253,11 +205,11 @@
                         @php $jobLines = old('job_lines', $record?->job_lines ?? [['location'=>'','description'=>'','supervisor_comment'=>'']]); @endphp
                         @foreach($jobLines as $i => $line)
                         <tr class="job-line-row">
-                            <td><input type="text" name="job_lines[{{ $i }}][location]" value="{{ $line['location'] ?? '' }}" placeholder="e.g. Kitchen, Bathroom"></td>
-                            <td><textarea name="job_lines[{{ $i }}][description]" placeholder="Describe the issue or work needed">{{ $line['description'] ?? '' }}</textarea></td>
-                            <td><textarea name="job_lines[{{ $i }}][supervisor_comment]" placeholder="Supervisor notes">{{ $line['supervisor_comment'] ?? '' }}</textarea></td>
+                            <td data-label="Location"><input type="text" name="job_lines[{{ $i }}][location]" value="{{ $line['location'] ?? '' }}" placeholder="e.g. Kitchen, Bathroom"></td>
+                            <td data-label="Description of Work"><textarea name="job_lines[{{ $i }}][description]" placeholder="Describe the issue or work needed">{{ $line['description'] ?? '' }}</textarea></td>
+                            <td data-label="Supervisor Comment"><textarea name="job_lines[{{ $i }}][supervisor_comment]" placeholder="Supervisor notes">{{ $line['supervisor_comment'] ?? '' }}</textarea></td>
                             <td style="text-align:center">
-                                <button type="button" class="remove-line-btn" onclick="removeJobLine(this)" title="Remove">
+                                <button type="button" class="remove-line-btn" onclick="removeJobLine(this)" title="Remove" aria-label="Remove job line">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </td>
@@ -270,13 +222,13 @@
     </div>
 
     {{-- ── SECTION 3: SUPERVISOR ─────────────────────────── --}}
-    <div class="maint-section">
-        <div class="maint-section-header">
-            <div class="maint-section-icon"><i class="fa-solid fa-user-tie"></i></div>
-            <div class="maint-section-title">Supervisor</div>
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon"><i class="fa-solid fa-user-tie"></i></div>
+            <div class="card-title">Supervisor</div>
         </div>
-        <div class="maint-section-body">
-            <div class="form-grid-2">
+        <div class="card-body">
+            <div class="form-grid cols-2">
                 <div class="form-group">
                     <label>Supervisor Name</label>
                     <input type="text" name="supervisor_name" value="{{ old('supervisor_name', $record?->supervisor_name) }}" placeholder="Full name">
@@ -291,19 +243,19 @@
     </div>
 
     {{-- ── SECTION 4: MAINTENANCE USE ONLY ──────────────── --}}
-    <div class="maint-section">
-        <div class="maint-section-header">
-            <div class="maint-section-icon"><i class="fa-solid fa-wrench"></i></div>
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon"><i class="fa-solid fa-wrench"></i></div>
             <div>
-                <div class="maint-section-title">Maintenance Use Only</div>
+                <div class="card-title">Maintenance Use Only</div>
             </div>
         </div>
-        <div class="maint-section-body">
+        <div class="card-body">
             <div class="form-group" style="margin-bottom:16px">
                 <label>Job Assessment</label>
                 <textarea name="job_assessment" rows="3" placeholder="Assessment notes and findings…">{{ old('job_assessment', $record?->job_assessment) }}</textarea>
             </div>
-            <div class="form-grid-3" style="margin-bottom:16px">
+            <div class="form-grid cols-3" style="margin-bottom:16px">
                 @foreach([1,2,3] as $n)
                 @php $fileField = "quotation_{$n}_file"; $existingFile = $record?->$fileField; @endphp
                 <div class="form-group">
@@ -327,7 +279,7 @@
                         </label>
                     </div>
                     @endif
-                    <div class="quot-file-pill" id="quot_pill_{{ $n }}">
+                    <div class="file-chip" id="quot_pill_{{ $n }}">
                         <i class="fa-solid fa-paperclip" style="flex-shrink:0;font-size:10px"></i>
                         <span id="quot_fname_{{ $n }}"></span>
                         <button type="button" data-index="{{ $n }}" class="quot-pill-clear" title="Remove">
@@ -335,7 +287,7 @@
                         </button>
                     </div>
                     @error($fileField)
-                    <div style="font-size:12px;color:#DC2626;margin-top:4px"><i class="fa-solid fa-triangle-exclamation"></i> {{ $message }}</div>
+                    <div style="font-size:12px;color:var(--tone-danger-fg);margin-top:4px"><i class="fa-solid fa-triangle-exclamation"></i> {{ $message }}</div>
                     @enderror
                 </div>
                 @endforeach
@@ -348,13 +300,13 @@
     </div>
 
     {{-- ── SECTION 5: APPROVAL ──────────────────────────── --}}
-    <div class="maint-section">
-        <div class="maint-section-header">
-            <div class="maint-section-icon"><i class="fa-solid fa-signature"></i></div>
-            <div class="maint-section-title">Approval</div>
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon"><i class="fa-solid fa-signature"></i></div>
+            <div class="card-title">Approval</div>
         </div>
-        <div class="maint-section-body">
-            <div class="form-grid-2">
+        <div class="card-body">
+            <div class="form-grid cols-2">
                 <div class="form-group">
                     <label>Approved by Supervisor</label>
                     <input type="text" name="approved_supervisor" value="{{ old('approved_supervisor', $record?->approved_supervisor) }}" placeholder="Supervisor name / signature">
@@ -392,7 +344,7 @@ function addJobLine() {
         <td><textarea name="job_lines[${i}][description]" placeholder="Describe the issue or work needed"></textarea></td>
         <td><textarea name="job_lines[${i}][supervisor_comment]" placeholder="Supervisor notes"></textarea></td>
         <td style="text-align:center">
-            <button type="button" class="remove-line-btn" onclick="removeJobLine(this)" title="Remove">
+            <button type="button" class="remove-line-btn" onclick="removeJobLine(this)" title="Remove" aria-label="Remove job line">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </td>

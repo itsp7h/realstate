@@ -5,91 +5,99 @@
 
 @push('styles')
 <style>
-.form-card {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 28px 32px; margin-bottom: 20px;
-    max-width: 560px;
-}
-.form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
-.form-grid.cols-1 { grid-template-columns: 1fr; }
-.form-group { display: flex; flex-direction: column; gap: 6px; }
-.form-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
-.form-label .required { color: #DC2626; margin-left: 2px; }
+
+.form-label .required { color: var(--tone-danger-fg); margin-left: 2px; }
 .form-control {
-    padding: 9px 13px; font-size: 13px;
+    padding: 9px 13px; font-size: var(--fs-base);
     border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
     background: var(--input-bg); color: var(--text-primary); outline: none;
     transition: border-color 0.18s; width: 100%; box-sizing: border-box;
     font-family: 'Plus Jakarta Sans', sans-serif;
 }
 .form-control:focus { border-color: var(--accent); }
-.form-control.is-invalid { border-color: #DC2626; }
-.invalid-feedback { font-size: 11px; color: #DC2626; margin-top: 3px; }
-.form-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
-.form-actions { display: flex; gap: 10px; align-items: center; justify-content: flex-end; padding-top: 6px; }
+.form-control.is-invalid { border-color: var(--tone-danger-border); }
+.form-hint { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 3px; }
 </style>
 @endpush
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">{{ $record ? 'Edit User' : 'New User' }}</h1>
-        <p class="page-header-sub">{{ $record ? 'Update this account\'s details or role' : 'Create a new account that can sign in to this system' }}</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('users.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
-    </div>
-</div>
+@section('page-title')
+    {{ $record ? 'Edit User' : 'New User' }}
+@endsection
+@section('page-subtitle')
+    {{ $record ? 'Update this account\'s details or role' : 'Create a new account that can sign in to this system' }}
+@endsection
+@section('page-back')
+    <a href="{{ route('users.index') }}" class="btn btn-outline" aria-label="Back">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back</span>
+    </a>
+@endsection
+
+
+
 
 <form method="POST" action="{{ $record ? route('users.update', $record) : route('users.store') }}" novalidate>
     @csrf
     @if($record) @method('PUT') @endif
 
-    <div class="form-card">
-        <div class="form-grid cols-1">
-            <div class="form-group">
-                <label class="form-label" for="name">Full Name <span class="required">*</span></label>
-                <input type="text" id="name" name="name" class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}"
-                       value="{{ old('name', $record?->name) }}" maxlength="255" required>
-                @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
+    <div class="card is-roomy is-narrow">
+        <div class="card-body">
+            <div class="form-grid cols-1">
+                <div class="form-group">
+                    <label class="form-label" for="name">Full Name <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}"
+                           value="{{ old('name', $record?->name) }}" maxlength="255" required>
+                    @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
 
-            <div class="form-group">
-                <label class="form-label" for="email">Email Address <span class="required">*</span></label>
-                <input type="email" id="email" name="email" class="form-control {{ $errors->has('email') ? 'is-invalid' : '' }}"
-                       value="{{ old('email', $record?->email) }}" maxlength="255" required>
-                @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" class="form-control {{ $errors->has('email') ? 'is-invalid' : '' }}"
+                           value="{{ old('email', $record?->email) }}" maxlength="255" required>
+                    @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
 
-            <div class="form-group">
-                <label class="form-label" for="role">Role <span class="required">*</span></label>
-                <select id="role" name="role" class="form-control {{ $errors->has('role') ? 'is-invalid' : '' }}" required>
-                    <option value="">— Select —</option>
-                    @foreach(['admin' => 'Admin', 'user' => 'User', 'maintenance' => 'Maintenance'] as $value => $label)
-                    <option value="{{ $value }}" {{ old('role', $record?->role) === $value ? 'selected' : '' }}>{{ $label }}</option>
-                    @endforeach
-                </select>
-                <div class="form-hint">Only Admin can delete records, view Reports, and manage Users. Maintenance accounts can only access Maintenance Requests.</div>
-                @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
+                <div class="form-group">
+                    <label class="form-label" for="role">Role <span class="required">*</span></label>
+                    <select id="role" name="role" class="form-control {{ $errors->has('role') ? 'is-invalid' : '' }}"
+                            required aria-describedby="roleHint">
+                        <option value="">— Select —</option>
+                        @foreach($roles as $r)
+                        <option value="{{ $r['key'] }}" {{ old('role', $record?->role) === $r['key'] ? 'selected' : '' }}>{{ $r['label'] }} — {{ $r['scope'] }}</option>
+                        @endforeach
+                    </select>
+                    {{-- The selected role's own one-line summary, read straight from
+                         RoleCatalog, so this hint cannot contradict the Roles page the
+                         way a hand-written sentence listing three roles just did. --}}
+                    <div class="form-hint" id="roleHint" aria-live="polite"
+                         data-role-hints='@json(collect($roles)->pluck('summary', 'key'))'>
+                        {{ collect($roles)->firstWhere('key', old('role', $record?->role))['summary']
+                            ?? 'Pick a role to see what it can reach.' }}
+                    </div>
+                    <div class="form-hint">
+                        <a href="{{ route('roles.index') }}">Roles &amp; Permissions</a> lists every capability, role by role.
+                    </div>
+                    @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
 
-            <div class="form-group">
-                <label class="form-label" for="password">
-                    Password @if(! $record)<span class="required">*</span>@endif
-                </label>
-                <input type="password" id="password" name="password" class="form-control {{ $errors->has('password') ? 'is-invalid' : '' }}"
-                       placeholder="{{ $record ? 'Leave blank to keep current password' : '' }}" {{ $record ? '' : 'required' }}>
-                <div class="form-hint">At least 8 characters.</div>
-                @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">
+                        Password @if(! $record)<span class="required">*</span>@endif
+                    </label>
+                    <input type="password" id="password" name="password" class="form-control {{ $errors->has('password') ? 'is-invalid' : '' }}"
+                           placeholder="{{ $record ? 'Leave blank to keep current password' : '' }}" {{ $record ? '' : 'required' }}>
+                    <div class="form-hint">At least 8 characters.</div>
+                    @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
 
-            <div class="form-group">
-                <label class="form-label" for="password_confirmation">
-                    Confirm Password @if(! $record)<span class="required">*</span>@endif
-                </label>
-                <input type="password" id="password_confirmation" name="password_confirmation" class="form-control"
-                       {{ $record ? '' : 'required' }}>
+                <div class="form-group">
+                    <label class="form-label" for="password_confirmation">
+                        Confirm Password @if(! $record)<span class="required">*</span>@endif
+                    </label>
+                    <input type="password" id="password_confirmation" name="password_confirmation" class="form-control"
+                           {{ $record ? '' : 'required' }}>
+                </div>
             </div>
         </div>
     </div>
@@ -103,3 +111,20 @@
 </form>
 
 @endsection
+
+@push('scripts')
+<script>
+/* Swaps the hint under the Role field for the chosen role's summary. Text only,
+   from a map rendered server-side — no fetch, and the field is fully usable
+   with this script absent (the hint just stays on whatever loaded). */
+(function () {
+    const select = document.getElementById('role');
+    const hint = document.getElementById('roleHint');
+    if (!select || !hint) return;
+    const summaries = JSON.parse(hint.dataset.roleHints || '{}');
+    select.addEventListener('change', function () {
+        hint.textContent = summaries[this.value] || 'Pick a role to see what it can reach.';
+    });
+})();
+</script>
+@endpush

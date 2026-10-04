@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\RoleCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,7 +20,10 @@ class StoreUserRequest extends FormRequest
         return [
             'name'     => ['required', 'string', 'max:255', Rule::unique('users', 'name')->ignore($userId)],
             'email'    => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
-            'role'     => ['required', Rule::in(['admin', 'user', 'maintenance'])],
+            // Taken from the catalog rather than repeated: this rule is what
+            // decides which roles can exist at all, and RoleCatalogTest pins
+            // the two together.
+            'role'     => ['required', Rule::in(RoleCatalog::ROLES)],
             'password' => [$userId ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
         ];
     }

@@ -2,96 +2,32 @@
 
 @section('title', 'Invoices')
 @section('topbar-title', 'Invoices')
+@section('topbar-count', number_format($invoices->total()))
+
+@section('page-title', 'Invoices')
+@section('page-subtitle', 'Manage and track invoices issued to tenants')
+@section('page-actions')
+    <button type="button" class="btn btn-outline" onclick="openGenInvoicesModal()">
+        <i class="fa-solid fa-bolt"></i> Generate Invoices
+    </button>
+    <a href="{{ route('invoices.create') }}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> New Invoice
+    </a>
+@endsection
 
 @push('styles')
 <style>
-.inv-stats {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 14px; margin-bottom: 24px;
-}
-.inv-stat {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 16px 20px;
-    display: flex; align-items: center; gap: 14px;
-}
-.inv-stat-icon {
-    width: 40px; height: 40px; border-radius: var(--radius-sm);
-    display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
-}
-.inv-stat-icon.gray  { background: #F1F5F9; color: #64748B; }
-.inv-stat-icon.blue  { background: #EFF6FF; color: #2563EB; }
-.inv-stat-icon.amber { background: #FFFBEB; color: #D97706; }
-.inv-stat-icon.green { background: #ECFDF5; color: #059669; }
-.inv-stat-icon.red   { background: #FEF2F2; color: #DC2626; }
-.inv-stat-val { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-.inv-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-.filter-bar {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 14px 18px;
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px;
-}
-.filter-bar input, .filter-bar select {
-    padding: 8px 12px; font-size: 13px;
-    border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-    background: var(--input-bg); color: var(--text-primary); outline: none;
-    transition: border-color 0.18s;
-}
-.filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
-.filter-bar input[type="search"] { flex: 1; min-width: 180px; }
-.filter-bar input[type="date"]   { min-width: 140px; }
 
-.status-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
-}
-.status-badge.draft          { background: #F1F5F9; color: #64748B; }
-.status-badge.issued         { background: #EFF6FF; color: #2563EB; }
-.status-badge.partially_paid { background: #FFFBEB; color: #D97706; }
-.status-badge.paid           { background: #ECFDF5; color: #059669; }
-.status-badge.overdue        { background: #FEF2F2; color: #DC2626; }
-.status-badge.cancelled      { background: #F8FAFC; color: #94A3B8; }
-
-.type-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;
-}
-.type-badge.rent      { background: #EFF6FF; color: #2563EB; }
-.type-badge.utilities { background: #FFF7ED; color: #EA580C; }
-.type-badge.other     { background: #F1F5F9; color: #64748B; }
-
-.table-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden; }
-.overdue-row td { background: #FFF8F8; }
-
-.pdf-modal-overlay {
-    display: none; position: fixed; inset: 0; z-index: 1050;
-    background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
-}
-.pdf-modal-overlay.open { display: flex; }
-.pdf-modal-box {
-    width: 90vw; height: 90vh; background: #1E2433; border-radius: var(--radius);
-    display: flex; flex-direction: column; overflow: hidden;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-}
-.pdf-modal-header {
-    padding: 12px 18px; background: #151929; border-bottom: 1px solid #2D3650;
-    display: flex; align-items: center; gap: 12px;
-}
-.pdf-modal-header span { flex: 1; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: #E2E8F0; }
-.pdf-modal-iframe { flex: 1; border: none; width: 100%; background: #fff; }
+.overdue-row td { background: var(--tone-danger-bg); }
 
 /* GENERATE INVOICES MODAL */
 .gen-modal-overlay {
     display: none; position: fixed; inset: 0; z-index: 1050;
     background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(2px);
-    align-items: center; justify-content: center; padding: 20px;
+    align-items: center; justify-content: center; padding: var(--sp-5);
 }
 .gen-modal-overlay.open { display: flex; }
-.gen-modal-box {
-    width: 100%; max-width: 420px; background: var(--card-bg);
-    border-radius: var(--radius); box-shadow: 0 24px 60px rgba(0,0,0,0.25);
-    overflow: hidden;
-}
 .gen-modal-header {
     padding: 20px 24px 16px; display: flex; align-items: flex-start; gap: 14px;
     border-bottom: 1px solid var(--card-border);
@@ -99,17 +35,17 @@
 .gen-modal-icon {
     width: 40px; height: 40px; border-radius: var(--radius-sm); flex-shrink: 0;
     background: var(--accent-dim); color: var(--accent);
-    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    display: flex; align-items: center; justify-content: center; font-size: var(--fs-md);
 }
-.gen-modal-title { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-primary); }
-.gen-modal-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
+.gen-modal-title { font-family: 'Outfit', sans-serif; font-size: var(--fs-md); font-weight: 700; color: var(--text-primary); }
+.gen-modal-sub { font-size: var(--fs-sm); color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
 .gen-modal-body { padding: 20px 24px; }
 .gen-modal-body label {
-    display: block; font-size: 12px; font-weight: 600; color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px;
+    display: block; font-size: var(--fs-sm); font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: var(--sp-2);
 }
 .gen-modal-body input[type="date"] {
-    width: 100%; padding: 10px 13px; font-size: 14px; box-sizing: border-box;
+    width: 100%; padding: 10px 13px; font-size: var(--fs-base); box-sizing: border-box;
     border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
     background: var(--input-bg); color: var(--text-primary); outline: none;
     transition: border-color 0.18s; font-family: 'Plus Jakarta Sans', sans-serif;
@@ -119,8 +55,8 @@
     margin-top: 14px; padding: 12px 14px; border-radius: var(--radius-sm);
     background: var(--accent-dim); display: flex; align-items: center; gap: 10px;
 }
-.gen-modal-preview i { color: var(--accent); font-size: 14px; }
-.gen-modal-preview span { font-size: 13px; color: var(--text-primary); }
+.gen-modal-preview i { color: var(--accent); font-size: var(--fs-base); }
+.gen-modal-preview span { font-size: var(--fs-base); color: var(--text-primary); }
 .gen-modal-preview strong { font-family: 'Outfit', sans-serif; font-weight: 700; }
 .gen-modal-footer {
     padding: 16px 24px; border-top: 1px solid var(--card-border);
@@ -131,114 +67,152 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Invoices</h1>
-        <p class="page-header-sub">Manage and track invoices issued to tenants</p>
-    </div>
-    <div class="page-header-actions">
-        <button type="button" class="btn btn-outline" onclick="openGenInvoicesModal()">
-            <i class="fa-solid fa-bolt"></i> Generate Invoices
-        </button>
-        <a href="{{ route('invoices.create') }}" class="btn btn-primary">
-            <i class="fa-solid fa-plus"></i> New Invoice
-        </a>
-    </div>
-</div>
 
-{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
+     The status pill is the row's one slot when nothing is filtered by
+     status; when a chip is filtering, every pill would say the same word,
+     so the amount takes the slot instead. ── --}}
 @php
-    $invStatusLabels = ['issued' => 'Issued', 'partially_paid' => 'Partially Paid', 'paid' => 'Paid', 'overdue' => 'Overdue'];
-    $invBadgeColors = [
-        'paid'           => ['#E6F6EE', '#17A96C'],
-        'partially_paid' => ['#FBF3E4', '#C08A2D'],
-        'issued'         => ['#E9F0FD', '#4A7DF0'],
-        'overdue'        => ['#FCEBEB', '#D64545'],
-        'draft'          => ['#F1F3F8', '#6B7688'],
-        'cancelled'      => ['#F1F3F8', '#6B7688'],
-    ];
+    $invStatusLabels = ['issued' => 'Issued', 'partially_paid' => 'Partially paid', 'paid' => 'Paid', 'overdue' => 'Overdue'];
 @endphp
-<div class="m-screen">
-    <div style="background:linear-gradient(135deg,#10141F,#232B42);border-radius:18px;padding:20px;display:flex;gap:24px;">
-        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">COLLECTED &middot; {{ now()->format('M') }}</div><div style="font-size:21px;font-weight:800;color:#7ED8AC;">BHD {{ number_format($collectedThisMonth, 0) }}</div></div>
-        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">OUTSTANDING</div><div style="font-size:21px;font-weight:800;color:#E7B266;">BHD {{ number_format($outstanding, 0) }}</div></div>
-    </div>
-    <div class="m-chip-row no-sb">
-        <a href="{{ route('invoices.index') }}" class="m-chip {{ !request('status') ? 'active' : '' }}">All</a>
-        @foreach($invStatusLabels as $val => $label)
-            <a href="{{ route('invoices.index', ['status' => $val]) }}" class="m-chip {{ request('status') === $val ? 'active' : '' }}">{{ $label }}</a>
-        @endforeach
-    </div>
-    <div class="m-row-list">
-        @forelse($invoices as $inv)
-            @php [$bg, $fg] = $invBadgeColors[$inv->status] ?? ['#F1F3F8', '#6B7688']; @endphp
-            <a href="{{ route('invoices.show', $inv) }}" class="m-row-card">
-                <div class="m-row-icon" style="background:var(--m-line);color:#8E9AAE;"><i class="fa-solid fa-file-invoice"></i></div>
-                <div style="flex:1;min-width:0;">
-                    <div class="m-row-title">{{ $inv->invoice_number }}</div>
-                    <div class="m-row-sub">{{ $inv->tenant_name }}</div>
-                </div>
-                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-                    <div style="font-size:13.5px;font-weight:800;">BHD {{ number_format($inv->amount, 0) }}</div>
-                    <span class="m-row-badge" style="background:{{ $bg }};color:{{ $fg }};">{{ $inv->status_label }}</span>
-                </div>
+@php
+    $invStatus = request('status');
+    $invChips  = [[
+        'label'  => 'All',
+        'href'   => route('invoices.index', array_filter(['search' => request('search')])),
+        'active' => ! $invStatus,
+    ]];
+    foreach ($invStatusLabels as $invVal => $invLabel) {
+        $invChips[] = [
+            'label'  => $invLabel,
+            'href'   => route('invoices.index', array_filter(['search' => request('search'), 'status' => $invVal])),
+            'active' => $invStatus === $invVal,
+        ];
+    }
+@endphp
+<x-mobile-list
+    :actions="['primary' => ['label' => 'New invoice', 'href' => route('invoices.create')]]"
+    :stats="[
+        ['money' => $collectedThisMonth,               'label' => now()->format('M').' BHD'],
+        {{-- "Owed", the same word the dashboard uses for the same figure: one
+             name per thing, and it fits the column without wrapping. --}}
+        ['money' => $outstanding,                      'label' => 'Owed BHD', 'owed' => true],
+        ['value' => number_format($invoices->total()), 'label' => 'Invoices'],
+    ]"
+    :search="[
+        'action'      => route('invoices.index'),
+        'placeholder' => 'Search invoice or tenant',
+        'aria'        => 'Search invoices',
+        'keep'        => ['status'],
+    ]"
+    :chips="$invChips">
+
+    @forelse($invoices as $inv)
+        <a href="{{ route('invoices.show', $inv) }}" class="m-row-card ps-reveal">
+            <span class="m-row-thumb"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i></span>
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $inv->invoice_number }}</span>
+                <span class="m-row-sub">{{ $inv->tenant_name }}</span>
+                {{-- The status word repeats the active chip, so it only
+                     earns a line when nothing is filtering by it. --}}
+                <span class="m-row-sub">
+                    Due {{ $inv->due_date?->format('d M Y') ?? '—' }}@unless(request('status')) &middot; {{ $inv->status_label }}@endunless
+                </span>
+            </span>
+            <span class="m-row-amount">BHD {{ number_format($inv->amount, 0) }}</span>
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+        </a>
+    @empty
+        <div class="m-empty">
+            <div class="m-empty-icon"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No invoices here</div>
+            <div class="m-empty-sub">Raise one against a lease, and it shows up here.</div>
+            <a href="{{ route('invoices.create') }}" class="m-action-btn primary">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>New invoice
             </a>
-        @empty
-            <div class="m-empty">
-                <div class="m-empty-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                <div class="m-empty-title">No invoices found</div>
-                <div class="m-empty-sub">Try adjusting your filters.</div>
-            </div>
-        @endforelse
+        </div>
+    @endforelse
+</x-mobile-list>
+
+<div class="stats-grid m-hide-desktop-index">
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon gray"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+            <span class="stat-lbl">Total</span>
+        </div>
+        <div class="stat-val">{{ $stats['total'] }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon blue"><i class="fa-solid fa-paper-plane"></i></span>
+            <span class="stat-lbl">Issued</span>
+        </div>
+        <div class="stat-val">{{ $stats['issued'] }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon amber"><i class="fa-solid fa-circle-half-stroke"></i></span>
+            <span class="stat-lbl">Partial</span>
+        </div>
+        <div class="stat-val">{{ $stats['partially_paid'] }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon green"><i class="fa-solid fa-circle-check"></i></span>
+            <span class="stat-lbl">Paid</span>
+        </div>
+        <div class="stat-val">{{ $stats['paid'] }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></span>
+            <span class="stat-lbl">Overdue</span>
+        </div>
+        <div class="stat-val">{{ $stats['overdue'] }}</div>
     </div>
 </div>
-
-<div class="inv-stats m-hide-desktop-index">
-    <div class="inv-stat">
-        <div class="inv-stat-icon gray"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-        <div><div class="inv-stat-val">{{ $stats['total'] }}</div><div class="inv-stat-lbl">Total</div></div>
-    </div>
-    <div class="inv-stat">
-        <div class="inv-stat-icon blue"><i class="fa-solid fa-paper-plane"></i></div>
-        <div><div class="inv-stat-val">{{ $stats['issued'] }}</div><div class="inv-stat-lbl">Issued</div></div>
-    </div>
-    <div class="inv-stat">
-        <div class="inv-stat-icon amber"><i class="fa-solid fa-circle-half-stroke"></i></div>
-        <div><div class="inv-stat-val">{{ $stats['partially_paid'] }}</div><div class="inv-stat-lbl">Partial</div></div>
-    </div>
-    <div class="inv-stat">
-        <div class="inv-stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
-        <div><div class="inv-stat-val">{{ $stats['paid'] }}</div><div class="inv-stat-lbl">Paid</div></div>
-    </div>
-    <div class="inv-stat">
-        <div class="inv-stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <div><div class="inv-stat-val">{{ $stats['overdue'] }}</div><div class="inv-stat-lbl">Overdue</div></div>
-    </div>
-</div>
-
-<form method="GET" action="{{ route('invoices.index') }}" class="filter-bar m-hide-desktop-index">
-    <input type="search" name="search" value="{{ request('search') }}" placeholder="Search invoice #, tenant, property…">
-    <select name="status" onchange="this.form.submit()">
-        <option value="">All Statuses</option>
-        @foreach(['draft'=>'Draft','issued'=>'Issued','partially_paid'=>'Partially Paid','paid'=>'Paid','overdue'=>'Overdue','cancelled'=>'Cancelled'] as $v => $l)
-        <option value="{{ $v }}" {{ request('status') === $v ? 'selected' : '' }}>{{ $l }}</option>
-        @endforeach
-    </select>
-    <select name="type" onchange="this.form.submit()">
-        <option value="">All Types</option>
-        @foreach(['rent'=>'Rent','utilities'=>'Utilities','other'=>'Other'] as $v => $l)
-        <option value="{{ $v }}" {{ request('type') === $v ? 'selected' : '' }}>{{ $l }}</option>
-        @endforeach
-    </select>
-    <input type="date" name="date_from" value="{{ request('date_from') }}" title="Invoice date from">
-    <input type="date" name="date_to"   value="{{ request('date_to') }}"   title="Invoice date to">
-    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-    @if(request()->hasAny(['search','status','type','date_from','date_to']))
-    <a href="{{ route('invoices.index') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
-    @endif
-</form>
 
 <div class="table-card m-hide-desktop-index">
+    <form method="GET" action="{{ route('invoices.index') }}">
+        <div class="filter-bar">
+            <div class="filter-group is-search">
+                <label for="f_search">Search</label>
+                <input type="search" id="f_search" name="search" value="{{ request('search') }}" placeholder="Search invoice #, tenant, property…">
+            </div>
+            <div class="filter-group">
+                <label for="f_status">Status</label>
+                <select id="f_status" name="status" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    @foreach(['draft'=>'Draft','issued'=>'Issued','partially_paid'=>'Partially Paid','paid'=>'Paid','overdue'=>'Overdue','cancelled'=>'Cancelled'] as $v => $l)
+                    <option value="{{ $v }}" {{ request('status') === $v ? 'selected' : '' }}>{{ $l }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="f_type">Type</label>
+                <select id="f_type" name="type" onchange="this.form.submit()">
+                    <option value="">All Types</option>
+                    @foreach(['rent'=>'Rent','utilities'=>'Utilities','other'=>'Other'] as $v => $l)
+                    <option value="{{ $v }}" {{ request('type') === $v ? 'selected' : '' }}>{{ $l }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="f_date_from">From</label>
+                <input type="date" id="f_date_from" name="date_from" value="{{ request('date_from') }}">
+            </div>
+            <div class="filter-group">
+                <label for="f_date_to">To</label>
+                <input type="date" id="f_date_to" name="date_to" value="{{ request('date_to') }}">
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                @if(request()->hasAny(['search','status','type','date_from','date_to']))
+                <a href="{{ route('invoices.index') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
+                @endif
+            </div>
+        </div>
+    </form>
     @if($invoices->isEmpty())
     <div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
         <i class="fa-solid fa-file-invoice-dollar" style="font-size:36px;display:block;margin-bottom:12px;opacity:0.3"></i>
@@ -254,17 +228,17 @@
                     <th>Tenant</th>
                     <th>Property / Unit</th>
                     <th>Type</th>
-                    <th>Amount (BHD)</th>
-                    <th>Balance (BHD)</th>
+                    <th class="num">Amount (BHD)</th>
+                    <th class="num">Balance (BHD)</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th class="col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($invoices as $inv)
                 <tr data-href="{{ route('invoices.show', $inv) }}" style="cursor:pointer"
                     class="{{ $inv->status === 'overdue' ? 'overdue-row' : '' }}">
-                    <td style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--accent)">
+                    <td class="cell-id">
                         {{ $inv->invoice_number }}
                     </td>
                     <td style="white-space:nowrap;font-size:12px">{{ $inv->invoice_date->format('d M Y') }}</td>
@@ -277,9 +251,11 @@
                             @if($inv->unit)<span style="color:var(--text-muted)"> / {{ $inv->unit }}</span>@endif
                         @endif
                     </td>
-                    <td><span class="type-badge {{ $inv->type }}">{{ $inv->type_label }}</span></td>
-                    <td style="font-family:'Outfit',sans-serif;font-weight:700">{{ number_format($inv->amount, 3) }}</td>
-                    <td style="font-family:'Outfit',sans-serif;font-weight:700;{{ $inv->balance_due > 0 && $inv->status !== 'cancelled' ? 'color:#DC2626' : 'color:var(--text-muted)' }}">
+                    <td><span class="status-badge {{ $inv->type }}">{{ $inv->type_label }}</span></td>
+                    <td class="num">{{ number_format($inv->amount, 3) }}</td>
+                    {{-- An outstanding balance is the column people scan for, so it
+                         carries a tone; a settled or cancelled one recedes. --}}
+                    <td class="num {{ $inv->balance_due > 0 && $inv->status !== 'cancelled' ? 'val-negative' : 'cell-muted' }}">
                         {{ number_format($inv->balance_due, 3) }}
                     </td>
                     <td>
@@ -288,45 +264,40 @@
                             {{ $inv->status_label }}
                         </span>
                     </td>
-                    <td>
-                        <div style="display:flex;gap:6px;align-items:center" onclick="event.stopPropagation()">
-                            <button type="button" class="btn btn-outline btn-sm" title="Preview PDF"
-                                    onclick="openInvPdf('{{ route('invoices.pdf.preview', $inv) }}', '{{ $inv->invoice_number }}')">
-                                <i class="fa-solid fa-file-pdf"></i>
-                            </button>
-                            <a href="{{ route('invoices.show', $inv) }}" class="btn btn-outline btn-sm" title="View">
-                                <i class="fa-solid fa-eye"></i>
-                            </a>
-                            @if($inv->status !== 'paid' && $inv->status !== 'cancelled')
-                            <a href="{{ route('invoices.edit', $inv) }}" class="btn btn-outline btn-sm" title="Edit">
-                                <i class="fa-solid fa-pen"></i>
-                            </a>
-                            @endif
-                            <form method="POST" action="{{ route('invoices.destroy', $inv) }}"
-                                  onsubmit="return confirm('Delete invoice {{ $inv->invoice_number }}?')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </form>
-                        </div>
+                    <td class="col-actions" onclick="event.stopPropagation()">
+                        @include('partials.row-actions', ['label' => 'Actions for invoice '.$inv->invoice_number, 'items' => [
+                            ['label' => 'View invoice', 'icon' => 'fa-eye', 'url' => route('invoices.show', $inv)],
+                            ['label' => 'Preview PDF',  'icon' => 'fa-file-pdf',
+                             'onclick' => "openInvPdf('".route('invoices.pdf.preview', $inv)."', '".e($inv->invoice_number)."')"],
+                            /* A paid or cancelled invoice is a record, not a draft. */
+                            ($inv->status !== 'paid' && $inv->status !== 'cancelled')
+                                ? ['label' => 'Edit invoice', 'icon' => 'fa-pen', 'url' => route('invoices.edit', $inv)]
+                                : null,
+                            ['sep' => true],
+                            ['label' => 'Delete invoice', 'icon' => 'fa-trash', 'tone' => 'danger',
+                             'action' => route('invoices.destroy', $inv), 'method' => 'DELETE',
+                             'confirm' => 'Delete invoice '.$inv->invoice_number.'?'],
+                        ]])
                     </td>
                 </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
-    <div style="padding:14px 18px;border-top:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-muted)">
-        <div>Showing {{ $invoices->firstItem() }}–{{ $invoices->lastItem() }} of {{ $invoices->total() }}</div>
-        <div>{{ $invoices->links() }}</div>
+    <div class="table-footer">
+        <div class="result-count">
+            Showing <strong>{{ $invoices->firstItem() ?? 0 }}–{{ $invoices->lastItem() ?? 0 }}</strong>
+            of <strong>{{ number_format($invoices->total()) }}</strong> invoices
+        </div>
+        {{ $invoices->links() }}
     </div>
     @endif
 </div>
 
 {{-- PDF PREVIEW MODAL --}}
-<div class="pdf-modal-overlay" id="invPdfModal" onclick="closeInvPdf(event)">
-    <div class="pdf-modal-box" onclick="event.stopPropagation()">
-        <div class="pdf-modal-header">
+<div class="pdf-viewer-overlay" id="invPdfModal" onclick="closeInvPdf(event)">
+    <div class="pdf-viewer" onclick="event.stopPropagation()">
+        <div class="pdf-viewer-header">
             <i class="fa-solid fa-file-pdf" style="color:var(--accent);font-size:16px"></i>
             <span id="invPdfTitle">Invoice</span>
             <a id="invPdfDownload" href="#" class="btn btn-outline btn-sm" download>
@@ -336,13 +307,13 @@
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
-        <iframe id="invPdfFrame" class="pdf-modal-iframe" src="about:blank"></iframe>
+        <iframe id="invPdfFrame" class="pdf-viewer-frame" src="about:blank"></iframe>
     </div>
 </div>
 
 {{-- GENERATE INVOICES MODAL --}}
 <div class="gen-modal-overlay" id="genInvoicesModal" onclick="closeGenInvoicesModal(event)">
-    <div class="gen-modal-box" onclick="event.stopPropagation()">
+    <div class="modal-box" style="--modal-w:420px" onclick="event.stopPropagation()">
         <form method="POST" action="{{ route('invoices.generate-monthly') }}">
             @csrf
             <div class="gen-modal-header">

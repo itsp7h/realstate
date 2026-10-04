@@ -5,6 +5,7 @@ namespace App\Mcp\Tools;
 use App\Models\LeaseContract;
 use App\Models\PropertyUnit;
 use App\Models\Tenant;
+use App\Support\Occupancy;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Carbon;
 use Laravel\Mcp\Request;
@@ -57,7 +58,7 @@ class LeasingStatusTool extends Tool
             'total_units'          => $totalUnits,
             'occupied_units'       => $occupiedUnits,
             'vacant_units'         => $totalUnits - $occupiedUnits,
-            'occupancy_rate_percent' => $totalUnits > 0 ? round(($occupiedUnits / $totalUnits) * 100, 1) : 0,
+            'occupancy_rate_percent' => Occupancy::rate($occupiedUnits, $totalUnits),
             'active_lease_contracts' => $activeContracts->count(),
             'total_tenants'        => Tenant::count(),
             'expiring_within_days' => $expiringWithinDays,

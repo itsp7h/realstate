@@ -5,27 +5,29 @@
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <a href="{{ route('tenants.index') }}">Tenants</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Edit</span>
-        </div>
-        <h1 class="page-header-title">Edit Tenant</h1>
-        <p class="page-header-sub">Update profile information for {{ $tenant->name }}</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('tenants.show', $tenant) }}" class="btn btn-outline">
-            <i class="fa-regular fa-eye"></i> View Profile
-        </a>
-        <a href="{{ route('tenants.index') }}" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back to Tenants
-        </a>
-    </div>
-</div>
+@section('page-breadcrumb')
+    <a href="{{ url('/dashboard') }}">Home</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <a href="{{ route('tenants.index') }}">Tenants</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Edit</span>
+@endsection
+@section('page-title', 'Edit Tenant')
+@section('page-subtitle')
+    Update profile information for {{ $tenant->name }}
+@endsection
+@section('page-back')
+    <a href="{{ route('tenants.index') }}" class="btn btn-outline" aria-label="Back to Tenants">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back to Tenants</span>
+    </a>
+@endsection
+
+@section('page-actions')
+    <a href="{{ route('tenants.show', $tenant) }}" class="btn btn-outline">
+        <i class="fa-regular fa-eye"></i> View Profile
+    </a>
+@endsection
+
 
 <form method="POST" action="{{ route('tenants.update', $tenant) }}" novalidate>
     @csrf @method('PUT')
@@ -190,5 +192,19 @@ function syncTypeLabels() {
 }
 document.querySelectorAll('input[name="tenant_type"]').forEach(r => r.addEventListener('change', syncTypeLabels));
 syncTypeLabels();
+
+/* The overview's "Add ›" links arrive as ?focus=<field>. Put the cursor in
+   the field they came from: a reader who tapped "Add" next to Phone has
+   already said which field they mean, and making them find it again in a
+   form of fifteen is asking the question twice. Only fields that exist on
+   this form can be named, so an unknown value is simply ignored. */
+(function () {
+    const want = new URLSearchParams(location.search).get('focus');
+    if (! want) return;
+    const field = document.querySelector(`[name="${CSS.escape(want)}"]`);
+    if (! field) return;
+    field.scrollIntoView({block: 'center', behavior: 'instant'});
+    field.focus({preventScroll: true});
+})();
 </script>
 @endpush

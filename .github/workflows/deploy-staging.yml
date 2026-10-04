@@ -71,6 +71,10 @@ jobs:
         working-directory: ${{ env.DEPLOY_PATH }}
         run: |
           sudo chown -R actionsrunner:actionsrunner storage bootstrap/cache database
+          # storage/ is excluded from the rsync, so directories added to the
+          # repo under it never reach the server; DomPDF needs this one for
+          # its font cache and will not create it.
+          mkdir -p storage/fonts
           chmod -R ug+rwX storage bootstrap/cache
           chmod g+w database
           chmod g+w database/database.sqlite

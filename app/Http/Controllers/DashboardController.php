@@ -11,6 +11,7 @@ use App\Models\MaintenanceRequest;
 use App\Models\Payment;
 use App\Models\PropertyUnit;
 use App\Services\DashboardAnalyticsService;
+use App\Support\Occupancy;
 use Illuminate\Support\Carbon;
 
 class DashboardController extends Controller
@@ -68,7 +69,7 @@ class DashboardController extends Controller
             'overdueCount'    => $overdueTenantCount,
             'openMaintenance' => $openMaintenanceCount,
             'expiringLeases'  => $expiringLeaseCount,
-            'occupancyPct'    => $stats['units'] > 0 ? round($stats['occupied'] / $stats['units'] * 100) : 0,
+            'occupancyPct'    => Occupancy::percent($stats['occupied'], $stats['units']),
         ];
 
         return view('dashboard', compact(

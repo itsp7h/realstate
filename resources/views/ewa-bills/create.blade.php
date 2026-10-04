@@ -3,36 +3,30 @@
 @section('title', $record ? 'Edit EWA Bill' : 'New EWA Bill')
 @section('topbar-title', 'EWA Bills')
 
+@section('page-title')
+    {{ $record ? 'Edit EWA Bill' : 'New EWA Bill' }}
+@endsection
+@section('page-subtitle', 'Electricity & Water Authority — Kingdom of Bahrain')
+@section('page-back')
+    <a href="{{ route('ewa-bills.index') }}" class="btn btn-outline" aria-label="Back">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back</span>
+    </a>
+@endsection
+
 @push('styles')
 <style>
-.form-card {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 28px 32px; margin-bottom: 20px;
-}
-.form-card-title {
-    font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700;
-    color: var(--text-primary); margin-bottom: 20px; padding-bottom: 14px;
-    border-bottom: 1px solid var(--card-border); display: flex; align-items: center; gap: 8px;
-}
-.form-card-title.ewa { color: #0D9488; }
-.form-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 18px; }
-.form-grid.cols-3 { grid-template-columns: repeat(3,1fr); }
-.form-grid.cols-4 { grid-template-columns: repeat(4,1fr); }
-.form-grid.cols-1 { grid-template-columns: 1fr; }
-.form-group { display: flex; flex-direction: column; gap: 6px; }
-.form-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
-.form-label .required { color: #DC2626; margin-left: 2px; }
-.form-label .unit-tag { color: var(--accent); font-size: 10px; margin-left: 4px; background: var(--accent-dim); padding: 1px 6px; border-radius: 4px; }
+
+.form-label .required { color: var(--tone-danger-fg); margin-left: 2px; }
+.form-label .unit-tag { color: var(--accent); font-size: var(--fs-2xs); margin-left: var(--sp-1); background: var(--accent-dim); padding: 1px 6px; border-radius: 4px; }
 .form-control {
-    padding: 9px 13px; font-size: 13px;
+    padding: 9px 13px; font-size: var(--fs-base);
     border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
     background: var(--input-bg); color: var(--text-primary); outline: none;
     transition: border-color 0.18s; width: 100%; box-sizing: border-box;
     font-family: 'Plus Jakarta Sans', sans-serif;
 }
 .form-control:focus { border-color: var(--accent); }
-.form-control.is-invalid { border-color: #DC2626; }
-.invalid-feedback { font-size: 11px; color: #DC2626; margin-top: 3px; display: none; }
+.form-control.is-invalid { border-color: var(--tone-danger-border); }
 .form-control.is-invalid ~ .invalid-feedback { display: block; }
 textarea.form-control { resize: vertical; min-height: 80px; }
 
@@ -43,16 +37,13 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 }
 .meter-row-header {
     display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
-    font-size: 13px; font-weight: 700; color: var(--text-primary);
+    font-size: var(--fs-base); font-weight: 700; color: var(--text-primary);
 }
-.meter-badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-.meter-badge.elec  { background: #FEF9C3; color: #713F12; }
-.meter-badge.water { background: #E0F2FE; color: #0369A1; }
 
 /* Consumption auto-computed */
 .computed-field {
     background: var(--page-bg); border: 1.5px dashed var(--card-border);
-    border-radius: var(--radius-sm); padding: 9px 13px; font-size: 13px;
+    border-radius: var(--radius-sm); padding: 9px 13px; font-size: var(--fs-base);
     color: var(--text-muted); font-family: 'Outfit', sans-serif; font-weight: 700;
 }
 .computed-field.has-value { color: var(--text-primary); }
@@ -62,44 +53,44 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .amount-wrap input { padding-right: 52px; font-family: 'Outfit', sans-serif; font-weight: 700; }
 .amount-wrap::after {
     content: 'BHD'; position: absolute; right: 13px; top: 50%;
-    transform: translateY(-50%); font-size: 11px; font-weight: 700;
+    transform: translateY(-50%); font-size: var(--fs-xs); font-weight: 700;
     color: var(--text-muted); pointer-events: none;
 }
 
 /* Total summary */
 .total-summary {
-    background: linear-gradient(135deg, #0D9488 0%, #0369A1 100%);
+    background: linear-gradient(135deg, var(--tone-info-fg) 0%, var(--tone-info-fg) 100%);
     border-radius: var(--radius-sm); padding: 18px 24px;
-    display: flex; align-items: center; justify-content: space-between; margin-top: 4px;
+    display: flex; align-items: center; justify-content: space-between; margin-top: var(--sp-1);
 }
-.total-summary .lbl { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); }
-.total-summary .val { font-family: 'Outfit',sans-serif; font-size: 28px; font-weight: 800; color: #fff; }
-.total-summary .cur { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.75); margin-left: 4px; }
+.total-summary .lbl { font-size: var(--fs-base); font-weight: 600; color: rgba(255,255,255,0.85); }
+.total-summary .val { font-family: 'Outfit',sans-serif; font-size: 28px; font-weight: 800; color: var(--ink-on-fill); }
+.total-summary .cur { font-size: var(--fs-base); font-weight: 600; color: rgba(255,255,255,0.75); margin-left: var(--sp-1); }
 
 /* Cap & split preview */
 .cap-section { margin-top: 14px; }
 .cap-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.cap-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; min-width: 80px; }
+.cap-label { font-size: var(--fs-sm); font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; min-width: 80px; }
 .cap-source-badge {
     display: inline-flex; align-items: center; gap: 4px;
-    padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700;
-    background: #F0FDFA; color: #0D9488; border: 1px solid #99F6E4;
+    padding: 2px 8px; border-radius: var(--radius-pill); font-size: var(--fs-2xs); font-weight: 700;
+    background: var(--tone-info-bg); color: var(--tone-info-fg); border: 1px solid var(--tone-info-border);
 }
-.split-preview { display: none; margin-top: 12px; padding: 14px 16px; background: var(--page-bg); border: 1px solid var(--card-border); border-radius: var(--radius-sm); }
+.split-preview { display: none; margin-top: var(--sp-3); }
 .split-preview.show { display: block; }
 .split-bar { height: 8px; border-radius: 4px; overflow: hidden; display: flex; margin: 8px 0 12px; }
-.split-bar-landlord { background: #059669; transition: width 0.3s ease; }
-.split-bar-tenant   { background: #D97706; transition: width 0.3s ease; }
+.split-bar-landlord { background: var(--tone-success-fg); transition: width 0.3s ease; }
+.split-bar-tenant   { background: var(--tone-warning-fg); transition: width 0.3s ease; }
 .split-amounts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .split-cell { padding: 10px 14px; border-radius: var(--radius-sm); }
-.split-cell.landlord { background: #ECFDF5; border: 1px solid #BBF7D0; }
-.split-cell.tenant   { background: #FFFBEB; border: 1px solid #FDE68A; }
-.split-cell-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
-.split-cell.landlord .split-cell-lbl { color: #059669; }
-.split-cell.tenant   .split-cell-lbl { color: #D97706; }
-.split-cell-val { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; }
-.split-cell.landlord .split-cell-val { color: #059669; }
-.split-cell.tenant   .split-cell-val { color: #D97706; }
+.split-cell.landlord { background: var(--tone-success-bg); border: 1px solid var(--tone-success-border); }
+.split-cell.tenant   { background: var(--tone-warning-bg); border: 1px solid var(--tone-warning-border); }
+.split-cell-lbl { font-size: var(--fs-2xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+.split-cell.landlord .split-cell-lbl { color: var(--tone-success-fg); }
+.split-cell.tenant   .split-cell-lbl { color: var(--tone-warning-fg); }
+.split-cell-val { font-family: 'Outfit', sans-serif; font-size: var(--fs-lg); font-weight: 800; }
+.split-cell.landlord .split-cell-val { color: var(--tone-success-fg); }
+.split-cell.tenant   .split-cell-val { color: var(--tone-warning-fg); }
 
 /* Combobox (reused from invoice) */
 .contract-combobox { position: relative; }
@@ -110,15 +101,15 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 }
 .cbox-trigger:focus-within { border-color: var(--accent); }
 .cbox-search {
-    flex: 1; padding: 9px 13px; font-size: 13px;
+    flex: 1; padding: 9px 13px; font-size: var(--fs-base);
     border: none; background: transparent; color: var(--text-primary);
     outline: none; font-family: 'Plus Jakarta Sans', sans-serif; min-width: 0;
 }
 .cbox-search::placeholder { color: var(--text-muted); }
-.cbox-clear { padding: 0 12px; font-size: 14px; color: var(--text-muted); cursor: pointer; background: none; border: none; line-height: 1; display: none; align-items: center; }
-.cbox-clear:hover { color: #DC2626; }
+.cbox-clear { padding: 0 12px; font-size: var(--fs-base); color: var(--text-muted); cursor: pointer; background: none; border: none; line-height: 1; display: none; align-items: center; }
+.cbox-clear:hover { color: var(--tone-danger-fg); }
 .cbox-clear.visible { display: flex; }
-.cbox-spinner { padding: 0 10px; color: var(--text-muted); font-size: 13px; display: none; align-items: center; }
+.cbox-spinner { padding: 0 10px; color: var(--text-muted); font-size: var(--fs-base); display: none; align-items: center; }
 .cbox-spinner.visible { display: flex; }
 .cbox-dropdown {
     position: absolute; top: calc(100% + 4px); left: 0; right: 0;
@@ -129,78 +120,60 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .cbox-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--card-border); transition: background 0.12s; }
 .cbox-item:last-child { border-bottom: none; }
 .cbox-item:hover, .cbox-item.focused { background: var(--accent-dim); }
-.cbox-item-main { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-.cbox-item-main mark { background: #FEF08A; color: #713F12; border-radius: 2px; padding: 0 1px; font-weight: 700; }
-.cbox-item-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.cbox-hint { padding: 8px 14px; font-size: 11px; color: var(--text-muted); border-bottom: 1px solid var(--card-border); background: var(--page-bg); }
-.cbox-empty { padding: 20px 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
+.cbox-item-main { font-size: var(--fs-base); font-weight: 600; color: var(--text-primary); }
+.cbox-item-main mark { background: var(--tone-warning-bg); color: var(--tone-warning-fg); border-radius: 2px; padding: 0 1px; font-weight: 700; }
+.cbox-item-sub { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 2px; }
+.cbox-hint { padding: 8px 14px; font-size: var(--fs-xs); color: var(--text-muted); border-bottom: 1px solid var(--card-border); background: var(--page-bg); }
+.cbox-empty { padding: 20px 16px; text-align: center; color: var(--text-muted); font-size: var(--fs-base); }
 
-.contract-selected { display: none; margin-top: 10px; border: 1.5px solid #0D9488; border-radius: var(--radius-sm); background: #F0FDFA; overflow: hidden; }
+.contract-selected { display: none; margin-top: 10px; border: 1.5px solid var(--tone-info-fg); border-radius: var(--radius-sm); background: var(--tone-info-bg); overflow: hidden; }
 .contract-selected.show { display: block; }
-.contract-selected-header { padding: 8px 14px; background: #0D9488; display: flex; align-items: center; justify-content: space-between; }
-.contract-selected-header span { font-size: 12px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 6px; }
-.contract-selected-change { font-size: 11px; color: rgba(255,255,255,0.85); cursor: pointer; background: none; border: none; font-family: inherit; font-weight: 600; display: flex; align-items: center; gap: 4px; padding: 0; }
-.contract-selected-change:hover { color: #fff; }
+.contract-selected-header { padding: 8px 14px; background: var(--tone-info-fg); display: flex; align-items: center; justify-content: space-between; }
+.contract-selected-header span { font-size: var(--fs-sm); font-weight: 700; color: var(--ink-on-fill); display: flex; align-items: center; gap: 6px; }
+.contract-selected-change { font-size: var(--fs-xs); color: rgba(255,255,255,0.85); cursor: pointer; background: none; border: none; font-family: inherit; font-weight: 600; display: flex; align-items: center; gap: 4px; padding: 0; }
+.contract-selected-change:hover { color: var(--ink-on-fill); }
 .contract-selected-body { padding: 10px 14px; display: grid; grid-template-columns: repeat(3,1fr); gap: 8px 14px; }
-.cs-item span { font-size: 10px; color: #0D9488; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
-.cs-item strong { font-size: 13px; color: var(--text-primary); }
+.cs-item span { font-size: var(--fs-2xs); color: var(--tone-info-fg); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
+.cs-item strong { font-size: var(--fs-base); color: var(--text-primary); }
 
 /* ── SMART IMPORT ZONE ───────────────────────────────────── */
 .import-zone {
-    background: linear-gradient(135deg, #F0FDFA 0%, #E0F2FE 100%);
-    border: 2px dashed #0D9488; border-radius: var(--radius);
-    padding: 28px 32px; margin-bottom: 20px;
+    background: linear-gradient(135deg, var(--tone-info-bg) 0%, var(--tone-info-bg) 100%);
+    border: 2px dashed var(--tone-info-fg); border-radius: var(--radius);
+    padding: 28px 32px; margin-bottom: var(--sp-5);
     display: flex; align-items: center; gap: 20px; cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
 }
-.import-zone:hover, .import-zone.drag-over { border-color: #0369A1; background: linear-gradient(135deg, #E0F2FE 0%, #BFDBFE 100%); }
+.import-zone:hover, .import-zone.drag-over { border-color: var(--tone-info-fg); background: var(--tone-info-bg); }
 .import-zone-icon {
     width: 56px; height: 56px; border-radius: var(--radius-sm); flex-shrink: 0;
     background: rgba(13,148,136,0.15); display: flex; align-items: center; justify-content: center;
-    font-size: 24px; color: #0D9488;
+    font-size: var(--fs-2xl); color: var(--tone-info-fg);
 }
-.import-zone-text h3 { font-family: 'Outfit',sans-serif; font-size: 16px; font-weight: 700; color: #0D9488; margin-bottom: 3px; }
-.import-zone-text p  { font-size: 12px; color: #0369A1; }
+.import-zone-text h3 { font-family: 'Outfit',sans-serif; font-size: var(--fs-md); font-weight: 700; color: var(--tone-info-fg); margin-bottom: 3px; }
+.import-zone-text p  { font-size: var(--fs-sm); color: var(--tone-info-fg); }
 .import-zone-btn { margin-left: auto; flex-shrink: 0; }
 
-.import-progress {
-    display: none; align-items: center; gap: 12px; padding: 14px 18px;
-    background: #F0FDFA; border: 1px solid #99F6E4; border-radius: var(--radius-sm);
-    margin-bottom: 8px;
-}
+.import-progress { display: none; align-items: center; }
 .import-progress.show { display: flex; }
-.import-progress-bar-wrap { flex: 1; height: 6px; background: #CCFBF1; border-radius: 3px; overflow: hidden; }
-.import-progress-bar { height: 100%; background: #0D9488; border-radius: 3px; transition: width 0.3s; width: 0%; }
 
 .import-result {
     display: none; padding: 14px 18px; border-radius: var(--radius-sm);
-    margin-bottom: 8px; font-size: 13px;
+    margin-bottom: var(--sp-2); font-size: var(--fs-base);
 }
 .import-result.show { display: flex; align-items: flex-start; gap: 12px; }
-.import-result.success { background: #F0FDFA; border: 1px solid #99F6E4; color: #0D9488; }
-.import-result.warning { background: #FFFBEB; border: 1px solid #FDE68A; color: #D97706; }
-.import-result.error   { background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626; }
-.import-result-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
-.import-result-body strong { display: block; font-weight: 700; margin-bottom: 4px; }
-.import-result-body ul { margin: 6px 0 0 16px; padding: 0; font-size: 12px; line-height: 1.6; }
+.import-result.success { background: var(--tone-info-bg); border: 1px solid var(--tone-info-border); color: var(--tone-info-fg); }
+.import-result.warning { background: var(--tone-warning-bg); border: 1px solid var(--tone-warning-border); color: var(--tone-warning-fg); }
+.import-result.error   { background: var(--tone-danger-bg); border: 1px solid var(--tone-danger-border); color: var(--tone-danger-fg); }
+.import-result-icon { font-size: var(--fs-lg); flex-shrink: 0; margin-top: 1px; }
+.import-result-body strong { display: block; font-weight: 700; margin-bottom: var(--sp-1); }
+.import-result-body ul { margin: 6px 0 0 16px; padding: 0; font-size: var(--fs-sm); line-height: 1.6; }
 
-.form-actions { display: flex; gap: 10px; align-items: center; justify-content: flex-end; padding-top: 6px; }
 </style>
 @endpush
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">{{ $record ? 'Edit EWA Bill' : 'New EWA Bill' }}</h1>
-        <p class="page-header-sub">Electricity &amp; Water Authority — Kingdom of Bahrain</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('ewa-bills.index') }}" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back
-        </a>
-    </div>
-</div>
 
 @if($errors->any())
 <div class="alert alert-danger" style="margin-bottom:16px">
@@ -221,16 +194,16 @@ textarea.form-control { resize: vertical; min-height: 80px; }
         <p>Upload your EWA bill PDF and fields will be auto-filled &mdash; drag &amp; drop or click to browse</p>
     </div>
     <div class="import-zone-btn">
-        <span class="btn btn-outline btn-sm" style="pointer-events:none;border-color:#0D9488;color:#0D9488">
+        <span class="btn btn-outline btn-sm" style="pointer-events:none;border-color:var(--tone-info-fg);color:var(--tone-info-fg)">
             <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-fill
         </span>
     </div>
 </div>
 
-<div class="import-progress" id="importProgress">
-    <i class="fa-solid fa-circle-notch fa-spin" style="color:#0D9488;font-size:16px"></i>
-    <span style="font-size:13px;color:#0D9488;font-weight:600">Reading EWA bill…</span>
-    <div class="import-progress-bar-wrap"><div class="import-progress-bar" id="importBar"></div></div>
+<div class="alert alert-info import-progress" id="importProgress">
+    <i class="fa-solid fa-circle-notch fa-spin"></i>
+    <span style="font-weight:600">Reading EWA bill…</span>
+    <div class="progress is-sm"><div class="progress-bar" id="importBar"></div></div>
 </div>
 
 <div class="import-result" id="importResult">
@@ -246,148 +219,162 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     @if($record) @method('PUT') @endif
 
     {{-- CUSTOMER / PROPERTY --}}
-    <div class="form-card">
-        <div class="form-card-title ewa">
-            <i class="fa-solid fa-droplet"></i> Customer &amp; Property
-        </div>
-
-        {{-- Contract combobox --}}
-        <div class="form-group" style="margin-bottom:18px">
-            <label class="form-label">Link to Lease Contract <span style="font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none">(optional)</span></label>
-            <input type="hidden" name="lease_contract_id" id="contractId" value="{{ old('lease_contract_id', $record?->lease_contract_id) }}">
-
-            @if($record && $record->lease_contract_id)
-                <div class="contract-selected show">
-                    <div class="contract-selected-header">
-                        <span><i class="fa-solid fa-circle-check"></i> Linked Contract</span>
-                    </div>
-                    <div class="contract-selected-body">
-                        <div class="cs-item"><span>Tenant</span><strong>{{ $record->tenant_name }}</strong></div>
-                        <div class="cs-item"><span>Property</span><strong>{{ $record->property_name }}</strong></div>
-                        <div class="cs-item"><span>Unit</span><strong>{{ $record->unit ?: '—' }}</strong></div>
-                    </div>
-                </div>
-            @else
-                <div class="contract-combobox" id="contractCombobox">
-                    <div class="cbox-trigger" id="cboxTrigger">
-                        <input type="text" id="cboxSearch" class="cbox-search"
-                               placeholder="Search tenant, property… (optional)" autocomplete="off">
-                        <span class="cbox-spinner" id="cboxSpinner"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
-                        <button type="button" class="cbox-clear" id="cboxClear" tabindex="-1"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                    <div class="cbox-dropdown" id="cboxDropdown">
-                        <div class="cbox-hint">Type to search lease contracts</div>
-                        <div id="cboxList"></div>
-                    </div>
-                </div>
-                <div class="contract-selected" id="contractSelected">
-                    <div class="contract-selected-header">
-                        <span><i class="fa-solid fa-circle-check"></i> Contract Linked</span>
-                        <button type="button" class="contract-selected-change" id="cboxChangeBtn"><i class="fa-solid fa-pen"></i> Change</button>
-                    </div>
-                    <div class="contract-selected-body" id="contractPreviewBody"></div>
-                </div>
-            @endif
-        </div>
-
-        <div class="form-grid cols-3">
-            <div class="form-group">
-                <label class="form-label">Tenant Name <span class="required">*</span></label>
-                <input type="text" name="tenant_name" id="tenantNameInput"
-                       class="form-control {{ $errors->has('tenant_name') ? 'is-invalid' : '' }}"
-                       value="{{ old('tenant_name', $record?->tenant_name) }}" maxlength="255" required>
-                <div class="invalid-feedback">{{ $errors->first('tenant_name') }}</div>
+    <div class="card is-roomy">
+        <div class="card-header">
+            <div class="card-header-icon is-info"><i class="fa-solid fa-droplet"></i></div>
+            <div class="card-header-text">
+                <h3 class="card-title">Customer &amp; Property</h3>
             </div>
-            <div class="form-group">
-                <label class="form-label">Property</label>
-                <input type="text" name="property_name" id="propertyNameInput"
-                       class="form-control {{ $errors->has('property_name') ? 'is-invalid' : '' }}"
-                       value="{{ old('property_name', $record?->property_name) }}" maxlength="255">
-                <div class="invalid-feedback">{{ $errors->first('property_name') }}</div>
+        </div>
+        <div class="card-body">
+            {{-- Contract combobox --}}
+            <div class="form-group" style="margin-bottom:18px">
+                <label class="form-label">Link to Lease Contract <span style="font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none">(optional)</span></label>
+                <input type="hidden" name="lease_contract_id" id="contractId" value="{{ old('lease_contract_id', $record?->lease_contract_id) }}">
+
+                @if($record && $record->lease_contract_id)
+                    <div class="contract-selected show">
+                        <div class="contract-selected-header">
+                            <span><i class="fa-solid fa-circle-check"></i> Linked Contract</span>
+                        </div>
+                        <div class="contract-selected-body">
+                            <div class="cs-item"><span>Tenant</span><strong>{{ $record->tenant_name }}</strong></div>
+                            <div class="cs-item"><span>Property</span><strong>{{ $record->property_name }}</strong></div>
+                            <div class="cs-item"><span>Unit</span><strong>{{ $record->unit ?: '—' }}</strong></div>
+                        </div>
+                    </div>
+                @else
+                    <div class="contract-combobox" id="contractCombobox">
+                        <div class="cbox-trigger" id="cboxTrigger">
+                            <input type="text" id="cboxSearch" class="cbox-search"
+                                   placeholder="Search tenant, property… (optional)" autocomplete="off">
+                            <span class="cbox-spinner" id="cboxSpinner"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+                            <button type="button" class="cbox-clear" id="cboxClear" tabindex="-1"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="cbox-dropdown" id="cboxDropdown">
+                            <div class="cbox-hint">Type to search lease contracts</div>
+                            <div id="cboxList"></div>
+                        </div>
+                    </div>
+                    <div class="contract-selected" id="contractSelected">
+                        <div class="contract-selected-header">
+                            <span><i class="fa-solid fa-circle-check"></i> Contract Linked</span>
+                            <button type="button" class="contract-selected-change" id="cboxChangeBtn"><i class="fa-solid fa-pen"></i> Change</button>
+                        </div>
+                        <div class="contract-selected-body" id="contractPreviewBody"></div>
+                    </div>
+                @endif
             </div>
-            <div class="form-group">
-                <label class="form-label">Unit</label>
-                <input type="text" name="unit" id="unitInput"
-                       class="form-control {{ $errors->has('unit') ? 'is-invalid' : '' }}"
-                       value="{{ old('unit', $record?->unit) }}" maxlength="100">
-                <div class="invalid-feedback">{{ $errors->first('unit') }}</div>
+
+            <div class="form-grid cols-3">
+                <div class="form-group">
+                    <label class="form-label">Tenant Name <span class="required">*</span></label>
+                    <input type="text" name="tenant_name" id="tenantNameInput"
+                           class="form-control {{ $errors->has('tenant_name') ? 'is-invalid' : '' }}"
+                           value="{{ old('tenant_name', $record?->tenant_name) }}" maxlength="255" required>
+                    <div class="invalid-feedback">{{ $errors->first('tenant_name') }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Property</label>
+                    <input type="text" name="property_name" id="propertyNameInput"
+                           class="form-control {{ $errors->has('property_name') ? 'is-invalid' : '' }}"
+                           value="{{ old('property_name', $record?->property_name) }}" maxlength="255">
+                    <div class="invalid-feedback">{{ $errors->first('property_name') }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Unit</label>
+                    <input type="text" name="unit" id="unitInput"
+                           class="form-control {{ $errors->has('unit') ? 'is-invalid' : '' }}"
+                           value="{{ old('unit', $record?->unit) }}" maxlength="100">
+                    <div class="invalid-feedback">{{ $errors->first('unit') }}</div>
+                </div>
             </div>
         </div>
     </div>
 
     {{-- BILL INFO --}}
-    <div class="form-card">
-        <div class="form-card-title ewa">
-            <i class="fa-solid fa-file-invoice"></i> Bill Information
+    <div class="card is-roomy">
+        <div class="card-header">
+            <div class="card-header-icon is-info"><i class="fa-solid fa-file-invoice"></i></div>
+            <div class="card-header-text">
+                <h3 class="card-title">Bill Information</h3>
+            </div>
         </div>
-        <div class="form-grid cols-4">
-            <div class="form-group">
-                <label class="form-label">EWA Account No.</label>
-                <input type="text" name="ewa_account_number"
-                       class="form-control {{ $errors->has('ewa_account_number') ? 'is-invalid' : '' }}"
-                       value="{{ old('ewa_account_number', $record?->ewa_account_number) }}" maxlength="50"
-                       placeholder="e.g. 12345678">
-                <div class="invalid-feedback">{{ $errors->first('ewa_account_number') }}</div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Billing Period <span class="required">*</span></label>
-                <input type="text" name="billing_period"
-                       class="form-control {{ $errors->has('billing_period') ? 'is-invalid' : '' }}"
-                       value="{{ old('billing_period', $record?->billing_period) }}" maxlength="30"
-                       placeholder="e.g. April 2024" required>
-                <div class="invalid-feedback">{{ $errors->first('billing_period') }}</div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Reading Date</label>
-                <input type="date" name="reading_date"
-                       class="form-control {{ $errors->has('reading_date') ? 'is-invalid' : '' }}"
-                       value="{{ old('reading_date', $record?->reading_date?->format('Y-m-d')) }}">
-                <div class="invalid-feedback">{{ $errors->first('reading_date') }}</div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Reading Type <span class="required">*</span></label>
-                <select name="reading_type" class="form-control {{ $errors->has('reading_type') ? 'is-invalid' : '' }}">
-                    <option value="actual"    {{ old('reading_type', $record?->reading_type ?? 'actual') === 'actual'    ? 'selected' : '' }}>Actual (A)</option>
-                    <option value="estimated" {{ old('reading_type', $record?->reading_type) === 'estimated' ? 'selected' : '' }}>Estimated (E)</option>
-                </select>
-                <div class="invalid-feedback">{{ $errors->first('reading_type') }}</div>
+        <div class="card-body">
+            <div class="form-grid cols-4">
+                <div class="form-group">
+                    <label class="form-label">EWA Account No.</label>
+                    <input type="text" name="ewa_account_number"
+                           class="form-control {{ $errors->has('ewa_account_number') ? 'is-invalid' : '' }}"
+                           value="{{ old('ewa_account_number', $record?->ewa_account_number) }}" maxlength="50"
+                           placeholder="e.g. 12345678">
+                    <div class="invalid-feedback">{{ $errors->first('ewa_account_number') }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Billing Period <span class="required">*</span></label>
+                    <input type="text" name="billing_period"
+                           class="form-control {{ $errors->has('billing_period') ? 'is-invalid' : '' }}"
+                           value="{{ old('billing_period', $record?->billing_period) }}" maxlength="30"
+                           placeholder="e.g. April 2024" required>
+                    <div class="invalid-feedback">{{ $errors->first('billing_period') }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reading Date</label>
+                    <input type="date" name="reading_date"
+                           class="form-control {{ $errors->has('reading_date') ? 'is-invalid' : '' }}"
+                           value="{{ old('reading_date', $record?->reading_date?->format('Y-m-d')) }}">
+                    <div class="invalid-feedback">{{ $errors->first('reading_date') }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reading Type <span class="required">*</span></label>
+                    <select name="reading_type" class="form-control {{ $errors->has('reading_type') ? 'is-invalid' : '' }}">
+                        <option value="actual"    {{ old('reading_type', $record?->reading_type ?? 'actual') === 'actual'    ? 'selected' : '' }}>Actual (A)</option>
+                        <option value="estimated" {{ old('reading_type', $record?->reading_type) === 'estimated' ? 'selected' : '' }}>Estimated (E)</option>
+                    </select>
+                    <div class="invalid-feedback">{{ $errors->first('reading_type') }}</div>
+                </div>
             </div>
         </div>
     </div>
 
     {{-- ELECTRICITY --}}
-    <div class="form-card">
-        <div class="form-card-title ewa">
-            <i class="fa-solid fa-bolt"></i> Electricity
-        </div>
-        <div class="meter-row">
-            <div class="meter-row-header">
-                <span class="meter-badge elec">kWh</span>
-                Meter Readings
+    <div class="card is-roomy">
+        <div class="card-header">
+            <div class="card-header-icon is-info"><i class="fa-solid fa-bolt"></i></div>
+            <div class="card-header-text">
+                <h3 class="card-title">Electricity</h3>
             </div>
-            <div class="form-grid cols-4">
-                <div class="form-group">
-                    <label class="form-label">Previous Reading</label>
-                    <input type="number" name="elec_prev_reading" id="elecPrev" step="1" min="0"
-                           class="form-control" value="{{ old('elec_prev_reading', $record?->elec_prev_reading) }}"
-                           placeholder="0">
+        </div>
+        <div class="card-body">
+            <div class="meter-row">
+                <div class="meter-row-header">
+                    <span class="status-badge elec">kWh</span>
+                    Meter Readings
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Current Reading</label>
-                    <input type="number" name="elec_curr_reading" id="elecCurr" step="1" min="0"
-                           class="form-control" value="{{ old('elec_curr_reading', $record?->elec_curr_reading) }}"
-                           placeholder="0">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Consumption <span class="unit-tag">kWh</span></label>
-                    <div class="computed-field" id="elecConsumption">—</div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Electricity Charges <span class="unit-tag">BHD</span></label>
-                    <div class="amount-wrap">
-                        <input type="number" name="elec_charges" id="elecCharges" step="0.001" min="0"
-                               class="form-control" value="{{ old('elec_charges', $record?->elec_charges) }}"
-                               placeholder="0.000">
+                <div class="form-grid cols-4">
+                    <div class="form-group">
+                        <label class="form-label">Previous Reading</label>
+                        <input type="number" name="elec_prev_reading" id="elecPrev" step="1" min="0"
+                               class="form-control" value="{{ old('elec_prev_reading', $record?->elec_prev_reading) }}"
+                               placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Current Reading</label>
+                        <input type="number" name="elec_curr_reading" id="elecCurr" step="1" min="0"
+                               class="form-control" value="{{ old('elec_curr_reading', $record?->elec_curr_reading) }}"
+                               placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Consumption <span class="unit-tag">kWh</span></label>
+                        <div class="computed-field" id="elecConsumption">—</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Electricity Charges <span class="unit-tag">BHD</span></label>
+                        <div class="amount-wrap">
+                            <input type="number" name="elec_charges" id="elecCharges" step="0.001" min="0"
+                                   class="form-control" value="{{ old('elec_charges', $record?->elec_charges) }}"
+                                   placeholder="0.000">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -395,38 +382,43 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     </div>
 
     {{-- WATER --}}
-    <div class="form-card">
-        <div class="form-card-title ewa">
-            <i class="fa-solid fa-droplet"></i> Water
-        </div>
-        <div class="meter-row">
-            <div class="meter-row-header">
-                <span class="meter-badge water">m³</span>
-                Meter Readings
+    <div class="card is-roomy">
+        <div class="card-header">
+            <div class="card-header-icon is-info"><i class="fa-solid fa-droplet"></i></div>
+            <div class="card-header-text">
+                <h3 class="card-title">Water</h3>
             </div>
-            <div class="form-grid cols-4">
-                <div class="form-group">
-                    <label class="form-label">Previous Reading</label>
-                    <input type="number" name="water_prev_reading" id="waterPrev" step="0.001" min="0"
-                           class="form-control" value="{{ old('water_prev_reading', $record?->water_prev_reading) }}"
-                           placeholder="0.000">
+        </div>
+        <div class="card-body">
+            <div class="meter-row">
+                <div class="meter-row-header">
+                    <span class="status-badge water">m³</span>
+                    Meter Readings
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Current Reading</label>
-                    <input type="number" name="water_curr_reading" id="waterCurr" step="0.001" min="0"
-                           class="form-control" value="{{ old('water_curr_reading', $record?->water_curr_reading) }}"
-                           placeholder="0.000">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Consumption <span class="unit-tag">m³</span></label>
-                    <div class="computed-field" id="waterConsumption">—</div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Water Charges <span class="unit-tag">BHD</span></label>
-                    <div class="amount-wrap">
-                        <input type="number" name="water_charges" id="waterCharges" step="0.001" min="0"
-                               class="form-control" value="{{ old('water_charges', $record?->water_charges) }}"
+                <div class="form-grid cols-4">
+                    <div class="form-group">
+                        <label class="form-label">Previous Reading</label>
+                        <input type="number" name="water_prev_reading" id="waterPrev" step="0.001" min="0"
+                               class="form-control" value="{{ old('water_prev_reading', $record?->water_prev_reading) }}"
                                placeholder="0.000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Current Reading</label>
+                        <input type="number" name="water_curr_reading" id="waterCurr" step="0.001" min="0"
+                               class="form-control" value="{{ old('water_curr_reading', $record?->water_curr_reading) }}"
+                               placeholder="0.000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Consumption <span class="unit-tag">m³</span></label>
+                        <div class="computed-field" id="waterConsumption">—</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Water Charges <span class="unit-tag">BHD</span></label>
+                        <div class="amount-wrap">
+                            <input type="number" name="water_charges" id="waterCharges" step="0.001" min="0"
+                                   class="form-control" value="{{ old('water_charges', $record?->water_charges) }}"
+                                   placeholder="0.000">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -434,84 +426,88 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     </div>
 
     {{-- TOTAL --}}
-    <div class="form-card">
-        <div class="form-card-title ewa">
-            <i class="fa-solid fa-calculator"></i> Total
-        </div>
-
-        <div class="total-summary">
-            <div class="lbl">Total Bill (EWA)</div>
-            <div><span class="val" id="totalDisplay">0.000</span><span class="cur">BHD</span></div>
-        </div>
-
-        {{-- CAP & SPLIT --}}
-        <div class="cap-section">
-            <div class="cap-row">
-                <span class="cap-label">EWA Cap</span>
-                <div class="amount-wrap" style="flex:1;max-width:260px">
-                    <input type="number" name="ewa_cap" id="ewaCap" step="0.001" min="0"
-                           class="form-control {{ $errors->has('ewa_cap') ? 'is-invalid' : '' }}"
-                           value="{{ old('ewa_cap', $record?->ewa_cap) }}"
-                           placeholder="0.000 — no cap">
-                </div>
-                <span id="capSourceBadge" class="cap-source-badge" style="display:none">
-                    <i class="fa-solid fa-link"></i> from contract
-                </span>
+    <div class="card is-roomy">
+        <div class="card-header">
+            <div class="card-header-icon is-info"><i class="fa-solid fa-calculator"></i></div>
+            <div class="card-header-text">
+                <h3 class="card-title">Total</h3>
             </div>
-            <div style="font-size:11px;color:var(--text-muted);margin-left:90px;margin-top:-6px">
-                Landlord covers up to this amount per bill. Tenant pays the overage.
+        </div>
+        <div class="card-body">
+            <div class="total-summary">
+                <div class="lbl">Total Bill (EWA)</div>
+                <div><span class="val" id="totalDisplay">0.000</span><span class="cur">BHD</span></div>
             </div>
 
-            <div class="split-preview" id="splitPreview">
-                <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Bill split</div>
-                <div class="split-bar">
-                    <div class="split-bar-landlord" id="splitBarLandlord" style="width:50%"></div>
-                    <div class="split-bar-tenant"   id="splitBarTenant"   style="width:50%"></div>
-                </div>
-                <div class="split-amounts">
-                    <div class="split-cell landlord">
-                        <div class="split-cell-lbl"><i class="fa-solid fa-shield-halved"></i> Landlord covers</div>
-                        <div class="split-cell-val"><span id="landlordDisplay">0.000</span> <span style="font-size:12px;font-weight:600">BHD</span></div>
+            {{-- CAP & SPLIT --}}
+            <div class="cap-section">
+                <div class="cap-row">
+                    <span class="cap-label">EWA Cap</span>
+                    <div class="amount-wrap" style="flex:1;max-width:260px">
+                        <input type="number" name="ewa_cap" id="ewaCap" step="0.001" min="0"
+                               class="form-control {{ $errors->has('ewa_cap') ? 'is-invalid' : '' }}"
+                               value="{{ old('ewa_cap', $record?->ewa_cap) }}"
+                               placeholder="0.000 — no cap">
                     </div>
-                    <div class="split-cell tenant">
-                        <div class="split-cell-lbl"><i class="fa-solid fa-user"></i> Tenant owes</div>
-                        <div class="split-cell-val"><span id="tenantDisplay">0.000</span> <span style="font-size:12px;font-weight:600">BHD</span></div>
+                    <span id="capSourceBadge" class="cap-source-badge" style="display:none">
+                        <i class="fa-solid fa-link"></i> from contract
+                    </span>
+                </div>
+                <div style="font-size:11px;color:var(--text-muted);margin-left:90px;margin-top:-6px">
+                    Landlord covers up to this amount per bill. Tenant pays the overage.
+                </div>
+
+                <div class="card is-nested is-compact split-preview" id="splitPreview">
+                    <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Bill split</div>
+                    <div class="split-bar">
+                        <div class="split-bar-landlord" id="splitBarLandlord" style="width:50%"></div>
+                        <div class="split-bar-tenant"   id="splitBarTenant"   style="width:50%"></div>
+                    </div>
+                    <div class="split-amounts">
+                        <div class="split-cell landlord">
+                            <div class="split-cell-lbl"><i class="fa-solid fa-shield-halved"></i> Landlord covers</div>
+                            <div class="split-cell-val"><span id="landlordDisplay">0.000</span> <span style="font-size:12px;font-weight:600">BHD</span></div>
+                        </div>
+                        <div class="split-cell tenant">
+                            <div class="split-cell-lbl"><i class="fa-solid fa-user"></i> Tenant owes</div>
+                            <div class="split-cell-val"><span id="tenantDisplay">0.000</span> <span style="font-size:12px;font-weight:600">BHD</span></div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="form-grid" style="margin-top:18px">
-            <div class="form-group">
-                <label class="form-label">Due Date <span class="required">*</span></label>
-                <input type="date" name="due_date"
-                       class="form-control {{ $errors->has('due_date') ? 'is-invalid' : '' }}"
-                       value="{{ old('due_date', $record?->due_date?->format('Y-m-d')) }}" required>
-                <div class="invalid-feedback">{{ $errors->first('due_date') }}</div>
+            <div class="form-grid cols-2" style="margin-top:18px">
+                <div class="form-group">
+                    <label class="form-label">Due Date <span class="required">*</span></label>
+                    <input type="date" name="due_date"
+                           class="form-control {{ $errors->has('due_date') ? 'is-invalid' : '' }}"
+                           value="{{ old('due_date', $record?->due_date?->format('Y-m-d')) }}" required>
+                    <div class="invalid-feedback">{{ $errors->first('due_date') }}</div>
+                </div>
+                @if($record)
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-control">
+                        @foreach(['draft'=>'Draft','issued'=>'Issued','partially_paid'=>'Partially Paid','paid'=>'Paid','overdue'=>'Overdue','cancelled'=>'Cancelled'] as $v=>$l)
+                        <option value="{{ $v }}" {{ old('status', $record->status) === $v ? 'selected' : '' }}>{{ $l }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
             </div>
-            @if($record)
-            <div class="form-group">
-                <label class="form-label">Status</label>
-                <select name="status" class="form-control">
-                    @foreach(['draft'=>'Draft','issued'=>'Issued','partially_paid'=>'Partially Paid','paid'=>'Paid','overdue'=>'Overdue','cancelled'=>'Cancelled'] as $v=>$l)
-                    <option value="{{ $v }}" {{ old('status', $record->status) === $v ? 'selected' : '' }}>{{ $l }}</option>
-                    @endforeach
-                </select>
+
+            <div class="form-group" style="margin-top:16px">
+                <label class="form-label">Notes</label>
+                <textarea name="notes" class="form-control" rows="2"
+                          placeholder="Internal notes…">{{ old('notes', $record?->notes) }}</textarea>
             </div>
-            @endif
-        </div>
 
-        <div class="form-group" style="margin-top:16px">
-            <label class="form-label">Notes</label>
-            <textarea name="notes" class="form-control" rows="2"
-                      placeholder="Internal notes…">{{ old('notes', $record?->notes) }}</textarea>
-        </div>
-
-        <div class="form-group" style="margin-top:16px">
-            <label class="form-label">Remarks</label>
-            <textarea name="remarks" class="form-control {{ $errors->has('remarks') ? 'is-invalid' : '' }}" rows="2" maxlength="500"
-                      placeholder="Printed on the invoice…">{{ old('remarks', $record?->remarks) }}</textarea>
-            <div class="invalid-feedback">{{ $errors->first('remarks') }}</div>
+            <div class="form-group" style="margin-top:16px">
+                <label class="form-label">Remarks</label>
+                <textarea name="remarks" class="form-control {{ $errors->has('remarks') ? 'is-invalid' : '' }}" rows="2" maxlength="500"
+                          placeholder="Printed on the invoice…">{{ old('remarks', $record?->remarks) }}</textarea>
+                <div class="invalid-feedback">{{ $errors->first('remarks') }}</div>
+            </div>
         </div>
     </div>
 

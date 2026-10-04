@@ -3,6 +3,31 @@
 @section('title', 'Edit ' . $title)
 @section('topbar-title', 'Edit ' . $title)
 
+@section('page-breadcrumb')
+    <a href="{{ url('/dashboard') }}">Home</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <a href="{{ route('form-configs.index') }}">Form & Template Management</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Edit {{ $title }}</span>
+@endsection
+@section('page-title')
+    Edit {{ $title }}
+@endsection
+@section('page-subtitle', 'Drag to reorder, toggle to show/hide fields')
+@section('page-back')
+    <a href="{{ route('form-configs.index') }}" class="btn btn-outline" aria-label="Back">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back</span>
+    </a>
+@endsection
+
+@section('page-actions')
+    @if($configType === 'form')
+    <button type="button" class="btn btn-primary" id="openAddFieldModal">
+        <i class="fa-solid fa-plus"></i> Add New Field
+    </button>
+    @endif
+@endsection
+
 @push('styles')
 <style>
     .fc-edit-layout {
@@ -33,7 +58,7 @@
         user-select: none;
     }
     .field-row:last-child { border-bottom: none; }
-    .field-row:hover { background: #FAFBFC; }
+    .field-row:hover { background: var(--row-hover); }
     .field-row.sortable-ghost {
         background: var(--accent-dim);
         opacity: 0.7;
@@ -45,7 +70,7 @@
 
     .drag-handle {
         color: var(--text-muted);
-        font-size: 12px;
+        font-size: var(--fs-sm);
         cursor: grab;
         padding: 2px 4px;
         flex-shrink: 0;
@@ -67,8 +92,8 @@
     .toggle-slider {
         position: absolute;
         inset: 0;
-        background: #CBD5E1;
-        border-radius: 20px;
+        background: var(--card-border);
+        border-radius: var(--radius-pill);
         cursor: pointer;
         transition: background 0.2s;
     }
@@ -77,7 +102,7 @@
         position: absolute;
         width: 14px; height: 14px;
         left: 3px; top: 3px;
-        background: #fff;
+        background: var(--card-bg);
         border-radius: 50%;
         transition: transform 0.2s;
         box-shadow: 0 1px 3px rgba(0,0,0,0.2);
@@ -94,24 +119,13 @@
         min-width: 0;
     }
     .field-label-text {
-        font-size: 13.5px;
+        font-size: var(--fs-base);
         font-weight: 600;
         color: var(--text-primary);
         line-height: 1.3;
     }
-    .field-name-tag {
-        display: inline-block;
-        font-family: 'Courier New', monospace;
-        font-size: 10.5px;
-        color: var(--text-muted);
-        background: var(--page-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 4px;
-        padding: 1px 6px;
-        margin-top: 2px;
-    }
     .field-section-tag {
-        font-size: 10px;
+        font-size: var(--fs-2xs);
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.06em;
@@ -120,18 +134,6 @@
         border: 1px solid var(--card-border);
         border-radius: 4px;
         padding: 2px 7px;
-        flex-shrink: 0;
-    }
-    .badge-required {
-        display: inline-flex;
-        align-items: center;
-        gap: 3px;
-        padding: 2px 7px;
-        border-radius: 20px;
-        font-size: 10px;
-        font-weight: 600;
-        background: #FEF2F2;
-        color: var(--danger);
         flex-shrink: 0;
     }
 
@@ -154,13 +156,13 @@
         gap: 8px;
         padding: 7px 12px;
         border-radius: var(--radius-sm);
-        font-size: 13px;
+        font-size: var(--fs-base);
         color: var(--text-primary);
         background: var(--page-bg);
         transition: background 0.12s;
     }
     .preview-item i {
-        font-size: 11px;
+        font-size: var(--fs-xs);
         color: var(--success);
         flex-shrink: 0;
     }
@@ -168,12 +170,12 @@
         text-align: center;
         padding: 24px 16px;
         color: var(--text-muted);
-        font-size: 13px;
+        font-size: var(--fs-base);
     }
 
     /* Actions bar */
     .fc-actions-bar {
-        margin-top: 20px;
+        margin-top: var(--sp-5);
         padding: 16px 22px;
         background: var(--card-bg);
         border: 1px solid var(--card-border);
@@ -190,7 +192,7 @@
         padding: 8px 16px 6px;
         background: var(--page-bg);
         border-bottom: 1px solid var(--card-border);
-        font-size: 10px;
+        font-size: var(--fs-2xs);
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.1em;
@@ -209,9 +211,9 @@
         height: 28px;
         border-radius: var(--radius-sm);
         border: 1px solid var(--danger);
-        background: #FEF2F2;
+        background: var(--tone-danger-bg);
         color: var(--danger);
-        font-size: 11px;
+        font-size: var(--fs-xs);
         cursor: pointer;
         flex-shrink: 0;
         transition: background 0.15s, color 0.15s;
@@ -219,7 +221,7 @@
     }
     .btn-delete-custom:hover {
         background: var(--danger);
-        color: #fff;
+        color: var(--ink-on-fill);
     }
 
     /* Custom field badge */
@@ -228,90 +230,22 @@
         align-items: center;
         gap: 3px;
         padding: 2px 7px;
-        border-radius: 20px;
-        font-size: 10px;
+        border-radius: var(--radius-pill);
+        font-size: var(--fs-2xs);
         font-weight: 600;
-        background: #FEF3C7;
-        color: #92400E;
+        background: var(--tone-warning-bg);
+        color: var(--tone-accent-fg);
         flex-shrink: 0;
     }
 
     /* Modal overlay */
-    .cf-modal-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.55);
-        z-index: 9999;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-    }
-    .cf-modal-overlay.active {
-        display: flex;
-    }
-    .cf-modal {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius);
-        box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-        width: 100%;
-        max-width: 520px;
-        max-height: 90vh;
-        overflow-y: auto;
-        animation: cfModalIn 0.2s ease;
-    }
     @keyframes cfModalIn {
         from { opacity:0; transform: translateY(-16px) scale(0.97); }
         to   { opacity:1; transform: translateY(0) scale(1); }
     }
-    .cf-modal-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 18px 22px 16px;
-        border-bottom: 1px solid var(--card-border);
-    }
-    .cf-modal-header-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: var(--radius-sm);
-        background: var(--accent-dim);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--accent);
-        font-size: 15px;
-        flex-shrink: 0;
-    }
-    .cf-modal-header h4 {
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin: 0 0 2px;
-    }
-    .cf-modal-header p {
-        font-size: 12px;
-        color: var(--text-muted);
-        margin: 0;
-    }
-    .cf-modal-body {
-        padding: 22px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-    .cf-modal-footer {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 10px;
-        padding: 14px 22px;
-        border-top: 1px solid var(--card-border);
-    }
     .cf-form-group label {
         display: block;
-        font-size: 12px;
+        font-size: var(--fs-sm);
         font-weight: 600;
         color: var(--text-secondary);
         margin-bottom: 5px;
@@ -326,7 +260,7 @@
         border-radius: var(--radius-sm);
         background: var(--page-bg);
         color: var(--text-primary);
-        font-size: 13.5px;
+        font-size: var(--fs-base);
         transition: border 0.15s;
         box-sizing: border-box;
     }
@@ -356,7 +290,7 @@
         background: var(--page-bg);
         color: var(--text-muted);
         cursor: pointer;
-        font-size: 12px;
+        font-size: var(--fs-sm);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -374,7 +308,7 @@
         margin: 0;
         text-transform: none;
         letter-spacing: 0;
-        font-size: 13.5px;
+        font-size: var(--fs-base);
         font-weight: 600;
         color: var(--text-primary);
         cursor: pointer;
@@ -391,7 +325,7 @@
         gap: 10px;
         padding: 12px 18px;
         border-radius: var(--radius-sm);
-        font-size: 13.5px;
+        font-size: var(--fs-base);
         font-weight: 600;
         box-shadow: 0 8px 24px rgba(0,0,0,0.18);
         animation: cfToastIn 0.25s ease;
@@ -401,43 +335,20 @@
         from { opacity:0; transform: translateY(12px); }
         to   { opacity:1; transform: translateY(0); }
     }
-    .cf-toast.success { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
-    .cf-toast.error   { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+    .cf-toast.success { background: var(--tone-success-bg); color: var(--tone-success-fg); border: 1px solid var(--tone-success-border); }
+    .cf-toast.error   { background: var(--tone-danger-bg); color: var(--tone-danger-fg); border: 1px solid var(--tone-danger-border); }
 </style>
 @endpush
 
 @section('content')
 
 {{-- PAGE HEADER --}}
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <a href="{{ route('form-configs.index') }}">Form & Template Management</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Edit {{ $title }}</span>
-        </div>
-        <h1 class="page-header-title">Edit {{ $title }}</h1>
-        <p class="page-header-sub">Drag to reorder, toggle to show/hide fields</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('form-configs.index') }}" class="btn btn-outline">
-            <i class="fa-solid fa-arrow-left"></i> Back
-        </a>
-        @if($configType === 'form')
-        <button type="button" class="btn btn-primary" id="openAddFieldModal">
-            <i class="fa-solid fa-plus"></i> Add New Field
-        </button>
-        @endif
-    </div>
-</div>
 
 <div class="fc-edit-layout">
 
     {{-- LEFT: Sortable field list --}}
     <div>
-        <div class="card" style="overflow:hidden;">
+        <div class="table-card">
             <div class="card-header">
                 <div class="card-header-icon">
                     @if($configType === 'template')
@@ -498,7 +409,7 @@
 
                         <div class="field-label-col">
                             <div class="field-label-text">{{ $field['label'] }}</div>
-                            <span class="field-name-tag">{{ $field['name'] }}</span>
+                            <span class="badge">{{ $field['name'] }}</span>
                         </div>
 
                         <span class="field-section-tag">{{ $field['section'] ?? '' }}</span>
@@ -508,7 +419,7 @@
                         @endif
 
                         @if(!empty($field['required']))
-                            <span class="badge-required"><i class="fa-solid fa-asterisk" style="font-size:8px;"></i> Required</span>
+                            <span class="badge badge-red is-xs"><i class="fa-solid fa-asterisk" style="font-size:8px;"></i> Required</span>
                         @endif
 
                         @if($isCustom && $customId)
@@ -621,19 +532,21 @@
 
 {{-- ADD NEW FIELD MODAL --}}
 @if($configType === 'form')
-<div class="cf-modal-overlay" id="addFieldModal" role="dialog" aria-modal="true" aria-labelledby="cfModalTitle">
-    <div class="cf-modal">
-        <div class="cf-modal-header">
-            <div class="cf-modal-header-icon"><i class="fa-solid fa-puzzle-piece"></i></div>
-            <div>
-                <h4 id="cfModalTitle">Add New Field</h4>
-                <p>Add a custom field to the <strong>{{ $formType }}</strong> form</p>
+<div class="modal-overlay" id="addFieldModal" role="dialog" aria-modal="true" aria-labelledby="cfModalTitle">
+    <div class="modal-box" style="--modal-w:520px">
+        <div class="modal-header">
+            <div class="modal-header-top">
+                <div class="modal-header-icon"><i class="fa-solid fa-puzzle-piece"></i></div>
+                <div class="card-header-text">
+                    <div class="modal-header-title" id="cfModalTitle">Add New Field</div>
+                    <div class="modal-header-sub">Add a custom field to the <strong>{{ $formType }}</strong> form</div>
+                </div>
+                <button type="button" class="modal-close-btn" id="closeAddFieldModal" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-            <button type="button" id="closeAddFieldModal" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:4px;">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
         </div>
-        <div class="cf-modal-body">
+        <div class="modal-body">
             <div class="cf-form-group">
                 <label for="cfLabel">Label <span style="color:var(--danger);">*</span></label>
                 <input type="text" id="cfLabel" placeholder="e.g. Parking Level" autocomplete="off" maxlength="255">
@@ -669,7 +582,7 @@
                 <label for="cfIsRequired">Required field</label>
             </div>
         </div>
-        <div class="cf-modal-footer">
+        <div class="modal-footer">
             <button type="button" class="btn btn-outline" id="cancelAddFieldModal">Cancel</button>
             <button type="button" class="btn btn-primary" id="submitAddField">
                 <i class="fa-solid fa-plus"></i> Add Field
@@ -843,11 +756,11 @@
                 <input type="text" placeholder="Option 1" class="cf-option-input">
                 <button type="button" class="cf-option-remove" title="Remove"><i class="fa-solid fa-minus"></i></button>
             </div>`;
-        modal.classList.add('active');
+        modal.classList.add('open');
         cfLabel.focus();
     }
     function closeModal() {
-        modal.classList.remove('active');
+        modal.classList.remove('open');
     }
 
     openBtn && openBtn.addEventListener('click', openModal);
@@ -984,11 +897,11 @@
             </label>
             <div class="field-label-col">
                 <div class="field-label-text">${escHtml(label)}</div>
-                <span class="field-name-tag">${escHtml(name)}</span>
+                <span class="badge">${escHtml(name)}</span>
             </div>
             <span class="field-section-tag">Custom Fields</span>
             <span class="badge-custom"><i class="fa-solid fa-puzzle-piece" style="font-size:8px;"></i> Custom</span>
-            ${required ? '<span class="badge-required"><i class="fa-solid fa-asterisk" style="font-size:8px;"></i> Required</span>' : ''}
+            ${required ? '<span class="badge badge-red is-xs"><i class="fa-solid fa-asterisk" style="font-size:8px;"></i> Required</span>' : ''}
             <button type="button" class="btn-delete-custom" data-custom-id="${id}" title="Remove this custom field">
                 <i class="fa-solid fa-trash"></i>
             </button>`;

@@ -31,14 +31,19 @@ class AdminController extends Controller
             $query->where('entity_type', $entity);
         }
 
-        $logs  = $query->paginate(50)->withQueryString();
-        $stats = [
-            'total'    => AuditLog::count(),
-            'created'  => AuditLog::where('action', 'created')->count(),
-            'updated'  => AuditLog::where('action', 'updated')->count(),
-            'deleted'  => AuditLog::where('action', 'deleted')->count(),
-            'imported' => AuditLog::where('action', 'imported')->count(),
-        ];
+        $logs = $query->paginate(50)->withQueryString();
+
+        // One grouped count instead of a query per action, so adding an action
+        // to AuditLog::ACTIONS does not add a round trip.
+        $counts = AuditLog::query()
+            ->selectRaw('action, count(*) as total')
+            ->groupBy('action')
+            ->pluck('total', 'action');
+
+        $stats = ['total' => (int) $counts->sum()];
+        foreach (AuditLog::ACTIONS as $action) {
+            $stats[$action] = (int) ($counts[$action] ?? 0);
+        }
 
         $entityTypes = AuditLog::distinct()->pluck('entity_type')->sort()->values();
 

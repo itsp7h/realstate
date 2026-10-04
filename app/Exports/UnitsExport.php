@@ -27,6 +27,16 @@ class UnitsExport implements FromQuery, WithHeadings, WithMapping, WithStyles, S
             ->orderBy('unit_name');
     }
 
+    /**
+     * Ordering for the PDF of this list — see ListingPdf::fromExport().
+     *
+     * @return array<int, string>
+     */
+    public function pdfNaturalOrder(): array
+    {
+        return ['property_code', 'unit_name'];
+    }
+
     public function headings(): array
     {
         return [
@@ -36,6 +46,48 @@ class UnitsExport implements FromQuery, WithHeadings, WithMapping, WithStyles, S
             'Rent/Month', 'Security Deposit', 'Municipality Nos.',
             'Electricity Installation Date', 'Electricity Meter No.',
             'Water Installation Date', 'Water Meter No.', 'Electricity A/C No.',
+        ];
+    }
+
+    /**
+     * The subset worth printing. 21 columns on A4 is a table nobody reads, so
+     * the document keeps identity, size and money and leaves meter numbers,
+     * installation dates and municipality references to the spreadsheet.
+     *
+     * Labels, not indexes: reordering headings() must not silently reshuffle
+     * which columns the PDF shows.
+     */
+    /**
+     * 21 columns is a spreadsheet's job. On paper the document keeps identity,
+     * size and money, with short labels so no header wraps, and says "9 of 21
+     * shown" above the table.
+     */
+    public function pdfColumns(): array
+    {
+        return [
+            'Property Code'    => ['label' => 'CODE',     'align' => 'left',  'width' => 10],
+            'Floor Code'       => ['label' => 'FLOOR',    'align' => 'left',  'width' => 10],
+            'Unit Name'        => ['label' => 'UNIT',     'align' => 'left',  'width' => 15],
+            'Unit Type'        => ['label' => 'TYPE',     'align' => 'left',  'width' => 10],
+            'Condition'        => ['label' => 'CONDITION','align' => 'left',  'width' => 12],
+            'Area Inside'      => ['label' => 'AREA',     'align' => 'right', 'width' => 9],
+            'Area Terrace'     => ['label' => 'TERRACE',  'align' => 'right', 'width' => 9],
+            'Rent/Month'       => ['label' => 'RENT/MO',  'align' => 'right', 'width' => 12],
+            'Security Deposit' => ['label' => 'DEPOSIT',  'align' => 'right', 'width' => 13],
+        ];
+    }
+
+    /** @param  \Illuminate\Support\Collection  $records */
+    public function pdfTotals($records): array
+    {
+        $rented = $records->whereNotNull('rent_per_month');
+
+        return [
+            // A sum over nothing but NULLs is unknown, not zero.
+            'RENT/MO' => $rented->isEmpty() ? null : number_format($rented->sum('rent_per_month'), 3),
+            'DEPOSIT' => $records->whereNotNull('security_deposit_amount')->isEmpty()
+                ? null
+                : number_format($records->sum('security_deposit_amount'), 3),
         ];
     }
 

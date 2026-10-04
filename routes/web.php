@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PropertyUnitController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\FloorController;
@@ -23,13 +25,24 @@ use App\Http\Controllers\InvoiceNoteController;
 use App\Http\Controllers\TenantNoteController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\AzureMailSettingController;
+use App\Http\Controllers\BrandingSettingController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\RevenueController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->name('login.attempt');
+
+    // Password reset by emailed link. Rate limited and audited in the
+    // controller; see PasswordResetController for why the responses are
+    // deliberately identical whether or not the address has an account.
+    Route::get('/forgot-password',        [PasswordResetController::class, 'request'])->name('password.request');
+    Route::post('/forgot-password',       [PasswordResetController::class, 'email'])->name('password.email');
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'reset'])->name('password.reset');
+    Route::post('/reset-password',        [PasswordResetController::class, 'update'])->name('password.update');
 
     // Temporary side-by-side design previews for the mobile login redesign
     // (options 1a/1b) — both post to the real login route, so they're fully
@@ -47,7 +60,12 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::get('/data',                      [DataController::class, 'index'])->name('data.index');
         Route::get('/data/template/{format?}',   [DataController::class, 'template'])->name('data.template');
-        Route::get('/data/export',               [DataController::class, 'export'])->name('data.export');
+        // {format?} defaults to xlsx, so every existing route('data.export')
+        // call keeps working; 'pdf' renders the same three datasets as a
+        // document instead of a workbook.
+        Route::get('/data/export/{format?}',      [DataController::class, 'export'])
+            ->whereIn('format', ['xlsx', 'pdf'])
+            ->name('data.export');
         Route::post('/data/import',              [DataController::class, 'import'])->name('data.import');
 
         Route::get('/import/template/{type}/{format?}', [ImportController::class, 'template'])->name('import.template');
@@ -58,18 +76,32 @@ Route::middleware('auth')->group(function () {
         Route::post('/import/contracts', [ImportController::class, 'contracts'])->name('import.contracts');
         Route::post('/import/smart',    [ImportController::class, 'smart'])->name('import.smart');
 
-        Route::get('/export/buildings', [ImportController::class, 'exportBuildings'])->name('export.buildings');
-        Route::get('/export/floors',    [ImportController::class, 'exportFloors'])->name('export.floors');
-        Route::get('/export/units',     [ImportController::class, 'exportUnits'])->name('export.units');
-        Route::get('/export/tenants',   [ImportController::class, 'exportTenants'])->name('export.tenants');
-        Route::get('/export/contracts', [ImportController::class, 'exportContracts'])->name('export.contracts');
+        // Every list export takes a format: xlsx (the default, so existing
+        // links keep working) or pdf. whereIn keeps an unknown format a 404
+        // rather than a silent fall-through to the spreadsheet.
+        Route::get('/export/buildings/{format?}', [ImportController::class, 'exportBuildings'])->whereIn('format', ['xlsx', 'pdf'])->name('export.buildings');
+        Route::get('/export/floors/{format?}',    [ImportController::class, 'exportFloors'])->whereIn('format', ['xlsx', 'pdf'])->name('export.floors');
+        Route::get('/export/units/{format?}',     [ImportController::class, 'exportUnits'])->whereIn('format', ['xlsx', 'pdf'])->name('export.units');
+        Route::get('/export/tenants/{format?}',   [ImportController::class, 'exportTenants'])->whereIn('format', ['xlsx', 'pdf'])->name('export.tenants');
+        Route::get('/export/contracts/{format?}', [ImportController::class, 'exportContracts'])->whereIn('format', ['xlsx', 'pdf'])->name('export.contracts');
     });
 
     Route::get('/', fn() => redirect()->route('dashboard'));
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/property-units/export', [PropertyUnitController::class, 'export'])->name('property-units.export');
+    // Your own account. Deliberately outside every role gate: the users
+    // resource is Admin-only, which left a User or Maintenance account unable
+    // to change even its own name. ProfileController acts on auth()->user()
+    // and never on an id from the request.
+    Route::get('/profile',           [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile',           [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password',  [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // The ⌘K palette's search. Server-side and role-gated; see SearchController.
+    Route::get('/search', SearchController::class)->name('search');
+
+    Route::get('/property-units/export/{format?}', [PropertyUnitController::class, 'export'])->whereIn('format', ['xlsx', 'pdf'])->name('property-units.export');
     Route::get('/property-units/building/{building}/data', [PropertyUnitController::class, 'buildingData'])->name('property-units.building-data');
     Route::get('/property-units/building/{building}/floors', [PropertyUnitController::class, 'floorsByBuilding'])->name('property-units.building-floors');
     Route::resource('property-units', PropertyUnitController::class);
@@ -101,7 +133,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/ewa-bills/summary',               [EwaBillSummaryController::class, 'create'])->name('ewa-bills.summary.create');
     Route::post('/ewa-bills/summary',               [EwaBillSummaryController::class, 'store'])->name('ewa-bills.summary.store');
     Route::get('/ewa-bills/summary/{batch}',        [EwaBillSummaryController::class, 'show'])->name('ewa-bills.summary.show');
-    Route::get('/ewa-bills/summary/{batch}/export', [EwaBillSummaryController::class, 'export'])->name('ewa-bills.summary.export');
+    Route::get('/ewa-bills/summary/{batch}/export/{format?}', [EwaBillSummaryController::class, 'export'])->whereIn('format', ['xlsx', 'pdf'])->name('ewa-bills.summary.export');
     Route::resource('ewa-bills', EwaBillController::class);
     Route::post('/ewa-bills/{ewaBill}/payments',           [EwaBillController::class, 'storePayment'])->name('ewa-bills.payments.store');
     Route::delete('/ewa-bills/{ewaBill}/payments/{ewaPayment}', [EwaBillController::class, 'destroyPayment'])->name('ewa-bills.payments.destroy');
@@ -114,8 +146,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/invoices/{invoice}/payments/{payment}/receipt',  [PaymentController::class, 'receipt'])->name('invoices.payments.receipt');
     Route::get('/invoices/{invoice}/payments/{payment}/receipt/preview', [PaymentController::class, 'receiptPreview'])->name('invoices.payments.receipt.preview');
 
-    // Reports — financial data, kept to Admin only
-    Route::middleware('role:admin')->group(function () {
+    // Reports — financial data, so Admin's and the Accountant's, the role that
+    // exists to produce them. Mirrored by User::canViewReports(), which is what
+    // decides whether the nav entry is drawn.
+    Route::middleware('role:admin,accountant')->group(function () {
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/tenant-statement',        [ReportController::class, 'tenantStatement'])->name('reports.tenant-statement');
         Route::get('/reports/tenant-statement/pdf',    [ReportController::class, 'tenantStatementPdf'])->name('reports.tenant-statement.pdf');
@@ -174,6 +208,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/settings/azure-mail',        [AzureMailSettingController::class, 'edit'])->name('settings.azure-mail.edit');
         Route::put('/settings/azure-mail',        [AzureMailSettingController::class, 'update'])->name('settings.azure-mail.update');
         Route::post('/settings/azure-mail/test',  [AzureMailSettingController::class, 'sendTest'])->name('settings.azure-mail.test');
+
+        Route::get('/settings/branding', [BrandingSettingController::class, 'edit'])->name('settings.branding.edit');
+        Route::put('/settings/branding', [BrandingSettingController::class, 'update'])->name('settings.branding.update');
     });
 
     Route::get('/form-configs', [FormConfigController::class, 'index'])->name('form-configs.index');
@@ -185,6 +222,35 @@ Route::middleware('auth')->group(function () {
     // User management — Admin only
     Route::middleware('role:admin')->group(function () {
         Route::resource('users', UserController::class);
+
+        // Roles & Permissions — a read-only reference for what each role can
+        // reach. Roles are code-defined (App\Support\RoleCatalog), so there is
+        // no store/update/destroy here by design.
+        Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
     });
 
+});
+
+// TEMP — local visual QA only, removed before commit.
+Route::get('/__qa-auth/{id}', function ($id) {
+    abort_unless(app()->environment('local') && request()->ip() === '127.0.0.1', 404);
+    auth()->loginUsingId((int) $id);
+    return redirect('/dashboard');
+});
+
+// TEMP-QA-AUTH (local screenshot harness only — removed before commit)
+Route::get('/__qa-auth/{id}', function ($id) {
+    abort_unless(request()->getHost() === '127.0.0.1', 404);
+    auth()->loginUsingId((int) $id);
+    return redirect('/');
+});
+
+// ── TEMPORARY, LOCAL VISUAL QA ONLY — remove before committing ───────────────
+// The qa-harness scripts sign in as qa-visual@example.com, which is not in this
+// database. This lets them attach to a real account without a DB write. Bound
+// to loopback so it cannot authenticate anyone off-box.
+Route::get('/__qa-auth/{id}', function (int $id) {
+    abort_unless(in_array(request()->ip(), ['127.0.0.1', '::1'], true), 404);
+    auth()->loginUsingId($id);
+    return redirect('/dashboard');
 });

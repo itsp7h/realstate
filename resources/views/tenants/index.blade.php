@@ -2,355 +2,222 @@
 
 @section('title', 'Tenants')
 @section('topbar-title', 'Tenants')
+@section('topbar-count', number_format($tenants->total()))
+
+@section('page-title', 'Tenants')
+@section('page-subtitle', 'Manage all tenant profiles and contact records')
+@section('page-actions')
+    @include('partials.export-menu', [
+        'route'  => 'export.tenants',
+        'params' => request()->only(['search','tenant_type','company_name']),
+        'sub'    => 'All 7 columns, import-ready',
+    ])
+    <button type="button" class="btn btn-outline" onclick="openImport_tenants()">
+        <i class="fa-solid fa-file-import"></i> Import
+    </button>
+    <button type="button" class="btn btn-primary" onclick="openTenantModal()">
+        <i class="fa-solid fa-plus"></i> Add Tenant
+    </button>
+@endsection
 
 @push('styles')
 <style>
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-    .stat-card {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius);
-        padding: 18px 20px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        box-shadow: var(--shadow-sm);
-        transition: box-shadow 0.2s, transform 0.2s;
-    }
-    .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-    .stat-icon {
-        width: 44px; height: 44px;
-        border-radius: var(--radius-sm);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 18px; flex-shrink: 0;
-    }
-    .stat-icon.gold  { background: var(--accent-dim); color: var(--accent); }
-    .stat-icon.green { background: #ECFDF5; color: var(--success); }
-    .stat-icon.blue  { background: #EFF6FF; color: var(--info); }
-    .stat-val { font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-    .stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
-
     /* ── FILTER BAR ─────────────────────────────────────── */
-    .filter-bar {
-        display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;
-        padding: 16px 20px;
-        background: var(--page-bg);
-        border-bottom: 1px solid var(--card-border);
-    }
-    .filter-group { display: flex; flex-direction: column; gap: 5px; min-width: 150px; }
-    .filter-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .filter-group input, .filter-group select {
-        padding: 8px 12px; font-size: 13px;
-        border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-        background: var(--card-bg); color: var(--text-primary);
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        outline: none; appearance: none; -webkit-appearance: none;
-        transition: border-color 0.18s, box-shadow 0.18s;
-    }
-    .filter-group input:focus, .filter-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
-    .filter-group select {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px;
-    }
-    .filter-actions { display: flex; gap: 8px; align-items: flex-end; margin-left: auto; }
 
     /* ── TABLE ──────────────────────────────────────────── */
     .tenant-avatar {
         width: 36px; height: 36px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
-        font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700;
+        font-family: 'Outfit', sans-serif; font-size: var(--fs-base); font-weight: 700;
         flex-shrink: 0;
     }
-    .tenant-avatar.individual { background: #ECFDF5; color: var(--success); }
-    .tenant-avatar.company    { background: #EFF6FF; color: var(--info); }
-    .tenant-name { font-weight: 600; font-size: 13.5px; color: var(--text-primary); }
-    .tenant-sub  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    .action-btns { display: flex; gap: 6px; }
+    .tenant-avatar.individual { background: var(--tone-success-bg); color:var(--tone-success-fg); }
+    .tenant-avatar.company    { background: var(--tone-info-bg); color:var(--tone-info-fg); }
+    .tenant-name { font-weight: 600; font-size: var(--fs-base); color: var(--text-primary); }
+    .tenant-sub  { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 2px; }
 
     /* ── TABLE FOOTER ───────────────────────────────────── */
-    .table-footer {
-        padding: 14px 20px; border-top: 1px solid var(--card-border);
-        display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
-    }
-    .pagination { display: flex; gap: 4px; align-items: center; }
-    .page-btn {
-        width: 32px; height: 32px; border: 1.5px solid var(--card-border);
-        background: var(--card-bg); border-radius: var(--radius-sm);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 12px; font-weight: 600; color: var(--text-secondary);
-        cursor: pointer; text-decoration: none; transition: all 0.15s;
-    }
-    .page-btn:hover { background: var(--page-bg); color: var(--text-primary); }
-    .page-btn.active { background: var(--accent); border-color: var(--accent); color: #0B1120; }
-    .result-count { font-size: 13px; color: var(--text-muted); }
-    .result-count strong { color: var(--text-primary); }
-    .empty-state { text-align: center; padding: 60px 20px; }
-    .empty-icon { width: 64px; height: 64px; background: var(--page-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--text-muted); margin: 0 auto 16px; }
-    .empty-state h4 { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
-    .empty-state p { font-size: 13px; color: var(--text-muted); }
 
     /* ── MODAL ──────────────────────────────────────────── */
-    .modal-overlay {
-        position: fixed; inset: 0; z-index: 1000;
-        background: rgba(11,17,32,0.55); backdrop-filter: blur(4px);
-        display: flex; align-items: center; justify-content: center; padding: 20px;
-        opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
-    }
-    .modal-overlay.open { opacity: 1; pointer-events: all; }
-    .modal-box {
-        background: var(--card-bg); border: 1px solid var(--card-border);
-        border-radius: 16px;
-        box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.10);
-        width: 100%; max-width: 560px; max-height: 90vh;
-        display: flex; flex-direction: column;
-        transform: translateY(20px) scale(0.98);
-        transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);
-        overflow: hidden;
-    }
-    .modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
-    .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--card-border); flex-shrink: 0; }
-    .modal-header-top { display: flex; align-items: center; gap: 12px; }
-    .modal-header-icon {
-        width: 40px; height: 40px; border-radius: 10px;
-        background: var(--accent-dim); border: 1px solid rgba(232,184,109,0.25);
-        display: flex; align-items: center; justify-content: center;
-        color: var(--accent); font-size: 16px; flex-shrink: 0;
-    }
-    .modal-header-title { font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 800; color: var(--text-primary); }
-    .modal-header-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    .modal-close-btn {
-        margin-left: auto; width: 32px; height: 32px; border-radius: var(--radius-sm);
-        border: 1.5px solid var(--card-border); background: transparent;
-        cursor: pointer; display: flex; align-items: center; justify-content: center;
-        color: var(--text-muted); font-size: 13px; transition: all 0.15s;
-    }
-    .modal-close-btn:hover { background: var(--page-bg); color: var(--text-primary); }
-    .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
-    .modal-body::-webkit-scrollbar { width: 4px; }
-    .modal-body::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
-    .modal-footer {
-        padding: 16px 24px; border-top: 1px solid var(--card-border);
-        display: flex; align-items: center; justify-content: flex-end; gap: 10px;
-        flex-shrink: 0;
-    }
 
     /* ── MODAL FIELDS ───────────────────────────────────── */
     .mfield-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px 20px; }
     .mfield-grid .span-full { grid-column: 1/-1; }
     .mfield-group { display: flex; flex-direction: column; }
     .mfield-label {
-        font-size: 11px; font-weight: 700; color: var(--text-secondary);
+        font-size: var(--fs-xs); font-weight: 700; color: var(--text-secondary);
         letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px;
         display: flex; align-items: center; gap: 3px;
     }
-    .mfield-label .req { color: var(--danger); font-size: 13px; line-height: 1; }
+    .mfield-label .req { color: var(--danger); font-size: var(--fs-base); line-height: 1; }
     .mfield-wrap { position: relative; }
     .mfield-icon {
         position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-        color: var(--text-muted); font-size: 12px; pointer-events: none; transition: color 0.2s;
+        color: var(--text-muted); font-size: var(--fs-sm); pointer-events: none; transition: color 0.2s;
     }
     .mfield-wrap:focus-within .mfield-icon { color: var(--accent); }
     .has-micon input, .has-micon select { padding-left: 34px; }
     .mfield-input, .mfield-select {
         width: 100%; padding: 9.5px 13px;
         border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-        background: #fff; color: var(--text-primary);
-        font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px;
+        background: var(--input-bg); color: var(--text-primary);
+        font-family: 'Plus Jakarta Sans', sans-serif; font-size: var(--fs-base);
         outline: none; appearance: none; -webkit-appearance: none;
         transition: border-color 0.2s, box-shadow 0.2s;
     }
     .mfield-input:focus, .mfield-select:focus {
-        border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: #FFFDF8;
+        border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: var(--tone-warning-bg);
     }
-    .mfield-input.is-invalid, .mfield-select.is-invalid { border-color: var(--danger); background: #FFF8F8; }
+    .mfield-input.is-invalid, .mfield-select.is-invalid { border-color: var(--danger); background: var(--tone-danger-bg); }
     .mfield-select {
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2394A3B8' d='M5 7L0.669873 2.5L9.33013 2.5L5 7Z'/%3E%3C/svg%3E");
         background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px;
     }
-    .mfield-error { display: flex; align-items: center; gap: 4px; margin-top: 5px; font-size: 11px; color: var(--danger); font-weight: 500; }
+    .mfield-error { display: flex; align-items: center; gap: 4px; margin-top: 5px; font-size: var(--fs-xs); color: var(--danger); font-weight: 500; }
 
     /* ── TYPE TOGGLE ────────────────────────────────────── */
-    .type-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
-    .type-option { position: relative; }
-    .type-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
-    .type-option label {
-        display: flex; align-items: center; gap: 10px;
-        padding: 12px 14px; border-radius: var(--radius-sm);
-        border: 1.5px solid var(--card-border); cursor: pointer;
-        font-size: 13px; font-weight: 600; color: var(--text-secondary);
-        transition: all 0.18s; background: var(--page-bg);
-        text-transform: none; letter-spacing: 0;
-    }
-    .type-option label .ti { font-size: 16px; }
-    .type-option input:checked + label {
-        border-color: var(--accent); background: var(--accent-dim);
-        color: var(--text-primary);
-        box-shadow: 0 0 0 3px var(--accent-dim);
-    }
-    .type-option label:hover { border-color: #B0BCCF; background: #F8FAFC; }
 
     @media (max-width: 600px) {
-        .modal-box { max-height: 100vh; border-radius: 0; max-width: 100%; }
-        .modal-overlay { padding: 0; align-items: flex-end; }
         .mfield-grid { grid-template-columns: 1fr; }
         .mfield-grid .span-full { grid-column: span 1; }
-        .type-toggle { grid-template-columns: 1fr; }
     }
 
     /* ── TENANT PROFILE MODAL ───────────────────────────── */
     .profile-modal-overlay {
         display: none; position: fixed; inset: 0; z-index: 1050;
         background: rgba(11,17,32,0.75); backdrop-filter: blur(4px);
-        align-items: center; justify-content: center; padding: 24px;
+        align-items: center; justify-content: center; padding: var(--sp-6);
     }
     .profile-modal-overlay.open { display: flex; }
-    .profile-modal-box {
-        width: 100%; max-width: 1100px; max-height: 90vh;
-        background: var(--card-bg); border-radius: var(--radius);
-        display: flex; flex-direction: column; overflow: hidden;
-        box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-    }
     .profile-modal-header {
         padding: 10px 16px; background: var(--page-bg); border-bottom: 1px solid var(--card-border);
         display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0;
     }
     .profile-modal-body { flex: 1; overflow-y: auto; padding: 22px 24px; }
     .profile-modal-body::-webkit-scrollbar { width: 4px; }
-    .profile-modal-body::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
-    .profile-modal-loading { text-align: center; padding: 80px 20px; color: var(--text-muted); font-size: 24px; }
+    .profile-modal-body::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 10px; }
+    .profile-modal-loading { text-align: center; padding: 80px 20px; color: var(--text-muted); font-size: var(--fs-2xl); }
 </style>
 @endpush
 
 @section('content')
 
 {{-- PAGE HEADER --}}
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Tenants</span>
-        </div>
-        <h1 class="page-header-title">Tenants</h1>
-        <p class="page-header-sub">Manage all tenant profiles and contact records</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('export.tenants', request()->only(['search','tenant_type','company_name'])) }}" class="btn btn-outline">
-            <i class="fa-solid fa-file-export"></i> Export
+
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
+     Was the odd one out: its own search wrapper, its own chip class, rows
+     built from .pm-action-row with an inline avatar, a section eyebrow with
+     a loose count beside it, and a FAB for the create verb that every other
+     screen puts in the actions row. All five are the shared components
+     now. ── --}}
+@php
+    $tenantFilters = [
+        ['id' => null,      'label' => 'All'],
+        ['id' => 'paid',    'label' => 'Paid'],
+        ['id' => 'overdue', 'label' => 'Overdue'],
+    ];
+    $activeStatus = request('status');
+    $tenantChips  = array_map(fn ($f) => [
+        'label'  => $f['label'],
+        'href'   => route('tenants.index', array_filter(['search' => request('search'), 'status' => $f['id']])),
+        'active' => $activeStatus === $f['id'],
+        'count'  => $f['id'] ? $tenants->total() : null,
+    ], $tenantFilters);
+@endphp
+<x-mobile-list
+    :actions="[
+        'primary' => ['label' => 'Add tenant', 'onclick' => 'openTenantModal()'],
+        'sheet'   => [
+            'id'    => 'tenantsMoreSheet',
+            'title' => 'More',
+            'sub'   => 'Import and export this list',
+            'items' => [
+                ['icon' => 'fa-wand-magic-sparkles', 'label' => 'Smart import',
+                 'desc' => 'Bring in tenants from a spreadsheet',
+                 'onclick' => 'openImport_tenants()'],
+                ['icon' => 'fa-file-excel', 'label' => 'Export to Excel',
+                 'desc' => 'The list as it is filtered now',
+                 'href' => route('export.tenants', array_merge(request()->only(['search','status','tenant_type']), ['format' => 'xlsx']))],
+                ['icon' => 'fa-file-pdf', 'label' => 'Export to PDF',
+                 'desc' => 'The list as it is filtered now',
+                 'href' => route('export.tenants', array_merge(request()->only(['search','status','tenant_type']), ['format' => 'pdf']))],
+            ],
+        ],
+    ]"
+    :search="[
+        'action'      => route('tenants.index'),
+        'placeholder' => 'Search tenants or units',
+        'aria'        => 'Search tenants',
+        'keep'        => ['status'],
+    ]"
+    :chips="$tenantChips">
+
+    @forelse($tenants as $tenant)
+        @php
+            $lease = $tenant->activeLease;
+            $rentStatus = match ($tenant->rentStatus) {
+                'paid'    => 'Paid',
+                'overdue' => 'Overdue',
+                default   => null,
+            };
+        @endphp
+        <a href="{{ route('tenants.show', $tenant) }}" class="m-row-card ps-reveal">
+            <span class="m-row-thumb">
+                <span class="m-row-initials">{{ strtoupper(substr($tenant->name, 0, 2)) }}</span>
+            </span>
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $tenant->name }}</span>
+                <span class="m-row-sub">{{ $lease?->property_code ?? 'No active lease' }}{{ $lease?->unit ? ' · '.$lease->unit : '' }}</span>
+                {{-- The chip already says Paid or Overdue when one is
+                     active; repeating it on every row says nothing. --}}
+                @if($rentStatus && ! $activeStatus)
+                    <span class="m-row-sub {{ $rentStatus === 'Overdue' ? 'is-down' : '' }}">Rent {{ strtolower($rentStatus) }}</span>
+                @endif
+            </span>
+            @if($lease?->rent_per_month)
+                <span class="m-row-amount">BHD {{ number_format($lease->rent_per_month, 0) }}</span>
+            @endif
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
         </a>
-        <button type="button" class="btn btn-outline" onclick="openImport_tenants()">
-            <i class="fa-solid fa-file-import"></i> Import
-        </button>
-        <button type="button" class="btn btn-primary" onclick="openTenantModal()">
-            <i class="fa-solid fa-plus"></i> Add Tenant
-        </button>
-    </div>
-</div>
-
-
-{{-- ═══════════════════════ MOBILE SCREEN (Miknas Property Manager design) ═══════════════════════ --}}
-<div class="m-screen">
-    <div style="display:flex;align-items:center;gap:9px;background:var(--pm-surface);border:1px solid var(--pm-border-strong);border-radius:8px;padding:10px 12px;">
-        <i class="fa-solid fa-magnifying-glass" style="color:var(--pm-text-3);font-size:13px;"></i>
-        <form method="GET" action="{{ route('tenants.index') }}" style="flex:1;">
-            @if(request('status'))<input type="hidden" name="status" value="{{ request('status') }}">@endif
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search tenants or units"
-                   style="width:100%;border:0;outline:none;font-size:13.5px;color:var(--pm-text);background:transparent;font-family:'Plus Jakarta Sans',sans-serif;"
-                   oninput="mDebounceSubmit(this)">
-        </form>
-    </div>
-
-    @php
-        $tenantFilters = [
-            ['id' => null,      'label' => 'All'],
-            ['id' => 'paid',    'label' => 'Paid'],
-            ['id' => 'overdue', 'label' => 'Overdue'],
-        ];
-        $activeStatus = request('status');
-    @endphp
-    <div style="display:flex;gap:7px;">
-        @foreach($tenantFilters as $f)
-            @php $isActive = $activeStatus === $f['id']; @endphp
-            <a href="{{ route('tenants.index', array_filter(['search' => request('search'), 'status' => $f['id']])) }}"
-               style="padding:7px 13px;border-radius:9999px;font-size:12px;font-weight:600;text-decoration:none;
-                      border:1px solid {{ $isActive ? 'var(--pm-navy)' : 'var(--pm-border)' }};
-                      background:{{ $isActive ? 'var(--pm-navy)' : 'var(--pm-surface)' }};
-                      color:{{ $isActive ? '#fff' : 'var(--pm-text-2)' }};">
-                {{ $f['label'] }}
-            </a>
-        @endforeach
-    </div>
-
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="pm-section-label" style="margin-bottom:0;">LEASES</div>
-        <div style="font-size:11px;font-weight:600;color:var(--pm-text-3);">{{ $tenants->total() }}</div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:8px;">
-        @forelse($tenants as $tenant)
-            @php
-                $lease = $tenant->activeLease;
-                $statusMeta = match ($tenant->rentStatus) {
-                    'paid'    => ['label' => 'Paid',    'tone' => 'var(--pm-green-text)'],
-                    'overdue' => ['label' => 'Overdue', 'tone' => 'var(--pm-red)'],
-                    default   => null,
-                };
-            @endphp
-            <a href="{{ route('tenants.show', $tenant) }}" class="pm-action-row" style="text-decoration:none;">
-                <div style="flex:none;width:38px;height:38px;border-radius:9999px;background:var(--pm-page);color:var(--pm-text-2);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">
-                    {{ strtoupper(substr($tenant->name, 0, 2)) }}
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div class="pm-action-title">{{ $tenant->name }}</div>
-                    <div class="pm-action-sub">{{ $lease?->property_code ?? '—' }}{{ $lease?->unit ? ' · '.$lease->unit : '' }}</div>
-                </div>
-                @if($lease?->rent_per_month)
-                    <div style="text-align:right;flex-shrink:0;">
-                        <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;color:var(--pm-text);">BHD {{ number_format($lease->rent_per_month, 0) }}</div>
-                        @if($statusMeta)
-                            <div style="font-size:10px;font-weight:700;color:{{ $statusMeta['tone'] }};">{{ $statusMeta['label'] }}</div>
-                        @endif
-                    </div>
-                @endif
-            </a>
-        @empty
-            <div class="pm-empty">
-                @if($activeStatus)
-                    No tenants match this filter.
-                @else
-                    <div style="font-size:14px;font-weight:700;color:var(--pm-text);margin-bottom:4px;">No tenants found</div>
-                    <div>Try adjusting your search or add a new tenant.</div>
-                @endif
-            </div>
-        @endforelse
-    </div>
-
-    <button type="button" class="pm-fab" style="position:fixed;border:0;" onclick="openTenantModal()" title="Add a tenant"><i class="fa-solid fa-plus"></i></button>
-</div>
+    @empty
+        <div class="m-empty">
+            <div class="m-empty-icon"><i class="fa-solid fa-users" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No tenants here</div>
+            <div class="m-empty-sub">Try a different search, or add a tenant.</div>
+            <button type="button" class="m-action-btn primary" onclick="openTenantModal()">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>Add tenant
+            </button>
+        </div>
+    @endforelse
+</x-mobile-list>
 
 {{-- STATS --}}
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-icon gold"><i class="fa-solid fa-users"></i></div>
-        <div><div class="stat-val">{{ $tenants->total() }}</div><div class="stat-lbl">Total Tenants</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon gold"><i class="fa-solid fa-users"></i></span>
+            <span class="stat-lbl">Total Tenants</span>
+        </div>
+        <div class="stat-val">{{ $tenants->total() }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon green"><i class="fa-solid fa-user"></i></div>
-        <div><div class="stat-val">{{ $stats['individual'] ?? 0 }}</div><div class="stat-lbl">Individuals</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon green"><i class="fa-solid fa-user"></i></span>
+            <span class="stat-lbl">Individuals</span>
+        </div>
+        <div class="stat-val">{{ $stats['individual'] ?? 0 }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon blue"><i class="fa-solid fa-building-user"></i></div>
-        <div><div class="stat-val">{{ $stats['company'] ?? 0 }}</div><div class="stat-lbl">Companies</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon blue"><i class="fa-solid fa-building-user"></i></span>
+            <span class="stat-lbl">Companies</span>
+        </div>
+        <div class="stat-val">{{ $stats['company'] ?? 0 }}</div>
     </div>
 </div>
 
 {{-- TABLE CARD --}}
-<div class="card m-hide-desktop-index" style="overflow:hidden;">
+<div class="table-card m-hide-desktop-index">
 
     <form method="GET" action="{{ route('tenants.index') }}" id="filterForm">
         <div class="filter-bar">
@@ -393,16 +260,21 @@
             <thead>
                 <tr>
                     <th>Tenant</th>
-                    <th>Type</th>
-                    <th>ID / CR Number</th>
+                    <th>Unit</th>
                     <th>Phone</th>
-                    <th>Email</th>
-                    <th>Nationality / Country</th>
-                    <th style="text-align:right;">Actions</th>
+                    <th>Lease ends</th>
+                    <th class="num">Balance (BHD)</th>
+                    <th>Status</th>
+                    <th class="col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($tenants as $tenant)
+                @php
+                    $lease   = $tenant->activeLease;
+                    $balance = (float) $tenant->invoices->sum(fn ($i) => $i->balance_due);
+                    $overdue = $tenant->invoices->contains(fn ($i) => $i->status === 'overdue');
+                @endphp
                 <tr data-tenant-modal="{{ route('tenants.show', $tenant) }}" style="cursor:pointer">
                     <td>
                         <div style="display:flex;align-items:center;gap:10px;">
@@ -416,20 +288,11 @@
                         </div>
                     </td>
                     <td>
-                        @if($tenant->tenant_type === 'individual')
-                            <span class="badge badge-green"><i class="fa-solid fa-user"></i> Individual</span>
+                        @if($lease)
+                            <div class="cell-title">{{ $lease->unit ?: optional($lease->propertyUnit)->unit_name ?: '—' }}</div>
+                            <div class="cell-sub">{{ $lease->property_name }}</div>
                         @else
-                            <span class="badge badge-blue"><i class="fa-solid fa-building-user"></i> Company</span>
-                            @if($tenant->company_name)
-                                <div class="tenant-sub" style="margin-top:4px;">Under {{ $tenant->company_name }}</div>
-                            @endif
-                        @endif
-                    </td>
-                    <td>
-                        @if($tenant->id_cr_number)
-                            <span style="font-family:'Outfit',sans-serif;font-weight:600;font-size:13px;">{{ $tenant->id_cr_number }}</span>
-                        @else
-                            <span style="color:var(--text-muted);">—</span>
+                            <span class="cell-muted">No active lease</span>
                         @endif
                     </td>
                     <td>
@@ -440,35 +303,40 @@
                         @endif
                     </td>
                     <td>
-                        @if($tenant->email)
-                            <a href="mailto:{{ $tenant->email }}" style="color:var(--info);text-decoration:none;font-size:13px;">{{ $tenant->email }}</a>
+                        @if($lease && $lease->lease_end_date)
+                            <div class="cell-title">{{ $lease->lease_end_date->format('d M Y') }}</div>
+                            <div class="cell-sub {{ $lease->status === 'expiring' ? 'val-warning' : '' }}">
+                                {{ $lease->lease_end_date->diffForHumans() }}
+                            </div>
                         @else
-                            <span style="color:var(--text-muted);">—</span>
+                            <span class="cell-muted">—</span>
                         @endif
+                    </td>
+                    {{-- Outstanding across every unpaid invoice. Owing money is
+                         the thing worth spotting from a list, so it carries a
+                         tone; a settled account recedes. --}}
+                    <td class="num {{ $balance > 0.001 ? 'val-negative' : 'cell-muted' }}">
+                        {{ number_format($balance, 3) }}
                     </td>
                     <td>
-                        @if($tenant->nationality_country)
-                            <span style="font-size:13px;">{{ $tenant->nationality_country }}</span>
+                        @if($overdue)
+                            <span class="status-badge overdue">Overdue</span>
+                        @elseif($lease)
+                            <span class="status-badge {{ $lease->status }}">{{ ucfirst($lease->status) }}</span>
                         @else
-                            <span style="color:var(--text-muted);">—</span>
+                            <span class="status-badge draft">No lease</span>
                         @endif
                     </td>
-                    <td onclick="event.stopPropagation()">
-                        <div class="action-btns" style="justify-content:flex-end;">
-                            <button type="button" class="btn btn-outline btn-sm" title="View" onclick="openTenantProfileModal('{{ route('tenants.show', $tenant) }}')">
-                                <i class="fa-regular fa-eye"></i>
-                            </button>
-                            <a href="{{ route('tenants.edit', $tenant) }}" class="btn btn-outline btn-sm" title="Edit">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </a>
-                            <form method="POST" action="{{ route('tenants.destroy', $tenant) }}"
-                                  onsubmit="return confirm('Delete {{ addslashes($tenant->name) }}? This cannot be undone.')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </form>
-                        </div>
+                    <td class="col-actions" onclick="event.stopPropagation()">
+                        @include('partials.row-actions', ['label' => 'Actions for '.$tenant->name, 'items' => [
+                            ['label' => 'View profile',  'icon' => 'fa-eye',
+                             'onclick' => "openTenantProfileModal('".route('tenants.show', $tenant)."')"],
+                            ['label' => 'Edit tenant',   'icon' => 'fa-pen-to-square', 'url' => route('tenants.edit', $tenant)],
+                            ['sep' => true],
+                            ['label' => 'Delete tenant', 'icon' => 'fa-trash-can', 'tone' => 'danger',
+                             'action' => route('tenants.destroy', $tenant), 'method' => 'DELETE',
+                             'confirm' => 'Delete '.$tenant->name.'? This cannot be undone.'],
+                        ]])
                     </td>
                 </tr>
                 @empty
@@ -491,21 +359,7 @@
             Showing <strong>{{ $tenants->firstItem() ?? 0 }}–{{ $tenants->lastItem() ?? 0 }}</strong>
             of <strong>{{ $tenants->total() }}</strong> tenants
         </div>
-        <div class="pagination">
-            @if($tenants->onFirstPage())
-                <span class="page-btn" style="opacity:0.4;cursor:default;"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></span>
-            @else
-                <a href="{{ $tenants->previousPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></a>
-            @endif
-            @foreach($tenants->getUrlRange(max(1,$tenants->currentPage()-2), min($tenants->lastPage(),$tenants->currentPage()+2)) as $page => $url)
-                <a href="{{ $url }}" class="page-btn {{ $page == $tenants->currentPage() ? 'active' : '' }}">{{ $page }}</a>
-            @endforeach
-            @if($tenants->hasMorePages())
-                <a href="{{ $tenants->nextPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></a>
-            @else
-                <span class="page-btn" style="opacity:0.4;cursor:default;"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></span>
-            @endif
-        </div>
+        {{ $tenants->links() }}
     </div>
 
 </div>
@@ -521,7 +375,7 @@
      ADD TENANT MODAL
 ═══════════════════════════════════════════════════════ --}}
 <div class="modal-overlay" id="tenantModal" role="dialog" aria-modal="true" aria-labelledby="tenantModalTitle">
-    <div class="modal-box">
+    <div class="modal-box" style="--modal-w:560px">
 
         <div class="modal-header">
             <div class="modal-header-top">
@@ -543,19 +397,19 @@
                 {{-- TENANT TYPE --}}
                 <div style="margin-bottom:20px;">
                     <div class="mfield-label" style="margin-bottom:10px;">Tenant Type <span class="req">*</span></div>
-                    <div class="type-toggle">
-                        <div class="type-option">
+                    <div class="option-grid">
+                        <div class="option-group">
                             <input type="radio" name="tenant_type" id="type_individual" value="individual"
                                 {{ old('tenant_type', 'individual') === 'individual' ? 'checked' : '' }} required>
-                            <label for="type_individual">
+                            <label for="type_individual" class="option-card">
                                 <i class="fa-solid fa-user ti" style="color:var(--success);"></i>
                                 Individual
                             </label>
                         </div>
-                        <div class="type-option">
+                        <div class="option-group">
                             <input type="radio" name="tenant_type" id="type_company" value="company"
                                 {{ old('tenant_type') === 'company' ? 'checked' : '' }}>
-                            <label for="type_company">
+                            <label for="type_company" class="option-card">
                                 <i class="fa-solid fa-building-user ti" style="color:var(--info);"></i>
                                 Company
                             </label>
@@ -679,7 +533,7 @@
      TENANT PROFILE MODAL
 ═══════════════════════════════════════════════════════ --}}
 <div class="profile-modal-overlay" id="tenantProfileModal" onclick="closeTenantProfileModal(event)">
-    <div class="profile-modal-box" onclick="event.stopPropagation()">
+    <div class="modal-box" style="--modal-w:1100px" onclick="event.stopPropagation()">
         <div class="profile-modal-header">
             <button type="button" class="btn btn-outline btn-sm" onclick="closeTenantProfileModal()">
                 <i class="fa-solid fa-xmark"></i> Close

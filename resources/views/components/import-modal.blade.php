@@ -69,7 +69,7 @@
 
 {{-- ── IMPORT MODAL ─────────────────────────────────────────── --}}
 <div class="modal-overlay" id="{{ $modalId }}" onclick="if(event.target===this){{ $closeFn }}()">
-    <div class="modal-box import-modal-box">
+    <div class="modal-box import-modal-box" style="--modal-w:560px">
 
         {{-- Header --}}
         <div class="modal-header">
@@ -109,73 +109,73 @@
             {{-- Column guide --}}
             <div class="import-col-guide">
                 @if($type === 'buildings')
-                    <span class="col-badge required-col">Property Name *</span>
-                    <span class="col-badge required-col">Property Code *</span>
-                    <span class="col-badge">Type of Ownership</span>
-                    <span class="col-badge">Property Type</span>
-                    <span class="col-badge">Land Lord</span>
-                    <span class="col-badge">Building No.</span>
-                    <span class="col-badge">Road</span>
-                    <span class="col-badge">Block</span>
-                    <span class="col-badge">Area</span>
-                    <span class="col-badge">City</span>
-                    <span class="col-badge">Total Blocks</span>
-                    <span class="col-badge">Total Floors</span>
-                    <span class="col-badge">Total Units</span>
+                    <span class="badge required-col">Property Name *</span>
+                    <span class="badge required-col">Property Code *</span>
+                    <span class="badge">Type of Ownership</span>
+                    <span class="badge">Property Type</span>
+                    <span class="badge">Land Lord</span>
+                    <span class="badge">Building No.</span>
+                    <span class="badge">Road</span>
+                    <span class="badge">Block</span>
+                    <span class="badge">Area</span>
+                    <span class="badge">City</span>
+                    <span class="badge">Total Blocks</span>
+                    <span class="badge">Total Floors</span>
+                    <span class="badge">Total Units</span>
                 @elseif($type === 'floors')
-                    <span class="col-badge required-col">Property Code *</span>
-                    <span class="col-badge required-col">Floor Name *</span>
-                    <span class="col-badge">Floor Code</span>
-                    <span class="col-badge">Block Name</span>
-                    <span class="col-badge">Block Code</span>
-                    <span class="col-badge">Units</span>
+                    <span class="badge required-col">Property Code *</span>
+                    <span class="badge required-col">Floor Name *</span>
+                    <span class="badge">Floor Code</span>
+                    <span class="badge">Block Name</span>
+                    <span class="badge">Block Code</span>
+                    <span class="badge">Units</span>
                     <div style="font-size:11px;color:var(--text-muted);margin-top:6px;width:100%;">
                         <i class="fa-solid fa-circle-info"></i>
                         <strong>Property Code</strong> must match an existing building.
                     </div>
                 @elseif($type === 'tenants')
-                    <span class="col-badge required-col">Name *</span>
-                    <span class="col-badge">Tenant Type</span>
-                    <span class="col-badge">ID / CR Number</span>
-                    <span class="col-badge">Phone</span>
-                    <span class="col-badge">Email</span>
-                    <span class="col-badge">Nationality / Country</span>
+                    <span class="badge required-col">Name *</span>
+                    <span class="badge">Tenant Type</span>
+                    <span class="badge">ID / CR Number</span>
+                    <span class="badge">Phone</span>
+                    <span class="badge">Email</span>
+                    <span class="badge">Nationality / Country</span>
                     <div style="font-size:11px;color:var(--text-muted);margin-top:6px;width:100%;">
                         <i class="fa-solid fa-circle-info"></i>
                         <strong>Tenant Type</strong> must be <code>individual</code> or <code>company</code> (defaults to individual).
                         Rows with a duplicate name are skipped.
                     </div>
                 @elseif($type === 'contracts')
-                    <span class="col-badge required-col">Lease Agreement No *</span>
-                    <span class="col-badge required-col">Tenant Name *</span>
-                    <span class="col-badge required-col">Lease Start Date *</span>
-                    <span class="col-badge required-col">Lease End Date *</span>
-                    <span class="col-badge">Date</span>
-                    <span class="col-badge">Prop Code</span>
-                    <span class="col-badge">Floor Name / Code</span>
-                    <span class="col-badge">Unit</span>
-                    <span class="col-badge">Description</span>
-                    <span class="col-badge">Rent per Month</span>
-                    <span class="col-badge">Currency</span>
-                    <span class="col-badge">Invoicing Frequency</span>
-                    <span class="col-badge">Service Amount in BD (Excl. VAT)</span>
-                    <span class="col-badge">Security Deposit</span>
-                    <span class="col-badge">Lease Break Date</span>
-                    <span class="col-badge">Notice Period</span>
+                    <span class="badge required-col">Lease Agreement No *</span>
+                    <span class="badge required-col">Tenant Name *</span>
+                    <span class="badge required-col">Lease Start Date *</span>
+                    <span class="badge required-col">Lease End Date *</span>
+                    <span class="badge">Date</span>
+                    <span class="badge">Prop Code</span>
+                    <span class="badge">Floor Name / Code</span>
+                    <span class="badge">Unit</span>
+                    <span class="badge">Description</span>
+                    <span class="badge">Rent per Month</span>
+                    <span class="badge">Currency</span>
+                    <span class="badge">Invoicing Frequency</span>
+                    <span class="badge">Service Amount in BD (Excl. VAT)</span>
+                    <span class="badge">Security Deposit</span>
+                    <span class="badge">Lease Break Date</span>
+                    <span class="badge">Notice Period</span>
                     <div style="font-size:11px;color:var(--text-muted);margin-top:6px;width:100%;">
                         <i class="fa-solid fa-circle-info"></i>
                         <strong>Tenant Name</strong> will auto-link to an existing tenant if the name matches exactly.
                         Dates must be in <strong>YYYY-MM-DD</strong> format or standard Excel date format.
                     </div>
                 @else
-                    <span class="col-badge required-col">Property Code *</span>
-                    <span class="col-badge required-col">Unit Name *</span>
-                    <span class="col-badge">Floor Code</span>
-                    <span class="col-badge">Unit Type</span>
-                    <span class="col-badge">Condition</span>
-                    <span class="col-badge">Area Inside</span>
-                    <span class="col-badge">Rent/Month</span>
-                    <span class="col-badge">+ more…</span>
+                    <span class="badge required-col">Property Code *</span>
+                    <span class="badge required-col">Unit Name *</span>
+                    <span class="badge">Floor Code</span>
+                    <span class="badge">Unit Type</span>
+                    <span class="badge">Condition</span>
+                    <span class="badge">Area Inside</span>
+                    <span class="badge">Rent/Month</span>
+                    <span class="badge">+ more…</span>
                     <div style="font-size:11px;color:var(--text-muted);margin-top:6px;width:100%;">
                         <i class="fa-solid fa-circle-info"></i>
                         <strong>Property Code</strong> must match an existing building. <strong>Floor Code</strong> is optional.
@@ -219,47 +219,6 @@
 @push('styles')
 <style>
 /* ── MODAL OVERLAY (self-contained) ─────────────────────── */
-.modal-overlay {
-    position: fixed; inset: 0; z-index: 1000;
-    background: rgba(11,17,32,0.55); backdrop-filter: blur(4px);
-    display: flex; align-items: center; justify-content: center; padding: 20px;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.25s ease;
-}
-.modal-overlay.open { opacity: 1; pointer-events: all; }
-.modal-box {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: 16px;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.10);
-    width: 100%; max-width: 680px; max-height: 90vh;
-    display: flex; flex-direction: column; overflow: hidden;
-    transform: translateY(20px) scale(0.98);
-    transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);
-}
-.modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
-.modal-header { padding: 20px 24px 0; flex-shrink: 0; }
-.modal-header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-.modal-header-icon {
-    width: 40px; height: 40px; border-radius: 10px;
-    background: var(--accent-dim); border: 1px solid rgba(232,184,109,0.25);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--accent); font-size: 16px; flex-shrink: 0;
-}
-.modal-header-text { flex: 1; }
-.modal-header-title { font-family: 'Outfit',sans-serif; font-size: 17px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-.modal-header-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
-.modal-close-btn {
-    width: 32px; height: 32px; border-radius: var(--radius-sm);
-    border: 1.5px solid var(--card-border); background: transparent;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    color: var(--text-muted); font-size: 13px; transition: all 0.15s; flex-shrink: 0;
-}
-.modal-close-btn:hover { background: var(--page-bg); color: var(--text-primary); }
-.modal-footer {
-    padding: 16px 24px; border-top: 1px solid var(--card-border);
-    display: flex; align-items: center; justify-content: flex-end; gap: 10px;
-    flex-shrink: 0; background: var(--card-bg);
-}
 
 /* ── IMPORT BANNER ───────────────────────────────────────── */
 .import-banner {
@@ -276,33 +235,28 @@
     from { opacity: 0; transform: translateY(-8px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-.import-banner.success { background: #ECFDF5; border-color: #6EE7B7; }
-.import-banner.partial  { background: #FFFBEB; border-color: #FCD34D; }
-.import-banner.error    { background: #FEF2F2; border-color: #FCA5A5; }
-.import-banner-icon     { font-size: 16px; flex-shrink: 0; padding-top: 2px; }
-.import-banner.success .import-banner-icon { color: #059669; }
-.import-banner.partial  .import-banner-icon { color: #D97706; }
-.import-banner.error    .import-banner-icon { color: #DC2626; }
+.import-banner.success { background: var(--tone-success-bg); border-color: var(--tone-success-border); }
+.import-banner.partial  { background: var(--tone-warning-bg); border-color: var(--tone-warning-border); }
+.import-banner.error    { background: var(--tone-danger-bg); border-color: var(--tone-danger-border); }
+.import-banner-icon     { font-size: var(--fs-md); flex-shrink: 0; padding-top: 2px; }
+.import-banner.success .import-banner-icon { color: var(--tone-success-fg); }
+.import-banner.partial  .import-banner-icon { color: var(--tone-warning-fg); }
+.import-banner.error    .import-banner-icon { color: var(--tone-danger-fg); }
 .import-banner-body     { flex: 1; }
-.import-banner-title    { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
-.import-errors-details  { margin-top: 8px; }
+.import-banner-title    { font-size: var(--fs-base); font-weight: 600; color: var(--text-primary); }
+.import-errors-details  { margin-top: var(--sp-2); }
 .import-errors-details summary {
-    font-size: 12px; color: var(--text-muted); cursor: pointer;
-    list-style: revert; padding-left: 4px;
+    font-size: var(--fs-sm); color: var(--text-muted); cursor: pointer;
+    list-style: revert; padding-left: var(--sp-1);
 }
-.import-errors-list     { margin: 8px 0 0 16px; padding: 0; font-size: 12px; color: var(--text-secondary); line-height: 1.8; }
+.import-errors-list     { margin: 8px 0 0 16px; padding: 0; font-size: var(--fs-sm); color: var(--text-secondary); line-height: 1.8; }
 .import-banner-close {
     background: none; border: none; cursor: pointer;
-    color: var(--text-muted); font-size: 13px; flex-shrink: 0;
+    color: var(--text-muted); font-size: var(--fs-base); flex-shrink: 0;
     padding: 2px 4px; border-radius: 4px;
     transition: color 0.15s;
 }
 .import-banner-close:hover { color: var(--text-primary); }
-
-/* ── IMPORT MODAL BOX ────────────────────────────────────── */
-.import-modal-box {
-    max-width: 560px !important;
-}
 
 /* ── TEMPLATE BAR ────────────────────────────────────────── */
 .import-template-bar {
@@ -320,7 +274,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 13px;
+    font-size: var(--fs-base);
     color: var(--text-secondary);
 }
 
@@ -330,21 +284,6 @@
     flex-wrap: wrap;
     gap: 5px;
     margin-bottom: 18px;
-}
-.col-badge {
-    font-size: 11px;
-    font-family: 'Plus Jakarta Sans', monospace;
-    padding: 3px 8px;
-    border-radius: 4px;
-    background: var(--page-bg);
-    border: 1px solid var(--card-border);
-    color: var(--text-muted);
-}
-.col-badge.required-col {
-    background: var(--accent-dim);
-    border-color: rgba(232,184,109,0.4);
-    color: var(--accent);
-    font-weight: 700;
 }
 
 /* ── DROP ZONE ───────────────────────────────────────────── */
@@ -375,18 +314,18 @@
 }
 .import-drop-label {
     font-family: 'Outfit', sans-serif;
-    font-size: 15px;
+    font-size: var(--fs-md);
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 5px;
 }
 .import-drop-sub {
-    font-size: 12px;
+    font-size: var(--fs-sm);
     color: var(--text-muted);
 }
 .import-file-name {
-    margin-top: 12px;
-    font-size: 13px;
+    margin-top: var(--sp-3);
+    font-size: var(--fs-base);
     font-weight: 600;
     color: var(--accent);
     min-height: 18px;

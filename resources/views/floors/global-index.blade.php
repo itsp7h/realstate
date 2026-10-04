@@ -2,249 +2,110 @@
 
 @section('title', 'Floors')
 @section('topbar-title', 'Floors')
+@section('topbar-count', number_format($floors->total()))
 
 @push('styles')
 <style>
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-    .stat-card {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius);
-        padding: 18px 20px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        box-shadow: var(--shadow-sm);
-    }
-    .stat-icon {
-        width: 44px; height: 44px;
-        border-radius: var(--radius-sm);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 18px;
-        flex-shrink: 0;
-    }
-    .stat-icon.gold   { background: var(--accent-dim); color: var(--accent); }
-    .stat-icon.blue   { background: #EFF6FF; color: var(--info); }
-    .stat-val {
-        font-family: 'Outfit', sans-serif;
-        font-size: 24px;
-        font-weight: 800;
-        color: var(--text-primary);
-        line-height: 1;
-    }
-    .stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
-
-    .filter-bar {
-        display: flex;
-        align-items: flex-end;
-        gap: 12px;
-        flex-wrap: wrap;
-        padding: 16px 20px;
-        border-bottom: 1px solid var(--card-border);
-    }
-    .filter-group { display: flex; flex-direction: column; gap: 5px; min-width: 180px; }
-    .filter-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .filter-group select {
-        padding: 8px 12px;
-        font-size: 13px;
-        border: 1.5px solid var(--input-border);
-        border-radius: var(--radius-sm);
-        background: var(--card-bg);
-        color: var(--text-primary);
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        outline: none;
-        appearance: none;
-        -webkit-appearance: none;
-        transition: border-color 0.18s;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 10px center;
-        padding-right: 32px;
-    }
-    .filter-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
-    .filter-actions { display: flex; gap: 8px; align-items: flex-end; margin-left: auto; }
-
-    .bldg-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        background: var(--accent-dim);
-        color: var(--accent);
-        font-size: 11px;
-        font-weight: 700;
-        padding: 3px 8px;
-        border-radius: 20px;
-    }
-    .action-btns { display: flex; gap: 6px; justify-content: flex-end; }
-    .table-footer {
-        padding: 14px 20px;
-        border-top: 1px solid var(--card-border);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-    .pagination { display: flex; gap: 4px; }
-    .page-btn {
-        width: 32px; height: 32px;
-        border: 1.5px solid var(--card-border);
-        background: var(--card-bg);
-        border-radius: var(--radius-sm);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 12px; font-weight: 600;
-        color: var(--text-secondary);
-        cursor: pointer;
-        text-decoration: none;
-        transition: all 0.15s;
-    }
-    .page-btn:hover { background: var(--page-bg); color: var(--text-primary); }
-    .page-btn.active { background: var(--accent); border-color: var(--accent); color: #0B1120; }
-    .result-count { font-size: 13px; color: var(--text-muted); }
-    .result-count strong { color: var(--text-primary); }
-    .empty-state { text-align: center; padding: 60px 20px; }
-    .empty-icon {
-        width: 64px; height: 64px;
-        background: var(--page-bg);
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 24px; color: var(--text-muted);
-        margin: 0 auto 16px;
-    }
-    .empty-state h4 { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
-    .empty-state p { font-size: 13px; color: var(--text-muted); }
 
     /* Modal */
-    .modal-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.55);
-        z-index: 1000;
-        align-items: center;
-        justify-content: center;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-box {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow-lg);
-        width: 100%;
-        max-width: 560px;
-        max-height: 90vh;
-        overflow-y: auto;
-        animation: modalIn 0.18s ease;
-    }
     @keyframes modalIn {
         from { opacity: 0; transform: translateY(-12px) scale(0.98); }
         to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    .modal-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 18px 22px 14px;
-        border-bottom: 1px solid var(--card-border);
-    }
-    .modal-title {
-        font-family: 'Outfit', sans-serif;
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .modal-close {
-        width: 30px; height: 30px;
-        border-radius: var(--radius-sm);
-        border: 1.5px solid var(--card-border);
-        background: none;
-        cursor: pointer;
-        color: var(--text-muted);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 14px;
-        transition: background 0.15s, color 0.15s;
-    }
-    .modal-close:hover { background: var(--page-bg); color: var(--text-primary); }
-    .modal-body { padding: 20px 22px; }
-    .modal-footer {
-        padding: 14px 22px;
-        border-top: 1px solid var(--card-border);
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
     }
 </style>
 @endpush
 
 @section('content')
 
-{{-- PAGE HEADER --}}
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Floors</span>
-        </div>
-        <h1 class="page-header-title">Floors</h1>
-        <p class="page-header-sub">All floors across all buildings</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('export.floors', array_filter(['building_id' => $buildingId ?? null])) }}" class="btn btn-success">
-            <i class="fa-solid fa-file-excel"></i> Export
-        </a>
-        <button type="button" class="btn btn-outline" onclick="openImport_floors()">
-            <i class="fa-solid fa-file-import"></i> Import
-        </button>
-        <button class="btn btn-primary" onclick="openAddFloorModal()">
-            <i class="fa-solid fa-plus"></i> Add Floor
-        </button>
-    </div>
-</div>
+@section('page-title', 'Floors')
+@section('page-subtitle', 'All floors across all buildings')
+@section('page-actions')
+    @include('partials.export-menu', [
+        'route'  => 'export.floors',
+        'params' => array_filter(['building_id' => $buildingId ?? null]),
+        'sub'    => 'All 7 columns, import-ready',
+    ])
+    <button type="button" class="btn btn-outline" onclick="openImport_floors()">
+        <i class="fa-solid fa-file-import"></i> Import
+    </button>
+    <button class="btn btn-primary" onclick="openAddFloorModal()">
+        <i class="fa-solid fa-plus"></i> Add Floor
+    </button>
+@endsection
 
-{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
-<div class="m-screen">
-    <div class="m-action-row">
-        <a href="{{ route('export.floors', array_filter(['building_id' => $buildingId ?? null])) }}" class="m-action-btn green-outline">Export</a>
-        <button type="button" class="m-action-btn outline" onclick="openImport_floors()">Import</button>
-        <button type="button" class="m-action-btn primary" onclick="openAddFloorModal()">+ Add Floor</button>
-    </div>
-    <div class="m-chip-row no-sb">
-        <a href="{{ route('floors.global') }}" class="m-chip {{ !$buildingId ? 'active' : '' }}">All</a>
-        @foreach($buildings as $b)
-            <a href="{{ route('floors.global', ['building_id' => $b->id]) }}" class="m-chip {{ (string) $buildingId === (string) $b->id ? 'active' : '' }}">{{ $b->property_code }}</a>
-        @endforeach
-    </div>
-    <div class="m-row-list">
-        @forelse($floors as $floor)
-            @php $uCount = $floor->total_no_of_units ?? $floor->units_count; @endphp
-            <a href="{{ route('buildings.show', $floor->building) }}?tab=floors" class="m-row-card">
-                <span class="m-row-chip">{{ $floor->building->property_code }}</span>
-                <div style="flex:1;min-width:0;">
-                    <div class="m-row-title">{{ $floor->floor_name }}</div>
-                    <div class="m-row-sub">{{ $floor->building->property_name }}{{ $floor->block_name ? ' · '.$floor->block_name : '' }}</div>
-                </div>
-                @if($floor->floor_code)
-                    <span class="m-row-badge" style="background:var(--m-line);color:#6B7688;">{{ $floor->floor_code }}</span>
-                @endif
-            </a>
-        @empty
-            <div class="m-empty">
-                <div class="m-empty-icon"><i class="fa-solid fa-layer-group"></i></div>
-                <div class="m-empty-title">No floors found</div>
-                <div class="m-empty-sub">Try a different building filter or add a new floor.</div>
-            </div>
-        @endforelse
-    </div>
-</div>
+{{-- PAGE HEADER --}}
+
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
+     Four peers became two: Add Floor is the primary, and XLSX, PDF and
+     Import are rows in the More sheet. ── --}}
+@php
+    /* No search pill: floors are filtered by building, which is what the
+       chips are, and the endpoint takes no search term. */
+    $floorChips = [[
+        'label'  => 'All',
+        'href'   => route('floors.global'),
+        'active' => ! $buildingId,
+    ]];
+    foreach ($buildings as $floorB) {
+        $floorChips[] = [
+            'label'  => $floorB->property_code,
+            'href'   => route('floors.global', ['building_id' => $floorB->id]),
+            'active' => (string) $buildingId === (string) $floorB->id,
+        ];
+    }
+@endphp
+<x-mobile-list
+    :actions="[
+        'primary' => ['label' => 'Add floor', 'onclick' => 'openAddFloorModal()'],
+        'sheet'   => [
+            'id'    => 'floorsMoreSheet',
+            'title' => 'More',
+            'sub'   => 'Import and export this list',
+            'items' => [
+                ['icon' => 'fa-wand-magic-sparkles', 'label' => 'Smart import',
+                 'desc' => 'Bring in floors from a spreadsheet',
+                 'onclick' => 'openImport_floors()'],
+                ['icon' => 'fa-file-excel', 'label' => 'Export to Excel',
+                 'desc' => 'The list as it is filtered now',
+                 'href' => route('export.floors', array_merge(array_filter(['building_id' => $buildingId ?? null]), ['format' => 'xlsx']))],
+                ['icon' => 'fa-file-pdf', 'label' => 'Export to PDF',
+                 'desc' => 'The list as it is filtered now',
+                 'href' => route('export.floors', array_merge(array_filter(['building_id' => $buildingId ?? null]), ['format' => 'pdf']))],
+            ],
+        ],
+    ]"
+    :stats="[
+        ['value' => $stats['total'],                     'label' => 'Floors'],
+        ['value' => $buildings->count(),                 'label' => 'Properties'],
+        ['value' => number_format($stats['filtered']),   'label' => 'Listed'],
+    ]"
+    :chips="$floorChips">
+
+    @forelse($floors as $floor)
+        @php $uCount = $floor->total_no_of_units ?? $floor->units_count; @endphp
+        <a href="{{ route('buildings.show', $floor->building) }}?tab=floors" class="m-row-card ps-reveal">
+            <span class="m-row-thumb"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span>
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $floor->floor_name }}</span>
+                <span class="m-row-sub">{{ $floor->building->property_name }}{{ $floor->block_name ? ' · '.$floor->block_name : '' }}</span>
+                <span class="m-row-sub">{{ $uCount }} {{ \Illuminate\Support\Str::plural('unit', $uCount) }}@if($floor->floor_code) &middot; {{ $floor->floor_code }}@endif</span>
+            </span>
+            @unless($buildingId)
+                <span class="m-row-badge">{{ $floor->building->property_code }}</span>
+            @endunless
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+        </a>
+    @empty
+        <div class="m-empty">
+            <div class="m-empty-icon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No floors here</div>
+            <div class="m-empty-sub">Try another property, or add a floor.</div>
+            <button type="button" class="m-action-btn primary" onclick="openAddFloorModal()">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>Add floor
+            </button>
+        </div>
+    @endforelse
+</x-mobile-list>
 
 @include('components.import-modal', [
     'type'        => 'floors',
@@ -258,23 +119,23 @@
 {{-- STATS --}}
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-icon gold"><i class="fa-solid fa-layer-group"></i></div>
-        <div>
-            <div class="stat-val">{{ $stats['total'] }}</div>
-            <div class="stat-lbl">Total Floors</div>
+        <div class="stat-card-top">
+            <span class="stat-icon gold"><i class="fa-solid fa-layer-group"></i></span>
+            <span class="stat-lbl">Total Floors</span>
         </div>
+        <div class="stat-val">{{ $stats['total'] }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon blue"><i class="fa-solid fa-building"></i></div>
-        <div>
-            <div class="stat-val">{{ $buildings->count() }}</div>
-            <div class="stat-lbl">Buildings</div>
+        <div class="stat-card-top">
+            <span class="stat-icon blue"><i class="fa-solid fa-building"></i></span>
+            <span class="stat-lbl">Buildings</span>
         </div>
+        <div class="stat-val">{{ $buildings->count() }}</div>
     </div>
 </div>
 
 {{-- FILTER + TABLE --}}
-<div class="card m-hide-desktop-index" style="overflow:hidden;">
+<div class="table-card m-hide-desktop-index">
 
     {{-- FILTER --}}
     <form method="GET" action="{{ route('floors.global') }}" id="filterForm">
@@ -320,7 +181,7 @@
                     <td>
                         <a href="{{ route('buildings.show', $floor->building) }}?tab=floors"
                            style="text-decoration:none;">
-                            <span class="bldg-pill">
+                            <span class="badge">
                                 <i class="fa-solid fa-building" style="font-size:9px;"></i>
                                 {{ $floor->building->property_code }}
                             </span>
@@ -349,24 +210,15 @@
                             <span style="color:var(--text-muted);">—</span>
                         @endif
                     </td>
-                    <td onclick="event.stopPropagation()">
-                        <div class="action-btns">
-                            <a href="{{ route('buildings.show', $floor->building) }}?tab=floors"
-                               class="btn btn-outline btn-sm" title="View in building">
-                                <i class="fa-regular fa-eye"></i>
-                            </a>
-                            <a href="{{ route('floors.edit', $floor) }}"
-                               class="btn btn-outline btn-sm" title="Edit">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </a>
-                            <form method="POST" action="{{ route('floors.destroy', $floor) }}"
-                                  onsubmit="return confirm('Delete floor {{ addslashes($floor->floor_name) }}?')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </form>
-                        </div>
+                    <td class="col-actions" onclick="event.stopPropagation()">
+                        @include('partials.row-actions', ['label' => 'Actions for '.$floor->floor_name, 'items' => [
+                            ['label' => 'View in building', 'icon' => 'fa-eye', 'url' => route('buildings.show', $floor->building).'?tab=floors'],
+                            ['label' => 'Edit floor',       'icon' => 'fa-pen-to-square', 'url' => route('floors.edit', $floor)],
+                            ['sep' => true],
+                            ['label' => 'Delete floor',     'icon' => 'fa-trash-can', 'tone' => 'danger',
+                             'action' => route('floors.destroy', $floor), 'method' => 'DELETE',
+                             'confirm' => 'Delete floor '.$floor->floor_name.'?'],
+                        ]])
                     </td>
                 </tr>
                 @empty
@@ -396,36 +248,20 @@
             Showing <strong>{{ $floors->firstItem() ?? 0 }}–{{ $floors->lastItem() ?? 0 }}</strong>
             of <strong>{{ $floors->total() }}</strong> floors
         </div>
-        <div class="pagination">
-            @if($floors->onFirstPage())
-                <span class="page-btn" style="opacity:0.4;cursor:default;"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></span>
-            @else
-                <a href="{{ $floors->previousPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></a>
-            @endif
-
-            @foreach($floors->getUrlRange(max(1, $floors->currentPage()-2), min($floors->lastPage(), $floors->currentPage()+2)) as $page => $url)
-                <a href="{{ $url }}" class="page-btn {{ $page == $floors->currentPage() ? 'active' : '' }}">{{ $page }}</a>
-            @endforeach
-
-            @if($floors->hasMorePages())
-                <a href="{{ $floors->nextPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></a>
-            @else
-                <span class="page-btn" style="opacity:0.4;cursor:default;"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></span>
-            @endif
-        </div>
+        {{ $floors->links() }}
     </div>
 
 </div>
 
 {{-- ADD FLOOR MODAL --}}
 <div class="modal-overlay" id="addFloorModal" onclick="closeOnOverlay(event)">
-    <div class="modal-box">
+    <div class="modal-box" style="--modal-w:560px">
         <div class="modal-header">
-            <div class="modal-title">
+            <div class="modal-header-title">
                 <i class="fa-solid fa-layer-group" style="color:var(--accent);"></i>
                 Add Floor
             </div>
-            <button class="modal-close" onclick="closeAddFloorModal()"><i class="fa-solid fa-xmark"></i></button>
+            <button class="modal-close-btn" onclick="closeAddFloorModal()"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
         <form method="POST" action="" id="addFloorForm" novalidate>
