@@ -437,8 +437,8 @@ class ReportController extends Controller
 
         $headings = [
             'Building / Scope', 'Rent Collected (BHD)', 'Utilities Collected (BHD)', 'Other Collected (BHD)',
-            'EWA Collected (BHD)', 'Total Revenue (BHD)', 'EWA Landlord Expense (BHD)', 'Maintenance Expense (BHD)',
-            'Total Expense (BHD)', 'Net Profit (BHD)',
+            'EWA Collected (BHD)', 'Manual Revenue (BHD)', 'Total Revenue (BHD)', 'EWA Landlord Expense (BHD)',
+            'Maintenance Expense (BHD)', 'Manual Expense (BHD)', 'Total Expense (BHD)', 'Net Profit (BHD)',
         ];
         $mapper = fn ($row) => [
             $row['label'],
@@ -446,9 +446,11 @@ class ReportController extends Controller
             $row['revenue']['utilities_collected'],
             $row['revenue']['other_collected'],
             $row['revenue']['ewa_collected'],
+            $row['revenue']['manual_revenue'],
             $row['total_revenue'],
             $row['expenses']['ewa_landlord_expense'],
             $row['expenses']['maintenance_expense'],
+            $row['expenses']['manual_expense'],
             $row['total_expense'],
             $row['net_profit'],
         ];

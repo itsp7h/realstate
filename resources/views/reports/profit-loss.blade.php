@@ -140,10 +140,12 @@
             <tr style="border-bottom:1px solid var(--card-border)"><td style="padding:9px 18px;color:var(--text-muted)">Utilities collected</td><td class="right pl-money" style="padding:9px 18px">{{ $fmt($statement['revenue']['utilities_collected']) }}</td></tr>
             <tr style="border-bottom:1px solid var(--card-border)"><td style="padding:9px 18px;color:var(--text-muted)">Other invoices collected</td><td class="right pl-money" style="padding:9px 18px">{{ $fmt($statement['revenue']['other_collected']) }}</td></tr>
             <tr style="border-bottom:1px solid var(--card-border)"><td style="padding:9px 18px;color:var(--text-muted)">EWA collected from tenants</td><td class="right pl-money" style="padding:9px 18px">{{ $fmt($statement['revenue']['ewa_collected']) }}</td></tr>
+            <tr style="border-bottom:1px solid var(--card-border)"><td style="padding:9px 18px;color:var(--text-muted)">Manually recorded revenue</td><td class="right pl-money" style="padding:9px 18px">{{ $fmt($statement['revenue']['manual_revenue']) }}</td></tr>
             <tr class="subtotal-row"><td style="padding:10px 18px">Total Revenue</td><td class="right pl-money" style="padding:10px 18px">{{ $fmt($statement['total_revenue']) }}</td></tr>
 
             <tr style="border-bottom:1px solid var(--card-border)"><td style="padding:9px 18px;color:var(--text-muted)">EWA charges not recovered from tenant</td><td class="right pl-money" style="padding:9px 18px">{{ $fmt($statement['expenses']['ewa_landlord_expense']) }}</td></tr>
             <tr style="border-bottom:1px solid var(--card-border)"><td style="padding:9px 18px;color:var(--text-muted)">Approved maintenance cost</td><td class="right pl-money" style="padding:9px 18px">{{ $fmt($statement['expenses']['maintenance_expense']) }}</td></tr>
+            <tr style="border-bottom:1px solid var(--card-border)"><td style="padding:9px 18px;color:var(--text-muted)">Manually recorded expenses</td><td class="right pl-money" style="padding:9px 18px">{{ $fmt($statement['expenses']['manual_expense']) }}</td></tr>
             <tr class="subtotal-row"><td style="padding:10px 18px">Total Expense</td><td class="right pl-money" style="padding:10px 18px">{{ $fmt($statement['total_expense']) }}</td></tr>
 
             <tr class="net-row">
