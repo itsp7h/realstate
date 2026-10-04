@@ -54,6 +54,40 @@ class LeaseContractsExport implements FromQuery, WithHeadings, WithMapping, With
         ];
     }
 
+    /**
+     * The subset worth printing — who, where, for how long, for how much. The
+     * service-charge and ledger columns stay in the spreadsheet; see
+     * UnitsExport::pdfColumns() for why labels rather than indexes.
+     */
+    /**
+     * Who, where, for how long, for how much — the ten of twenty-six columns a
+     * lease list is read for on paper.
+     */
+    public function pdfColumns(): array
+    {
+        return [
+            'Lease Agreement No' => ['label' => 'AGREEMENT', 'align' => 'left',  'width' => 15],
+            'Tenant Name'        => ['label' => 'TENANT',    'align' => 'left',  'width' => 18],
+            'Property Name'      => ['label' => 'PROPERTY',  'align' => 'left',  'width' => 16],
+            'Unit'               => ['label' => 'UNIT',      'align' => 'left',  'width' => 9],
+            'Lease Start Date'   => ['label' => 'START',     'align' => 'left',  'width' => 10],
+            'Lease End Date'     => ['label' => 'END',       'align' => 'left',  'width' => 10],
+            'Currency'           => ['label' => 'CCY',       'align' => 'left',  'width' => 6],
+            'Rent per Month'     => ['label' => 'RENT/MO',   'align' => 'right', 'width' => 8],
+            'Security Deposit'   => ['label' => 'DEPOSIT',   'align' => 'right', 'width' => 8],
+        ];
+    }
+
+    /** @param  \Illuminate\Support\Collection  $records */
+    public function pdfTotals($records): array
+    {
+        $rented = $records->whereNotNull('rent_per_month');
+
+        return [
+            'RENT/MO' => $rented->isEmpty() ? null : number_format($rented->sum('rent_per_month'), 3),
+        ];
+    }
+
     public function map($row): array
     {
         return [

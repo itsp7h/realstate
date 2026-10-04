@@ -7,6 +7,7 @@ use App\Http\Requests\StoreEwaPaymentRequest;
 use App\Models\EwaBill;
 use App\Models\EwaPayment;
 use App\Services\EwaBillParser;
+use App\Support\PdfPageNumbers;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -160,7 +161,7 @@ class EwaBillController extends Controller
         $pdf = Pdf::loadView('ewa-bills.pdf', ['bill' => $ewaBill])
                   ->setPaper('a4', 'portrait');
 
-        return $pdf->download("ewa-bill-{$ewaBill->bill_number}.pdf");
+        return PdfPageNumbers::stamp($pdf)->download("ewa-bill-{$ewaBill->bill_number}.pdf");
     }
 
     public function pdfPreview(EwaBill $ewaBill): Response
@@ -169,6 +170,6 @@ class EwaBillController extends Controller
         $pdf = Pdf::loadView('ewa-bills.pdf', ['bill' => $ewaBill])
                   ->setPaper('a4', 'portrait');
 
-        return $pdf->stream("ewa-bill-{$ewaBill->bill_number}.pdf");
+        return PdfPageNumbers::stamp($pdf)->stream("ewa-bill-{$ewaBill->bill_number}.pdf");
     }
 }

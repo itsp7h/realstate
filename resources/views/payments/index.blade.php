@@ -2,142 +2,132 @@
 
 @section('title', 'Payments')
 @section('topbar-title', 'Payments')
+@section('topbar-count', number_format($payments->total()))
 
 @push('styles')
 <style>
-.pay-stats {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 14px; margin-bottom: 24px;
-}
-.pay-stat {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 16px 20px;
-    display: flex; align-items: center; gap: 14px;
-}
-.pay-stat-icon {
-    width: 40px; height: 40px; border-radius: var(--radius-sm);
-    display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
-}
-.pay-stat-icon.green { background: #ECFDF5; color: #059669; }
-.pay-stat-icon.teal  { background: #F0FDFA; color: #0D9488; }
-.pay-stat-icon.blue  { background: #EFF6FF; color: #2563EB; }
-.pay-stat-val { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-.pay-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-.filter-bar {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 14px 18px;
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px;
-}
-.filter-bar input, .filter-bar select {
-    padding: 8px 12px; font-size: 13px;
-    border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-    background: var(--input-bg); color: var(--text-primary); outline: none;
-    transition: border-color 0.18s;
-}
-.filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
-.filter-bar input[type="search"] { flex: 1; min-width: 180px; }
-.filter-bar input[type="date"]   { min-width: 140px; }
-
-.method-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 3px 9px; border-radius: 6px; font-size: 11px; font-weight: 600;
-    background: var(--page-bg); color: var(--text-secondary); border: 1px solid var(--card-border);
-}
-
-.table-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden; }
 </style>
 @endpush
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">Payments</h1>
-        <p class="page-header-sub">All payments received across invoices</p>
-    </div>
-</div>
+@section('page-title', 'Payments')
+@section('page-subtitle', 'All payments received across invoices')
 
-{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
+     No actions row: a payment is recorded against an invoice, so there is
+     no "add payment" here to be primary. ── --}}
 @php
-    $payMethodLabels = ['cash' => 'Cash', 'bank_transfer' => 'Bank Transfer', 'cheque' => 'Cheque', 'online_card' => 'Online / Card'];
+    $payMethodLabels = ['cash' => 'Cash', 'bank_transfer' => 'Bank transfer', 'cheque' => 'Cheque', 'online_card' => 'Online / card'];
 @endphp
-<div class="m-screen">
-    <div style="background:linear-gradient(135deg,#10141F,#232B42);border-radius:18px;padding:20px;display:flex;gap:24px;">
-        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">COLLECTED &middot; {{ now()->format('M') }}</div><div style="font-size:21px;font-weight:800;color:#7ED8AC;">BHD {{ number_format($stats['this_month'], 0) }}</div></div>
-        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">ALL-TIME</div><div style="font-size:21px;font-weight:800;color:#E7B266;">BHD {{ number_format($stats['total_collected'], 0) }}</div></div>
+@php
+    $payMethod = request('method');
+    $payChips  = [[
+        'label'  => 'All',
+        'href'   => route('payments.index', array_filter(['search' => request('search')])),
+        'active' => ! $payMethod,
+    ]];
+    foreach ($payMethodLabels as $payVal => $payLabel) {
+        $payChips[] = [
+            'label'  => $payLabel,
+            'href'   => route('payments.index', array_filter(['search' => request('search'), 'method' => $payVal])),
+            'active' => $payMethod === $payVal,
+        ];
+    }
+@endphp
+<x-mobile-list
+    :stats="[
+        ['money' => $stats['this_month'],           'label' => now()->format('M').' BHD'],
+        ['money' => $stats['total_collected'],      'label' => 'All-time BHD'],
+        ['value' => number_format($stats['count']), 'label' => 'Payments'],
+    ]"
+    :search="[
+        'action'      => route('payments.index'),
+        'placeholder' => 'Search payment, tenant or reference',
+        'aria'        => 'Search payments',
+        'keep'        => ['method'],
+    ]"
+    :chips="$payChips">
+
+    @forelse($payments as $pmt)
+        @php $mInv = $pmt->invoice; @endphp
+        <a href="{{ $mInv ? route('invoices.show', $mInv) : '#' }}" class="m-row-card ps-reveal">
+            <span class="m-row-thumb"><i class="fa-solid fa-money-bill-transfer" aria-hidden="true"></i></span>
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $pmt->payment_number }}</span>
+                <span class="m-row-sub">{{ $mInv?->tenant_name ?? '—' }} &middot; {{ $pmt->payment_date->format('d M Y') }}</span>
+                <span class="m-row-sub">@unless(request('method')){{ $pmt->method_label }}@endunless{{ $pmt->reference ? (request('method') ? '' : ' · ').'Ref '.$pmt->reference : '' }}</span>
+            </span>
+            <span class="m-row-amount">BHD {{ number_format($pmt->amount, 0) }}</span>
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+        </a>
+    @empty
+        <div class="m-empty">
+            <div class="m-empty-icon"><i class="fa-solid fa-money-bill-transfer" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No payments here</div>
+            <div class="m-empty-sub">Record a payment from the invoice it settles.</div>
+        </div>
+    @endforelse
+</x-mobile-list>
+
+<div class="stats-grid m-hide-desktop-index">
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon green"><i class="fa-solid fa-coins"></i></span>
+            <span class="stat-lbl">Total Collected (BHD)</span>
+        </div>
+        <div class="stat-val">{{ number_format($stats['total_collected'], 3) }}</div>
     </div>
-    <div class="m-chip-row no-sb">
-        <a href="{{ route('payments.index') }}" class="m-chip {{ !request('method') ? 'active' : '' }}">All</a>
-        @foreach($payMethodLabels as $val => $label)
-            <a href="{{ route('payments.index', ['method' => $val]) }}" class="m-chip {{ request('method') === $val ? 'active' : '' }}">{{ $label }}</a>
-        @endforeach
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon teal"><i class="fa-solid fa-money-bill-transfer"></i></span>
+            <span class="stat-lbl">Transactions</span>
+        </div>
+        <div class="stat-val">{{ $stats['count'] }}</div>
     </div>
-    <div class="m-row-list">
-        @forelse($payments as $pmt)
-            @php $mInv = $pmt->invoice; @endphp
-            <a href="{{ $mInv ? route('invoices.show', $mInv) : '#' }}" class="m-row-card">
-                <div class="m-row-icon" style="background:#E6F6EE;color:#17A96C;"><i class="fa-solid fa-money-bill-transfer"></i></div>
-                <div style="flex:1;min-width:0;">
-                    <div class="m-row-title">{{ $pmt->payment_number }}</div>
-                    <div class="m-row-sub">{{ $mInv?->tenant_name ?? '—' }} &middot; {{ $pmt->payment_date->format('d M Y') }}</div>
-                </div>
-                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-                    <div style="font-size:13.5px;font-weight:800;color:#17A96C;">BHD {{ number_format($pmt->amount, 0) }}</div>
-                    <span class="m-row-badge" style="background:var(--m-line);color:#6B7688;">{{ $pmt->method_label }}</span>
-                </div>
-            </a>
-        @empty
-            <div class="m-empty">
-                <div class="m-empty-icon"><i class="fa-solid fa-money-bill-transfer"></i></div>
-                <div class="m-empty-title">No payments recorded yet</div>
-                <div class="m-empty-sub">Try adjusting your filters.</div>
-            </div>
-        @endforelse
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon blue"><i class="fa-solid fa-calendar-check"></i></span>
+            <span class="stat-lbl">This Month (BHD)</span>
+        </div>
+        <div class="stat-val">{{ number_format($stats['this_month'], 3) }}</div>
     </div>
 </div>
-
-<div class="pay-stats m-hide-desktop-index">
-    <div class="pay-stat">
-        <div class="pay-stat-icon green"><i class="fa-solid fa-coins"></i></div>
-        <div>
-            <div class="pay-stat-val">{{ number_format($stats['total_collected'], 3) }}</div>
-            <div class="pay-stat-lbl">Total Collected (BHD)</div>
-        </div>
-    </div>
-    <div class="pay-stat">
-        <div class="pay-stat-icon teal"><i class="fa-solid fa-money-bill-transfer"></i></div>
-        <div>
-            <div class="pay-stat-val">{{ $stats['count'] }}</div>
-            <div class="pay-stat-lbl">Transactions</div>
-        </div>
-    </div>
-    <div class="pay-stat">
-        <div class="pay-stat-icon blue"><i class="fa-solid fa-calendar-check"></i></div>
-        <div>
-            <div class="pay-stat-val">{{ number_format($stats['this_month'], 3) }}</div>
-            <div class="pay-stat-lbl">This Month (BHD)</div>
-        </div>
-    </div>
-</div>
-
-<form method="GET" action="{{ route('payments.index') }}" class="filter-bar m-hide-desktop-index">
-    <input type="search" name="search" value="{{ request('search') }}" placeholder="Search payment #, tenant, invoice #, reference…">
-    <select name="method" onchange="this.form.submit()">
-        <option value="">All Methods</option>
-        @foreach(['cash'=>'Cash','bank_transfer'=>'Bank Transfer','cheque'=>'Cheque','online_card'=>'Online / Card'] as $v => $l)
-        <option value="{{ $v }}" {{ request('method') === $v ? 'selected' : '' }}>{{ $l }}</option>
-        @endforeach
-    </select>
-    <input type="date" name="date_from" value="{{ request('date_from') }}" title="Date from">
-    <input type="date" name="date_to"   value="{{ request('date_to') }}"   title="Date to">
-    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-    @if(request()->hasAny(['search','method','date_from','date_to']))
-    <a href="{{ route('payments.index') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
-    @endif
-</form>
 
 <div class="table-card m-hide-desktop-index">
+    <form method="GET" action="{{ route('payments.index') }}">
+        <div class="filter-bar">
+            <div class="filter-group is-search">
+                <label for="f_search">Search</label>
+                <input type="search" id="f_search" name="search" value="{{ request('search') }}" placeholder="Search payment #, tenant, invoice #, reference…">
+            </div>
+            <div class="filter-group">
+                <label for="f_method">Method</label>
+                <select id="f_method" name="method" onchange="this.form.submit()">
+                    <option value="">All Methods</option>
+                    @foreach(['cash'=>'Cash','bank_transfer'=>'Bank Transfer','cheque'=>'Cheque','online_card'=>'Online / Card'] as $v => $l)
+                    <option value="{{ $v }}" {{ request('method') === $v ? 'selected' : '' }}>{{ $l }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="f_date_from">From</label>
+                <input type="date" id="f_date_from" name="date_from" value="{{ request('date_from') }}">
+            </div>
+            <div class="filter-group">
+                <label for="f_date_to">To</label>
+                <input type="date" id="f_date_to" name="date_to" value="{{ request('date_to') }}">
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                @if(request()->hasAny(['search','method','date_from','date_to']))
+                <a href="{{ route('payments.index') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
+                @endif
+            </div>
+        </div>
+    </form>
     @if($payments->isEmpty())
     <div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
         <i class="fa-solid fa-money-bill-transfer" style="font-size:36px;display:block;margin-bottom:12px;opacity:0.3"></i>
@@ -162,7 +152,7 @@
                 @foreach($payments as $pmt)
                 @php $inv = $pmt->invoice; @endphp
                 <tr data-href="{{ $inv ? route('invoices.show', $inv) : '#' }}" style="cursor:pointer">
-                    <td style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--accent)">
+                    <td class="cell-id">
                         {{ $pmt->payment_number }}
                     </td>
                     <td style="white-space:nowrap;font-size:12px">{{ $pmt->payment_date->format('d M Y') }}</td>
@@ -170,18 +160,18 @@
                     <td>
                         @if($inv)
                         <a href="{{ route('invoices.show', $inv) }}" onclick="event.stopPropagation()"
-                           style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--accent);text-decoration:none;font-size:13px">
+                           class="cell-id">
                             {{ $inv->invoice_number }}
                         </a>
                         @else
                         <span style="color:var(--text-muted)">—</span>
                         @endif
                     </td>
-                    <td style="font-family:'Outfit',sans-serif;font-weight:700;color:#059669">
+                    <td style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--tone-success-fg)">
                         {{ number_format($pmt->amount, 3) }}
                     </td>
                     <td>
-                        <span class="method-badge">
+                        <span class="badge">
                             <i class="fa-solid {{ match($pmt->method) {
                                 'cash'          => 'fa-money-bill',
                                 'bank_transfer' => 'fa-building-columns',
@@ -192,7 +182,7 @@
                             {{ $pmt->method_label }}
                         </span>
                     </td>
-                    <td style="font-size:12px;color:var(--text-muted)">{{ $pmt->reference ?: '—' }}</td>
+                    <td class="cell-muted">{{ $pmt->reference ?: '—' }}</td>
                     <td>
                         <div style="display:flex;gap:6px;align-items:center" onclick="event.stopPropagation()">
                             @if($inv)
@@ -215,9 +205,12 @@
             </tbody>
         </table>
     </div>
-    <div style="padding:14px 18px;border-top:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-muted)">
-        <div>Showing {{ $payments->firstItem() }}–{{ $payments->lastItem() }} of {{ $payments->total() }}</div>
-        <div>{{ $payments->links() }}</div>
+    <div class="table-footer">
+        <div class="result-count">
+            Showing <strong>{{ $payments->firstItem() ?? 0 }}–{{ $payments->lastItem() ?? 0 }}</strong>
+            of <strong>{{ number_format($payments->total()) }}</strong> payments
+        </div>
+        {{ $payments->links() }}
     </div>
     @endif
 </div>

@@ -1,0 +1,4951 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   APP CORE — design system foundation + shared components
+   ───────────────────────────────────────────────────────────────────────────
+   Single source of truth for tokens, the app shell, and every shared
+   component. Extracted from the ~5,300 lines of near-identical CSS that had
+   been copy-pasted across 50 per-page `@push('styles')` blocks (.filter-bar
+   was defined 24 times, .table-card 18, .modal-box 14, .pagination 6, and one
+   stat card existed under nine different names).
+
+   ── CASCADE CONTRACT ──────────────────────────────────────────────────────
+   layouts/admin.blade.php loads stylesheets in this exact order:
+
+       1. app-core.css        ← this file
+       2. @stack('styles')    ← per-page overrides
+       3. app-mobile.css      ← mobile app layer, intentionally wins
+
+   Step 3 is deliberate and predates this refactor: the mobile layer converts
+   every .modal-overlay in the app into a bottom sheet, and has to beat any
+   per-page modal CSS at equal specificity. Keep that order.
+
+   ── RULES FOR EDITING ─────────────────────────────────────────────────────
+   • Add to this file, not to a page. If two pages need it, it belongs here.
+   • Never hardcode a color. Every color is a token; tokens flip for dark mode
+     in ONE place (§1.2). A raw hex in a component is a dark-mode bug.
+   • Control heights come from --h-control*. Never set an ad-hoc height on an
+     input or button — that is what made field heights drift page to page.
+   • No `!important`. The cascade contract above removes the need for it.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §1  FOUNDATION
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── §1.0  Breakpoints ───────────────────────────────────────────────────────
+     Six steps, and no others. CSS custom properties cannot be used in a media
+     query, so this is a contract rather than a token — but it is the contract:
+     a page that invents 620px or 820px puts a fold in the layout that exists
+     on that page and nowhere else.
+
+       430px   small phone — two-up KPI cards go single file
+       600px   large phone / small tablet — two-column content stacks
+       768px   the mobile boundary. ≤768 the mobile app layer owns the screen;
+               ≥769 the desktop shell does. Nothing else may sit on this line.
+       900px   side-by-side panels stack (a detail page's aside)
+       1200px  wide-desktop reflow (a four-up grid to two-up)
+       1400px  the five-across KPI strip goes three-across
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── §1.1  Tokens — light (also the :root default) ───────────────────────── */
+:root,
+:root[data-theme="light"] {
+    /* Brand / chrome — the navy + gold identity, unchanged */
+    --sidebar-bg:       #0B1120;
+    --sidebar-border:   #1A2540;
+    --sidebar-hover:    #131E35;
+    --sidebar-active:   #1E2D4A;
+    --accent:           #D8B25F;
+    --accent-strong:    #CAA14F;   /* accent hover — was inline in .btn-primary */
+    --accent-dim:       rgba(216,178,95,0.16);
+    --accent-glow:      rgba(216,178,95,0.22);
+    --on-accent:        #1E2C4F;   /* text on a gold fill — 6.8:1 on --accent */
+    /* The gold is a gradient wherever it fills a control, not a flat wash.
+       One declaration so a button, a header action and an avatar are the
+       same object lit the same way. */
+    --accent-gradient:  linear-gradient(100deg, #EDCD85 0%, #D0A854 100%);
+    --accent-lift:      0 6px 16px rgba(202,161,79,0.30);
+    --accent-lift-hover: 0 9px 20px rgba(202,161,79,0.42);
+    /* Ink on any saturated fill — a tone chip, a navy panel, a coloured
+       header. White in both themes, because the fill under it is too. Pages
+       were writing #fff for this, which reads as a surface and got mistaken
+       for one during theming. */
+    --ink-on-fill:      #FFFFFF;
+
+    /* Surfaces & text */
+    --page-bg:          #EEF1F6;
+    --page-bg-alt:      #F7F9FC;
+    /* The canvas the cards sit ON, as opposed to --page-bg's second job as a
+       subtle fill (ghost/outline button hover, search field, drop zone). They
+       were one token, so lightening the canvas also washed out those hovers.
+       Split: the canvas is a shade lighter, the fills keep their weight. */
+    --page-canvas:      #EEF1F6;
+    --card-bg:          #FFFFFF;
+    --card-border:      #D5DAE3;
+    --row-border:       #EEF1F6;
+    --row-hover:        #F7F9FC;
+    --text-primary:     #1E2C4F;
+    --text-secondary:   #5D6880;
+    /* Was #94A3B8, which measures 2.56:1 on white — well under WCAG AA, and it
+       carries most of the app's secondary text (table headers, stat labels,
+       card subtitles, breadcrumbs, detail labels, placeholders). #61708A clears
+       4.5:1 on all three light surfaces (card #FFFFFF 5.01, alt #F8FAFC 4.79,
+       page #F1F5F9 4.57). */
+    --text-muted:       #626E85;
+    /* The old value, kept for genuinely non-text decoration where a light grey
+       is the point and no contrast minimum applies: an empty-state glyph, a
+       chevron, a divider. Never use it for text. */
+    --text-faint:       #97A1B4;
+    --text-sidebar:     #8A9BBE;
+    --text-sidebar-active: #FFFFFF;
+
+    /* Inputs */
+    --input-bg:         #FFFFFF;
+    /* Was #CBD5E1 at 1.48:1 against the field — an input's border is the
+       "visual information required to identify the component" that WCAG 2.2
+       AA 1.4.11 requires 3:1 for. #8494A9 measures 3.09:1.
+       --card-border stays light on purpose: it separates two surfaces that are
+       already distinguished by their own fill and elevation, so it is
+       decoration rather than a component boundary. */
+    --input-border:     #848FA6;
+    --input-focus:      #CAA14F;
+
+    /* Status — solid values, for icons/fills/chart series */
+    --danger:           #B4483C;
+    --success:          #2F7A4F;
+    --info:             #2F4A7A;
+    --warning:          #CAA14F;
+
+    /* ── Semantic tones ────────────────────────────────────────────────────
+         Every status surface in the app (badges, alerts, stat icons, soft
+         buttons) draws its three values from one of these six sets, so a
+         status reads the same everywhere and flips correctly for dark mode
+         in exactly one place. The old code hardcoded the light tints
+         (#ECFDF5 / #EFF6FF / #FEF2F2 / #FFFBEB), which is why status badges
+         stayed near-white in dark mode.
+
+         `-fg` values are chosen to clear WCAG AA (4.5:1) against their own
+         `-bg`. The previous gold badge — #E8B86D on #FDF6EA, about 1.7:1 —
+         failed outright; --tone-accent-fg fixes it at ~6.4:1. */
+    --tone-success-fg:      #2F7A4F;
+    --tone-success-bg:      #E4F2EA;
+    --tone-success-border:  #C3E2D1;
+    --tone-danger-fg:       #B4483C;
+    --tone-danger-bg:       #F9E9E7;
+    --tone-danger-border:   #F0CFCB;
+    --tone-warning-fg:      #8A6D20;
+    --tone-warning-bg:      #FDF6E6;
+    --tone-warning-border:  #EFDFB6;
+    --tone-info-fg:         #1E2C4F;
+    --tone-info-bg:         #E8EEF8;
+    --tone-info-border:     #CBD8EC;
+    /* Chart series — fixed system-wide (DESKTOP-UI.md §3) so a colour always
+       means the same thing on every chart. Identical in both themes: these
+       are data identities, not surfaces. */
+    --chart-income:   #2F7A4F;
+    --chart-expenses: #B4483C;
+    --chart-credits:  #2F4A7A;
+    --chart-debits:   #CAA14F;
+    --chart-profit:   #6E5AA8;
+    /* The two-series pairing the brand uses when the series ARE the brand
+       rather than a semantic (income vs expense on a building's financial
+       card): navy against gold. Semantic green/red above still means
+       good/bad everywhere else. */
+    --chart-primary:  #1E2C4F;
+    --chart-accent:   #D8B25F;
+
+    --tone-neutral-fg:      #5D6880;
+    --tone-neutral-bg:      #EEF1F6;
+    --tone-neutral-border:  #D5DAE3;
+    /* #8A6D20 is the design's gold ink, and it measures 4.32:1 on the page
+       background — the active tab label sits directly on it. One step darker
+       clears AA on all three light surfaces (page 4.66, card 5.28, gold tint
+       4.90) and is indistinguishable at label size. */
+    --tone-accent-fg:       #84681E;
+    --tone-accent-bg:       #FDF6E6;
+    --tone-accent-border:   #EFDFB6;
+
+    /* ── Type ──────────────────────────────────────────────────────────────
+         Two faces with distinct jobs: Outfit for anything that should read as
+         a figure or a title (page titles, KPI values, money), Plus Jakarta
+         Sans for everything else. --font-data is Outfit with tabular figures
+         — this app is columns of BHD amounts and unit counts, and
+         proportional digits in a ledger never line up. */
+    --font-display: 'Poppins', system-ui, sans-serif;
+    --font-body:    'Poppins', system-ui, sans-serif;
+    --font-data:    'Poppins', system-ui, sans-serif;
+
+    /* Scale — replaces the 18 ad-hoc sizes that were in use
+       (10 / 10.5 / 11 / 11.5 / 12 / 12.5 / 13 / 13.5 / 14 / 14.5 / 15 / 16 /
+       17 / 19 / 21 / 24 / 26 / 28px). --fs-base stays 13.5px so no existing
+       page shifts. */
+    --fs-2xs:   10px;   /* eyebrow / section label, always uppercase */
+    --fs-xs:    11px;   /* badge, table header, meta */
+    --fs-sm:    12px;   /* form label, help text, muted table-cell text (.cell-muted) */
+    --fs-base:  13.5px; /* body, table cell, input, button */
+    --fs-md:    15px;   /* card title */
+    --fs-lg:    17px;   /* topbar title, section heading */
+    --fs-xl:    20px;   /* stat value */
+    --fs-2xl:   24px;   /* page title */
+    --fs-3xl:   30px;   /* hero figure */
+
+    --lh-tight: 1.2;
+    --lh-snug:  1.4;
+    --lh-base:  1.55;
+
+    /* ── Spacing — 4px base. Named by step, not by use, so one scale serves
+         padding, gap and margin alike. */
+    --sp-1:  4px;
+    --sp-2:  8px;
+    --sp-3:  12px;
+    --sp-4:  16px;
+    --sp-5:  20px;
+
+    /* Section rhythm — the vertical gap between the page's own sections
+       (header → KPIs → filters → content → pagination). Declared once here
+       and applied by .shell-content, so no page sets a section margin. */
+    --section-gap:    24px;
+    --section-gap-sm: 18px;
+    --sp-6:  24px;
+    --sp-7:  28px;
+    --sp-8:  32px;
+    --sp-10: 40px;
+    --sp-12: 48px;
+
+    /* ── Radius */
+    --radius:       12px;
+    --radius-sm:    10px;
+    --radius-lg:    14px;
+    --radius-pill:  9999px;
+
+    /* ── Elevation — ambient + key shadow, composed rather than one flat blur */
+    --shadow-sm: 0 1px 2px rgba(30,44,79,0.05);
+    --shadow-md: 0 6px 18px rgba(30,44,79,0.08), 0 2px 6px rgba(30,44,79,0.04);
+    --shadow-lg: 0 12px 30px rgba(30,44,79,0.10);
+    --shadow-modal: 0 24px 60px rgba(30,44,79,0.20), 0 8px 24px rgba(30,44,79,0.12);
+
+    /* ── Control sizing — the fix for inputs and buttons drifting between
+         pages. Every interactive control derives its box from these. */
+    --h-control:    38px;
+    --h-control-sm: 32px;
+    --h-control-lg: 44px;
+    --border-control: 1.5px;
+
+    /* ── Focus — visible on every control, in both themes. .btn previously
+         had no focus state at all. */
+    --focus-ring:   0 0 0 4px var(--accent-glow);
+    --focus-outline: 2px solid var(--accent-strong);
+
+    /* ── Motion */
+    --ease-out:     cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring:  cubic-bezier(.32,.72,0,1);
+    --dur-fast:     0.15s;
+    --dur-base:     0.18s;
+    --dur-slow:     0.28s;
+    --duration-sheet: 380ms;
+
+    /* ── Layers — was a spread of 20/90/95/99/100/1000/1050 literals */
+    --z-sticky:   90;
+    --z-tabbar:   95;
+    /* A panel hung off the top bar — the notification bell. Above the sticky
+       chrome it opens from, below the backdrop so a modal still covers it. */
+    --z-dropdown: 96;
+    --z-backdrop: 99;
+    --z-sidebar:  100;
+    --z-modal:    1000;
+    --z-sheet:    1050;
+    --z-toast:    1100;
+
+    /* ── Shell */
+    --sidebar-width: 260px;
+    --sheet-radius:  22px;
+    --scrim:         rgba(11,17,32,0.55);
+}
+
+/* ── §1.2  Tokens — dark. Only what actually changes. ────────────────────── */
+:root[data-theme="dark"] {
+    --page-bg:        #0E1526;
+    --page-bg-alt:    #141C31;
+    --page-canvas:    #0E1526;   /* dark has no room to lighten — see the light note */
+    --card-bg:        #16203A;
+    --card-border:    #26314D;
+    --row-border:     #1E2740;
+    --row-hover:      #1B2439;
+    --text-primary:   #EDF1F8;
+    --text-secondary: #B4BFD3;
+    --text-muted:     #8894AC;   /* 5.28:1 on --card-bg */
+
+    --input-bg:       #101829;
+    --input-border:   #6B7897;   /* 4.02:1 against --input-bg — see the light note */
+    --text-faint:     #6B7691;
+
+    --danger:  #E8938A;
+    --success: #7BD1A3;
+    --info:    #9DB6E4;
+    --warning: #E0BE79;
+
+    /* Tones invert: a translucent wash of the solid color, with a light
+       foreground. Keeps the same six meanings legible on a dark surface
+       without going muddy. */
+    --tone-success-fg:      #7BD1A3;
+    --tone-success-bg:      rgba(47,122,79,0.20);
+    --tone-success-border:  rgba(47,122,79,0.42);
+    --tone-danger-fg:       #E8938A;
+    --tone-danger-bg:       rgba(180,72,60,0.20);
+    --tone-danger-border:   rgba(180,72,60,0.44);
+    --tone-warning-fg:      #E0BE79;
+    --tone-warning-bg:      rgba(202,161,79,0.16);
+    --tone-warning-border:  rgba(202,161,79,0.34);
+    --tone-info-fg:         #9DB6E4;
+    --tone-info-bg:         rgba(47,74,122,0.26);
+    --tone-info-border:     rgba(47,74,122,0.50);
+    --tone-neutral-fg:      #B4BFD3;
+    --tone-neutral-bg:      rgba(151,161,180,0.12);
+    --tone-neutral-border:  rgba(151,161,180,0.24);
+    --tone-accent-fg:       #EDCD85;
+    --tone-accent-bg:       rgba(216,178,95,0.16);
+    --tone-accent-border:   rgba(216,178,95,0.32);
+
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.30), 0 1px 2px rgba(0,0,0,0.20);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.36), 0 2px 6px rgba(0,0,0,0.24);
+    --shadow-lg: 0 10px 40px rgba(0,0,0,0.45);
+    --shadow-modal: 0 24px 60px rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.40);
+
+    /* The gold gradient dims a step on a dark surface — the light-mode stops
+       glare against a #16203A card — but stays the same object. */
+    --accent-gradient:   linear-gradient(100deg, #E0BE79 0%, #C29A46 100%);
+    --accent-lift:       0 6px 16px rgba(0,0,0,0.40);
+    --accent-lift-hover: 0 9px 20px rgba(0,0,0,0.52);
+
+    --chart-primary:  #8FA6D6;
+    --chart-accent:   #E0BE79;
+
+    --scrim: rgba(0,0,0,0.65);
+}
+
+/* Native widget chrome (date pickers, select popups, scrollbars) has to be
+   told which theme it is in, or it renders light-on-light. */
+:root[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+
+/* ── §1.2b  Mobile app palette (--m-*) ──────────────────────────────────────
+     The first mobile pass's own palette. Kept as tokens because the mobile
+     markup references them directly (the More sheet's icon tints, the tab
+     bar, the .m-* row cards). They are intentionally theme-independent: the
+     mobile screens they serve are a fixed light treatment today, and making
+     them flip would change shipped screens rather than standardise them.
+
+     New work should use the §1.1 tokens. These stay until the .m-* screens
+     are folded into the .pm-* system. */
+:root {
+    --m-bg:            #F4F1EA;
+    --m-card:          #FFFFFF;
+    --m-ink:           #17203A;
+    --m-muted:         #8E9AAE;
+    --m-faint:         #A7B0C0;
+    --m-line:          #F1F3F8;
+    --m-border:        #E4E9F0;
+
+    --m-navy:          #10141F;
+    --m-navy-2:        #1E2842;
+    --m-navy-line:     #1A2540;
+    --m-navy-active:   #1E2D4A;
+    --m-navy-text:     #8A9BBE;
+
+    --m-gold:          #E7B266;
+    --m-gold-deep:     #D99A3D;
+    --m-gold-text:     #C08A2D;
+    --m-gold-tint:     #FBF3E4;
+    --m-gold-on:       #2A2312;
+    --m-gold-grad:     linear-gradient(135deg,#EDBE78,#DC9E45);
+
+    --m-green:  #17A96C;  --m-green-tint:  #E6F6EE;
+    --m-red:    #D64545;  --m-red-tint:    #FCEBEB;
+    --m-blue:   #4A7DF0;  --m-blue-tint:   #E9F0FD;
+    --m-purple: #7A5AF8;  --m-purple-tint: #EFEBFD;
+
+    --m-r-card: 18px;  --m-r-btn: 12px;  --m-r-chip: 10px;  --m-r-badge: 7px;
+    --m-shadow: 0 1px 3px rgba(23,32,58,.05);
+    --m-shadow-float: 0 8px 24px rgba(23,32,58,.10);
+}
+
+
+/* ── §1.3  Reset & base ─────────────────────────────────────────────────── */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    line-height: var(--lh-base);
+    background: var(--page-bg);
+    color: var(--text-primary);
+    display: flex;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+img, svg, video { max-width: 100%; }
+
+/* Long unbroken strings — a tenant's email, a reference number, a pasted URL
+   in a maintenance note — must wrap rather than widen their container and
+   push the page into horizontal scroll. */
+h1, h2, h3, h4, p, td, th, li, dd, dt, label { overflow-wrap: break-word; }
+
+
+/* ── §1.4  Accessibility primitives ─────────────────────────────────────── */
+
+/* One focus treatment for the whole app. :focus-visible so a mouse click
+   doesn't leave a ring behind, keyboard and programmatic focus always do. */
+:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+}
+/* Inputs draw their own ring inside the border instead, which reads better
+   on a field than an offset outline. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: none;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+/* Skip link — visible only once focused. */
+.skip-link {
+    position: absolute;
+    left: var(--sp-4);
+    top: -100px;
+    z-index: var(--z-toast);
+    padding: var(--sp-2) var(--sp-4);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: var(--border-control) solid var(--accent);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-base);
+    font-weight: 600;
+    text-decoration: none;
+    transition: top var(--dur-base) var(--ease-out);
+}
+.skip-link:focus { top: var(--sp-4); }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §2  APP SHELL — sidebar, topbar, main
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── §2.1  Sidebar ──────────────────────────────────────────────────────── */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: var(--z-sidebar);
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-right: 1px solid var(--sidebar-border);
+    transition: transform var(--dur-slow) ease;
+}
+
+.sidebar-logo {
+    padding: var(--sp-6) var(--sp-5) var(--sp-5);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    border-bottom: 1px solid var(--sidebar-border);
+    text-decoration: none;
+}
+.sidebar-logo-icon {
+    width: 48px; height: 48px;
+    background: var(--accent);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    color: var(--on-accent);
+    flex-shrink: 0;
+    box-shadow: 0 0 20px var(--accent-glow);
+    animation: shell-brand-mark-in var(--dur-slow) var(--ease-spring);
+    transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+.sidebar-logo-icon img { width: 100%; height: 100%; object-fit: contain; border-radius: inherit; }
+.sidebar-logo:hover .sidebar-logo-icon { transform: scale(1.08) rotate(-2deg); box-shadow: 0 0 28px var(--accent-glow); }
+/* Same fix as .shell-brand-text: the column claims the width the mark leaves.
+   That was the actual bug — a flex item that will not shrink shows an ellipsis
+   while there is still room beside it. The name stays on one line. */
+.sidebar-logo-text { flex: 1; min-width: 0; line-height: var(--lh-tight); }
+.sidebar-logo-text strong {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    font-weight: 700;
+    color: #fff;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sidebar-logo-text span {
+    display: block;
+    font-size: var(--fs-2xs);
+    color: var(--text-sidebar);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.sidebar-section { padding: var(--sp-5) var(--sp-3) var(--sp-2); }
+.sidebar-section-label {
+    font-size: var(--fs-2xs);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-sidebar);
+    padding: 0 var(--sp-2);
+    margin-bottom: 6px;
+    opacity: 0.6;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px var(--sp-3);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    color: var(--text-sidebar);
+    font-size: var(--fs-base);
+    font-weight: 500;
+    transition: background var(--dur-base) ease, color var(--dur-base) ease;
+    position: relative;
+    margin-bottom: 2px;
+}
+.nav-item:hover {
+    background: var(--sidebar-hover);
+    color: #C8D6F0;
+}
+.nav-item.active {
+    background: var(--sidebar-active);
+    color: var(--text-sidebar-active);
+}
+/* The active marker is a rail on the leading edge, not a color change alone —
+   so "where am I" survives being read without color. */
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 20%; bottom: 20%;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 0 3px 3px 0;
+}
+.nav-item .nav-icon {
+    width: 18px;
+    text-align: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+.nav-item.active .nav-icon { color: var(--accent); }
+.nav-item:focus-visible { outline-offset: -2px; }
+
+.nav-badge {
+    margin-left: auto;
+    background: var(--accent-dim);
+    color: var(--tone-accent-fg);
+    font-size: var(--fs-2xs);
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: var(--radius-pill);
+}
+:root[data-theme="dark"] .nav-badge { color: var(--accent); }
+
+.sidebar-footer {
+    margin-top: auto;
+    padding: var(--sp-4) var(--sp-3);
+    border-top: 1px solid var(--sidebar-border);
+}
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px var(--sp-3);
+    border-radius: var(--radius-sm);
+    transition: background var(--dur-base);
+}
+.sidebar-user:hover { background: var(--sidebar-hover); }
+.user-avatar {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--accent), #C49040);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 13px; font-weight: 700;
+    color: var(--on-accent);
+    flex-shrink: 0;
+}
+/* ── §4.x  Upload row ────────────────────────────────────────────────────────
+   A file input with a preview beside it — branding's logo and favicon, and a
+   profile photo. It lived in branding.blade.php's @push('styles') until a
+   second page needed it, which is exactly the line at which a page-local rule
+   becomes a shared component.
+
+   .is-round is for an avatar: the same row, but the preview is the circle the
+   photo will actually be drawn in, so what you see before saving is what the
+   account chip shows after. */
+.upload-row { display: flex; flex-wrap: wrap; gap: var(--sp-4); align-items: flex-start; }
+.upload-preview {
+    width: 88px; height: 88px; flex: none;
+    border: 1.5px solid var(--card-border); border-radius: var(--radius-sm);
+    background: var(--page-bg-alt);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.upload-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.upload-preview i { font-size: var(--fs-xl); color: var(--text-muted); }
+.upload-fields { flex: 1; min-width: 200px; }
+
+.upload-preview.is-round {
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    color: var(--on-accent);
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 700;
+}
+.upload-preview.is-round img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; }
+
+/* ── Avatar photo ────────────────────────────────────────────────────────────
+   The image inside an avatar disc — the sidebar footer, the account chip, the
+   sign-out dialog, the mobile header. One rule, because five places draw the
+   same object and a photo that crops differently in each reads as four
+   different avatars.
+
+   object-fit: cover so a portrait or a landscape both fill the circle instead
+   of squashing; inset border because a light photo against a light chip needs
+   an edge to sit on. The disc keeps its gradient underneath, which is what
+   shows while the image loads. */
+.avatar-photo {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    box-shadow: inset 0 0 0 1px rgba(11,17,32,0.10);
+}
+/* The disc stops being a lettered tile when it holds a photo: no gradient
+   behind a transparent PNG, and no padding to misalign the crop. */
+.user-avatar.has-photo,
+.shell-avatar.has-photo,
+.pm-avatar.has-photo,
+.signout-avatar.has-photo { background: var(--page-bg); padding: 0; overflow: hidden; }
+
+.user-info { min-width: 0; }
+.user-info strong {
+    display: block;
+    font-size: 13px;
+    color: #fff;
+    font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.user-info span { font-size: var(--fs-xs); color: var(--text-sidebar); }
+
+.sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-backdrop);
+    background: var(--scrim);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-slow) ease;
+}
+.sidebar-backdrop.show { opacity: 1; pointer-events: all; }
+
+
+/* ── §2.2  Main column + topbar ─────────────────────────────────────────── */
+.main-wrap {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;   /* lets a wide table shrink instead of pushing the page */
+}
+
+.topbar {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--card-border);
+    padding: 0 var(--sp-7);
+    height: 60px;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+}
+.topbar-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+.page-content {
+    padding: var(--sp-7);
+    flex: 1;
+    min-width: 0;
+}
+
+
+/* ── §2.3  More sheet (mobile tab bar's "More" destination) ──────────────────
+     Base positioning lives here rather than in app-mobile.css because, unlike
+     a per-page modal, this sheet is part of the shell and is present on every
+     page — including pages that define no modal CSS of their own. Both rules
+     are ID-scoped so they cannot leak into another page's .modal-box. */
+#moreSheet {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-sheet);
+    background: var(--scrim);
+    display: flex;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-slow) ease;
+}
+#moreSheet.open { opacity: 1; pointer-events: all; }
+#moreSheet .modal-box {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.18);
+}
+
+
+/* ── §2.4  Scrollbars ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--input-border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §3  PAGE STRUCTURE
+   ───────────────────────────────────────────────────────────────────────────
+   The skeleton every page follows:
+       breadcrumb → page-header (title / sub / actions) → stats → filters
+       → main content → supporting content
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+.breadcrumb a { color: var(--text-muted); text-decoration: none; }
+.breadcrumb a:hover { color: var(--tone-accent-fg); text-decoration: underline; }
+.breadcrumb i { font-size: 9px; }
+.breadcrumb [aria-current="page"] { color: var(--text-secondary); font-weight: 600; }
+
+.page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: var(--sp-6);
+    flex-wrap: wrap;
+    gap: 14px;
+}
+.page-header-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-2xl);
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: var(--lh-tight);
+    letter-spacing: -0.01em;
+}
+.page-header-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    max-width: 68ch;
+}
+.page-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* Vertical rhythm between sibling sections on a page. */
+.section-stack { display: flex; flex-direction: column; gap: var(--sp-5); }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §4  COMPONENTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── §4.1  Buttons ──────────────────────────────────────────────────────────
+     One hierarchy, one box. Variants change color only — never height,
+     padding, radius or type — which is what kept buttons from lining up
+     across pages before.
+
+     primary   the single main action on a screen
+     outline   secondary actions, and every table row action
+     ghost     tertiary / low-noise (toolbar, inside a card header)
+     danger    destructive; soft by default, filled on hover
+     export    every Export trigger in the app — see the note on .btn-export
+     Sizes: .btn-sm (dense, table rows) · default · .btn-lg (forms, mobile) */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: var(--h-control);
+    padding: 0 18px;
+    border: var(--border-control) solid transparent;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background var(--dur-base) ease, color var(--dur-base) ease,
+                border-color var(--dur-base) ease, box-shadow var(--dur-base) ease;
+}
+.btn > i { font-size: 0.92em; }   /* icon never outweighs its label */
+
+/* The gold fill is a gradient with its own lift — the same object as
+   .shell-headbtn.is-primary, so the page header's action and a card's action
+   are lit identically. */
+.btn-primary {
+    background: var(--accent-gradient);
+    border-color: transparent;
+    color: var(--on-accent);
+    box-shadow: var(--accent-lift);
+}
+.btn-primary:hover {
+    box-shadow: var(--accent-lift-hover);
+    transform: translateY(-1px);
+}
+@media (prefers-reduced-motion: reduce) {
+    .btn-primary:hover { transform: none; }
+}
+
+.btn-outline {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+    color: var(--text-secondary);
+}
+.btn-outline:hover {
+    background: var(--page-bg);
+    border-color: var(--accent-strong);
+    color: var(--text-primary);
+}
+
+.btn-ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--text-secondary);
+}
+.btn-ghost:hover { background: var(--page-bg); color: var(--text-primary); }
+
+.btn-danger {
+    background: var(--tone-danger-bg);
+    border-color: var(--tone-danger-border);
+    color: var(--tone-danger-fg);
+}
+.btn-danger:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+/* The one Export button. Every export trigger in the app is this object —
+   list toolbars, the dashboard header, the Import/Export page, every report —
+   and it is the navy secondary: primary ink on the card surface, hairline
+   border, the standard control height and radius, hover and focus from .btn.
+
+   It is a named variant rather than a reuse of .btn-outline because Export was
+   the one action that kept drifting: soft green on Buildings, Units and Floors,
+   outline on Tenants, Leases and the EWA summary, gold on all ten reports —
+   three answers to the same question on three tabs of the same app. A class of
+   its own gives the sweep something to assert against, and the export button
+   sits a step above the outline actions beside it (primary ink, not secondary),
+   which is the emphasis the green fill was reaching for.
+
+   Render it through <x-export-button>, never by hand. The green variant it
+   replaces (.btn-success) is gone on purpose — there is no second style to
+   fall back to. */
+.btn-export {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+    color: var(--text-primary);
+}
+.btn-export:hover {
+    background: var(--page-bg);
+    border-color: var(--accent-strong);
+    color: var(--text-primary);
+}
+/* The chevron on a menu trigger: subordinate to the label it hangs off, so it
+   is smaller than the leading icon and does not read as a second action. */
+.btn-export .btn-caret { font-size: 9px; opacity: 0.75; }
+
+.btn-sm { min-height: var(--h-control-sm); padding: 0 13px; font-size: var(--fs-sm); gap: 6px; }
+.btn-lg { min-height: var(--h-control-lg); padding: 0 var(--sp-6); font-size: 14.5px; }
+
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: var(--focus-outline); outline-offset: 2px; }
+.btn:disabled,
+.btn[aria-disabled="true"],
+.btn.is-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+/* Full-width button — the mobile default for a form's submit. */
+.btn-block { width: 100%; }
+
+/* Icon-only button. Square, and it must carry an aria-label or title. */
+.btn-icon { padding: 0; width: var(--h-control); aspect-ratio: 1; }
+.btn-icon.btn-sm { width: var(--h-control-sm); }
+.btn-icon.btn-lg { width: var(--h-control-lg); }
+
+/* Topbar / card-header icon button. */
+.topbar-icon-btn {
+    width: 36px; height: 36px;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-secondary);
+    font-size: 14px;
+    transition: background var(--dur-fast), color var(--dur-fast);
+}
+.topbar-icon-btn:hover { background: var(--page-bg); color: var(--text-primary); }
+/* The one that carries a count. Positioned so .shell-bell-badge — the same
+   badge the desktop shell bell uses — has something to anchor to. */
+.topbar-bell { position: relative; }
+
+/* Row of actions in a table's Actions column, or a card footer. */
+.action-btns { display: flex; gap: 6px; align-items: center; }
+
+/* ── §4.1b  Row actions menu ────────────────────────────────────────────────
+     One trigger per row instead of three or four icon buttons.
+
+     Why: the actions column was the widest thing on every list — four buttons
+     of chrome per row, repeated twenty times, competing with the data they sit
+     beside. Collapsing them puts the row's own content first and gives each
+     action a readable label instead of an icon the reader has to decode.
+
+     The panel is `position: fixed`, placed by JS at open time, and that is not
+     a stylistic choice: .table-wrap carries `overflow-x: auto`, so an absolutely
+     positioned panel is clipped by its own scroll container — the menu would
+     open inside the table and be cut off at the cell. Fixed escapes it. The
+     handler in layouts/admin.blade.php owns the positioning, closes on scroll,
+     resize, outside click and Escape, and keeps one menu open at a time.
+
+     Markup:  .row-menu > button[data-rowmenu-toggle] + .row-menu-panel[hidden]
+                                                        > .row-menu-item …
+     Destructive items keep their own <form> with CSRF and a confirm; putting
+     an action in a menu must not turn a POST into a GET. */
+.row-menu { position: relative; display: inline-flex; }
+.row-menu-panel {
+    position: fixed;
+    z-index: var(--z-dropdown);
+    min-width: 184px;
+    max-width: 260px;
+    padding: 5px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+}
+.row-menu-panel form { margin: 0; }
+.row-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 8px 11px;
+    border: 0;
+    border-radius: 7px;
+    background: none;
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--text-primary);
+    text-align: left;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.row-menu-item:hover { background: var(--page-bg); }
+.row-menu-item:focus-visible { outline: var(--focus-outline); outline-offset: -2px; }
+.row-menu-item > i { width: 14px; text-align: center; flex: none; color: var(--text-muted); font-size: 12px; }
+/* Destructive last, toned rather than shouted, and set apart by a rule so it
+   is not adjacent to a benign item by accident. */
+.row-menu-item.is-danger { color: var(--tone-danger-fg); }
+.row-menu-item.is-danger:hover { background: var(--tone-danger-bg); }
+.row-menu-item.is-danger > i { color: var(--tone-danger-fg); }
+.row-menu-sep { height: 1px; margin: 5px 4px; background: var(--card-border); }
+
+
+/* ── §4.2  Forms ────────────────────────────────────────────────────────────
+     Every field is the same height and shares one focus and one error
+     treatment. Field-level messages only — never a generic "something went
+     wrong". */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 18px;
+}
+/* Fixed column counts, for a form where an explicit pairing is part of the
+   design (a create form reads better as two deliberate columns than as
+   auto-fill, which spreads a label away from its field on a wide screen).
+   Replaces .form-grid.cols-N and .form-grid-N being redefined per page. */
+.form-grid.cols-1 { grid-template-columns: 1fr; }
+.form-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.form-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.form-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.form-group.col-span-2 { grid-column: span 2; }
+.form-group.col-span-full { grid-column: 1 / -1; }
+
+label,
+.form-label {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+}
+label .required,
+label .req,
+.form-label .required,
+.form-label .req { color: var(--tone-danger-fg); margin-left: 2px; }
+/* Bare .req, for the pages whose label is not a <label> element. */
+.req { color: var(--tone-danger-fg); }
+
+input[type="text"],
+input[type="search"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="email"],
+input[type="tel"],
+input[type="url"],
+input[type="password"],
+select,
+textarea,
+.form-control {
+    width: 100%;
+    min-height: var(--h-control);
+    padding: 0 13px;
+    border: var(--border-control) solid var(--input-border);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    transition: border-color var(--dur-base), box-shadow var(--dur-base);
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+textarea,
+.form-control textarea {
+    padding: 9px 13px;
+    resize: vertical;
+    min-height: 80px;
+    line-height: var(--lh-base);
+}
+
+input:focus, select:focus, textarea:focus, .form-control:focus {
+    border-color: var(--input-focus);
+    box-shadow: var(--focus-ring);
+}
+input:disabled, select:disabled, textarea:disabled {
+    background: var(--page-bg);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
+
+/* Numeric and money inputs get tabular figures so digits align while typing. */
+input[type="number"],
+input[inputmode="decimal"],
+input[inputmode="numeric"] {
+    font-variant-numeric: tabular-nums;
+}
+
+select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+/* Error state — border, message, and aria-invalid all agree. */
+input.error, select.error, textarea.error,
+input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"],
+.form-control.is-invalid {
+    border-color: var(--danger);
+}
+input.error:focus, select.error:focus, textarea.error:focus,
+input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
+    box-shadow: 0 0 0 3px var(--tone-danger-bg);
+}
+.field-error,
+.invalid-feedback {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    /* Not --danger: that is the fill colour and measures 3.76:1 as text on
+       white. --tone-danger-fg is the text colour, at 6.47:1. A validation
+       message is the last place to be hard to read. */
+    color: var(--tone-danger-fg);
+    margin-top: 2px;
+}
+.field-help,
+.form-text {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+
+/* Checkbox / radio — native control, consistent label alignment. */
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: var(--h-control-sm);
+}
+.form-check input[type="checkbox"],
+.form-check input[type="radio"] {
+    width: 16px; height: 16px;
+    min-height: 0;
+    flex: none;
+    accent-color: var(--accent-strong);
+    cursor: pointer;
+    appearance: auto;
+    -webkit-appearance: auto;
+}
+.form-check label { font-weight: 500; color: var(--text-primary); cursor: pointer; }
+
+/* Form page scaffold. */
+.form-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+.form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: var(--sp-4) var(--sp-6);
+    border-top: 1px solid var(--card-border);
+    background: var(--page-bg-alt);
+}
+
+
+/* ── §4.3  CARDS ────────────────────────────────────────────────────────────
+     ONE card system for the whole application.
+
+     Audit that produced it: 49 selectors across the app painted their own card
+     chrome, between them using 13 different padding values (12px 14px, 12px
+     16px, 13px, 14px, 14px 16px, 16px 18px, 16px 20px, 18px 16px, 18px 20px,
+     20px 22px, 24px, 28px, 28px 32px), 9 radii (8, 12, 14, 15, 16, 22px, 0,
+     --radius, --radius-sm), 6 shadow treatments and 3 border widths — and 18
+     separately-named implementations of "header + title + subtitle + body"
+     (.bldg-card-head, .dash-card-head, .data-panel-head, .detail-card-header,
+     .fc-card-header, .finance-card-head, .maint-section-header,
+     .section-card-header, .section-panel-header, .u-section-header,
+     .pay-form-header, .contract-selected-header, .step-panel-heading, ...).
+
+     ── ANATOMY ───────────────────────────────────────────────────────────────
+       .card
+         .card-header        icon · title · subtitle · actions
+         .card-body          content
+         .card-footer        actions, right-aligned
+     Header, body and footer share horizontal padding, so an icon, a paragraph
+     and a button all sit on the same left edge down the card.
+
+     ── THE STANDARD ──────────────────────────────────────────────────────────
+       background   --card-bg, always
+       border       1px solid --card-border, always (no 1.5px variants)
+       radius       --radius (12px). Nested cards --radius-sm. Modals only
+                    --radius-lg, sheets --sheet-radius.
+       shadow       --shadow-sm on a top-level card, none on a nested one —
+                    a shadow inside a shadow reads as noise, not depth.
+       padding      three steps, not thirteen: --card-pad-sm / --card-pad /
+                    --card-pad-lg, chosen by density, set via .is-compact /
+                    default / .is-roomy.
+       hover        only a card that is actually a link or button
+                    (.is-interactive). A static readout must not lift under
+                    the cursor — it promises a click that isn't there.
+
+     ── SIZE / TYPE MATRIX ────────────────────────────────────────────────────
+       basic, dashboard, information   .card
+       KPI, statistic, metric          .stat-card  (§4.4)
+       summary                         .stat-tile  (§4.4)
+       action (clickable)              .card.is-interactive on an <a>/<button>
+       profile / hero                  .card.is-hero
+       list                            .table-card (§4.6) — a .card owning a table
+       nested                          .card.is-nested
+       alert                           .alert (§4.9) — a message, not a card
+       modal                           .modal-box (§4.11) — a card in an overlay
+
+     Adding a card means picking from that matrix. It does not mean a new
+     class with its own padding. */
+
+:root {
+    --card-pad-sm: 14px 16px;
+    --card-pad:    18px 20px;
+    --card-pad-lg: 24px 28px;
+    /* Horizontal padding on its own, so header/body/footer can share an edge
+       while using different vertical rhythm. */
+    --card-pad-x:    20px;
+    --card-pad-x-sm: 16px;
+    --card-pad-x-lg: 28px;
+    /* The corner, as a variable rather than a literal, so a card that needs a
+       softer one (a dashboard panel) swaps the token instead of restating the
+       radius — and anything clipped to the card's edge can follow it. */
+    --card-radius:   var(--radius);
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow-sm);
+    min-width: 0;          /* lets a card shrink in a grid instead of overflowing */
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    flex-wrap: wrap;
+    padding: var(--card-pad);
+    border-bottom: 1px solid var(--card-border);
+    flex: none;
+}
+/* Icon: always leading, always the same box, tone-tinted. Accent by default;
+   add a tone class for a status-carrying card. */
+.card-header-icon {
+    width: 34px; height: 34px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--fs-md);
+    flex: none;
+    background: var(--tone-accent-bg);
+    color: var(--tone-accent-fg);
+}
+.card-header-icon.is-success { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.card-header-icon.is-danger  { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+.card-header-icon.is-warning { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.card-header-icon.is-info    { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.card-header-icon.is-neutral { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+/* Quieter glyph, same chip. For a card whose icon is orientation rather than
+   status — a dashboard panel — where a full-strength mark out-shouts the
+   title next to it. Decoration only, so --text-muted carries no contrast
+   duty here. */
+.card-header-icon.is-soft { color: var(--text-muted); font-size: var(--fs-base); }
+
+/* Title block. The text takes the free space so actions land on the trailing
+   edge; min-width:0 is what lets a long title wrap or ellipsis instead of
+   pushing the actions out of the card. */
+.card-header-text { flex: 1; min-width: 0; }
+.card-title,
+.card-header h2,
+.card-header h3,
+.card-header h4 {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    font-weight: 700;
+    line-height: var(--lh-snug);
+    color: var(--text-primary);
+    overflow-wrap: break-word;
+}
+.card-subtitle,
+.card-header p {
+    font-size: var(--fs-sm);
+    line-height: var(--lh-snug);
+    color: var(--text-muted);
+    margin-top: 1px;
+    max-width: 68ch;        /* a subtitle is a line of prose, not a paragraph */
+}
+/* Single-line title where the card is in a tight grid. */
+.card-title.is-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.card-header-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+}
+
+/* Numbered step badge, for a header in a multi-step form. The number is real
+   information — which section of the form this is — so it stays; it is not
+   decoration. Replaces .section-step-badge and .u-step-badge. */
+.card-step-badge {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+}
+
+/* Staggered entrance for a stack of cards. Opt in by putting .card-reveal on
+   the container. Shared rather than duplicated, since buildings/_form and
+   property-units/_form each carried their own keyframes and nth-child delay
+   ladder. Respects prefers-reduced-motion via §1.4.
+
+   What reveals is an explicit list, not `> *`: a .card-reveal container also
+   holds things that must never start at opacity 0 — .form-sticky-actions is a
+   direct child of both form stacks, and a Save bar that fades in (or fails to)
+   is a bug, not an entrance. A panel that is not a .card opts in by name with
+   .reveal-item, which also works standalone for a section with no container. */
+.card-reveal > .card,
+.card-reveal > .stat-card,
+.reveal-item {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: card-reveal 0.42s var(--ease-out) forwards;
+}
+@keyframes card-reveal { to { opacity: 1; transform: translateY(0); } }
+/* The ladder is delay only, so it can be addressed positionally: a child that
+   carries no animation ignores an animation-delay entirely. */
+.card-reveal > :nth-child(1) { animation-delay: 0.04s; }
+.card-reveal > :nth-child(2) { animation-delay: 0.10s; }
+.card-reveal > :nth-child(3) { animation-delay: 0.16s; }
+.card-reveal > :nth-child(4) { animation-delay: 0.22s; }
+.card-reveal > :nth-child(5) { animation-delay: 0.28s; }
+.card-reveal > :nth-child(6) { animation-delay: 0.34s; }
+.card-reveal > :nth-child(7) { animation-delay: 0.40s; }
+.card-reveal > :nth-child(n+8) { animation-delay: 0.46s; }
+/* With motion reduced, §1.4 collapses the animation duration — which would
+   leave the card at opacity 0. Make the end state the start state instead. */
+@media (prefers-reduced-motion: reduce) {
+    .card-reveal > .card,
+    .card-reveal > .stat-card,
+    .reveal-item { opacity: 1; transform: none; animation: none; }
+}
+
+/* Sticky action bar at the foot of a long form. Same anatomy as .card-footer,
+   but pinned so Save stays reachable without scrolling to the bottom of a
+   40-field form. Replaces .u-actions-bar. */
+.form-sticky-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    margin-top: var(--sp-5);
+    padding: 14px var(--card-pad-x-lg);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+}
+.form-sticky-actions-hint {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.form-sticky-actions-hint i { color: var(--accent); }
+/* The button row wraps rather than pushing the bar wider than the page. */
+.form-sticky-actions .action-btns,
+.form-sticky-actions .actions-right { flex-wrap: wrap; justify-content: flex-end; }
+
+/* ≤600px the hint sits above a full-width row of equal buttons. Observed at
+   320–430px: three buttons in one row overflowed the viewport by up to 243px
+   on the unit form and 121px on the building form. */
+@media (max-width: 600px) {
+    .form-sticky-actions {
+        flex-direction: column;
+        align-items: stretch;
+        padding: var(--sp-3) var(--sp-4);
+    }
+    .form-sticky-actions-hint { justify-content: center; text-align: center; }
+    .form-sticky-actions .action-btns,
+    .form-sticky-actions .actions-right {
+        width: 100%;
+        gap: var(--sp-2);
+    }
+    .form-sticky-actions .action-btns > *,
+    .form-sticky-actions .actions-right > * {
+        flex: 1 1 auto;
+        min-width: 0;
+        justify-content: center;
+        min-height: var(--h-control-lg);   /* 44px touch target */
+    }
+}
+
+/* ── Body ───────────────────────────────────────────────────────────────── */
+.card-body {
+    padding: var(--card-pad-lg);
+    flex: 1;                /* footers line up across cards in a row */
+    min-width: 0;
+}
+/* A card that is only a body needs the body to carry the card's own rhythm. */
+.card > .card-body:only-child { padding: var(--card-pad-lg); }
+/* Body content that must run to the card's edge — a table, a full-bleed image. */
+.card-body.is-flush { padding: 0; }
+/* …and when that body is what the card ends on, it has to carry the card's
+   bottom corners, or a table's last row (and its hover fill) squares them. */
+.card > .card-body.is-flush:last-child {
+    overflow: hidden;
+    border-radius: 0 0 var(--card-radius) var(--card-radius);
+}
+/* A body whose content stacks, so a trailing row can pin itself to the bottom
+   with margin-top:auto and line up across a grid of cards. */
+.card-body.is-stack { display: flex; flex-direction: column; gap: 10px; }
+
+/* ── Media ──────────────────────────────────────────────────────────────────
+     A card that leads with a photo — a property card, a unit card. The image
+     area sits above the header/body and bleeds to the card's edges (the card's
+     own overflow clips it to the radius). Height is a token so a grid of
+     property cards has one photo height instead of 185px here and 190px there.
+
+     A card with no photo still reserves the space and says so, rather than
+     collapsing and making that card shorter than its neighbours. */
+.card-media {
+    position: relative;
+    height: var(--card-media-h, 185px);
+    flex: none;
+    overflow: hidden;
+    background: var(--page-bg);
+}
+.card-media > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.card-media-empty {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-1);
+    color: var(--text-muted);
+    font-size: 11.5px;
+}
+.card-media-empty i { font-size: 26px; opacity: 0.45; }
+/* Thin tone bar across the top of the photo, carrying a category. */
+.card-media-bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; z-index: 3; }
+/* Overlay pill on the photo (a type, an occupancy figure). */
+.card-media-pill {
+    position: absolute;
+    top: 10px; right: 10px;
+    z-index: 3;
+    padding: 4px 9px;
+    border-radius: var(--radius-pill);
+    background: rgba(11,17,32,0.72);
+    color: var(--accent);
+    font-size: var(--fs-2xs);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+/* A card whose content is a form: the form is the card's flex child, so it has
+   to be the growing column too. Without this, .card-footer's margin-top:auto
+   has nothing to push against — the footer floats wherever the fields happen to
+   end, which left the Password card's action 190px above its own bottom edge. */
+.card > form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────────── */
+.card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+    /* Pinned to the bottom of the card. .card is a flex column, so in a grid
+       row of equal-height cards this puts every action button on one line
+       rather than leaving each one wherever its own content happened to end. */
+    margin-top: auto;
+    padding: var(--sp-3) var(--card-pad-x);
+    border-top: 1px solid var(--card-border);
+    background: var(--page-bg-alt);
+    flex: none;
+}
+/* Footer carrying a caption on the left and actions on the right. */
+.card-footer.is-split { justify-content: space-between; }
+.card-footer-note { font-size: var(--fs-sm); color: var(--text-muted); }
+
+/* ── Density ────────────────────────────────────────────────────────────────
+     Three steps replacing thirteen ad-hoc paddings. Pick by how much content
+     the card holds, not by which page it is on. */
+.card.is-compact { --card-pad: var(--card-pad-sm); --card-pad-x: var(--card-pad-x-sm); }
+.card.is-compact > .card-body { padding: var(--card-pad-sm); }
+.card.is-roomy   { --card-pad: var(--card-pad-lg); --card-pad-x: var(--card-pad-x-lg); }
+.card.is-roomy   > .card-body { padding: var(--sp-7) var(--card-pad-x-lg); }
+
+/* ── Nested cards ───────────────────────────────────────────────────────────
+     A card inside a card steps down: smaller radius, no shadow, and the
+     recessed ground rather than the raised one. Two elevated surfaces stacked
+     on each other read as a mistake. */
+.card.is-nested,
+.card .card {
+    border-radius: var(--radius-sm);
+    box-shadow: none;
+    background: var(--page-bg-alt);
+}
+.card.is-nested > .card-body { padding: var(--card-pad-sm); }
+
+/* ── Interactive cards ──────────────────────────────────────────────────────
+     Only for a card that really is a link or a button. Border and elevation
+     respond; the card does not move. */
+.card.is-interactive {
+    text-decoration: none;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--dur-base) ease, box-shadow var(--dur-base) ease;
+}
+.card.is-interactive:hover {
+    border-color: var(--input-border);
+    box-shadow: var(--shadow-md);
+}
+.card.is-interactive:focus-visible { outline: var(--focus-outline); outline-offset: 2px; }
+.card.is-interactive:active { box-shadow: var(--shadow-sm); }
+/* Accent-led action card — picking a report to run, choosing an import target. */
+.card.is-interactive.is-accent:hover { border-color: var(--accent); }
+/* Trailing chevron on a card that navigates somewhere. */
+.card-chevron { color: var(--text-faint); font-size: var(--fs-sm); flex: none; }
+
+/* ── Option card ────────────────────────────────────────────────────────────
+     A card the user picks: a tenant type toggle, a quotation to approve. Was
+     two implementations — .type-option label (1.5px border, accent selection)
+     and .quot-radio-card (2px border, a hardcoded #7C3AED purple that appeared
+     nowhere else in the product).
+
+     Selection is carried by the accent, like every other "this one is chosen"
+     state in the app, and by a ring as well as a fill so it survives being read
+     without colour. Works with a real radio/checkbox (input:checked + label) or
+     with .is-selected toggled in JS. */
+.option-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: var(--sp-3) 14px;
+    border: var(--border-control) solid var(--card-border);
+    border-radius: var(--radius-sm);
+    background: var(--page-bg-alt);
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: 0;
+    transition: border-color var(--dur-base), background var(--dur-base),
+                color var(--dur-base), box-shadow var(--dur-base);
+}
+.option-card:hover { border-color: var(--input-border); background: var(--page-bg); }
+.option-card > i, .option-card .option-card-icon { font-size: 16px; flex: none; }
+
+/* The input itself is visually hidden but still focusable and still the thing
+   screen readers and the keyboard operate. */
+.option-group { position: relative; }
+.option-group input[type="radio"],
+.option-group input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0; height: 0;
+    margin: 0;
+}
+.option-group input:checked + .option-card,
+.option-card.is-selected {
+    border-color: var(--accent);
+    background: var(--tone-accent-bg);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+}
+/* Focus has to be visible on the card, since the input carrying focus is not. */
+.option-group input:focus-visible + .option-card {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+}
+/* Numbered badge inside an option card — which quotation this is. */
+.option-card-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--page-bg);
+    border: 2px solid var(--card-border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
+    font-weight: 800;
+    color: var(--text-muted);
+    flex: none;
+    transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+}
+.option-group input:checked + .option-card .option-card-num,
+.option-card.is-selected .option-card-num {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+}
+
+/* Radio/check indicator inside the card. */
+.option-card-check {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--page-bg);
+    border: 2px solid var(--card-border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    color: transparent;
+    flex: none;
+    transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+}
+.option-group input:checked + .option-card .option-card-check,
+.option-card.is-selected .option-card-check {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+}
+.option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 768px) {
+    .option-grid { grid-template-columns: 1fr; }
+    .option-card { min-height: var(--h-control-lg); }
+}
+
+/* ── Hero card ──────────────────────────────────────────────────────────────
+     The identity block at the top of a detail page (a tenant's profile, a
+     lease contract). Roomier, and its title steps up to page-title scale
+     because on that screen it IS the page's subject. */
+.card.is-hero { padding: var(--sp-7) var(--card-pad-x-lg); }
+.card.is-hero .card-title { font-size: var(--fs-xl); font-weight: 800; letter-spacing: -0.01em; }
+.card.is-hero .card-subtitle { font-size: 13px; }
+
+/* A short form has no business stretching to a 1600px viewport — the eye
+   loses the label/field relationship. Caps the measure instead of each page
+   inventing its own max-width. */
+.card.is-narrow { max-width: 560px; }
+.card.is-medium { max-width: 860px; }
+
+/* A card pinned beside a long scrolling column — the payment form on a bill
+   detail page stays in view while the reader scrolls the charges. */
+.card.is-sticky { position: sticky; top: var(--sp-5); }
+@media (max-width: 900px) {
+    /* Nothing to stay beside once the columns stack. */
+    .card.is-sticky { position: static; }
+}
+/* Tone accent on a card's leading edge, for a card that carries a status. */
+.card.has-rail { border-left: 3px solid var(--card-rail, var(--card-border)); }
+.card.has-rail.is-success { --card-rail: var(--success); }
+.card.has-rail.is-danger  { --card-rail: var(--danger); }
+.card.has-rail.is-warning { --card-rail: var(--warning); }
+.card.has-rail.is-info    { --card-rail: var(--info); }
+.card.has-rail.is-accent  { --card-rail: var(--accent); }
+
+/* Stacked sibling cards get their rhythm from the system, so a page never has
+   to add its own margin-bottom (which is how .form-card, .fc-card,
+   .detail-card and .maint-section each ended up with a different gap).
+   The margin is for cards in normal flow. Any container that lays its children
+   out with `gap` — every grid and flex row below, and every page-local one —
+   must reset it, or its second card sits --sp-5 lower than its first and, in a
+   stretch grid, --sp-5 shorter. That misalignment is the whole reason this
+   list exists; a page adding its own card grid adds a reset with it. */
+.card + .card { margin-top: var(--sp-5); }
+.card-grid > .card + .card,
+.stats-grid > .card + .card,
+.detail-grid > .card + .card,
+.section-stack > .card + .card { margin-top: 0; }
+
+/* ── Card grid ──────────────────────────────────────────────────────────────
+     Equal-height columns by default, because a row of cards with ragged
+     bottoms is the most common way a card layout looks unfinished. Cards are
+     flex columns and .card-body flexes, so footers align across the row. */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--sp-4);
+    align-items: stretch;
+}
+/* Two families here, and the difference matters when you pick one:
+     .is-2 FLOWS — as many >=340px columns as fit. Right for a set whose
+       length varies (form-configs runs 5 and 6 cards through it).
+     .is-pair / .is-3 / .is-4 are FIXED counts. Right when the row is a
+       designed composition of exactly that many panels: four donuts read as
+       one strip, two lists read as a pair. A flow grid cannot express that —
+       give it two children and a 3-track width and you get two cards at a
+       third each with a hole on the end, which is precisely how the building
+       detail page's chart strip broke. */
+.card-grid.is-2 { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+.card-grid.is-pair { grid-template-columns: repeat(2, 1fr); }
+.card-grid.is-3 { grid-template-columns: repeat(3, 1fr); }
+.card-grid.is-4 { grid-template-columns: repeat(4, 1fr); }
+/* A card row that should NOT equalise heights (cards of genuinely different
+   length, where stretching leaves dead space). */
+.card-grid.is-natural { align-items: start; }
+@media (max-width: 900px) { .card-grid.is-pair { grid-template-columns: 1fr; } }
+
+/* ── Empty state inside a card ─────────────────────────────────────────────
+     A card with nothing in it still needs to say so. §4.7's .empty-state drops
+     straight into a .card-body. */
+.card-body > .empty-state:only-child { padding: var(--sp-10) var(--sp-5); }
+
+/* ── §4.3b  Detail list ─────────────────────────────────────────────────────
+     The label/value grid that fills a detail page's cards — a lease's terms, a
+     maintenance request's particulars, a tenant's contact record. Was defined
+     three times (lease-contracts/show, maintenance/show, tenants/_profile)
+     with the label at 11px/700/uppercase each time but the value at 14px/500
+     in one and 14px/600 in another.
+
+     Markup:  .detail-grid > .detail-item > .detail-label + .detail-value */
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--sp-4);
+}
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    min-width: 0;
+}
+/* An item that leads with an icon — the icon sits beside the pair, not above. */
+.detail-item.has-icon { flex-direction: row; align-items: flex-start; gap: 14px; }
+.detail-label {
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+.detail-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;   /* an email or IBAN must wrap, not widen the grid */
+}
+/* A value that is a figure. */
+.detail-value.is-num {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: var(--fs-md);
+}
+/* Nothing recorded — said plainly, and set apart from a real value so the two
+   are never confused at a glance. */
+.detail-value.is-empty { color: var(--text-muted); font-weight: 400; font-style: italic; }
+.detail-value a { color: var(--info); text-decoration: none; }
+.detail-value a:hover { text-decoration: underline; }
+
+/* ── §4.3c  Key/value card ──────────────────────────────────────────────────
+     A record's fields as a list, not as a grid of cards.
+
+     §4.3b's .detail-grid gives every field its own card, its own icon tile and
+     three lines of height. On a tenant with nothing but a name that produced
+     seven cards, five of them saying "Not provided" in italic grey beside a
+     coloured icon — a screen that spends its whole vertical budget announcing
+     absence, in three accent colours that encode nothing, and reads like a
+     form that failed to load.
+
+     This is the same information as a definition list: label left, value
+     right, one hairline between rows. A field that is empty does not report
+     its emptiness — it offers to be filled ("Add ›"), which is the only thing
+     a reader can usefully do about it. Five dead rows become five
+     affordances, and each one drops from a card to a single line.
+
+     Use .detail-grid when most fields are filled and each value is worth its
+     own block (a lease's terms). Use this when the record is sparse, or when
+     the reader's job is to notice what is missing.
+
+     Markup:  .kv-stack > .kv-card > [.kv-head] .kv-row* [.kv-meta]  */
+.kv-stack { display: flex; flex-direction: column; gap: var(--sp-3); }
+/* A row this shape only works while the card is narrow: label hard left,
+   value hard right, and on a 1440px page that is a foot of empty carpet
+   between "Phone" and the number. So above the mobile fold the cards sit
+   side by side and each one caps at a readable measure — the same reason a
+   column of prose is not set to the width of the window. */
+@media (min-width: 769px) {
+    .kv-stack { flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
+    .kv-stack > .kv-card { flex: 1 1 320px; min-width: 0; max-width: 460px; }
+}
+.kv-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--card-radius);
+    overflow: hidden;          /* so the first row's corners follow the card's */
+}
+/* Title, and the one verb that acts on every row under it. The Edit link is
+   the card's only accent: a row's own affordance is the value slot. */
+.kv-head {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+    padding: var(--sp-3) 14px;
+}
+.kv-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-base); font-weight: 700; line-height: var(--lh-tight);
+    color: var(--text-primary);
+}
+.kv-edit {
+    flex: none;
+    font-size: var(--fs-xs); font-weight: 600; text-decoration: none;
+    color: var(--tone-accent-fg);
+}
+.kv-edit:hover { text-decoration: underline; }
+
+/* One field. The label is the fixed part and the value is the elastic one, so
+   a long address wraps against the right edge instead of pushing the label
+   off the left. */
+.kv-row {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 13px 14px;
+    border-top: 1px solid var(--card-border);
+    min-height: 44px;          /* the row is a tap target when it carries a link */
+    box-sizing: border-box;
+}
+.kv-row > .kv-icon {
+    flex: none; width: 16px; align-self: center;
+    font-size: 14px; color: var(--text-muted); text-align: center;
+}
+.kv-label {
+    flex: none;
+    font-size: var(--fs-sm); line-height: var(--lh-snug); color: var(--text-secondary);
+}
+.kv-value {
+    flex: 1; min-width: 0; text-align: right;
+    font-size: var(--fs-sm); font-weight: 600; line-height: var(--lh-snug);
+    color: var(--text-primary);
+    overflow-wrap: anywhere;   /* an email must wrap, not widen the card */
+}
+.kv-value a { color: inherit; text-decoration: none; }
+.kv-value a:hover { text-decoration: underline; }
+/* Nothing on file. Muted, because it is not a value — and weighted, because
+   it is a control. The chevron is the affordance: this goes somewhere. */
+.kv-add {
+    font-weight: 600; color: var(--text-muted); text-decoration: none;
+    white-space: nowrap;
+}
+.kv-add:hover { color: var(--tone-accent-fg); text-decoration: none; }
+.kv-add > i { font-size: 9px; margin-left: 3px; opacity: .8; }
+
+/* The footer: when a record was made, and when it last changed. Two pairs on
+   one row, set as eyebrows — this is provenance, not content, and it should
+   read after everything above it. */
+.kv-meta {
+    display: flex; gap: var(--sp-5);
+    padding: 12px 14px;
+    border-top: 1px solid var(--card-border);
+}
+.kv-meta-label {
+    font-size: var(--fs-2xs); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-muted);
+}
+.kv-meta-value {
+    margin-top: 2px;
+    font-size: var(--fs-sm); font-weight: 600; color: var(--text-primary);
+}
+
+/* ── §4.4  Stat cards ───────────────────────────────────────────────────────
+     Was nine separate components (.stat-card, .pay-stat, .exp-stat,
+     .inv-stat, .rev-stat, .ewa-stat, .dash-stat, .pl-stat, .bldg-stat) that
+     all rendered the same thing. §6 aliases the old names onto this one.
+
+     These are cards and take §4.3's standard exactly: --card-bg, 1px
+     --card-border, --radius, --shadow-sm, --card-pad. Before this they were
+     elevated on Buildings / Tenants / Units / Floors / Leases and flat on
+     Invoices / Payments / Expenses / Revenue / EWA / Maintenance / audit /
+     error — the same component reading as two different components depending
+     on which page you were on.
+
+     No hover: these are readouts, not controls. .stat-card:hover used to lift
+     2px and deepen its shadow on five pages, promising a click that was never
+     wired up. A KPI card that navigates somewhere should be a
+     .card.is-interactive instead. */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
+    gap: var(--sp-5);
+    align-items: stretch;   /* one row of KPIs, one height */
+    margin-bottom: var(--sp-6);
+}
+/* A fixed five, for a page whose KPI row is read as a set (the dashboard). */
+.stats-grid.is-5 { grid-template-columns: repeat(5, 1fr); }
+@media (max-width: 1400px) { .stats-grid.is-5 { grid-template-columns: repeat(3, 1fr); } }
+/* A fixed count, where the figures are being read against each other and
+   auto-fill would let them drift apart on a wide screen (the P&L's
+   revenue / expenses / net). */
+.stats-grid.is-triple { grid-template-columns: repeat(3, 1fr); }
+.stats-grid.is-double { grid-template-columns: repeat(2, 1fr); }
+/* ── The compact strip ──────────────────────────────────────────────────────
+     Eight or nine figures that are read as one block — a building's whole
+     position in a glance — rather than four headline KPIs. At 22px padding
+     and a 30px figure the standard card needs 212px and two rows to hold
+     them; the reader loses the set. The compact card drops the icon, halves
+     the padding and steps the figure down to 19px, which fits the same nine
+     figures in one row from about 1330px.
+
+     Same anatomy and same markup contract as the standard card — label above
+     figure, .stat-card-top then .stat-val — so a card can move between the
+     two by changing one class. Use it only where the figures are a set; a
+     lone KPI still deserves the full card. */
+/* 130px, not the 148px the cards settle at: the minimum is what decides how
+   many columns auto-fit takes, and 148 leaves a 1440px screen one card short
+   of eight — an orphan on a second row. At 130 the eighth card fits and 1fr
+   grows them all back to ~148. */
+.stats-grid.is-compact { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: var(--sp-3); }
+/* Below that, eight across stops being readable at all, so the strip breaks
+   into deliberate blocks rather than whatever auto-fit leaves over. */
+@media (max-width: 1400px) { .stats-grid.is-compact { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 900px)  { .stats-grid.is-compact { grid-template-columns: repeat(2, 1fr); } }
+.stat-card.is-compact {
+    padding: 13px 14px;
+    min-height: 0;
+    box-shadow: none;
+}
+.stat-card.is-compact .stat-lbl {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+}
+.stat-card.is-compact .stat-val { font-size: 19px; margin-top: 7px; }
+.stat-card.is-compact .stat-val .stat-cur { font-size: 13px; font-weight: 500; }
+/* ── The anatomy ────────────────────────────────────────────────────────────
+     One order, everywhere:
+
+         ┌────────────────────────────┐
+         │  [icon]  LABEL             │   .stat-card-top
+         │                            │
+         │  30px figure               │   .stat-val
+         │                            │
+         │  supporting line   [trend] │   .stat-foot
+         └────────────────────────────┘
+
+     Label above the figure, not below it: the reader needs to know what they
+     are looking at before they read it, and it is what makes cards with and
+     without a supporting line still line up.
+
+     min-height is what holds the row even, including across pages — a card
+     with no supporting line occupies the same box as one that has it. */
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-sm);
+    min-width: 0;
+    min-height: 132px;
+}
+/* Several KPI cards navigate — they are rendered as <button>, which brings
+   the UA's centred text, its own font and no pointer. Reset here rather than
+   on each page. */
+button.stat-card {
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+}
+.stat-card-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+.stat-icon {
+    width: 40px; height: 40px;
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    background: var(--tone-neutral-bg);
+    color: var(--tone-neutral-fg);
+}
+.stat-icon.gold, .stat-icon.accent  { background: var(--tone-accent-bg);  color: var(--tone-accent-fg); }
+.stat-icon.green, .stat-icon.success { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.stat-icon.blue, .stat-icon.info    { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.stat-icon.red, .stat-icon.danger   { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+.stat-icon.amber, .stat-icon.warning { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.stat-icon.gray, .stat-icon.neutral { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+.stat-icon.teal { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.stat-icon.purple { background: var(--tone-info-bg); color: var(--tone-info-fg); }
+
+.stat-body { min-width: 0; }
+.stat-lbl {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    min-width: 0;
+}
+.stat-val {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-top: 16px;
+}
+/* The currency prefix rides one step down from the figure so the number
+     stays the thing the eye lands on. */
+.stat-val .stat-cur { font-size: 20px; font-weight: 600; margin-right: 4px; }
+
+/* Supporting line, and the optional trend chip beside it. */
+.stat-foot {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.stat-sub {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    min-width: 0;
+}
+.stat-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.stat-trend.is-up   { color: var(--tone-success-fg); }
+.stat-trend.is-down { color: var(--tone-danger-fg); }
+
+/* A stat card that really does navigate — the dashboard's figures link to the
+   list behind them. Same interactive treatment as .card.is-interactive, so a
+   clickable figure and a clickable card behave identically. */
+a.stat-card,
+button.stat-card {
+    text-decoration: none;
+    color: inherit;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+    transition: border-color var(--dur-base) ease, box-shadow var(--dur-base) ease;
+}
+a.stat-card:hover,
+button.stat-card:hover { border-color: var(--input-border); box-shadow: var(--shadow-md); }
+a.stat-card:hover .stat-val,
+button.stat-card:hover .stat-val { color: var(--text-primary); }
+a.stat-card:focus-visible,
+button.stat-card:focus-visible { outline: var(--focus-outline); outline-offset: 2px; }
+
+/* Stat well — a nested figure block inside another card (the floors/units
+   counts on a building card). Recessed rather than raised, because it sits on
+   a surface that is already elevated. Replaces .bldg-stat-pill and is the
+   desktop counterpart of the mobile .pm-well. */
+.stat-well {
+    flex: 1;
+    min-width: 0;
+    background: var(--page-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: var(--sp-2) 10px;
+    text-align: center;
+}
+.stat-well-val {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--text-primary);
+    line-height: 1;
+}
+.stat-well-lbl {
+    font-size: var(--fs-2xs);
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+}
+.stat-well-row { display: flex; gap: var(--sp-2); }
+/* A well that leads with an icon. Same tinted-square treatment as
+   .card-header-icon, one step smaller because it sits inside a nested block. */
+.stat-well-icon {
+    width: 32px; height: 32px;
+    border-radius: var(--radius-sm);
+    background: var(--tone-accent-bg);
+    color: var(--tone-accent-fg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    flex: none;
+}
+/* Tone-carrying wells — a property card's income / net / occupancy figures.
+   Replaces .property-stat-box's hardcoded #ECFDF5 / #EFF6FF tints, which were
+   light-mode-only and so stayed near-white on a dark surface. */
+.stat-well.is-success { background: var(--tone-success-bg); border-color: var(--tone-success-border); }
+.stat-well.is-success .stat-well-val,
+.stat-well.is-success .stat-well-lbl { color: var(--tone-success-fg); }
+.stat-well.is-info    { background: var(--tone-info-bg);    border-color: var(--tone-info-border); }
+.stat-well.is-info .stat-well-val,
+.stat-well.is-info .stat-well-lbl    { color: var(--tone-info-fg); }
+.stat-well.is-warning { background: var(--tone-warning-bg); border-color: var(--tone-warning-border); }
+.stat-well.is-warning .stat-well-val,
+.stat-well.is-warning .stat-well-lbl { color: var(--tone-warning-fg); }
+.stat-well.is-danger  { background: var(--tone-danger-bg);  border-color: var(--tone-danger-border); }
+.stat-well.is-danger .stat-well-val,
+.stat-well.is-danger .stat-well-lbl  { color: var(--tone-danger-fg); }
+/* A well grid, when there are three or more figures to line up. */
+.stat-well-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-2); }
+
+/* Figure-first variant: no icon, the number leads and an uppercase caption
+   sits beneath it. For dense rows of counts (the audit and error logs) where
+   an icon per card added noise without adding meaning. */
+/* No icon tile — for dense rows of counts (the audit and error logs) where an
+   icon per card added noise without adding meaning. Same order, same type,
+   same box; the tile is simply absent. */
+.stat-card.is-figure { min-height: 104px; }
+.stat-card.is-figure.is-danger  .stat-val { color: var(--tone-danger-fg); }
+.stat-card.is-figure.is-warning .stat-val { color: var(--tone-warning-fg); }
+.stat-card.is-figure.is-info    .stat-val { color: var(--tone-info-fg); }
+.stat-card.is-figure.is-success .stat-val { color: var(--tone-success-fg); }
+
+/* Stat tile — the label-above-figure variant, with a leading rail carrying
+   the tone. For a small set of headline figures that are being compared
+   against each other (the P&L's revenue / expenses / net), where the figure
+   itself should be the largest thing on the page. Was page-local CSS on
+   reports/profit-loss with the tone colors hardcoded. */
+.stat-tile {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-left: 3px solid var(--tile-rail, var(--card-border));
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: var(--card-pad);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+.stat-tile-label {
+    font-size: var(--fs-2xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.stat-tile-value {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--tile-fg, var(--text-primary));
+}
+.stat-tile-value { overflow-wrap: anywhere; }
+.stat-tile-value sup { font-size: var(--fs-sm); font-weight: 600; margin-left: var(--sp-1); }
+.stat-tile.is-success { --tile-rail: var(--tone-success-fg); --tile-fg: var(--tone-success-fg); }
+.stat-tile.is-warning { --tile-rail: var(--tone-warning-fg); --tile-fg: var(--tone-warning-fg); }
+.stat-tile.is-danger  { --tile-rail: var(--tone-danger-fg);  --tile-fg: var(--tone-danger-fg); }
+.stat-tile.is-accent  { --tile-rail: var(--accent);          --tile-fg: var(--tone-accent-fg); }
+/* The bottom-line figure gets a double rule under it — the accounting
+   convention for a total, and it reads without relying on color. */
+.stat-tile.is-total .stat-tile-value {
+    display: inline-block;
+    padding-bottom: 6px;
+    border-bottom: 2px solid currentColor;
+    box-shadow: 0 4px 0 -3px currentColor;
+}
+
+/* ── §4.4b  Value tones ─────────────────────────────────────────────────────
+     A figure's sign or age carries meaning in this app: money owed, money
+     received, an ageing bucket past 120 days. These replace the per-report
+     hardcodes (.net-owing, .net-credit, .bucket-lt60, .bucket-b60120,
+     .bucket-gt120, .overdue-pos, .balance-row-owing, .balance-row-settled),
+     which were literal #DC2626 / #059669 / #D97706 and so stayed light-mode
+     colors on a dark surface.
+
+     Color is never the only signal — these sit on figures that are also
+     labelled by their column. */
+.val-positive { color: var(--tone-success-fg); font-weight: 700; }
+.val-negative { color: var(--tone-danger-fg);  font-weight: 700; }
+.val-warning  { color: var(--tone-warning-fg); font-weight: 700; }
+.val-muted    { color: var(--text-muted); }
+/* An overdue figure is also set in italics, so the emphasis survives being
+   read in grayscale or by someone who can't separate the two hues. */
+.val-negative.is-emphatic { font-style: italic; }
+
+
+/* ── §4.5  Filter bar ───────────────────────────────────────────────────────
+     Master pattern, taken from tenants/index: the filter bar sits INSIDE the
+     table card, above the header row, so filters visibly belong to the table
+     they narrow. Each control is labelled — the competing variant used bare
+     placeholder-only inputs, which leaves no accessible name once a value is
+     filled in.
+
+     Filtering is server-side: these controls submit a GET form and the
+     backend returns already-filtered, already-paginated rows. */
+.filter-bar {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--sp-3);
+    flex-wrap: wrap;
+    padding: var(--sp-4) var(--sp-5);
+    background: var(--page-bg-alt);
+    border-bottom: 1px solid var(--card-border);
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 150px;
+}
+.filter-group > label {
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.filter-group input,
+.filter-group select {
+    min-height: var(--h-control-sm);
+    padding: 0 var(--sp-3);
+    font-size: 13px;
+    background: var(--card-bg);
+}
+.filter-group select { background-position: right 10px center; padding-right: 32px; }
+/* Search field is the widest and comes first. */
+.filter-group.is-search { flex: 1; min-width: 220px; }
+.filter-actions {
+    display: flex;
+    gap: var(--sp-2);
+    align-items: flex-end;
+    margin-left: auto;
+}
+
+/* One filter component, two containers — the internals are identical, only
+   what the filters belong to differs:
+
+     .table-card > .filter-bar    a list page. The filters narrow a list that
+                                  is already on screen, so they sit inside the
+                                  table's own card, attached to it.
+
+     .filter-card > .filter-bar   a report page. Here the filters ARE the
+                                  page's query — pick a tenant and a date
+                                  range, then read the result — and the result
+                                  below swaps between a table and an empty
+                                  state. So the filters get their own card.
+
+   Anything else (a bare .filter-bar floating on the page background, filters
+   in a card with no label on each control) is not a third option. */
+.filter-card {
+    display: block;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 18px;
+    overflow: hidden;
+}
+.filter-card > .filter-bar { border-bottom: none; background: transparent; }
+
+
+/* ── §4.6  Tables ───────────────────────────────────────────────────────────
+     One table system for the whole app.
+
+     Structure:  .table-card > [.filter-bar] > .table-wrap > table > …
+                              > .table-footer > .result-count + .pagination
+
+     Desktop: sticky header, right-aligned numeric columns in tabular
+     figures, a single hover state, one Actions column treatment.
+
+     Mobile (≤768px, §4.6.3): rows become stacked key/value cards using each
+     cell's `data-label`. Horizontal scroll is kept only for tables marked
+     `.table-wrap.is-scroll` — a wide financial matrix (an ageing report,
+     a rent schedule) genuinely reads better scrolled than stacked, because
+     comparing across columns is the point. Everything else stacks. */
+
+.table-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    min-width: 0;
+}
+.table-wrap { overflow-x: auto; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+thead th {
+    padding: 11px var(--sp-5);
+    text-align: left;
+    font-size: var(--fs-2xs);
+    /* 600 at --text-secondary, not 700 at --text-muted: the label reads darker
+       (7.3:1 on --page-bg-alt, was 4.8:1) without gaining visual weight, so a
+       header still sits behind its column rather than competing with it. */
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-secondary);
+    background: var(--page-bg-alt);
+    border-bottom: 1px solid var(--card-border);
+    vertical-align: middle;
+    white-space: nowrap;
+}
+tbody td {
+    padding: 12px var(--sp-5);
+    font-size: var(--fs-base);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--row-border);
+    vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--row-hover); }
+
+/* ── An editable line table ─────────────────────────────────────────────────
+     A table whose cells hold inputs: an invoice's rental lines, a maintenance
+     request's job lines, the same job lines inside the request modal. Three
+     pages had written this three times (.lines-table, .job-lines-table,
+     .modal-job-lines-table) with padding 6px 6px / 8px 6px / 6px 4px, header
+     type at 10px and 11px, and each restating the input border and focus
+     colour that §4.2 already defines.
+
+     Markup:  .table-wrap > table.is-editable > … > td > input|select|textarea
+     Cells are top-aligned because a textarea in one column must not drag the
+     row's other controls down with it. */
+table.is-editable tbody td {
+    padding: var(--sp-2) 6px;
+    vertical-align: top;
+}
+table.is-editable thead th { padding: 9px 10px; }
+table.is-editable tbody tr:hover td { background: transparent; }
+table.is-editable :is(input, select, textarea) {
+    width: 100%;
+    min-height: var(--h-control-sm);
+    padding: 6px 9px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--text-primary);
+    background: var(--input-bg);
+    border: var(--border-control) solid var(--input-border);
+    border-radius: var(--radius-sm);
+}
+table.is-editable :is(input, select, textarea):focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: var(--focus-ring);
+}
+table.is-editable input:disabled {
+    background: var(--page-bg);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+table.is-editable textarea { resize: vertical; min-height: 60px; }
+/* A money cell keeps the figure treatment even while it is an input. */
+table.is-editable td.num input {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    text-align: right;
+}
+
+/* A denser read-only table, for a small breakdown sitting inside a card
+   (a bill's meter readings, a unit's contract history) rather than a full
+   page listing. Same type, one step less padding. */
+table.is-compact thead th { padding: 8px var(--sp-3); }
+table.is-compact tbody td { padding: 10px var(--sp-3); }
+
+/* Rows are clickable across the whole row (project convention). The cursor
+   and hover state say so; the Actions cell stops propagation in JS. */
+tr[data-href] { cursor: pointer; }
+tr[data-href]:focus-visible { outline: var(--focus-outline); outline-offset: -2px; }
+
+/* A record's own identifier in a table cell — an invoice number, a payment
+   reference, a unit code. Nine index pages each wrote
+   `font-family:'Outfit';font-weight:700;color:var(--accent)` inline, which
+   put a 1.82:1 gold on white where the cell IS the row's identity. Uses the
+   AA-compliant accent ink (§8's compliant swap), not the decorative gold. */
+.cell-id {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: var(--tone-accent-fg);
+    text-decoration: none;
+}
+a.cell-id:hover { text-decoration: underline; }
+
+/* Numeric / money columns: right-aligned, tabular figures, no wrapping.
+   `.num` is the canonical class; `.right` and `.amount-col` / `.money-col`
+   are kept as aliases in §6. */
+.num, td.num, th.num {
+    text-align: right;
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.num-strong { font-weight: 700; }
+
+/* Summary / total row, and the bottom line beneath it. .total-row is a
+   subtotal or a closing balance; .grand-total-row is the one figure the whole
+   table is building to, and gets the heavier rule accounting expects. */
+.total-row td {
+    background: var(--page-bg-alt);
+    font-weight: 700;
+    border-top: 1px solid var(--card-border);
+}
+.grand-total-row td {
+    border-top: 2px solid var(--text-primary);
+    font-weight: 700;
+    padding-top: var(--sp-3);
+}
+
+/* Title for a table that sits inside a card without a full .card-header —
+   a section label above the rows rather than a header bar. */
+.table-card-title {
+    padding: 14px 18px 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-base);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* Code / stack-trace block. */
+.code-block {
+    margin: 0;
+    font-family: 'Fira Code', ui-monospace, 'Courier New', monospace;
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    background: var(--page-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: var(--sp-3) 14px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    max-height: 400px;
+    overflow: auto;
+}
+
+/* Cell utilities. Deliberately a short list — anything longer belongs as a
+   component, not as a utility. */
+.nowrap { white-space: nowrap; }
+.wrap-anywhere { overflow-wrap: anywhere; }
+
+/* Explanatory note under a section — how a figure was derived, what a report
+   does and does not include. */
+.section-note {
+    margin-top: var(--sp-1);
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    max-width: 72ch;
+}
+
+/* Primary identifier in a row: name on top, secondary detail beneath. */
+.cell-title { font-weight: 600; font-size: var(--fs-base); color: var(--text-primary); }
+.cell-sub   { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 2px; }
+
+/* A whole cell that is itself de-emphasized — a reference number, unit
+   suffix, or "—" placeholder column, not a second line under a title (that's
+   .cell-sub, one step smaller at --fs-xs). Was 10 identical
+   `style="font-size:12px;color:var(--text-muted)"` copies across 8 index
+   pages; --fs-sm already existed at exactly this value, so no new token. */
+.cell-muted { font-size: var(--fs-sm); color: var(--text-muted); }
+
+/* Actions column — fixed to the trailing edge, never grows. */
+th.col-actions, td.col-actions { width: 1%; white-space: nowrap; text-align: right; }
+td.col-actions .action-btns { justify-content: flex-end; }
+
+/* §4.6.2  Footer + pagination — was duplicated in six index pages. */
+.table-footer {
+    padding: 14px var(--sp-5);
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+}
+.result-count { font-size: 13px; color: var(--text-muted); }
+.result-count strong { color: var(--text-primary); font-weight: 600; }
+
+.pagination {
+    display: flex;
+    gap: var(--sp-1);
+    align-items: center;
+    flex-wrap: wrap;
+}
+.page-btn {
+    min-width: var(--h-control-sm);
+    height: var(--h-control-sm);
+    padding: 0 6px;
+    border: var(--border-control) solid var(--card-border);
+    background: var(--card-bg);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-decoration: none;
+    transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+.page-btn > i { font-size: 10px; }
+.page-btn:hover { background: var(--page-bg); color: var(--text-primary); }
+.page-btn.active,
+.page-btn[aria-current="page"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+}
+.page-btn.disabled,
+.page-btn.is-disabled,
+.page-btn[aria-disabled="true"] { opacity: 0.4; pointer-events: none; cursor: default; }
+
+
+/* ── §4.6b  Entity list ─────────────────────────────────────────────────────
+     A card body that is a list of records rather than a table: leading tone
+     icon, a two-line identity, and a trailing badge or figure. Buildings/show
+     had been writing this with Bootstrap's .list-group / .list-group-item,
+     which no longer exist anywhere in the app — the rows rendered with no
+     separator, no hover and no focus ring.
+
+     Markup:  .entity-list > a.entity-row > .stat-icon + .entity-row-text + [trailing]
+                                            .entity-row-title
+                                            .entity-row-sub
+
+     The dashboard's .dash-attention-row is the same shape and should fold
+     into this next time that page is touched; it is left alone here rather
+     than widening an unrelated change. */
+.entity-list { display: flex; flex-direction: column; }
+.entity-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--card-pad-x);
+    border-bottom: 1px solid var(--row-border);
+    text-decoration: none;
+    color: inherit;
+    transition: background var(--dur-base);
+}
+.entity-row:last-child { border-bottom: none; }
+.entity-row:hover { background: var(--row-hover); }
+.entity-row:focus-visible { outline: var(--focus-outline); outline-offset: -2px; }
+.entity-row-text { flex: 1; min-width: 0; }
+.entity-row-title {
+    display: block;         /* the markup uses spans, so this is not automatic */
+    font-size: var(--fs-base);
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.entity-row-sub {
+    display: block;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* The trailing badge never shrinks under a long title. */
+.entity-row > .badge { flex: none; margin-left: auto; }
+
+/* ── §4.7  Empty state ──────────────────────────────────────────────────────
+     One empty state, replacing .empty-state / .report-empty / .tp-empty and
+     a handful of inline `text-align:center;padding:60px 20px` blocks. An
+     empty screen is an invitation to act, so the pattern has room for a
+     primary action. */
+.empty-state {
+    text-align: center;
+    padding: var(--sp-12) var(--sp-5);
+}
+.empty-icon {
+    width: 64px; height: 64px;
+    background: var(--page-bg);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--fs-2xl);
+    color: var(--text-faint);
+    margin: 0 auto var(--sp-4);
+}
+.empty-state h4 {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+.empty-state p {
+    font-size: 13px;
+    color: var(--text-muted);
+    max-width: 46ch;
+    margin: 0 auto;
+}
+.empty-state .btn { margin-top: var(--sp-5); }
+
+
+/* ── §4.8  Badges ───────────────────────────────────────────────────────────
+     .badge is the neutral pill. .status-badge is the same box with an
+     explicit status meaning; its modifiers are the domain's own status
+     names, mapped onto the six semantic tones so they are correct in both
+     themes. */
+.badge,
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    padding: 3px 9px;
+    border-radius: var(--radius-pill);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    line-height: var(--lh-snug);
+    white-space: nowrap;
+    background: var(--tone-neutral-bg);
+    color: var(--tone-neutral-fg);
+}
+.status-badge { font-weight: 700; padding: 3px 10px; }
+
+/* Tone modifiers — the vocabulary. */
+.badge-gold,  .tone-accent  { background: var(--tone-accent-bg);  color: var(--tone-accent-fg); }
+.badge-green, .tone-success { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.badge-blue,  .tone-info    { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.badge-red,   .tone-danger  { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+.badge-amber, .tone-warning { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.badge-gray,  .tone-neutral { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+
+/* ── Domain status vocabulary ────────────────────────────────────────────────
+     The badge class comes straight off the model's status value
+     (class="status-badge {{ $invoice->status }}"), so this list has to cover
+     every status the domain can produce. Values below are taken from the
+     migrations and models: invoices and EWA bills (draft / issued /
+     partially_paid / paid / overdue / cancelled), maintenance requests (open /
+     waiting_supervisor / waiting_approval / approved / in_progress /
+     completed / cancelled), leases (active / expiring / expired / upcoming),
+     rent schedule (paid / partial / unpaid / not_invoiced), and the audit and
+     error logs (created / updated / deleted / imported, error / warning /
+     info / debug).
+
+     Add a new status here, next to the others that mean the same thing —
+     never as a one-off rule on a page. If a status has no obvious tone, the
+     unmodified .status-badge is neutral and is a correct answer. */
+
+/* Settled, done, approved. */
+.status-badge.paid,
+.status-badge.active,
+.status-badge.completed,
+.status-badge.approved,
+.status-badge.collected,
+.status-badge.created       { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+
+/* Needs attention, or failed. */
+.status-badge.overdue,
+.status-badge.unpaid,
+.status-badge.rejected,
+.status-badge.failed,
+.status-badge.error,
+.status-badge.deleted,
+.status-badge.urgent        { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+
+/* In flight — started, not finished. */
+.status-badge.partially_paid,
+.status-badge.partially,
+.status-badge.partial,
+.status-badge.expiring,
+.status-badge.waiting,
+.status-badge.waiting_supervisor,
+.status-badge.waiting_approval,
+.status-badge.pending,
+.status-badge.open,
+.status-badge.warning,
+.status-badge.in_progress,
+.status-badge.in            { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+
+/* Live and informational — issued, sent, coming up. */
+.status-badge.issued,
+.status-badge.upcoming,
+.status-badge.updated,
+.status-badge.sent,
+.status-badge.info          { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+
+/* Bulk / system origin, and privileged roles. */
+.status-badge.imported,
+.status-badge.admin         { background: var(--tone-accent-bg);  color: var(--tone-accent-fg); }
+
+/* Authentication events in the audit log. A refused or throttled sign-in is
+   the same "needs attention" red as any other failure; a successful one is the
+   same green as any other settled thing; signing out is neither. */
+.status-badge.signed_in      { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.status-badge.signed_out     { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+.status-badge.sign_in_failed,
+.status-badge.locked_out     { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+.status-badge.password_reset { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.status-badge.password_reset_requested { background: var(--tone-info-bg); color: var(--tone-info-fg); }
+.status-badge.leases_expiring { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+
+/* Kinds rather than states: an invoice's type, a user's role. Same box, same
+   vocabulary — a page must not invent .type-badge / .role-badge for these. */
+.status-badge.rent,
+.status-badge.user          { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.status-badge.utilities     { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.status-badge.other,
+.status-badge.maintenance   { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+
+/* A reading taken vs one estimated; a setting configured vs not; a meter's
+   service. Same three tones as everything else means the same thing. */
+.status-badge.actual,
+.status-badge.configured    { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.status-badge.estimated,
+.status-badge.elec          { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.status-badge.water         { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.status-badge.unconfigured  { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+
+/* Inert — never started, or over. */
+.status-badge.draft,
+.status-badge.not_invoiced,
+.status-badge.cancelled,
+.status-badge.expired,
+.status-badge.closed,
+.status-badge.vacant,
+.status-badge.debug         { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+
+/* Outlined variant, for a badge sitting on an already-tinted surface. */
+.badge-outline { background: transparent; border: 1px solid currentColor; }
+/* Uppercase, for a badge acting as a section marker rather than a status. */
+.badge.is-caps { text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+/* Extra small, for a marker attached to a single field. */
+.badge.is-xs { padding: 2px 7px; font-size: var(--fs-2xs); gap: 3px; }
+
+
+/* ── §4.8b  File chip ────────────────────────────────────────────────────────
+     One attached-file pill, shown after a file input once a file is picked.
+     Was .mquot-pill (maintenance/index) and .quot-file-pill (maintenance/create)
+     — identical CSS under two names. Toggle with .show; JS sets the filename
+     text and wires the clear button.
+
+     Markup: .file-chip > i.fa-paperclip + span (filename) + button (clear) */
+.file-chip {
+    display: none; align-items: center; gap: 5px;
+    padding: 3px 8px 3px 6px; margin-top: 5px;
+    background: var(--accent-dim); border-radius: var(--radius-pill);
+    font-size: var(--fs-xs); font-weight: 600; color: var(--accent);
+    max-width: 100%; overflow: hidden;
+}
+.file-chip.show { display: flex; }
+.file-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+.file-chip button {
+    background: none; border: none; color: var(--accent); cursor: pointer;
+    font-size: var(--fs-xs); padding: 0; line-height: 1; flex-shrink: 0; opacity: .7;
+    transition: opacity .15s;
+}
+.file-chip button:hover { opacity: 1; }
+
+
+/* ── §4.15  Board (kanban) ──────────────────────────────────────────────────
+     Work grouped by the stage it is at, rather than listed by date. Right when
+     the question is "what is stuck and where", which a paginated table answers
+     badly — you cannot see the shape of 40 requests through a 20-row window.
+
+     Markup:
+       .board > .board-col > .board-col-head > .board-dot + label + .board-count
+                           > .board-card (an <a>) …
+                           > .board-more | .board-empty
+
+     A board is NOT a replacement for the list. It has no pagination and no
+     sorting, and it caps what it draws — so every page that offers one also
+     offers the table, and the cap links across to it. Columns are a fixed
+     three: a board that grows a column per status stops being scannable.
+
+     Deliberately not drag-and-drop. Moving a card would have to mean a status
+     transition, and the transitions here carry assessments, quotations and
+     approvals — a drag is the wrong gesture for a decision that needs a form. */
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-4);
+    align-items: start;
+}
+.board-col {
+    background: var(--page-bg-alt);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: var(--sp-3);
+    min-width: 0;
+}
+.board-col-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 2px 6px 12px;
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.board-col-head > span:nth-child(2) { flex: 1; min-width: 0; }
+/* The dot carries the column's tone, so the three groups are told apart by
+   position AND colour AND label — never colour alone. */
+.board-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--text-faint); }
+.board-dot.is-danger  { background: var(--tone-danger-fg); }
+.board-dot.is-accent  { background: var(--accent-strong); }
+.board-dot.is-success { background: var(--tone-success-fg); }
+.board-count {
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+}
+.board-card {
+    display: block;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 11px 13px;
+    margin-bottom: var(--sp-2);
+    text-decoration: none;
+    transition: border-color var(--dur-base) ease, box-shadow var(--dur-base) ease;
+}
+.board-card:hover { border-color: var(--input-border); box-shadow: var(--shadow-md); }
+.board-card:focus-visible { outline: var(--focus-outline); outline-offset: 2px; }
+.board-card:last-child { margin-bottom: 0; }
+.board-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-2);
+    margin-bottom: 6px;
+}
+.board-card-title {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+.board-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+.board-card-meta .sep { opacity: 0.5; }
+/* Age, and the same figure once it has been sitting too long. */
+.board-age.is-stale { color: var(--tone-danger-fg); font-weight: 600; }
+.board-more {
+    display: block;
+    padding: 9px;
+    text-align: center;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border: 1px dashed var(--card-border);
+    border-radius: var(--radius-sm);
+}
+.board-more:hover { color: var(--tone-accent-fg); border-color: var(--accent-strong); }
+.board-empty {
+    padding: 18px 10px;
+    text-align: center;
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+/* Three columns need width. Below the panel breakpoint they stack, which is
+   also where the board stops being the better view — hence the list toggle. */
+@media (max-width: 1200px) {
+    .board { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+    .board { grid-template-columns: 1fr; }
+}
+
+
+/* ── §4.9  Alerts ───────────────────────────────────────────────────────── */
+.alert {
+    padding: 13px var(--sp-4);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-base);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: var(--sp-5);
+    border: 1px solid transparent;
+}
+.alert > i { margin-top: 2px; flex: none; }
+.alert-success { background: var(--tone-success-bg); color: var(--tone-success-fg); border-color: var(--tone-success-border); }
+.alert-danger  { background: var(--tone-danger-bg);  color: var(--tone-danger-fg);  border-color: var(--tone-danger-border); }
+.alert-warning { background: var(--tone-warning-bg); color: var(--tone-warning-fg); border-color: var(--tone-warning-border); }
+.alert-info    { background: var(--tone-info-bg);    color: var(--tone-info-fg);    border-color: var(--tone-info-border); }
+
+
+/* ── §4.10  Tabs ────────────────────────────────────────────────────────── */
+.tab-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-1);
+    border-bottom: 1px solid var(--card-border);
+    margin-bottom: 18px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+    padding: 11px 14px;
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color var(--dur-base), border-color var(--dur-base);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    text-decoration: none;
+    white-space: nowrap;
+}
+.tab-btn > i { font-size: 15px; }
+.tab-btn:hover { color: var(--tone-accent-fg); }
+.tab-btn.active,
+.tab-btn[aria-selected="true"] {
+    color: var(--tone-accent-fg);
+    font-weight: 600;
+    border-bottom-color: var(--accent-strong);
+}
+:root[data-theme="dark"] .tab-btn.active,
+:root[data-theme="dark"] .tab-btn[aria-selected="true"] { color: var(--accent); }
+.tab-btn:focus-visible { outline-offset: -2px; }
+
+/* The panel a tab reveals. Was page-local on property-units/show and needed
+   again by buildings/show, so it belongs here — one contract for both:
+   .tab-panel is hidden, .tab-panel.active is shown. */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: tab-panel-in var(--dur-base) var(--ease-out) both; }
+@keyframes tab-panel-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .tab-panel.active { animation: none; } }
+/* Pushes the tabs after it to the trailing edge — a settings tab that belongs
+   at the far end of the bar. */
+.tab-bar-spacer { flex: 1; }
+
+/* A count riding inside a tab — "Units 24". Was page-local on form-configs;
+   any tab bar that filters a list wants it. */
+.tab-count {
+    margin-left: var(--sp-1);
+    padding: 1px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--tone-accent-bg);
+    color: var(--tone-accent-fg);
+    font-size: var(--fs-2xs);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ── §4.11  Modals ──────────────────────────────────────────────────────────
+     Base for the 14 pages that each had their own copy. On mobile,
+     app-mobile.css converts this same markup into a bottom sheet — which is
+     why that file loads last. Width is set per use with a `--modal-w`
+     override rather than a new class per page. */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    background: var(--scrim);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-slow) ease;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+/* Lightbox variant — the photo IS the box, on a darker scrim. */
+.modal-overlay.is-lightbox { background: rgba(11,17,32,0.82); padding: var(--sp-5); }
+.lightbox-img {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+}
+/* A closed overlay is still laid out (it only fades), so a modal whose content
+   is wider than a phone extended the page's scrollable width and gave the
+   whole app a horizontal scrollbar. Observed on Lease contracts at 320px,
+   whose modal tab row is ~590px wide. The overlay scrolls its own content
+   instead — which also rescues a modal taller than the viewport. */
+.modal-overlay { overflow: auto; }
+.modal-overlay:not(.open) { visibility: hidden; }
+.modal-overlay.open { visibility: visible; }
+
+.modal-box {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-modal);
+    width: 100%;
+    max-width: var(--modal-w, 560px);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(20px) scale(0.98);
+    transition: transform var(--dur-slow) var(--ease-out);
+}
+.modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
+
+.modal-header {
+    padding: var(--sp-5) var(--sp-6) var(--sp-4);
+    border-bottom: 1px solid var(--card-border);
+    flex-shrink: 0;
+}
+.modal-header-top { display: flex; align-items: center; gap: var(--sp-3); }
+/* Takes the free space so the close button lands on the trailing edge, and
+   min-width:0 lets a long title wrap instead of pushing it out. */
+.modal-header-text { flex: 1; min-width: 0; }
+.modal-header-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--accent-dim);
+    border: 1px solid var(--tone-accent-border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--tone-accent-fg);
+    font-size: var(--fs-md);
+    flex-shrink: 0;
+}
+:root[data-theme="dark"] .modal-header-icon { color: var(--accent); }
+.modal-header-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: var(--lh-tight);
+}
+.modal-header-sub { font-size: var(--fs-sm); color: var(--text-muted); margin-top: 2px; }
+.modal-close-btn {
+    margin-left: auto;
+    width: var(--h-control-sm); height: var(--h-control-sm);
+    border-radius: var(--radius-sm);
+    border: var(--border-control) solid var(--card-border);
+    background: transparent;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    flex-shrink: 0;
+    transition: background var(--dur-fast), color var(--dur-fast);
+}
+.modal-close-btn:hover { background: var(--page-bg); color: var(--text-primary); }
+
+.modal-body { padding: var(--sp-5) var(--sp-6); overflow-y: auto; flex: 1; }
+.modal-footer {
+    padding: var(--sp-4) var(--sp-6);
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+
+/* ── §4.11a  Sign-out confirmation ──────────────────────────────────────────
+     The one dialog the layout owns rather than a page, shared by all three
+     sign-out controls (sidebar footer, More sheet row, mobile dashboard
+     avatar). It exists because window.confirm() cannot show WHICH account is
+     leaving, and its OK/Cancel pair names neither outcome. */
+.signout-identity {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--page-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+}
+.signout-avatar {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: var(--radius-pill);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-dim);
+    color: var(--tone-accent-fg);
+    font-family: var(--font-display);
+    font-weight: 700;
+}
+/* min-width:0 so a long address ellipsises instead of widening the dialog. */
+.signout-identity-text { display: flex; flex-direction: column; min-width: 0; }
+.signout-identity-text strong,
+.signout-identity-text span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.signout-identity-text strong { font-size: var(--fs-md); color: var(--text-primary); }
+.signout-identity-text span { font-size: var(--fs-sm); color: var(--text-muted); margin-top: 1px; }
+
+/* The destructive button needs its own POST form; display:contents keeps it a
+   direct flex child of the footer so it sizes like the button beside it. */
+.signout-actions form { display: contents; }
+
+
+/* ── §4.11b  Document viewer ────────────────────────────────────────────────
+     A PDF preview in an overlay: an invoice, a receipt, an EWA bill, a report.
+     Was five copies under two names (.pdf-modal-box and .pdf-modal) that
+     disagreed on chrome (#1E2433 vs #1E293B), scrim (0.85 vs 0.75) and layer
+     (1050 vs 2000).
+
+     Deliberately dark in both themes, and the one place in the system that does
+     not follow the theme: the thing inside is white paper, and a dark surround
+     is what keeps the document reading as the subject instead of the chrome. */
+.pdf-viewer-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-sheet);
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(3px);
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-4);
+}
+.pdf-viewer-overlay.open { display: flex; }
+.pdf-viewer {
+    width: 90vw;
+    max-width: var(--pdf-viewer-w, 1000px);
+    height: 90vh;
+    background: #1E2433;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.pdf-viewer-header {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3) 18px;
+    background: #151929;
+    border-bottom: 1px solid #2D3650;
+    flex: none;
+}
+.pdf-viewer-title {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    color: #E2E8F0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pdf-viewer-actions { display: flex; gap: var(--sp-2); flex: none; }
+/* Buttons in the dark header need their own treatment — .btn-outline's page-bg
+   hover would be invisible here. */
+.pdf-viewer-actions .btn-outline {
+    background: rgba(255,255,255,0.06);
+    border-color: #2D3650;
+    color: #CBD5E1;
+}
+.pdf-viewer-actions .btn-outline:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.pdf-viewer-frame { flex: 1; width: 100%; border: none; background: #fff; }
+
+@media (max-width: 768px) {
+    /* Full screen on a phone — a 90vw box inside a scrim wastes the only space
+       a document has to be readable in. */
+    .pdf-viewer-overlay { padding: 0; }
+    .pdf-viewer { width: 100vw; max-width: 100%; height: 100vh; border-radius: 0; }
+    .pdf-viewer-header { padding: calc(var(--sp-3) + env(safe-area-inset-top)) var(--sp-4) var(--sp-3); }
+}
+
+/* ── §4.12  Progress bar ────────────────────────────────────────────────────
+     One track/fill pair, replacing .lease-progress-*, .import-progress-bar*
+     and the mobile .pm-*-bar-fill variants. Height and tone are tokens so a
+     lease's elapsed term and an import's completion look like one component. */
+.progress {
+    height: var(--progress-h, 8px);
+    border-radius: var(--radius-pill);
+    background: var(--card-border);
+    overflow: hidden;
+    position: relative;
+}
+.progress-bar {
+    height: 100%;
+    width: 0;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    transition: width 0.4s var(--ease-out);
+}
+.progress.is-sm { --progress-h: 6px; }
+.progress-bar.is-success { background: var(--success); }
+.progress-bar.is-warning { background: var(--warning); }
+.progress-bar.is-danger  { background: var(--danger); }
+
+/* ── §4.12b  Divided figure grid ────────────────────────────────────────────
+     A row of totals separated by hairlines rather than gaps — an invoice's
+     subtotal / VAT / paid / balance. The 1px grid gap showing the border colour
+     through is what draws the rules, so the cells paint the surface. */
+.figure-split {
+    display: grid;
+    grid-template-columns: repeat(var(--figure-cols, 2), 1fr);
+    gap: 1px;
+    background: var(--card-border);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+.figure-split-cell {
+    background: var(--card-bg);
+    padding: 14px 18px;
+    text-align: center;
+    min-width: 0;
+}
+/* Caption above, figure below — the same pairing as .detail-label /
+   .detail-value, at the larger scale a headline total earns. */
+.figure-split-cell > span,
+.figure-split-label {
+    display: block;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin-bottom: var(--sp-1);
+}
+.figure-split-cell > strong,
+.figure-split-value {
+    display: block;
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+.figure-split-cell.is-success > strong { color: var(--tone-success-fg); }
+.figure-split-cell.is-danger  > strong { color: var(--tone-danger-fg); }
+
+/* ── §4.13  Loading states ──────────────────────────────────────────────────
+     There was no shared loading pattern; pages either froze or showed
+     nothing. A skeleton for content that is arriving, a spinner for an
+     action in flight. */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--page-bg) 25%,
+        var(--card-border) 37%,
+        var(--page-bg) 63%
+    );
+    background-size: 400% 100%;
+    animation: skeleton-sweep 1.4s ease infinite;
+    border-radius: var(--radius-sm);
+    min-height: 1em;
+}
+@keyframes skeleton-sweep {
+    0%   { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+}
+.skeleton-text { height: 0.8em; margin: 0.35em 0; }
+.skeleton-text.is-short { width: 40%; }
+
+.spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid var(--card-border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spinner-turn 0.65s linear infinite;
+    vertical-align: -3px;
+}
+@keyframes spinner-turn { to { transform: rotate(360deg); } }
+
+/* A button that is submitting: swap its icon for a spinner, keep its width. */
+.btn.is-loading { pointer-events: none; opacity: 0.75; }
+.btn.is-loading > i { display: none; }
+.btn.is-loading::before {
+    content: '';
+    width: 14px; height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spinner-turn 0.65s linear infinite;
+}
+
+
+/* ── §4.14  Figure panels ───────────────────────────────────────────────────
+     Three small components that a detail dashboard is built from, and that
+     three pages had drawn by hand (buildings/show, property-units/show, the
+     portfolio dashboard): a ring, a breakdown meter, and an identity block.
+
+     Why the ring is SVG and not a canvas: a canvas cannot read a CSS custom
+     property, so every colour in it has to be resolved in JavaScript and
+     repainted by hand on a theme toggle — that is what the four Chart.js
+     donuts on buildings/show were doing, and the centre label had to be
+     drawn with ctx.fillText in a font the page could not restyle. As SVG
+     with an HTML overlay the ring costs no JavaScript at all: it re-themes,
+     re-types and reflows with everything else, and its centre figure is real
+     selectable text a screen reader reads.
+
+     Markup:
+       .ring > svg.ring-svg > circle.ring-track + circle.ring-arc
+             + .ring-centre > .ring-figure + .ring-caption
+     The arc's length is set with stroke-dasharray on the element, since it
+     is data. Everything else is here.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.ring { position: relative; width: 128px; height: 128px; margin: 0 auto; }
+.ring-svg { display: block; width: 128px; height: 128px; }
+.ring-track { fill: none; stroke: var(--page-bg); stroke-width: 13; }
+.ring-arc {
+    fill: none;
+    stroke-width: 13;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dasharray var(--dur-slow) var(--ease-out);
+}
+/* A second arc behind the first, for a two-part reading (active vs active +
+   expiring). Butt-capped so the round cap of the arc in front is the only
+   one that shows. */
+.ring-arc.is-behind { stroke-linecap: butt; }
+.ring-arc.is-success { stroke: var(--tone-success-fg); }
+.ring-arc.is-accent  { stroke: var(--accent-strong); }
+.ring-arc.is-danger  { stroke: var(--tone-danger-fg); }
+.ring-centre {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    text-align: center;
+}
+.ring-figure {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text-primary);
+}
+.ring-figure.is-success { color: var(--tone-success-fg); }
+.ring-figure.is-danger  { color: var(--tone-danger-fg); }
+.ring-caption {
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+@media (prefers-reduced-motion: reduce) { .ring-arc { transition: none; } }
+
+/* The key beneath a ring. A ring with no key is decoration. */
+.ring-key { margin-top: var(--sp-3); display: flex; flex-direction: column; }
+.ring-key-row { display: flex; align-items: center; gap: var(--sp-2); padding: 5px 0; font-size: 11.5px; }
+.ring-key-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.ring-key-dot.is-success { background: var(--tone-success-fg); }
+.ring-key-dot.is-accent  { background: var(--accent-strong); }
+.ring-key-dot.is-danger  { background: var(--tone-danger-fg); }
+.ring-key-dot.is-faint   { background: var(--text-faint); }
+.ring-key-label { flex: 1; min-width: 0; color: var(--text-secondary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ring-key-val { font-family: var(--font-data); font-variant-numeric: tabular-nums; font-weight: 600; }
+.ring-key-pct { width: 38px; text-align: right; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/* ── The breakdown meter ────────────────────────────────────────────────────
+     A share-of-total list: category, amount, and a bar the width of its
+     share. Preferred over a second ring when the categories are ranked and
+     the reader wants the amounts — a four-slice donut makes them guess. */
+.meter-list { display: flex; flex-direction: column; gap: 13px; }
+.meter-row { min-width: 0; }
+.meter-head { display: flex; align-items: baseline; gap: var(--sp-2); font-size: 11.5px; margin-bottom: 5px; }
+.meter-label { flex: 1; min-width: 0; color: var(--text-secondary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meter-val { font-family: var(--font-data); font-variant-numeric: tabular-nums; font-weight: 600; }
+.meter-track { height: 7px; border-radius: var(--radius-pill); background: var(--page-bg); overflow: hidden; }
+.meter-fill { height: 100%; border-radius: var(--radius-pill); background: var(--accent-gradient); }
+.meter-fill.is-success { background: var(--tone-success-fg); }
+.meter-fill.is-danger  { background: var(--tone-danger-fg); }
+
+/* ── The identity block ─────────────────────────────────────────────────────
+     What a detail page opens with: a large mark, the record's location and
+     codes, and the one figure that says how it is doing. Sits above the tab
+     bar, so it stays on screen whichever tab is open. */
+.ident {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-5);
+    padding: var(--sp-5) var(--sp-6);
+}
+.ident-mark {
+    width: 84px; height: 84px;
+    border-radius: var(--radius);
+    background: var(--page-bg);
+    color: var(--text-secondary);
+    font-size: 30px;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+    overflow: hidden;
+}
+.ident-mark img { width: 100%; height: 100%; object-fit: cover; }
+.ident-body { flex: 1; min-width: 0; }
+.ident-place {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 13.5px; font-weight: 600;
+    margin-bottom: 9px;
+}
+.ident-place > i { color: var(--text-secondary); font-size: 13px; }
+.ident-meta {
+    display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-3);
+    font-size: 12px; color: var(--text-secondary);
+}
+.ident-meta-item { display: inline-flex; align-items: center; gap: 6px; }
+.ident-meta-sep { color: var(--text-faint); }
+.ident-figure { text-align: right; flex: none; }
+.ident-figure-val {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: 30px; font-weight: 700; line-height: 1.1;
+}
+.ident-figure-val.is-success { color: var(--tone-success-fg); }
+.ident-figure-cap {
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-muted);
+}
+/* The same figure standing in the page header, where it sits beside a 24px
+   title and must not out-shout it. */
+.ident-figure.is-sm .ident-figure-val { font-size: 22px; }
+.ident-figure.is-sm .ident-figure-cap { font-size: 9.5px; letter-spacing: 0.18em; }
+@media (max-width: 600px) {
+    .ident { flex-wrap: wrap; gap: var(--sp-4); }
+    .ident-mark { width: 60px; height: 60px; font-size: 22px; }
+    .ident-figure { text-align: left; }
+}
+
+/* ── The days-left tile ─────────────────────────────────────────────────────
+     A count of days standing in for an icon, in a list of things that expire.
+     Tone carries urgency, so it is never the only signal — the row states the
+     date in words beside it. */
+.daytile {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: 11px; font-weight: 600;
+    background: var(--tone-accent-bg);
+    color: var(--tone-accent-fg);
+}
+.daytile.is-urgent { background: var(--tone-danger-bg); color: var(--tone-danger-fg); }
+
+/* A card whose subject is money or performance, marked with a gold rule
+   across its top edge. Used sparingly — one per screen. */
+.card.has-accent-rule { border-top: 3px solid var(--accent); }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §5  RESPONSIVE
+   ───────────────────────────────────────────────────────────────────────────
+   Breakpoints:  ≤1200 laptop · ≤900 tablet · ≤768 mobile · ≤430 small phone
+   Mobile is a reorganisation, not a narrower desktop.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Laptop ─────────────────────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+    :root { --sidebar-width: 232px; }
+    .page-content { padding: var(--sp-6); }
+}
+
+/* ── Tablet — sidebar still docked, content relaxes ─────────────────────── */
+@media (max-width: 900px) {
+    .page-content { padding: var(--sp-5); }
+    .stats-grid,
+    .stats-grid.is-5,
+    .stats-grid.is-triple,
+    .stats-grid.is-double { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--sp-3); }
+    /* Cards step down one density level and grids relax to two across. */
+    .card-body { padding: var(--card-pad); }
+    .card.is-roomy > .card-body { padding: var(--card-pad); }
+    .card.is-hero { padding: var(--sp-5) var(--card-pad-x); }
+    .card-grid, .card-grid.is-2 { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+    .card-grid.is-3, .card-grid.is-4 { grid-template-columns: repeat(2, 1fr); }
+    .form-grid.cols-3, .form-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+    .filter-bar { padding: var(--sp-3) var(--sp-4); }
+    /* Two filters per row rather than a ragged wrap. */
+    .filter-group { min-width: calc(50% - var(--sp-2)); }
+    .filter-group.is-search { min-width: 100%; }
+    .filter-actions { margin-left: 0; width: 100%; }
+}
+
+/* ── Mobile ─────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    /* Sidebar becomes a drawer. */
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main-wrap { margin-left: 0; }
+
+    .page-content { padding: var(--sp-4); }
+    .page-header { margin-bottom: var(--sp-5); }
+    .page-header-title { font-size: var(--fs-xl); }
+    /* Page actions become a full-width row of equal buttons — reachable,
+       and no button silently changes size because its label is longer. */
+    .page-header-actions { width: 100%; }
+    .page-header-actions > .btn { flex: 1; min-height: var(--h-control-lg); }
+
+    /* Touch targets: 44px minimum on anything tappable (WCAG 2.2 AA 2.5.8). */
+    .btn, .page-btn, .topbar-icon-btn, .tab-btn { min-height: var(--h-control-lg); }
+    .btn-sm { min-height: 40px; }
+    .btn-icon { width: var(--h-control-lg); }
+    .page-btn { min-width: var(--h-control-lg); }
+    input, select, textarea, .form-control { min-height: var(--h-control-lg); }
+
+    /* Forms go single-column; a two-column span has nothing to span. */
+    .form-grid { grid-template-columns: 1fr; gap: var(--sp-4); }
+    .form-group.col-span-2 { grid-column: span 1; }
+    .form-grid.cols-1, .form-grid.cols-2,
+    .form-grid.cols-3, .form-grid.cols-4 { grid-template-columns: 1fr; }
+    .form-actions { padding: var(--sp-4); }
+    .form-actions > .btn { flex: 1; }
+
+    /* Stats: two across, so the numbers stay legible without a long scroll. */
+    .stats-grid,
+    .stats-grid.is-5,
+    .stats-grid.is-triple,
+    .stats-grid.is-double { grid-template-columns: 1fr 1fr; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+    .stat-card { padding: var(--sp-3); gap: 10px; flex-direction: column; align-items: flex-start; }
+    .stat-icon { width: 32px; height: 32px; font-size: 14px; }
+    .stat-val { font-size: var(--fs-xl); }
+    .stat-lbl { font-size: var(--fs-xs); }
+
+    /* Filters stack full-width and stay easy to hit. */
+    .filter-bar { flex-direction: column; align-items: stretch; gap: 10px; }
+    .filter-group,
+    .filter-group.is-search { min-width: 0; width: 100%; }
+    .filter-group input, .filter-group select { min-height: var(--h-control-lg); font-size: var(--fs-base); }
+    .filter-actions { width: 100%; }
+    .filter-actions > .btn, .filter-actions > .btn-sm { flex: 1; }
+
+    /* ── §4.6.3  Table → stacked cards ──────────────────────────────────────
+         Each row becomes its own card; each cell shows the column name from
+         `data-label` beside its value. Important information stays visible
+         and actions stay reachable, instead of a 9-column table shrinking to
+         4px of text or scrolling sideways.
+
+         Opt out with `.table-wrap.is-scroll` where comparing across columns
+         is the actual task (ageing buckets, rent schedule, VAT return). */
+    .table-wrap:not(.is-scroll) table,
+    .table-wrap:not(.is-scroll) tbody,
+    .table-wrap:not(.is-scroll) tr,
+    .table-wrap:not(.is-scroll) td {
+        display: block;
+        width: auto;
+    }
+    .table-wrap:not(.is-scroll) thead { display: none; }
+
+    .table-wrap:not(.is-scroll) tbody tr {
+        position: relative;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius);
+        padding: var(--sp-3) 14px;
+        margin: 0 0 10px;
+        box-shadow: var(--shadow-sm);
+    }
+    .table-wrap:not(.is-scroll) tbody tr:last-child { margin-bottom: 0; }
+
+    .table-wrap:not(.is-scroll) tbody td {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--sp-4);
+        padding: 5px 0;
+        border: none;
+        text-align: right;
+        font-size: 13px;
+        min-height: 0;
+    }
+    .table-wrap:not(.is-scroll) tbody td::before {
+        content: attr(data-label);
+        flex: none;
+        max-width: 45%;
+        text-align: left;
+        font-size: var(--fs-xs);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+    }
+    /* A cell with no data-label (spacers, checkboxes) keeps full width. */
+    .table-wrap:not(.is-scroll) tbody td:not([data-label])::before { content: none; }
+    .table-wrap:not(.is-scroll) tbody tr:hover td { background: transparent; }
+
+    /* The row's first cell is its heading: full width, larger, no label. */
+    .table-wrap:not(.is-scroll) tbody td:first-child {
+        display: block;
+        text-align: left;
+        font-size: 14px;
+        font-weight: 700;
+        padding-bottom: var(--sp-2);
+        margin-bottom: 6px;
+        border-bottom: 1px solid var(--row-border);
+    }
+    .table-wrap:not(.is-scroll) tbody td:first-child::before { content: none; }
+
+    /* Actions move to a full-width row at the card's foot. */
+    .table-wrap:not(.is-scroll) tbody td.col-actions {
+        display: flex;
+        width: auto;
+        justify-content: stretch;
+        padding-top: 10px;
+        margin-top: var(--sp-2);
+        border-top: 1px solid var(--row-border);
+    }
+    .table-wrap:not(.is-scroll) tbody td.col-actions::before { content: none; }
+    .table-wrap:not(.is-scroll) tbody td.col-actions .action-btns { flex: 1; }
+    .table-wrap:not(.is-scroll) tbody td.col-actions .action-btns > * { flex: 1; }
+
+    /* Totals row stays a single band, not a card. */
+    .table-wrap:not(.is-scroll) tbody tr.total-row {
+        background: var(--page-bg-alt);
+        box-shadow: none;
+    }
+
+    /* Where scrolling is the right answer, say so: the table gets a real
+       minimum width and its own scroll container, hinted with a shadow. */
+    .table-wrap.is-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        background:
+            linear-gradient(to right, var(--card-bg) 30%, rgba(0,0,0,0)) left center / 40px 100% no-repeat,
+            linear-gradient(to left,  var(--card-bg) 30%, rgba(0,0,0,0)) right center / 40px 100% no-repeat;
+    }
+    /* Per-table minimum, so a 7-column collection report and a 3-column
+       summary don't get the same arbitrary width. Set with
+       style="--table-min:920px" on the wrapper; 640px otherwise. */
+    .table-wrap.is-scroll table { min-width: var(--table-min, 640px); }
+
+    /* Footer: count above, pager below, both centred. */
+    .table-footer { flex-direction: column; align-items: stretch; gap: 10px; padding: var(--sp-3) 14px; }
+    .table-footer .result-count { text-align: center; }
+    .table-footer .pagination { justify-content: center; }
+
+    /* Modal / card chrome. */
+    .modal-header { padding: var(--sp-4) 18px var(--sp-3); }
+    .modal-body   { padding: var(--sp-4) 18px; }
+    .modal-footer { padding: var(--sp-3) 18px calc(var(--sp-3) + env(safe-area-inset-bottom)); }
+    .modal-footer > .btn { flex: 1; }
+
+    /* ── Cards on mobile ────────────────────────────────────────────────────
+         Every grid becomes a single column, cards take the compact padding,
+         and the header reflows: icon and title stay on the first line, actions
+         drop to a full-width row beneath so a long title never squeezes a
+         button down to an unreadable sliver. */
+    .card-grid, .card-grid.is-2, .card-grid.is-pair,
+    .card-grid.is-3, .card-grid.is-4 { grid-template-columns: 1fr; gap: var(--sp-3); }
+
+    .card { --card-pad: var(--card-pad-sm); --card-pad-x: var(--card-pad-x-sm); }
+    .card-header { padding: var(--card-pad-sm); gap: 10px; }
+    .card-body,
+    .card > .card-body:only-child,
+    .card.is-roomy > .card-body { padding: var(--card-pad-sm); }
+    .card.is-hero { padding: var(--sp-5) var(--card-pad-x-sm); }
+    .card-footer { padding: var(--sp-3) var(--card-pad-x-sm); }
+    .card-footer > .btn { flex: 1; }
+
+    .card-header-actions { margin-left: 0; width: 100%; }
+    /* Full width and full touch height: a .btn-sm sized for a desktop card
+       header is a 32px target once it is the only action on a phone row. */
+    .card-header-actions > .btn { flex: 1; min-height: var(--h-control-lg); }
+    /* A header with only an icon button (a close, a menu) keeps it inline
+       rather than stretching it across the card. */
+    .card-header-actions:has(> .btn-icon:only-child),
+    .card-header-actions:has(> .topbar-icon-btn:only-child) { width: auto; margin-left: auto; }
+
+    .card.is-hero .card-title { font-size: var(--fs-lg); }
+    .card-title { font-size: 14px; }
+    /* Truncation is a desktop-grid concern; on one column let the title wrap. */
+    .card-title.is-truncate { white-space: normal; overflow: visible; }
+
+    .empty-state  { padding: var(--sp-10) 18px; }
+    .tab-btn      { padding: 11px var(--sp-4); }
+
+    /* ── Divided figure grid ────────────────────────────────────────────────
+         Three or four cells across a phone clip their own figures — a balance
+         of 500.000 renders as "500.0". Two across, at the figure size that
+         still fits three digits and three decimals at 360px. */
+    .figure-split { grid-template-columns: repeat(2, 1fr); }
+    .figure-split-cell { padding: var(--sp-3) var(--sp-3); }
+    .figure-split-cell > strong,
+    .figure-split-value { font-size: 19px; }
+}
+
+/* ── Small phone ────────────────────────────────────────────────────────── */
+@media (max-width: 430px) {
+    .stats-grid,
+    .stats-grid.is-5,
+    .stats-grid.is-triple,
+    .stats-grid.is-double { grid-template-columns: 1fr 1fr; }
+    /* Below this width a two-across figure starts truncating, so stat cards
+       go full width and lay the icon beside the figure again. */
+    .stat-card { flex-direction: row; align-items: center; }
+    .stat-card.is-figure { flex-direction: column; align-items: flex-start; }
+    .page-header-actions { flex-direction: column; }
+    .page-header-actions > .btn { width: 100%; }
+    .table-wrap.is-scroll table { min-width: 560px; }
+}
+
+/* ── Print — reports and statements get printed from the browser too ────── */
+@media print {
+    .sidebar, .topbar, .ps-bottom-bar, .page-header-actions,
+    .filter-bar, .table-footer, .sidebar-backdrop, .skip-link,
+    .shell-sidebar, .shell-topbar,
+    .shell-pagehead-actions, .palette { display: none; }
+    .main-wrap { margin-left: 0; }
+    .page-content { padding: 0; }
+    /* The shell frames the screen with a fixed height; on paper the content
+       has to be allowed to run over as many pages as it needs. */
+    body.app-shell { height: auto; overflow: visible; display: block; padding: 0; }
+    .shell-frame { display: block; border-radius: 0; overflow: visible; }
+    .shell-content { padding: 0; overflow: visible; }
+    .card, .table-card, .stat-card { box-shadow: none; border-color: #CBD5E1; }
+    thead th { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §6  LEGACY ALIASES
+   ───────────────────────────────────────────────────────────────────────────
+   Old class names, mapped onto the canonical components above so the
+   duplicated per-page CSS could be deleted without touching every page's
+   markup in the same change. Each entry is a rename, never a second
+   implementation.
+
+   These are scheduled for removal: migrate markup to the canonical class,
+   then delete the alias. Do not add new ones.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Stat card, formerly nine components. */
+.dash-stats, .ewa-stats, .exp-stats, .inv-stats,
+.pay-stats, .rev-stats, .pl-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--sp-4);
+    margin-bottom: var(--sp-6);
+}
+.dash-stat, .ewa-stat, .exp-stat, .inv-stat,
+.pay-stat, .rev-stat, .pl-stat, .bldg-stat {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: var(--card-pad);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--shadow-sm);
+    min-width: 0;
+}
+.dash-stat-icon, .ewa-stat-icon, .exp-stat-icon,
+.inv-stat-icon, .pay-stat-icon, .rev-stat-icon {
+    width: 44px; height: 44px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    background: var(--tone-neutral-bg);
+    color: var(--tone-neutral-fg);
+}
+.dash-stat-val, .ewa-stat-val, .exp-stat-val,
+.inv-stat-val, .pay-stat-val, .rev-stat-val {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--fs-2xl);
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+}
+.dash-stat-lbl, .ewa-stat-lbl, .exp-stat-lbl,
+.inv-stat-lbl, .pay-stat-lbl, .rev-stat-lbl {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+/* Tone modifiers on the aliased icons. */
+.dash-stat-icon.gold,  .ewa-stat-icon.gold,  .exp-stat-icon.gold,
+.inv-stat-icon.gold,   .pay-stat-icon.gold,  .rev-stat-icon.gold   { background: var(--tone-accent-bg);  color: var(--tone-accent-fg); }
+.dash-stat-icon.green, .ewa-stat-icon.green, .exp-stat-icon.green,
+.inv-stat-icon.green,  .pay-stat-icon.green, .rev-stat-icon.green,
+.pay-stat-icon.teal,   .inv-stat-icon.teal,  .rev-stat-icon.teal   { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.dash-stat-icon.blue,  .ewa-stat-icon.blue,  .exp-stat-icon.blue,
+.inv-stat-icon.blue,   .pay-stat-icon.blue,  .rev-stat-icon.blue   { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.dash-stat-icon.red,   .ewa-stat-icon.red,   .exp-stat-icon.red,
+.inv-stat-icon.red,    .pay-stat-icon.red,   .rev-stat-icon.red    { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+.dash-stat-icon.amber, .ewa-stat-icon.amber, .exp-stat-icon.amber,
+.inv-stat-icon.amber,  .pay-stat-icon.amber, .rev-stat-icon.amber  { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.dash-stat-icon.gray,  .ewa-stat-icon.gray,  .exp-stat-icon.gray,
+.inv-stat-icon.gray,   .pay-stat-icon.gray,  .rev-stat-icon.gray   { background: var(--tone-neutral-bg); color: var(--tone-neutral-fg); }
+
+/* Empty states. */
+.report-empty, .tp-empty {
+    text-align: center;
+    padding: var(--sp-12) var(--sp-5);
+    color: var(--text-muted);
+}
+.report-empty i, .tp-empty i {
+    font-size: 36px;
+    display: block;
+    margin-bottom: var(--sp-3);
+    opacity: 0.3;
+}
+
+/* Numeric cells. */
+.right, td.right, th.right { text-align: right; }
+.amount-col, .money-col {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.amount-col { font-weight: 700; font-size: 13px; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §7  DESKTOP SHELL — sidebar, top bar, page header
+   ───────────────────────────────────────────────────────────────────────────
+   Implements DASHBOARD-SPEC.md §1 and §2, which supersede DESKTOP-UI.md §4
+   and §5A. There is no icon rail: one 228px navy sidebar, one 80px top bar,
+   and the page header sits inside the content column rather than in a fixed
+   bar of its own.
+
+   The whole frame is inset in an 8px navy margin with a 12px radius on the
+   content area (§1, "page gutter"), which is why <body> carries the navy and
+   the sidebar has no border — the gutter is the separation.
+
+   The shell exists only ≥769px. Below that the mobile app layer owns the
+   screen, so every shell region is display:none there and the legacy
+   .sidebar drawer / .topbar / .bottom-tabbar — which app-mobile.css styles —
+   take over. Those are the reverse: hidden ≥769px, live below it. That is
+   why this section has two media queries and no !important; the cascade
+   (app-core → @stack('styles') → app-mobile) does the rest.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+    /* Shell geometry — DASHBOARD-SPEC.md §1, final. */
+    --shell-sidebar-w:  236px;
+    --shell-topbar-h:   60px;
+    /* No gutter: the sidebar runs to the screen edge and the 1px topbar rule
+       is the only separation the frame needs. The inset navy border the shell
+       used to draw put a second frame inside the browser's own. */
+    --shell-gutter:     0px;
+
+    /* The navy is the same value in both themes: it is the product's frame,
+       not a surface that follows the theme (§7). */
+    --shell-navy:       #1E2C4F;
+    --shell-navy-deep:  #0B132B;   /* the help card, one step below the rail */
+    --shell-gold:       #D8B25F;
+    --shell-gold-lit:   #EDCD85;   /* gold on navy — 11:1, the active nav ink */
+    --shell-on-gold:    #1E2C4F;
+
+    /* 4.9:1 on the navy — an inactive nav item is still text people read. */
+    --shell-nav-ink:        #C6CDDA;
+    --shell-nav-ink-active: var(--shell-gold-lit);
+    --shell-gold-soft:      #EDCD85;   /* the light stop of the gold gradient */
+    --shell-nav-fill:       rgba(216,178,95,0.16);
+    --shell-nav-hover:      rgba(255,255,255,0.07);
+    --shell-nav-group:      #CAA14F;
+    --shell-nav-meta:       #97A1B4;
+    --shell-nav-card:       var(--shell-navy-deep);
+}
+
+body.app-shell {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    padding: var(--shell-gutter);
+    background: var(--shell-navy);
+}
+
+/* ── §7.1  Sidebar, 228px ───────────────────────────────────────────────── */
+.shell-sidebar {
+    width: var(--shell-sidebar-w);
+    flex: none;
+    background: var(--shell-navy);
+    /* An inherited colour, not the body's: --text-primary IS the navy, so
+       anything dropped in here without its own colour would be invisible. */
+    color: var(--shell-nav-ink);
+    display: flex;
+    flex-direction: column;
+}
+.shell-brand {
+    display: flex;
+    align-items: center;
+    /* 9px rather than 11px: the name fits the 149px column at 12.5px with
+       nothing to spare, and font metrics vary enough between platforms that
+       zero slack means an ellipsis on somebody's machine. Two pixels here are
+       worth more than two pixels of gap. */
+    gap: 9px;
+    padding: var(--sp-5) var(--sp-5) 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    text-decoration: none;
+}
+/* A filled gold tile, not gold type on navy: the mark is the one object in
+   the rail that is meant to be looked at rather than read. */
+.shell-brand-mark {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--shell-gold-soft), #D0A854);
+    color: var(--shell-on-gold);
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+    overflow: hidden;
+    animation: shell-brand-mark-in var(--dur-slow) var(--ease-spring);
+    transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+/* A tenant's own logo is its own object — it does not want a gold tile
+   painted behind it. The gradient is the fallback mark's treatment only. */
+.shell-brand-mark img { width: 100%; height: 100%; object-fit: contain; border-radius: inherit; }
+.shell-brand-mark:has(img) { background: none; }
+.shell-brand:hover .shell-brand-mark { transform: scale(1.08) rotate(-2deg); box-shadow: 0 0 0 4px var(--accent-glow); }
+@keyframes shell-brand-mark-in {
+    from { opacity: 0; transform: scale(.55) rotate(-10deg); }
+    to   { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+/* Name over tagline, not name beside tagline. The lockup sits in whatever is
+   left of a 228px sidebar after the 52px mark and the gutters — 116px — and
+   the two lines were sharing it: the name took 102px and the tagline was left
+   with 6px of the 139px it needs, so "Management Suite" rendered as "M…".
+   Stacked, each line gets the full 116px. Both still ellipsize, because the
+   name and tagline are tenant-configurable and a long one must degrade
+   rather than widen the sidebar. */
+.shell-brand-text {
+    /* flex:1 so the column claims everything the fixed-size mark leaves, and
+       min-width:0 so it is allowed to be narrower than its longest word —
+       without it a flex item refuses to shrink and the ellipsis appears even
+       when there is room to wrap. */
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+/* One line, and it fits. It used to render "Promoseven Holdi…" for two
+   compounding reasons: the text column was not claiming the width the mark
+   left it (fixed on .shell-brand-text above), and 0.06em of tracking was
+   adding ~15px across nineteen characters — enough on its own to overflow the
+   149px available. The tracking is the part that had to give: at 0.06em the
+   default name needs ~154px, at 0.01em it needs ~140px.
+
+   The ellipsis stays as the fallback, because the site name is editable under
+   Settings → Branding and a long one has to degrade somehow.
+
+   Measured, not guessed. The budget is 149px: a 236px sidebar, less 40px of
+   gutter, less the 36px mark, less the 11px gap. "Promoseven Holdings" in
+   Poppins 600 needs 154px at 13px/0.01em — so the size comes down one step to
+   12.5px (a value already in the scale, used by .tab-btn) and the tracking goes
+   to normal, which lands it at ~146px with 3px of slack. */
+.shell-brand-name {
+    font-family: var(--font-display);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: normal;
+    line-height: 1.3;
+    color: #FFFFFF;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* 10px at 0.05em, down from 10.5px at 0.12em. Measured, not guessed: the
+   default tagline needs 129.5px at the old setting and the column is 112.8px.
+   This lands it at 108px — about 4px of slack, the most the sidebar's 52px
+   mark and --sp-6 gutters leave without shrinking the brand itself. Tighter
+   tracking than the .shell-nav-group eyebrows on purpose; those get the full
+   180px and can afford 0.14em. */
+.shell-brand-sub {
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    line-height: 1.4;
+    text-transform: uppercase;
+    color: var(--shell-nav-meta);
+    /* Stays one line: it is a fixed short label, and a wrapped
+       "REAL ESTATE / DIVISION" reads as two separate things. */
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* min-height:0 lets the nav actually shrink and scroll inside the sidebar's
+   flex column; without it the last item sat clipped behind the help card at
+   900px viewport height. */
+.shell-nav { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 0; }
+.shell-nav-group {
+    padding: 4px 22px 8px;
+    font-family: var(--font-body);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--shell-nav-group);
+}
+.shell-nav-group + .shell-nav-group,
+.shell-navitem + .shell-nav-group,
+.shell-navgroup + .shell-nav-group { padding-top: var(--sp-4); }
+/* A pill, not a rail. The 3px gold bar flush to the sidebar edge dated from
+   a shell that had a gutter around it; without one it reads as a crack in
+   the frame. A filled pill inset from both edges belongs to the item. */
+.shell-navitem {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 1px 10px;
+    padding: 9px 12px;
+    border-radius: 9px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--shell-nav-ink);
+    text-decoration: none;
+    transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.shell-navitem > i { width: 17px; font-size: 15px; text-align: center; flex: none; }
+.shell-navitem-label { flex: 1; min-width: 0; }
+.shell-navitem-count {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: var(--radius-pill);
+    background: rgba(216,178,95,0.25);
+    color: var(--shell-gold-lit);
+    font-variant-numeric: tabular-nums;
+    flex: none;
+}
+.shell-navitem:hover { background: var(--shell-nav-hover); color: #FFFFFF; }
+.shell-navitem.is-active {
+    background: var(--shell-nav-fill);
+    color: var(--shell-nav-ink-active);
+    font-weight: 600;
+}
+/* A destination this build does not have yet. Visibly disabled with a
+   "Soon" chip rather than a fake URL — the design keeps the row, the user
+   learns it is coming, and navigation is never broken. */
+.shell-navitem.is-disabled,
+.shell-subitem.is-disabled {
+    opacity: 0.45;
+    cursor: default;
+    pointer-events: none;
+}
+.shell-soon {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: var(--radius-pill);
+    background: rgba(255,255,255,0.10);
+    color: var(--shell-nav-meta);
+    flex: none;
+}
+
+/* ── A nav item that opens in place ─────────────────────────────────────────
+     One row for a group of pages that are one piece of work to the user
+     (Bills & Payments; Settings). <details>/<summary> so it works without
+     JavaScript and keeps its own state. */
+.shell-navgroup > summary { list-style: none; cursor: pointer; }
+.shell-navgroup > summary::-webkit-details-marker { display: none; }
+.shell-navitem-caret {
+    font-size: 9px;
+    color: var(--shell-nav-meta);
+    transition: transform var(--dur-fast) ease;
+    flex: none;
+}
+.shell-navgroup[open] > summary .shell-navitem-caret { transform: rotate(180deg); }
+/* An open group is not a selected page — white, so the gold stays the
+   answer to "where am I". */
+.shell-navgroup[open] > summary,
+.shell-navitem.is-open { color: #FFFFFF; }
+
+.shell-subnav { display: flex; flex-direction: column; padding: 2px 0 6px; }
+.shell-subitem {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 1px 10px;
+    /* Aligned under the parent's label, not its icon: 12px item padding +
+       17px icon column + 12px gap. */
+    padding: 7px 12px 7px 41px;
+    border-radius: 9px;
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    font-weight: 400;
+    color: var(--shell-nav-meta);
+    text-decoration: none;
+    transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.shell-subitem:hover { background: var(--shell-nav-hover); color: #FFFFFF; }
+.shell-subitem.is-active {
+    background: var(--shell-nav-fill);
+    color: var(--shell-nav-ink-active);
+    font-weight: 600;
+}
+
+.shell-help {
+    margin: 14px;
+    padding: 13px 14px;
+    border-radius: var(--radius);
+    background: var(--shell-nav-card);
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    text-decoration: none;
+}
+.shell-help:hover { background: #101B36; }
+.shell-help-icon {
+    width: 30px; height: 30px;
+    border-radius: var(--radius-sm);
+    background: rgba(216,178,95,0.16);
+    color: var(--shell-gold-lit);
+    font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+}
+.shell-help-title { display: block; font-size: 11.5px; font-weight: 600; color: #FFFFFF; margin-bottom: 2px; }
+.shell-help-sub { display: block; font-size: 10.5px; line-height: 1.5; color: var(--shell-nav-meta); }
+
+/* ── §7.2  The content frame: top bar + scrolling column ────────────────── */
+.shell-frame {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--page-canvas);
+    overflow: hidden;
+}
+
+.shell-topbar {
+    height: var(--shell-topbar-h);
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+    padding: 0 26px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--card-border);
+}
+/* A hairline between the notification cluster and the account block, so the
+   two read as two things rather than one run of five controls. */
+.shell-divider { width: 1px; height: 24px; flex: none; background: var(--card-border); }
+.shell-hamburger {
+    border: 0;
+    background: none;
+    padding: 0;
+    width: 32px; height: 32px;
+    font-size: 18px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.shell-hamburger:hover { color: var(--text-primary); }
+.shell-topbar-spacer { flex: 1; }
+
+/* Leading, not trailing: search is the bar's primary affordance, so it takes
+   the left edge and grows to a 420px cap rather than sitting in the cluster
+   of icon buttons on the right. */
+.shell-search {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 420px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 13px;
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    background: var(--page-bg-alt);
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    text-align: left;
+    cursor: pointer;
+}
+.shell-search:hover { border-color: var(--input-border); }
+.shell-search > i { font-size: 13px; }
+.shell-search-label { flex: 1; }
+.shell-kbd {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 5px;
+    padding: 1px 5px;
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    flex: none;
+}
+
+.shell-iconbtn {
+    position: relative;
+    border: 0;
+    background: none;
+    padding: 0;
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    font-size: 17px;
+    color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex: none;
+    transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.shell-iconbtn:hover { background: var(--page-bg); color: var(--text-primary); }
+/* Red, not gold: an unread count is an alert, and gold is this app's
+   "primary action" colour everywhere else. */
+.shell-badge {
+    position: absolute;
+    top: 5px; right: 5px;
+    min-width: 14px; height: 14px;
+    padding: 0 3px;
+    border-radius: var(--radius-pill);
+    background: var(--danger);
+    color: var(--ink-on-fill);
+    font-family: var(--font-data);
+    font-size: 8.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.shell-user {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    border: 0;
+    background: none;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+}
+.shell-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    color: var(--on-accent);
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+}
+.shell-user-name { font-size: 12px; font-weight: 600; line-height: 1.2; color: var(--text-primary); }
+.shell-user-role { font-size: 10px; color: var(--text-muted); }
+.shell-user > .fa-chevron-down { font-size: 11px; color: var(--text-muted); }
+
+.shell-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 24px 26px 34px;
+}
+
+/* ── §7.5  One vertical rhythm for every page ───────────────────────────────
+     The content column spaces its own children, so a page never sets a
+     section margin. This is what makes the KPI row start at the same y on
+     every page that has one: the header is one component of one height, and
+     the gap below it is one token.
+
+     Scoped ≥769px because the mobile app layer (.m-screen / .pm-*) draws its
+     own spacing and must not be touched. */
+@media (min-width: 769px) {
+    .shell-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--section-gap);
+        align-items: stretch;
+    }
+    /* Sections used to carry their own bottom margin; with a gap that would
+       double up. Zeroed here rather than in each page. */
+    .shell-content > .page-header,
+    .shell-content > .stats-grid,
+    .shell-content > .filter-card,
+    .shell-content > .table-card,
+    .shell-content > .alert,
+    .shell-content > .card-grid,
+    .shell-content > .section-stack,
+    .shell-content > .shell-pagehead { margin-bottom: 0; }
+
+    /* A page's own wrapper div gets the same rhythm, so nesting one level
+       deep — which several pages do — behaves identically. */
+    .shell-content > .section-stack { gap: var(--section-gap); }
+
+    /* The column scrolls; its sections keep their natural height.
+       Without this, flex-shrink:1 (the default) lets a section taller than
+       the remaining space be SQUASHED rather than overflow — and because
+       .table-card clips to its radius with overflow:hidden, the squash is
+       silent: the rows are in the DOM, laid out, and invisible, with the
+       scroll container reporting no overflow to scroll. A 15-row table
+       rendered as 4 rows and no scrollbar is the symptom.
+
+       Excludes .is-flush, where a pane filling the height is the whole point
+       (archetype B master-detail, archetype D bulk grids own their scroll). */
+    .shell-content:not(.is-flush) > * { flex: 0 0 auto; }
+}
+/* Archetype B master-detail and D bulk grids own their own scroll. */
+.shell-content.is-flush { padding: 0; overflow: hidden; display: flex; }
+
+/* ── §7.3  Page header — §2, inside the content column ──────────────────── */
+.shell-pagehead {
+    display: flex;
+    align-items: flex-start;
+    /* Column gap is the action row's own 12px, so the back button reads as the
+       first control of that group rather than a separate island; the 20px
+       stays as the row gap for a header that wraps. */
+    row-gap: var(--sp-5);
+    column-gap: var(--sp-3);
+    flex-wrap: wrap;
+}
+/* The back slot leads the DOM (see the layout) and CSS puts it back where it
+   has always been on desktop: at the head of the trailing action group. */
+.shell-pagehead-text    { order: 1; flex: 1; min-width: 0; }
+.shell-pagehead-back    { order: 2; }
+.shell-pagehead-actions { order: 3; }
+/* A phone affordance only — the overflow trigger has no desktop job, because
+   everything behind it is already in the action row at this width. */
+.shell-pagehead-more    { order: 4; display: none; }
+.shell-pagehead .breadcrumb { margin-bottom: 8px; }
+.shell-pagehead-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: var(--lh-tight);
+    color: var(--text-primary);
+}
+.shell-pagehead-sub {
+    margin-top: 4px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.shell-pagehead-sub:empty { display: none; }
+.shell-pagehead-actions { display: flex; align-items: center; gap: 12px; }
+.shell-pagehead-actions:empty { display: none; }
+
+/* The header's own button sizes — 44px, radius 10px (§2) — rather than
+   .btn's, which the rest of the app shares. */
+.shell-headbtn {
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 0 18px;
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    background: var(--card-bg);
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--text-primary);
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color var(--dur-fast) ease, transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+}
+.shell-headbtn:hover { border-color: var(--accent-strong); }
+/* The gold fill is a gradient with its own lift, so the page's one primary
+   action is the only thing on the screen that sits above the surface. */
+.shell-headbtn.is-primary {
+    background: var(--accent-gradient);
+    border-color: transparent;
+    color: var(--on-accent);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    box-shadow: var(--accent-lift);
+}
+.shell-headbtn.is-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--accent-lift-hover);
+}
+@media (prefers-reduced-motion: reduce) {
+    .shell-headbtn.is-primary:hover { transform: none; }
+}
+
+/* ── §7.5  Command palette (⌘K) ─────────────────────────────────────────── */
+.palette {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-sheet);
+    background: var(--scrim);
+    backdrop-filter: blur(2px);
+    display: flex;
+    justify-content: center;
+    padding-top: 118px;
+}
+.palette[hidden] { display: none; }
+.palette-box {
+    width: 568px;
+    max-width: calc(100vw - 2 * var(--sp-5));
+    max-height: 420px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: palette-in var(--dur-fast) ease-out;
+}
+@keyframes palette-in {
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .palette-box { animation: none; }
+}
+.palette-head {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: var(--sp-4) var(--sp-4);
+    border-bottom: 1px solid var(--card-border);
+}
+.palette-head > i { font-size: 12px; color: var(--text-secondary); }
+.palette-input {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--text-primary);
+}
+.palette-input::placeholder { color: var(--text-muted); }
+.palette-list { flex: 1; overflow-y: auto; padding: 7px; }
+.palette-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 10px;
+    border-radius: 9px;
+    text-decoration: none;
+    color: inherit;
+}
+.palette-row:hover,
+.palette-row:focus-visible { background: var(--accent-dim); }
+.palette-row-icon {
+    width: 28px; height: 28px;
+    border-radius: var(--radius-sm);
+    background: var(--page-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-secondary);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+}
+.palette-row-text { flex: 1; min-width: 0; }
+.palette-row-title {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.palette-row-sub {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 10.5px;
+    color: var(--text-secondary);
+}
+.palette-row-kind {
+    font-family: var(--font-body);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    color: var(--text-secondary);
+}
+.palette-empty {
+    padding: 22px;
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+/* Group heading above a run of record results ("Tenants", "Invoices"). Same
+   eyebrow treatment as the sidebar's section labels, so the two lists of
+   destinations in this app are labelled the same way. */
+.palette-group {
+    padding: 10px 10px 4px;
+    font-family: var(--font-body);
+    font-size: var(--fs-2xs);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.palette-hint {
+    padding: 14px;
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 11.5px;
+    color: var(--text-muted);
+}
+.palette-foot {
+    display: flex;
+    gap: var(--sp-4);
+    padding: 9px 15px;
+    border-top: 1px solid var(--card-border);
+    background: var(--page-bg);
+    font-family: var(--font-body);
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+/* ── §7.5b  Top-bar dropdowns ───────────────────────────────────────────────
+     Two things in the top bar open a panel: the notification bell and the
+     account chip. Both hang off their trigger, so the chrome is shared
+     (.shell-pop) and only the contents differ.
+
+     A panel, not a page: everything in the bell is a count that belongs to a
+     list the app already has, so its job is to point at the right filtered
+     list, never to become a fifth place where invoices live. The account
+     panel's job is smaller still — it exists so that signing out takes an
+     intentional second click, and so the chevron on the chip is telling the
+     truth about what a click does. */
+.shell-bell,
+.shell-helpbtn,
+.shell-headmenu,
+.shell-account { position: relative; display: flex; }
+/* A page-header action that opens a format menu rather than firing straight
+   off (Export → xlsx | pdf). Narrower than the top-bar panels: it holds two
+   choices, not a feed. */
+.shell-headmenu > .shell-pop { width: 244px; }
+/* Count riding the bell. Tabular figures so 3 and 11 sit the same, and the
+   ring in --topbar-bg keeps it legible where it overlaps the glyph. */
+.shell-bell-badge {
+    position: absolute;
+    top: 2px; right: 2px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: var(--radius-pill);
+    background: var(--danger);
+    box-shadow: 0 0 0 2px var(--card-bg);
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 9.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 16px;
+    text-align: center;
+    pointer-events: none;
+}
+.shell-pop {
+    position: absolute;
+    top: calc(100% + 9px);
+    right: 0;
+    z-index: var(--z-dropdown);
+    width: 336px;
+    max-width: calc(100vw - var(--sp-6));
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+.shell-pop-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--card-border);
+    background: var(--page-bg-alt);
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.shell-pop-head .shell-pop-count {
+    margin-left: auto;
+    padding: 1px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--tone-danger-bg);
+    color: var(--tone-danger-fg);
+    font-size: var(--fs-2xs);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+/* A menu row: a link, or a form's submit. Full width so the whole row is the
+   target, and the destructive one is toned rather than shouted. */
+.shell-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    border: none;
+    background: none;
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+}
+.shell-menu-item:hover { background: var(--page-bg); }
+.shell-menu-item:focus-visible { outline: var(--focus-outline); outline-offset: -2px; }
+.shell-menu-item > i { width: 14px; text-align: center; color: var(--text-muted); flex: none; }
+.shell-menu-item.is-danger { color: var(--tone-danger-fg); }
+.shell-menu-item.is-danger:hover { background: var(--tone-danger-bg); }
+.shell-menu-item.is-danger > i { color: var(--tone-danger-fg); }
+/* Two lines where the choice needs qualifying — the format's name, then what
+   you get. The icon stays top-aligned against the pair. */
+.shell-menu-item.has-sub { align-items: flex-start; padding-top: 9px; padding-bottom: 9px; }
+.shell-menu-item.has-sub > i { margin-top: 2px; }
+.shell-menu-item-sub {
+    display: block;
+    margin-top: 2px;
+    font-size: var(--fs-xs);
+    font-weight: 400;
+    color: var(--text-muted);
+}
+/* Identity block at the head of the account panel. */
+.shell-pop-identity { padding: 12px 14px; border-bottom: 1px solid var(--card-border); }
+.shell-pop-identity strong { display: block; font-size: var(--fs-sm); color: var(--text-primary); }
+.shell-pop-identity span { display: block; font-size: var(--fs-xs); color: var(--text-muted); margin-top: 1px; overflow-wrap: anywhere; }
+/* The chevron points at the state it will move to. */
+.shell-user > .fa-chevron-down { transition: transform var(--dur-base) ease; }
+[aria-expanded="true"] > .fa-chevron-down { transform: rotate(180deg); }
+
+.shell-notif-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 11px 14px;
+    text-decoration: none;
+    border-bottom: 1px solid var(--card-border);
+}
+.shell-notif-item:hover { background: var(--page-bg); }
+.shell-notif-icon {
+    width: 30px; height: 30px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+    font-size: 12px;
+    background: var(--tone-neutral-bg);
+    color: var(--tone-neutral-fg);
+}
+.shell-notif-icon.is-danger  { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+.shell-notif-icon.is-warning { background: var(--tone-warning-bg); color: var(--tone-warning-fg); }
+.shell-notif-icon.is-info    { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.shell-notif-text { flex: 1; min-width: 0; }
+.shell-notif-title {
+    display: block;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.shell-notif-sub {
+    display: block;
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+.shell-notif-chev { color: var(--text-faint); font-size: 10px; flex: none; }
+.shell-notif-empty {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 18px 14px;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+.shell-notif-empty i { color: var(--tone-success-fg); }
+.shell-notif-foot {
+    display: block;
+    padding: 10px 14px;
+    text-align: center;
+    background: var(--page-bg-alt);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+.shell-notif-foot:hover { color: var(--tone-accent-fg); }
+
+/* Help panel. Same chrome as the other two; the only new parts are the
+   shortcut rows and the tip. Keys are right-aligned in a column of their own
+   so the labels read as a list rather than as ragged pairs. */
+.shell-helppop .shell-keys {
+    padding: var(--sp-3) 14px var(--sp-3);
+    border-bottom: 1px solid var(--card-border);
+}
+.shell-keys-label {
+    margin-bottom: var(--sp-2);
+    font-size: var(--fs-2xs);
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.shell-key-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-height: 24px;
+    font-size: var(--fs-sm);
+    color: var(--text-secondary);
+}
+.shell-key-row > span { flex: 1; min-width: 0; }
+/* The tip is prose, not a row: the bulb hangs beside a wrapping paragraph. */
+.shell-helptip {
+    display: flex;
+    gap: 10px;
+    margin: 0;
+    padding: var(--sp-3) 14px;
+    border-bottom: 1px solid var(--card-border);
+    background: var(--page-bg-alt);
+    font-size: var(--fs-sm);
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+.shell-helptip > i {
+    flex: none;
+    width: 14px;              /* same icon column as .shell-menu-item, so the
+                                 tip's text edge lines up with the links */
+    margin-top: 2px;
+    text-align: center;
+    color: var(--tone-accent-fg);
+}
+
+/* Touch. The help panel is the one .shell-pop that renders below 769px (the
+   shell bar, and with it the bell and account panels, is display:none there),
+   and a 39px row is under the 44px target every other mobile control meets. */
+@media (max-width: 768px) {
+    .shell-helppop .shell-menu-item { min-height: var(--h-control-lg); }
+}
+/* On a phone the panel would run off the edge; pin it to the viewport. */
+@media (max-width: 600px) {
+    .shell-pop { position: fixed; top: 64px; right: var(--sp-3); left: var(--sp-3); width: auto; }
+}
+
+/* ── §7.6  Focus, per §8 ────────────────────────────────────────────────── */
+.shell-iconbtn:focus-visible,
+.topbar-icon-btn:focus-visible,
+.shell-search:focus-visible,
+.shell-user:focus-visible,
+.shell-headbtn:focus-visible,
+.shell-help:focus-visible,
+.palette-row:focus-visible,
+.palette-input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+.shell-navitem:focus-visible,
+.shell-subitem:focus-visible,
+.shell-navgroup > summary:focus-visible {
+    outline: 2px solid var(--shell-gold);
+    outline-offset: -2px;
+}
+
+/* ── §7.7  The two boundaries ───────────────────────────────────────────── */
+
+/* Desktop: the legacy 260px drawer, its backdrop, the 60px topbar and the
+   mobile "More" sheet are the mobile layer's chrome. The shell replaces
+   them, so they are not rendered here — but they stay in the DOM because
+   app-mobile.css styles them below 769px. */
+@media (min-width: 769px) {
+    body.app-shell > .sidebar,
+    body.app-shell > .sidebar-backdrop,
+    body.app-shell #moreSheet,
+    body.app-shell .topbar { display: none; }
+}
+
+/* Mobile: the shell does not exist. Everything reverts to document flow so
+   the .pm-* / .m-* screens behave exactly as they did before the shell. */
+@media (max-width: 768px) {
+    .shell-sidebar,
+    .shell-topbar,
+    .palette { display: none; }
+
+    body.app-shell { height: auto; overflow: visible; display: block; padding: 0; background: var(--page-bg); }
+    .shell-frame { display: block; border-radius: 0; overflow: visible; }
+    /* 18px, the gutter the .pm-* / .m-* mobile screens use, so a page on the
+       shell and a page on the mobile app layer line their content — and their
+       back buttons — up at the same inset. Desktop keeps 26px. */
+    .shell-content { overflow: visible; padding-left: 18px; padding-right: 18px; padding-top: 18px; }
+    /* ── The page header on mobile ──────────────────────────────────────
+       Stacked, not shrunk: title, description, then the actions as a
+       full-width row of equal buttons. Hidden only on the routes that draw
+       their own header (the .m-screen / .pm-* app layer), which is what
+       body.is-mobile-screen and body.is-dashboard mark. */
+    /* No side padding: .shell-content already gutters the column, and adding
+       16px on top of it indented the title and the back button 16px further
+       in than every card below them. Top padding only. */
+    .shell-pagehead {
+        display: block;
+        padding: var(--sp-4) 0 0;
+    }
+    .shell-pagehead-title { font-size: 22px; }
+    .shell-pagehead-sub { font-size: 13px; }
+    /* The actions wrap onto a half-width grid instead of sizing to their
+       labels: one action fills the row, two split it, and an odd last one
+       — usually the destructive action — gets a full-width row of its own.
+       All of them are --h-control-lg so every tap target clears 44px. */
+    .shell-pagehead-actions {
+        width: 100%;
+        margin-top: var(--sp-4);
+        flex-wrap: wrap;
+        gap: var(--sp-2);
+    }
+    /* A <form> here is a submit wrapper, not a layout box (@csrf and
+       @method render display:none), so its button becomes the flex item
+       and lines up with the plain links beside it. */
+    .shell-pagehead-actions > form { display: contents; }
+    .shell-pagehead-actions .shell-headbtn,
+    .shell-pagehead-actions .btn {
+        flex: 1 1 calc(50% - var(--sp-2));
+        min-width: 0;
+        justify-content: center;
+        min-height: var(--h-control-lg);
+        padding: 0 var(--sp-3);
+        font-size: var(--fs-base);   /* normalises a .btn-sm dropped in here */
+    }
+    body.is-mobile-screen .shell-pagehead,
+    body.is-dashboard .shell-pagehead { display: none; }
+}
+
+/* ── §7.3b  Page header on a phone — the app bar ─────────────────────────────
+     Under 600px a detail page's header is the shape a phone app uses: a 44px
+     icon-only back button, the title beside it, an optional ⋯ on the trailing
+     edge, and the page's own actions on the row beneath. A full-width "← Back"
+     button below the title — which is what the action row alone produced — is
+     the widest, loudest control on the screen for the least interesting thing
+     on it.
+
+     Applies to every page that fills the page-back slot, which is what keeps
+     the header one object across the app instead of a per-page arrangement.
+     600px, not 640: the app's breakpoints are fixed (§1.0) and pages inventing
+     their own is what UiConsistencyTest exists to stop. */
+@media (max-width: 600px) {
+    .shell-pagehead.has-back {
+        display: grid;
+        grid-template-columns: var(--h-control-lg) minmax(0, 1fr);
+        grid-template-areas: "back title";
+        align-items: center;
+        column-gap: var(--sp-3);
+        row-gap: var(--sp-4);
+    }
+    /* Only pages that actually have actions get the second row; otherwise the
+       row-gap would leave a band of dead space under the title. */
+    .shell-pagehead.has-back.has-actions {
+        grid-template-areas:
+            "back title"
+            "actions actions";
+    }
+    .shell-pagehead.has-back.has-overflow {
+        grid-template-columns: var(--h-control-lg) minmax(0, 1fr) var(--h-control-lg);
+        grid-template-areas: "back title more";
+    }
+    .shell-pagehead.has-back.has-overflow.has-actions {
+        grid-template-areas:
+            "back title more"
+            "actions actions actions";
+    }
+    .shell-pagehead.has-back > .shell-pagehead-back    { grid-area: back; }
+    .shell-pagehead.has-back > .shell-pagehead-text    { grid-area: title; }
+    .shell-pagehead.has-back > .shell-pagehead-actions { grid-area: actions; margin-top: 0; }
+    .shell-pagehead.has-back > .shell-pagehead-more    { grid-area: more; display: block; }
+
+    /* Icon only, 44px square. The label stays in the DOM for desktop and for
+       assistive tech — the control carries its own aria-label — and is only
+       dropped from the layout here. */
+    .shell-pagehead-back > .btn,
+    .shell-pagehead-more > .btn {
+        width: var(--h-control-lg);
+        min-height: var(--h-control-lg);
+        padding: 0;
+        justify-content: center;
+        border-radius: var(--radius-lg);
+        font-size: var(--fs-md);
+    }
+    .shell-pagehead-back .pagehead-back-label { display: none; }
+
+    /* The back icon is the way up now, so the trail is duplicate chrome, and
+       the title can take the room it frees. */
+    .shell-pagehead.has-back .breadcrumb { display: none; }
+    .shell-pagehead.has-back .shell-pagehead-title { font-size: 22px; font-weight: 800; }
+    /* One line: a wrapped subtitle pushes the whole page down and the row it
+       sits in is a header, not a paragraph. */
+    .shell-pagehead.has-back .shell-pagehead-sub {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+/* The top bar hamburger hides the sidebar. Desktop only — ≤768px the drawer
+   is the mobile layer's and has its own handler. */
+@media (min-width: 769px) {
+    body.app-shell.is-nav-collapsed > .shell-sidebar { display: none; }
+}

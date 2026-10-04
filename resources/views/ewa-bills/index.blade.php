@@ -2,135 +2,52 @@
 
 @section('title', 'EWA Bills')
 @section('topbar-title', 'EWA Bills')
+@section('topbar-count', number_format($bills->total()))
+
+@section('page-title', 'EWA Bills')
+@section('page-subtitle', 'Electricity & Water Authority bills linked to lease contracts')
+@section('page-actions')
+    <a href="{{ route('ewa-bills.create') }}" class="btn btn-outline">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Import from PDF
+    </a>
+    <a href="{{ route('ewa-bills.create') }}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> New EWA Bill
+    </a>
+@endsection
 
 @push('styles')
 <style>
 /* ── STATS ─────────────────────────────────────────────────── */
-.ewa-stats {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
-    gap: 14px; margin-bottom: 24px;
-}
-.ewa-stat {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 16px 20px;
-    display: flex; align-items: center; gap: 14px;
-}
-.ewa-stat-icon {
-    width: 40px; height: 40px; border-radius: var(--radius-sm);
-    display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
-}
-.ewa-stat-icon.teal  { background: #F0FDFA; color: #0D9488; }
-.ewa-stat-icon.blue  { background: #EFF6FF; color: #2563EB; }
-.ewa-stat-icon.amber { background: #FFFBEB; color: #D97706; }
-.ewa-stat-icon.green { background: #ECFDF5; color: #059669; }
-.ewa-stat-icon.red   { background: #FEF2F2; color: #DC2626; }
-.ewa-stat-val { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-.ewa-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
 /* ── FILTER ────────────────────────────────────────────────── */
-.filter-bar {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 14px 18px;
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px;
-}
-.filter-bar input, .filter-bar select {
-    padding: 8px 12px; font-size: 13px;
-    border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-    background: var(--input-bg); color: var(--text-primary); outline: none;
-    transition: border-color 0.18s; font-family: 'Plus Jakarta Sans', sans-serif;
-}
-.filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
-.filter-bar input[type="search"] { flex: 1; min-width: 200px; }
 
 /* ── STATUS BADGES ─────────────────────────────────────────── */
-.status-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
-}
-.status-badge.issued         { background: #EFF6FF; color: #2563EB; }
-.status-badge.partially_paid { background: #FFFBEB; color: #D97706; }
-.status-badge.paid           { background: #ECFDF5; color: #059669; }
-.status-badge.overdue        { background: #FEF2F2; color: #DC2626; }
-.status-badge.cancelled      { background: #F8FAFC; color: #94A3B8; }
-.status-badge.draft          { background: #F1F5F9; color: #64748B; }
 
-.table-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden; }
-.amount-col { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 13px; }
-.overdue-row td { background: #FFF8F8; }
+.overdue-row td { background: var(--tone-danger-bg); }
 .actions-cell { display: flex; gap: 6px; align-items: center; }
 
 /* ── PDF PREVIEW MODAL ───────────────────────────────────── */
-.pdf-modal-overlay {
-    display: none; position: fixed; inset: 0; z-index: 2000;
-    background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
-    align-items: center; justify-content: center;
-}
-.pdf-modal-overlay.open { display: flex; }
-.pdf-modal {
-    width: 90vw; max-width: 900px; height: 90vh;
-    background: #1E293B; border-radius: var(--radius);
-    display: flex; flex-direction: column; overflow: hidden;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
-}
-.pdf-modal-header {
-    padding: 14px 20px; background: #0F172A;
-    display: flex; align-items: center; gap: 12px; flex-shrink: 0;
-}
-.pdf-modal-title { font-family: 'Outfit',sans-serif; font-size: 14px; font-weight: 700; color: #fff; flex: 1; }
-.pdf-modal-actions { display: flex; gap: 8px; }
-.pdf-modal-btn {
-    padding: 6px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
-    cursor: pointer; border: none; display: flex; align-items: center; gap: 6px;
-    font-family: inherit; text-decoration: none; transition: opacity 0.15s;
-}
-.pdf-modal-btn:hover { opacity: 0.85; }
-.pdf-modal-btn.download { background: #0D9488; color: #fff; }
-.pdf-modal-btn.close    { background: #334155; color: #94A3B8; }
-.pdf-modal-frame { flex: 1; width: 100%; border: none; background: #fff; }
 
 /* ── TABS ──────────────────────────────────────────────────── */
-.tab-bar { display: flex; gap: 4px; border-bottom: 2px solid var(--card-border); margin-bottom: 20px; }
-.tab-btn {
-    padding: 11px 22px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13.5px; font-weight: 600;
-    color: var(--text-muted); border: none; background: none; cursor: pointer;
-    border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.18s, border-color 0.18s;
-    display: flex; align-items: center; gap: 8px; text-decoration: none;
-}
-.tab-btn:hover { color: var(--text-primary); }
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
 /* EWA header strip */
 .ewa-header-strip {
-    background: linear-gradient(135deg, #0D9488 0%, #0369A1 100%);
-    border-radius: var(--radius); padding: 16px 22px; margin-bottom: 20px;
-    display: flex; align-items: center; gap: 16px; color: #fff;
+    background: linear-gradient(135deg, var(--tone-info-fg) 0%, var(--tone-info-fg) 100%);
+    border-radius: var(--radius); padding: 16px 22px; margin-bottom: var(--sp-5);
+    display: flex; align-items: center; gap: 16px; color: var(--ink-on-fill);
 }
 .ewa-header-strip .ewa-logo-circle {
     width: 48px; height: 48px; border-radius: 50%;
     background: rgba(255,255,255,0.2); backdrop-filter: blur(4px);
     display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;
 }
-.ewa-header-strip h2 { font-family: 'Outfit',sans-serif; font-size: 18px; font-weight: 800; margin: 0; }
-.ewa-header-strip p  { font-size: 12px; opacity: 0.85; margin: 2px 0 0; }
+.ewa-header-strip h2 { font-family: 'Outfit',sans-serif; font-size: var(--fs-lg); font-weight: 800; margin: 0; }
+.ewa-header-strip p  { font-size: var(--fs-sm); opacity: 0.85; margin: 2px 0 0; }
 </style>
 @endpush
 
 @section('content')
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header-title">EWA Bills</h1>
-        <p class="page-header-sub">Electricity &amp; Water Authority bills linked to lease contracts</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('ewa-bills.create') }}" class="btn btn-outline">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> Import from PDF
-        </a>
-        <a href="{{ route('ewa-bills.create') }}" class="btn btn-primary">
-            <i class="fa-solid fa-plus"></i> New EWA Bill
-        </a>
-    </div>
-</div>
 
 @include('ewa-bills._tabs')
 
@@ -144,47 +61,155 @@
 </div>
 
 {{-- STATS --}}
-<div class="ewa-stats">
-    <div class="ewa-stat">
-        <div class="ewa-stat-icon teal"><i class="fa-solid fa-droplet"></i></div>
-        <div><div class="ewa-stat-val">{{ $stats['total'] }}</div><div class="ewa-stat-lbl">Total</div></div>
+
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
+     One right-hand slot, not three: the row used to stack the total, the
+     balance and a status pill, which is three numbers to read in a space
+     sized for one. The status is the slot; the balance moved to the meta
+     line, where it only appears when there is one. ── --}}
+@php
+    $ewaStatusLabels = ['issued' => 'Issued', 'partially_paid' => 'Partially paid', 'paid' => 'Paid',
+                        'overdue' => 'Overdue', 'cancelled' => 'Cancelled', 'draft' => 'Draft'];
+    $ewaStatus = request('status');
+    $ewaChips  = [[
+        'label'  => 'All',
+        'href'   => route('ewa-bills.index', array_filter(['search' => request('search')])),
+        'active' => ! $ewaStatus,
+    ]];
+    foreach ($ewaStatusLabels as $ewaVal => $ewaLabel) {
+        $ewaChips[] = [
+            'label'  => $ewaLabel,
+            'href'   => route('ewa-bills.index', array_filter(['search' => request('search'), 'status' => $ewaVal])),
+            'active' => $ewaStatus === $ewaVal,
+        ];
+    }
+@endphp
+<x-mobile-list
+    :actions="[
+        'primary' => ['label' => 'Add bill', 'href' => route('ewa-bills.create')],
+        'sheet'   => [
+            'id'    => 'ewaMoreSheet',
+            'title' => 'More',
+            'sub'   => 'Bulk work on EWA bills',
+            'items' => [
+                ['icon' => 'fa-file-arrow-up', 'label' => 'Upload a summary',
+                 'desc' => 'Read a whole EWA statement at once',
+                 'href' => route('ewa-bills.summary.create')],
+            ],
+        ],
+    ]"
+    :stats="[
+        ['value' => $stats['total'],   'label' => 'Bills'],
+        ['value' => $stats['paid'],    'label' => 'Paid'],
+        ['value' => $stats['overdue'], 'label' => 'Overdue'],
+    ]"
+    :search="[
+        'action'      => route('ewa-bills.index'),
+        'placeholder' => 'Search bill, tenant or property',
+        'aria'        => 'Search EWA bills',
+        'keep'        => ['status'],
+    ]"
+    :chips="$ewaChips">
+
+    @forelse($bills as $bill)
+        @php $mBalance = $bill->balance_due > 0 && $bill->status !== 'cancelled' ? $bill->balance_due : null; @endphp
+        <a href="{{ route('ewa-bills.show', $bill) }}" class="m-row-card ps-reveal">
+            <span class="m-row-thumb"><i class="fa-solid fa-bolt" aria-hidden="true"></i></span>
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $bill->bill_number }}</span>
+                <span class="m-row-sub">{{ $bill->tenant_name }} &middot; {{ $bill->property_name }}@if($bill->unit) / {{ $bill->unit }}@endif</span>
+                <span class="m-row-sub {{ $mBalance ? 'is-down' : '' }}">
+                    BHD {{ number_format($bill->total_amount, 0) }} &middot;
+                    @if($mBalance) BHD {{ number_format($mBalance, 0) }} due {{ $bill->due_date->format('d M') }}
+                    @else Settled @endif
+                </span>
+            </span>
+            @unless(request('status'))
+                <span class="status-badge {{ $bill->status }}">{{ $bill->status_label }}</span>
+            @endunless
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+        </a>
+    @empty
+        <div class="m-empty">
+            <div class="m-empty-icon"><i class="fa-solid fa-bolt" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No EWA bills yet</div>
+            <div class="m-empty-sub">Add a bill, or upload a whole statement and let it read them.</div>
+            <a href="{{ route('ewa-bills.create') }}" class="m-action-btn primary">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>Add bill
+            </a>
+        </div>
+    @endforelse
+</x-mobile-list>
+
+<div class="stats-grid m-hide-desktop-index">
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon teal"><i class="fa-solid fa-droplet"></i></span>
+            <span class="stat-lbl">Total</span>
+        </div>
+        <div class="stat-val">{{ $stats['total'] }}</div>
     </div>
-    <div class="ewa-stat">
-        <div class="ewa-stat-icon blue"><i class="fa-solid fa-paper-plane"></i></div>
-        <div><div class="ewa-stat-val">{{ $stats['issued'] }}</div><div class="ewa-stat-lbl">Issued</div></div>
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon blue"><i class="fa-solid fa-paper-plane"></i></span>
+            <span class="stat-lbl">Issued</span>
+        </div>
+        <div class="stat-val">{{ $stats['issued'] }}</div>
     </div>
-    <div class="ewa-stat">
-        <div class="ewa-stat-icon amber"><i class="fa-solid fa-circle-half-stroke"></i></div>
-        <div><div class="ewa-stat-val">{{ $stats['partially_paid'] }}</div><div class="ewa-stat-lbl">Partial</div></div>
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon amber"><i class="fa-solid fa-circle-half-stroke"></i></span>
+            <span class="stat-lbl">Partial</span>
+        </div>
+        <div class="stat-val">{{ $stats['partially_paid'] }}</div>
     </div>
-    <div class="ewa-stat">
-        <div class="ewa-stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
-        <div><div class="ewa-stat-val">{{ $stats['paid'] }}</div><div class="ewa-stat-lbl">Paid</div></div>
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon green"><i class="fa-solid fa-circle-check"></i></span>
+            <span class="stat-lbl">Paid</span>
+        </div>
+        <div class="stat-val">{{ $stats['paid'] }}</div>
     </div>
-    <div class="ewa-stat">
-        <div class="ewa-stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <div><div class="ewa-stat-val">{{ $stats['overdue'] }}</div><div class="ewa-stat-lbl">Overdue</div></div>
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></span>
+            <span class="stat-lbl">Overdue</span>
+        </div>
+        <div class="stat-val">{{ $stats['overdue'] }}</div>
     </div>
 </div>
 
 {{-- FILTERS --}}
-<form method="GET" action="{{ route('ewa-bills.index') }}" class="filter-bar">
-    <input type="search" name="search" value="{{ request('search') }}" placeholder="Search bill no., tenant, account…">
-    <input type="text"   name="period" value="{{ request('period') }}" placeholder="Billing period…" style="min-width:140px">
-    <select name="status" onchange="this.form.submit()">
-        <option value="">All Statuses</option>
-        @foreach(['issued'=>'Issued','partially_paid'=>'Partially Paid','paid'=>'Paid','overdue'=>'Overdue','cancelled'=>'Cancelled','draft'=>'Draft'] as $v => $l)
-        <option value="{{ $v }}" {{ request('status') === $v ? 'selected' : '' }}>{{ $l }}</option>
-        @endforeach
-    </select>
-    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-    @if(request()->hasAny(['search','status','period']))
-    <a href="{{ route('ewa-bills.index') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
-    @endif
-</form>
 
 {{-- TABLE --}}
-<div class="table-card">
+<div class="table-card m-hide-desktop-index">
+    <form method="GET" action="{{ route('ewa-bills.index') }}">
+        <div class="filter-bar">
+            <div class="filter-group is-search">
+                <label for="f_search">Search</label>
+                <input type="search" id="f_search" name="search" value="{{ request('search') }}" placeholder="Search bill no., tenant, account…">
+            </div>
+            <div class="filter-group">
+                <label for="f_period">Billing period</label>
+                <input type="text" id="f_period" name="period" value="{{ request('period') }}" placeholder="Billing period…">
+            </div>
+            <div class="filter-group">
+                <label for="f_status">Status</label>
+                <select id="f_status" name="status" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    @foreach(['issued'=>'Issued','partially_paid'=>'Partially Paid','paid'=>'Paid','overdue'=>'Overdue','cancelled'=>'Cancelled','draft'=>'Draft'] as $v => $l)
+                    <option value="{{ $v }}" {{ request('status') === $v ? 'selected' : '' }}>{{ $l }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                @if(request()->hasAny(['search','status','period']))
+                <a href="{{ route('ewa-bills.index') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark"></i> Reset</a>
+                @endif
+            </div>
+        </div>
+    </form>
     @if($bills->isEmpty())
     <div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
         <i class="fa-solid fa-droplet" style="font-size:36px;display:block;margin-bottom:12px;opacity:0.3"></i>
@@ -211,11 +236,11 @@
                 @foreach($bills as $bill)
                 <tr data-href="{{ route('ewa-bills.show', $bill) }}" style="cursor:pointer"
                     class="{{ $bill->status === 'overdue' ? 'overdue-row' : '' }}">
-                    <td style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--accent)">
+                    <td class="cell-id">
                         {{ $bill->bill_number }}
                     </td>
                     <td style="font-size:12px;white-space:nowrap">{{ $bill->billing_period }}</td>
-                    <td style="white-space:nowrap;font-size:12px;{{ $bill->status === 'overdue' ? 'color:#DC2626;font-weight:600' : '' }}">
+                    <td style="white-space:nowrap;font-size:12px;{{ $bill->status === 'overdue' ? 'color:var(--tone-danger-fg);font-weight:600' : '' }}">
                         {{ $bill->due_date->format('d M Y') }}
                     </td>
                     <td>{{ $bill->tenant_name }}</td>
@@ -223,10 +248,10 @@
                         {{ $bill->property_name }}
                         @if($bill->unit)<span style="color:var(--text-muted)"> / {{ $bill->unit }}</span>@endif
                     </td>
-                    <td style="font-size:12px;color:var(--text-muted)">{{ $bill->ewa_account_number ?: '—' }}</td>
+                    <td class="cell-muted">{{ $bill->ewa_account_number ?: '—' }}</td>
                     <td class="amount-col">{{ number_format($bill->total_amount, 3) }}</td>
                     <td class="amount-col {{ $bill->balance_due > 0 && $bill->status !== 'cancelled' ? '' : '' }}"
-                        style="{{ $bill->balance_due > 0 && $bill->status !== 'cancelled' ? 'color:#DC2626' : 'color:var(--text-muted)' }}">
+                        style="{{ $bill->balance_due > 0 && $bill->status !== 'cancelled' ? 'color:var(--tone-danger-fg)' : 'color:var(--text-muted)' }}">
                         {{ number_format($bill->balance_due, 3) }}
                     </td>
                     <td>
@@ -263,31 +288,34 @@
             </tbody>
         </table>
     </div>
-    <div style="padding:14px 18px;border-top:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-muted)">
-        <div>Showing {{ $bills->firstItem() }}–{{ $bills->lastItem() }} of {{ $bills->total() }}</div>
-        <div>{{ $bills->links() }}</div>
+    <div class="table-footer">
+        <div class="result-count">
+            Showing <strong>{{ $bills->firstItem() ?? 0 }}–{{ $bills->lastItem() ?? 0 }}</strong>
+            of <strong>{{ number_format($bills->total()) }}</strong> bills
+        </div>
+        {{ $bills->links() }}
     </div>
     @endif
 </div>
 
 {{-- PDF PREVIEW MODAL --}}
-<div class="pdf-modal-overlay" id="pdfModalOverlay">
-    <div class="pdf-modal">
-        <div class="pdf-modal-header">
-            <div class="pdf-modal-title" id="pdfModalTitle">
-                <i class="fa-solid fa-file-invoice" style="color:#0D9488;margin-right:6px"></i>
+<div class="pdf-viewer-overlay" id="pdfModalOverlay">
+    <div class="pdf-viewer">
+        <div class="pdf-viewer-header">
+            <div class="pdf-viewer-title" id="pdfModalTitle">
+                <i class="fa-solid fa-file-invoice" style="color:var(--tone-info-fg);margin-right:6px"></i>
                 EWA Bill
             </div>
-            <div class="pdf-modal-actions">
-                <a href="#" id="pdfDownloadBtn" class="pdf-modal-btn download">
+            <div class="pdf-viewer-actions">
+                <a href="#" id="pdfDownloadBtn" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-file-arrow-down"></i> Download
                 </a>
-                <button type="button" class="pdf-modal-btn close" onclick="closePdfPreview()">
+                <button type="button" class="btn btn-outline btn-sm" onclick="closePdfPreview()">
                     <i class="fa-solid fa-xmark"></i> Close
                 </button>
             </div>
         </div>
-        <iframe id="pdfFrame" class="pdf-modal-frame" src="" title="EWA Bill Preview"></iframe>
+        <iframe id="pdfFrame" class="pdf-viewer-frame" src="" title="EWA Bill Preview"></iframe>
     </div>
 </div>
 
@@ -299,7 +327,7 @@ function openPdfPreview(previewUrl, downloadUrl, title) {
     document.getElementById('pdfFrame').src        = previewUrl;
     document.getElementById('pdfDownloadBtn').href = downloadUrl;
     document.getElementById('pdfModalTitle').innerHTML =
-        '<i class="fa-solid fa-file-invoice" style="color:#0D9488;margin-right:6px"></i>' + title;
+        '<i class="fa-solid fa-file-invoice" style="color:var(--tone-info-fg);margin-right:6px"></i>' + title;
     document.getElementById('pdfModalOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
 }

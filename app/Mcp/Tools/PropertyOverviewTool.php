@@ -4,6 +4,7 @@ namespace App\Mcp\Tools;
 
 use App\Models\Building;
 use App\Models\PropertyUnit;
+use App\Support\Occupancy;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -38,7 +39,7 @@ class PropertyOverviewTool extends Tool
             'total_units'      => $unitCount,
             'occupied_units'   => $occupiedCount,
             'vacant_units'     => $unitCount - $occupiedCount,
-            'occupancy_rate_percent' => $unitCount > 0 ? round(($occupiedCount / $unitCount) * 100, 1) : 0,
+            'occupancy_rate_percent' => Occupancy::rate($occupiedCount, $unitCount),
             'buildings' => $perBuilding,
         ]);
     }

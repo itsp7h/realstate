@@ -2,89 +2,33 @@
 
 @section('title', 'Buildings')
 @section('topbar-title', 'Buildings')
+@section('topbar-count', number_format($buildings->total()))
+
+@section('page-title', 'Buildings')
+@section('page-subtitle', 'Manage all building and property records')
+@section('page-actions')
+    @include('partials.export-menu', [
+        'route'  => 'export.buildings',
+        'params' => request()->only(['search','property_type','type_of_ownership']),
+        'sub'    => 'All 13 columns, import-ready',
+    ])
+    <button type="button" class="btn btn-outline" onclick="openImport_buildings()">
+        <i class="fa-solid fa-file-import"></i> Import
+    </button>
+    <button type="button" class="btn btn-primary" onclick="openBuildingModal()">
+        <i class="fa-solid fa-plus"></i> Add Building
+    </button>
+@endsection
 
 @push('styles')
 <style>
     /* ── STATS ─────────────────────────────────────────── */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-    .stat-card {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius);
-        padding: 18px 20px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        box-shadow: var(--shadow-sm);
-        transition: box-shadow 0.2s, transform 0.2s;
-    }
-    .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-    .stat-icon {
-        width: 44px; height: 44px;
-        border-radius: var(--radius-sm);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 18px;
-        flex-shrink: 0;
-    }
-    .stat-icon.gold   { background: var(--accent-dim); color: var(--accent); }
-    .stat-icon.green  { background: #ECFDF5; color: var(--success); }
-    .stat-icon.blue   { background: #EFF6FF; color: var(--info); }
-    .stat-val { font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-    .stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
 
     /* ── FILTER BAR ─────────────────────────────────────── */
-    .filter-bar {
-        display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;
-        padding: 16px 20px;
-        background: var(--page-bg);
-        border-bottom: 1px solid var(--card-border);
-    }
-    .filter-group { display: flex; flex-direction: column; gap: 5px; min-width: 150px; }
-    .filter-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .filter-group input, .filter-group select {
-        padding: 8px 12px; font-size: 13px;
-        border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-        background: var(--card-bg); color: var(--text-primary);
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        outline: none; appearance: none; -webkit-appearance: none;
-        transition: border-color 0.18s, box-shadow 0.18s;
-    }
-    .filter-group input:focus, .filter-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
-    .filter-group select {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px;
-    }
-    .filter-actions { display: flex; gap: 8px; align-items: flex-end; margin-left: auto; }
 
     /* ── TABLE ──────────────────────────────────────────── */
-    .bldg-code { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text-primary); font-size: 13.5px; }
-    .bldg-sub  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    .action-btns { display: flex; gap: 6px; }
-    .table-footer {
-        padding: 14px 20px; border-top: 1px solid var(--card-border);
-        display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
-    }
-    .pagination { display: flex; gap: 4px; align-items: center; }
-    .page-btn {
-        width: 32px; height: 32px; border: 1.5px solid var(--card-border);
-        background: var(--card-bg); border-radius: var(--radius-sm);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 12px; font-weight: 600; color: var(--text-secondary);
-        cursor: pointer; text-decoration: none; transition: all 0.15s;
-    }
-    .page-btn:hover { background: var(--page-bg); color: var(--text-primary); }
-    .page-btn.active { background: var(--accent); border-color: var(--accent); color: #0B1120; }
-    .result-count { font-size: 13px; color: var(--text-muted); }
-    .result-count strong { color: var(--text-primary); }
-    .empty-state { text-align: center; padding: 60px 20px; }
-    .empty-icon { width: 64px; height: 64px; background: var(--page-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--text-muted); margin: 0 auto 16px; }
-    .empty-state h4 { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
-    .empty-state p { font-size: 13px; color: var(--text-muted); }
+    .bldg-code { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text-primary); font-size: var(--fs-base); }
+    .bldg-sub  { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 2px; }
 
     /* ── VIEW TOGGLE ────────────────────────────────────── */
     .view-toggle {
@@ -98,12 +42,12 @@
         width: 34px; height: 34px;
         display: flex; align-items: center; justify-content: center;
         background: var(--card-bg); border: none; cursor: pointer;
-        color: var(--text-muted); font-size: 13px;
+        color: var(--text-muted); font-size: var(--fs-base);
         transition: background 0.15s, color 0.15s;
     }
     .view-toggle-btn:first-child { border-right: 1.5px solid var(--card-border); }
     .view-toggle-btn:hover { background: var(--page-bg); color: var(--text-primary); }
-    .view-toggle-btn.active { background: var(--accent); color: #0B1120; }
+    .view-toggle-btn.active { background: var(--accent); color: var(--text-primary); }
 
     /* ── VIEW PANELS ────────────────────────────────────── */
     .view-panel { animation: viewFadeIn 0.22s ease both; }
@@ -117,36 +61,10 @@
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
         gap: 20px;
-        padding: 20px;
-    }
-    .bldg-card {
-        background: var(--card-bg);
-        border: 1.5px solid var(--card-border);
-        border-radius: 14px;
-        overflow: hidden;
-        cursor: pointer;
-        transition: box-shadow 0.22s, transform 0.22s, border-color 0.22s;
-        display: flex; flex-direction: column;
-        position: relative;
-    }
-    .bldg-card:hover {
-        box-shadow: 0 12px 36px rgba(0,0,0,0.13);
-        transform: translateY(-4px);
-        border-color: var(--accent);
+        padding: var(--sp-5);
     }
 
     /* ── CARD PHOTO AREA ─────────────────────────────────── */
-    .bldg-card-photo {
-        position: relative;
-        height: 185px;
-        overflow: hidden;
-        background: var(--page-bg);
-        flex-shrink: 0;
-    }
-    .bldg-card-type-bar {
-        position: absolute; top: 0; left: 0; right: 0;
-        height: 3px; z-index: 3;
-    }
     /* Slides */
     .photo-slides { width: 100%; height: 100%; position: relative; }
     .photo-slide {
@@ -167,7 +85,7 @@
         border: 1px solid rgba(255,255,255,0.18);
         border-radius: 50%; cursor: pointer;
         display: flex; align-items: center; justify-content: center;
-        color: #fff; font-size: 10px;
+        color: var(--ink-on-fill); font-size: var(--fs-2xs);
         opacity: 0; transition: opacity 0.2s, background 0.2s;
     }
     .photo-arrow:hover { background: rgba(11,17,32,0.82); }
@@ -185,13 +103,13 @@
         cursor: pointer; transition: background 0.2s, transform 0.2s;
         border: none; padding: 0;
     }
-    .photo-dot.active { background: #fff; transform: scale(1.3); }
+    .photo-dot.active { background: var(--ink-on-fill); transform: scale(1.3); }
     /* Photo count badge */
     .photo-count-badge {
         position: absolute; top: 10px; right: 10px; z-index: 4;
         background: rgba(11,17,32,0.62); backdrop-filter: blur(4px);
-        color: #fff; font-size: 10.5px; font-weight: 700;
-        padding: 3px 8px; border-radius: 20px;
+        color: var(--ink-on-fill); font-size: var(--fs-2xs); font-weight: 700;
+        padding: 3px 8px; border-radius: var(--radius-pill);
         display: flex; align-items: center; gap: 4px;
     }
     /* Placeholder */
@@ -211,118 +129,48 @@
             );
     }
     .photo-placeholder i { font-size: 28px; color: var(--text-muted); opacity: 0.35; }
-    .photo-placeholder span { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+    .photo-placeholder span { font-size: var(--fs-xs); color: var(--text-muted); font-weight: 500; }
 
     /* ── CARD BODY ───────────────────────────────────────── */
-    .bldg-card-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    /* Layout only — the card system owns this card's chrome, padding and
+       hover. .bldg-card-body is a column so .bldg-card-stats can pin itself to
+       the bottom with margin-top:auto, which is what keeps the floors/units row
+       on one line across a grid of cards with different title lengths. */
+    .bldg-card-body { gap: 10px; }
+    .bldg-card-stats { padding-top: 10px; border-top: 1px solid var(--card-border); margin-top: auto; }
+    .bldg-card-actions .btn { flex: 1; justify-content: center; }
     .bldg-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-    .bldg-card-title {
-        font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 15px;
-        color: var(--text-primary); line-height: 1.25; flex: 1;
-    }
     .bldg-card-badges { display: flex; flex-wrap: wrap; gap: 5px; }
     .bldg-card-meta { display: flex; flex-direction: column; gap: 4px; }
     .bldg-card-meta-row {
         display: flex; align-items: center; gap: 7px;
-        font-size: 12px; color: var(--text-muted);
+        font-size: var(--fs-sm); color: var(--text-muted);
     }
-    .bldg-card-meta-row i { width: 13px; text-align: center; opacity: 0.6; font-size: 11px; flex-shrink: 0; }
-    .bldg-card-stats {
-        display: flex; gap: 8px; padding-top: 10px;
-        border-top: 1px solid var(--card-border);
-        margin-top: auto;
-    }
-    .bldg-stat-pill {
-        flex: 1; background: var(--page-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 8px; padding: 8px 10px;
-        text-align: center;
-    }
-    .bldg-stat-pill-val {
-        font-family: 'Outfit', sans-serif; font-weight: 800;
-        font-size: 18px; color: var(--text-primary); line-height: 1;
-    }
-    .bldg-stat-pill-lbl {
-        font-size: 10px; color: var(--text-muted); font-weight: 600;
-        text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px;
-    }
-    .bldg-card-actions {
-        padding: 10px 16px 14px;
-        display: flex; gap: 6px;
-        border-top: 1px solid var(--card-border);
-    }
-    .bldg-card-actions .btn { flex: 1; justify-content: center; font-size: 12px; }
+    .bldg-card-meta-row i { width: 13px; text-align: center; opacity: 0.6; font-size: var(--fs-xs); flex-shrink: 0; }
+
+    /* Occupancy rides the photo, bottom-left, so it clears the photo counter
+       in the opposite corner. */
+    .bldg-occ-pill { top: auto; right: auto; bottom: 10px; left: 10px; }
+    /* Let / vacant split under the unit count. */
+    .bldg-occ-split { font-size: var(--fs-2xs); margin-top: 3px; line-height: 1.3; color: var(--text-muted); }
+    .bldg-occ-split .is-let { color: var(--tone-success-fg); font-weight: 600; }
 
     @media (max-width: 768px) {
         .buildings-grid { grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px; }
     }
-    @media (max-width: 480px) {
+    @media (max-width: 600px) {
         .buildings-grid { grid-template-columns: 1fr; }
     }
 
     /* ── MODAL OVERLAY ──────────────────────────────────── */
-    .modal-overlay {
-        position: fixed; inset: 0; z-index: 1000;
-        background: rgba(11, 17, 32, 0.55);
-        backdrop-filter: blur(4px);
-        display: flex; align-items: center; justify-content: center;
-        padding: 20px;
-        opacity: 0; pointer-events: none;
-        transition: opacity 0.25s ease;
-    }
-    .modal-overlay.open {
-        opacity: 1; pointer-events: all;
-    }
-    .modal-box {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 16px;
-        box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.10);
-        width: 100%; max-width: 680px;
-        max-height: 90vh;
-        display: flex; flex-direction: column;
-        transform: translateY(20px) scale(0.98);
-        transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-        overflow: hidden;
-    }
-    .modal-overlay.open .modal-box {
-        transform: translateY(0) scale(1);
-    }
 
     /* ── MODAL HEADER ───────────────────────────────────── */
-    .modal-header {
-        padding: 20px 24px 0;
-        flex-shrink: 0;
-    }
-    .modal-header-top {
-        display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
-    }
-    .modal-header-icon {
-        width: 40px; height: 40px; border-radius: 10px;
-        background: var(--accent-dim); border: 1px solid rgba(232,184,109,0.25);
-        display: flex; align-items: center; justify-content: center;
-        color: var(--accent); font-size: 16px; flex-shrink: 0;
-    }
-    .modal-header-text { flex: 1; }
-    .modal-header-title {
-        font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 800;
-        color: var(--text-primary); line-height: 1;
-    }
-    .modal-header-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
-    .modal-close-btn {
-        width: 32px; height: 32px; border-radius: var(--radius-sm);
-        border: 1.5px solid var(--card-border); background: transparent;
-        cursor: pointer; display: flex; align-items: center; justify-content: center;
-        color: var(--text-muted); font-size: 13px;
-        transition: all 0.15s; flex-shrink: 0;
-    }
-    .modal-close-btn:hover { background: var(--page-bg); color: var(--text-primary); border-color: #B0BCCF; }
 
     /* ── STEP PROGRESS ──────────────────────────────────── */
     .step-track {
         display: flex;
         align-items: flex-start;
-        margin-bottom: 20px;
+        margin-bottom: var(--sp-5);
     }
     .step-item {
         flex: 1;
@@ -352,7 +200,7 @@
         border: 2px solid var(--card-border);
         background: var(--card-bg);
         display: flex; align-items: center; justify-content: center;
-        font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 800;
+        font-family: 'Outfit', sans-serif; font-size: var(--fs-xs); font-weight: 800;
         color: var(--text-muted);
         flex-shrink: 0;
         position: relative; z-index: 1;   /* sits above the connector line */
@@ -360,13 +208,13 @@
     }
     .step-item.active .step-dot {
         border-color: var(--accent); background: var(--accent);
-        color: #0B1120; box-shadow: 0 0 0 3px var(--accent-dim);
+        color: var(--text-primary); box-shadow: 0 0 0 3px var(--accent-dim);
     }
     .step-item.done .step-dot {
         border-color: var(--accent); background: var(--accent-dim); color: var(--accent);
     }
     .step-name {
-        font-size: 11px; font-weight: 600; color: var(--text-muted);
+        font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted);
         white-space: nowrap; text-align: center;
         transition: color 0.2s;
         position: relative; z-index: 1;
@@ -375,13 +223,6 @@
     .step-item.done  .step-name { color: var(--text-secondary); }
 
     /* ── MODAL BODY ─────────────────────────────────────── */
-    .modal-body {
-        padding: 0 24px;
-        overflow-y: auto;
-        flex: 1;
-    }
-    .modal-body::-webkit-scrollbar { width: 4px; }
-    .modal-body::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
 
     /* ── STEP PANELS ────────────────────────────────────── */
     .step-panel { display: none; padding: 6px 0 16px; }
@@ -396,13 +237,13 @@
         border-bottom: 1px solid var(--card-border);
     }
     .step-panel-icon {
-        width: 34px; height: 34px; border-radius: 8px;
+        width: 34px; height: 34px; border-radius: var(--radius-sm);
         background: var(--accent-dim);
         display: flex; align-items: center; justify-content: center;
-        color: var(--accent); font-size: 14px; flex-shrink: 0;
+        color: var(--accent); font-size: var(--fs-base); flex-shrink: 0;
     }
-    .step-panel-title { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary); }
-    .step-panel-sub   { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+    .step-panel-title { font-family: 'Outfit', sans-serif; font-size: var(--fs-base); font-weight: 700; color: var(--text-primary); }
+    .step-panel-sub   { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 1px; }
 
     /* ── FIELD GRID (modal) ─────────────────────────────── */
     .mfield-grid {
@@ -412,33 +253,33 @@
     .mfield-grid .span-full { grid-column: 1 / -1; }
     .mfield-group { display: flex; flex-direction: column; gap: 0; }
     .mfield-label {
-        font-size: 11px; font-weight: 700; color: var(--text-secondary);
+        font-size: var(--fs-xs); font-weight: 700; color: var(--text-secondary);
         letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px;
         display: flex; align-items: center; gap: 3px;
     }
-    .mfield-label .req { color: var(--danger); font-size: 13px; line-height: 1; }
+    .mfield-label .req { color: var(--danger); font-size: var(--fs-base); line-height: 1; }
     .mfield-wrap { position: relative; }
     .mfield-icon {
         position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-        color: var(--text-muted); font-size: 12px; pointer-events: none; transition: color 0.2s;
+        color: var(--text-muted); font-size: var(--fs-sm); pointer-events: none; transition: color 0.2s;
     }
     .mfield-wrap:focus-within .mfield-icon { color: var(--accent); }
     .has-micon input, .has-micon select { padding-left: 34px; }
     .mfield-input, .mfield-select {
         width: 100%; padding: 9.5px 13px;
         border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-        background: #fff; color: var(--text-primary);
-        font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px;
+        background: var(--input-bg); color: var(--text-primary);
+        font-family: 'Plus Jakarta Sans', sans-serif; font-size: var(--fs-base);
         outline: none; appearance: none; -webkit-appearance: none;
         transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
     }
     .mfield-input::placeholder { color: var(--text-muted); opacity: 0.6; }
-    .mfield-input:hover, .mfield-select:hover { border-color: #B0BCCF; }
+    .mfield-input:hover, .mfield-select:hover { border-color: var(--input-border); }
     .mfield-input:focus, .mfield-select:focus {
-        border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: #FFFDF8;
+        border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: var(--tone-warning-bg);
     }
     .mfield-input.is-invalid, .mfield-select.is-invalid {
-        border-color: var(--danger); background: #FFF8F8;
+        border-color: var(--danger); background: var(--tone-danger-bg);
     }
     .mfield-input.is-invalid:focus, .mfield-select.is-invalid:focus {
         box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
@@ -449,56 +290,40 @@
     }
     .mfield-error {
         display: flex; align-items: center; gap: 4px; margin-top: 5px;
-        font-size: 11px; color: var(--danger); font-weight: 500;
+        font-size: var(--fs-xs); color: var(--danger); font-weight: 500;
     }
 
     /* ── CAPACITY TILES (modal) ─────────────────────────── */
     .capacity-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-    .cap-tile {
-        background: var(--page-bg); border: 1.5px solid var(--card-border);
-        border-radius: var(--radius-sm); padding: 16px 12px;
-        display: flex; flex-direction: column; align-items: center; gap: 8px;
-        text-align: center; transition: border-color 0.2s, box-shadow 0.2s;
-    }
     .cap-tile:focus-within {
-        border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: #FFFDF8;
+        border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: var(--tone-warning-bg);
     }
     .cap-tile-icon {
         width: 32px; height: 32px; border-radius: 7px;
         background: var(--accent-dim); display: flex; align-items: center; justify-content: center;
-        color: var(--accent); font-size: 13px;
+        color: var(--accent); font-size: var(--fs-base);
     }
-    .cap-tile-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
     .cap-tile input {
         width: 100%; border: none; background: transparent; text-align: center;
-        font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 800;
+        font-family: 'Outfit', sans-serif; font-size: var(--fs-xl); font-weight: 800;
         color: var(--text-primary); outline: none; padding: 0; line-height: 1;
         -moz-appearance: textfield;
     }
     .cap-tile input::-webkit-outer-spin-button,
     .cap-tile input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .cap-tile input::placeholder { color: var(--text-muted); font-weight: 400; font-size: 18px; }
+    .cap-tile input::placeholder { color: var(--text-muted); font-weight: 400; font-size: var(--fs-lg); }
 
     /* ── MODAL FOOTER ───────────────────────────────────── */
-    .modal-footer {
-        padding: 16px 24px;
-        border-top: 1px solid var(--card-border);
-        display: flex; align-items: center; justify-content: space-between; gap: 10px;
-        flex-shrink: 0;
-        background: var(--card-bg);
-    }
     .modal-footer-left { display: flex; align-items: center; gap: 8px; }
     .modal-footer-right { display: flex; align-items: center; gap: 8px; }
     .step-counter {
-        font-size: 11.5px; font-weight: 600; color: var(--text-muted);
+        font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted);
         padding: 5px 10px; background: var(--page-bg);
-        border-radius: 20px; border: 1px solid var(--card-border);
+        border-radius: var(--radius-pill); border: 1px solid var(--card-border);
     }
     .step-counter strong { color: var(--accent); }
 
     @media (max-width: 600px) {
-        .modal-box { max-height: 100vh; border-radius: 0; max-width: 100%; }
-        .modal-overlay { padding: 0; align-items: flex-end; }
         .mfield-grid { grid-template-columns: 1fr; }
         .mfield-grid .span-2 { grid-column: span 1; }
         .capacity-row { grid-template-columns: 1fr; }
@@ -509,98 +334,140 @@
 
 @section('content')
 
+{{-- The two filterable facets, written once. They were spelled out four
+     times in this file — both filter selects and both create-form selects —
+     so a type you could create was not necessarily a type you could filter
+     by, and now the mobile chips read from the same two lines. --}}
+@php
+    $buildingTypes  = ['Residential', 'Commercial', 'Mixed Use', 'Industrial', 'Retail'];
+    $ownershipTypes = ['Owned', 'Leased', 'Joint Venture', 'Managed'];
+@endphp
+
 {{-- PAGE HEADER --}}
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{{ url('/dashboard') }}">Home</a>
-            <i class="fa-solid fa-chevron-right"></i>
-            <span>Buildings</span>
-        </div>
-        <h1 class="page-header-title">Buildings</h1>
-        <p class="page-header-sub">Manage all building and property records</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ route('export.buildings', request()->only(['search','property_type','type_of_ownership'])) }}" class="btn btn-success">
-            <i class="fa-solid fa-file-excel"></i> Export
-        </a>
-        <button type="button" class="btn btn-outline" onclick="openImport_buildings()">
-            <i class="fa-solid fa-file-import"></i> Import
-        </button>
-        <button type="button" class="btn btn-primary" onclick="openBuildingModal()">
-            <i class="fa-solid fa-plus"></i> Add Building
-        </button>
-    </div>
-</div>
 
-{{-- ═══════════════════════ MOBILE SCREEN (Miknas Property Manager design) ═══════════════════════ --}}
-<div class="m-screen">
-    <div class="pm-search-field is-pill">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <form method="GET" action="{{ route('buildings.index') }}" style="flex:1;">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search property name or code"
-                   style="width:100%;border:0;outline:none;font-size:13.5px;color:var(--pm-text);background:transparent;font-family:'Plus Jakarta Sans',sans-serif;"
-                   oninput="mDebounceSubmit(this)">
-        </form>
-    </div>
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
+     This screen was the prototype for the shared system — its row, its
+     reveal and its bar-draw are now .m-row-card, .ps-reveal and
+     .m-row-bar in app-mobile.css. The section order and the reveal queue
+     have moved out too, into components/mobile-list: this was the one
+     list screen that led with the search pill, which put its Add button
+     in a different place than on the other ten.
 
-    <div style="display:flex;flex-direction:column;gap:10px;">
-        @forelse($buildings as $building)
-            @php
-                $fin = $financials[$building->id] ?? null;
-                $totalUnits = $building->units_count ?? 0;
-                $occupied = $building->occupied_units_count ?? 0;
-                $photo = $building->images->first()?->url;
-                $netColor = ($fin && $fin['net_income'] < 0) ? 'var(--pm-red)' : 'var(--pm-text)';
-            @endphp
-            <a href="{{ route('buildings.show', $building) }}" class="pm-property-card pm-ripple">
-                <div style="display:flex;align-items:stretch;gap:12px;padding:14px;">
-                    <div style="flex:none;width:96px;height:112px;border-radius:10px;overflow:hidden;background:var(--pm-border);@if($photo) background-image:url('{{ $photo }}');background-size:cover;background-position:center; @endif">
-                        @unless($photo)
-                            <div class="pm-property-photo-fallback"><i class="fa-solid fa-building"></i></div>
-                        @endunless
-                    </div>
-                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;">
-                        <div class="pm-property-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $building->property_name }}</div>
-                        <div class="pm-property-address" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><i class="fa-solid fa-location-dot"></i>&nbsp;{{ $building->property_type ?? 'Property' }} &middot; {{ $occupied }} of {{ $totalUnits }} units let</div>
-                    </div>
-                    <i class="fa-solid fa-chevron-right pm-action-chevron" style="align-self:center;"></i>
-                </div>
-                @if($fin)
-                <div class="pm-property-wells" style="margin:0 14px 14px;">
-                    <div class="pm-well"><div class="pm-well-label">INCOME</div><div class="pm-well-value">BHD {{ number_format($fin['total_income'], 0) }}</div></div>
-                    <div class="pm-well"><div class="pm-well-label">NET</div><div class="pm-well-value" style="color:{{ $netColor }};">BHD {{ number_format($fin['net_income'], 0) }}</div></div>
-                    <div class="pm-well"><div class="pm-well-label">OCCUPIED</div><div class="pm-well-value">{{ $fin['occupancy_percent'] }}%</div></div>
-                </div>
+     Its filters had no mobile path at all — the two selects lived in the
+     desktop filter bar and nothing replaced them on the phone. They are
+     chips now, two facets in one row with a hairline between them. The
+     facets compose (Residential AND Leased), each chip clears itself when
+     tapped again, and All drops both while keeping the search. No counts
+     on them: the strip directly above already says how many. ── --}}
+@php
+    $bldType = request('property_type');
+    $bldOwn  = request('type_of_ownership');
+
+    /* One chip's link: it carries the other facet and the search through
+       untouched, and sets — or, when it is already the active one, clears
+       — its own. */
+    $bldFacet = function (string $key, string $value) use ($bldType, $bldOwn) {
+        $params = ['search' => request('search'), 'property_type' => $bldType, 'type_of_ownership' => $bldOwn];
+        $params[$key] = ($params[$key] === $value) ? null : $value;
+
+        return route('buildings.index', array_filter($params));
+    };
+
+    $bldChips = [[
+        'label'  => 'All',
+        'href'   => route('buildings.index', array_filter(['search' => request('search')])),
+        'active' => ! $bldType && ! $bldOwn,
+    ]];
+    foreach ($buildingTypes as $bldOpt) {
+        $bldChips[] = ['label' => $bldOpt, 'href' => $bldFacet('property_type', $bldOpt), 'active' => $bldType === $bldOpt];
+    }
+    $bldChips[] = ['sep' => true];
+    foreach ($ownershipTypes as $bldOpt) {
+        $bldChips[] = ['label' => $bldOpt, 'href' => $bldFacet('type_of_ownership', $bldOpt), 'active' => $bldOwn === $bldOpt];
+    }
+@endphp
+<x-mobile-list
+    :actions="[
+        'primary' => ['label' => 'Add a property', 'onclick' => 'openBuildingModal()'],
+        'sheet'   => [
+            'id'    => 'bldmMoreSheet',
+            'title' => 'More',
+            'sub'   => 'Import and export this list',
+            'items' => [
+                ['icon' => 'fa-wand-magic-sparkles', 'label' => 'Smart import',
+                 'desc' => 'Bring in properties from a spreadsheet',
+                 'onclick' => 'openImport_buildings()'],
+                ['icon' => 'fa-file-excel', 'label' => 'Export to Excel',
+                 'desc' => 'The list as it is filtered now',
+                 'href' => route('export.buildings', array_merge(request()->only(['search','property_type','type_of_ownership']), ['format' => 'xlsx']))],
+                ['icon' => 'fa-file-pdf', 'label' => 'Export to PDF',
+                 'desc' => 'The list as it is filtered now',
+                 'href' => route('export.buildings', array_merge(request()->only(['search','property_type','type_of_ownership']), ['format' => 'pdf']))],
+            ],
+        ],
+    ]"
+    :stats="[
+        ['value' => $stats['total'],       'label' => 'Total'],
+        ['value' => $stats['residential'], 'label' => 'Residential'],
+        ['value' => $stats['commercial'],  'label' => 'Commercial'],
+    ]"
+    :search="[
+        'action'      => route('buildings.index'),
+        'placeholder' => 'Search property name or code',
+        'aria'        => 'Search properties',
+        'keep'        => ['property_type', 'type_of_ownership'],
+    ]"
+    :chips="$bldChips">
+
+    @forelse($buildings as $building)
+        @php
+            $fin        = $financials[$building->id] ?? null;
+            $totalUnits = $building->units_count ?? 0;
+            $occupied   = $building->occupied_units_count ?? 0;
+            $photo      = $building->images->first()?->url;
+            $occPct     = $fin['occupancy_percent'] ?? \App\Support\Occupancy::percent($occupied, $totalUnits);
+            $net        = $fin['net_income'] ?? 0;
+            // The three wells said "BHD 0" three times on a portfolio with
+            // no ledger yet. The net only earns its place once it is a
+            // number worth reading.
+            $showNet    = $fin && (int) round($net) !== 0;
+        @endphp
+        <a href="{{ route('buildings.show', $building) }}" class="m-row-card ps-reveal">
+            <span class="m-row-thumb">
+                @if($photo)
+                    <img src="{{ $photo }}" alt="" loading="lazy">
+                @else
+                    <i class="fa-regular fa-building" aria-hidden="true"></i>
                 @endif
-            </a>
-        @empty
-            <div class="pm-empty is-lg">
-                <div class="pm-empty-icon-lg"><i class="fa-solid fa-building-circle-exclamation"></i></div>
-                <div style="font-size:14.5px;font-weight:700;color:var(--pm-text);margin-bottom:4px;">No buildings found</div>
-                <div style="margin-bottom:16px;">Try adjusting your search or add a new building.</div>
-                <button type="button" onclick="openBuildingModal()" class="pm-ripple" style="border:0;border-radius:12px;background:var(--pm-navy);color:#fff;font-weight:700;font-size:13px;padding:12px 20px;font-family:'Plus Jakarta Sans',sans-serif;">
-                    <i class="fa-solid fa-plus" style="margin-right:7px;color:var(--pm-gold);"></i>Add a property
-                </button>
-            </div>
-        @endforelse
+            </span>
 
-        <div style="display:flex;gap:9px;margin-top:4px;">
-            <button type="button" onclick="openBuildingModal()" style="flex:1;padding:13px 0;border:1px dashed var(--pm-border-strong);border-radius:8px;background:var(--pm-surface);color:var(--pm-text-2);font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
-                <i class="fa-solid fa-plus" style="margin-right:7px;"></i>Add a property
-            </button>
-            <button type="button" onclick="openImport_buildings()" style="flex:1;padding:13px 0;border:0;border-radius:8px;background:var(--pm-navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
-                <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--pm-gold);margin-right:7px;"></i>Smart import
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $building->property_name }}</span>
+                <span class="m-row-sub">{{ $building->property_type ?? 'Property' }} &middot; {{ $occupied }} of {{ $totalUnits }} let</span>
+                @if($showNet)
+                    <span class="m-row-sub {{ $net < 0 ? 'is-down' : 'is-strong' }}">BHD {{ number_format($net, 0) }} net</span>
+                @endif
+            </span>
+
+            <span class="m-row-occ">
+                <span class="m-row-bar">
+                    <span class="m-row-bar-fill" style="--ps-pct:{{ $occPct }}%"></span>
+                </span>
+                <span class="m-row-pct">{{ $occPct }}%</span>
+            </span>
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+        </a>
+    @empty
+        <div class="m-empty ps-reveal">
+            <div class="m-empty-icon"><i class="fa-solid fa-building-circle-exclamation" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No properties here</div>
+            <div class="m-empty-sub">Try a different search, or add a property.</div>
+            <button type="button" onclick="openBuildingModal()" class="m-action-btn primary">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>Add a property
             </button>
         </div>
-    </div>
-
-    <a href="{{ route('export.buildings', request()->only(['search','property_type','type_of_ownership'])) }}" style="text-align:center;font-size:12px;font-weight:600;color:var(--pm-text-3);text-decoration:none;padding:4px 0 8px;">
-        <i class="fa-solid fa-file-excel"></i> Export all to Excel
-    </a>
-
-    <button type="button" class="pm-fab" style="position:fixed;border:0;" onclick="openExpenseSheet()" title="Record expense"><i class="fa-solid fa-plus"></i></button>
-</div>
+    @endforelse
+</x-mobile-list>
 
 @include('components.expense-sheet')
 
@@ -616,21 +483,30 @@
 {{-- STATS --}}
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-icon gold"><i class="fa-solid fa-building"></i></div>
-        <div><div class="stat-val">{{ $stats['total'] ?? 0 }}</div><div class="stat-lbl">Total Buildings</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon gold"><i class="fa-solid fa-building"></i></span>
+            <span class="stat-lbl">Total Buildings</span>
+        </div>
+        <div class="stat-val">{{ $stats['total'] ?? 0 }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon green"><i class="fa-solid fa-house"></i></div>
-        <div><div class="stat-val">{{ $stats['residential'] ?? 0 }}</div><div class="stat-lbl">Residential</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon green"><i class="fa-solid fa-house"></i></span>
+            <span class="stat-lbl">Residential</span>
+        </div>
+        <div class="stat-val">{{ $stats['residential'] ?? 0 }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon blue"><i class="fa-solid fa-store"></i></div>
-        <div><div class="stat-val">{{ $stats['commercial'] ?? 0 }}</div><div class="stat-lbl">Commercial</div></div>
+        <div class="stat-card-top">
+            <span class="stat-icon blue"><i class="fa-solid fa-store"></i></span>
+            <span class="stat-lbl">Commercial</span>
+        </div>
+        <div class="stat-val">{{ $stats['commercial'] ?? 0 }}</div>
     </div>
 </div>
 
 {{-- FILTER BAR + TABLE CARD --}}
-<div class="card m-hide-desktop-index" style="overflow:hidden;">
+<div class="table-card m-hide-desktop-index">
 
     <form method="GET" action="{{ route('buildings.index') }}" id="filterForm">
         <div class="filter-bar">
@@ -643,7 +519,7 @@
                 <label>Property Type</label>
                 <select name="property_type" onchange="this.form.submit()">
                     <option value="">All Types</option>
-                    @foreach(['Residential','Commercial','Mixed Use','Industrial','Retail'] as $type)
+                    @foreach($buildingTypes as $type)
                         <option value="{{ $type }}" {{ request('property_type') == $type ? 'selected' : '' }}>{{ $type }}</option>
                     @endforeach
                 </select>
@@ -652,7 +528,7 @@
                 <label>Ownership</label>
                 <select name="type_of_ownership" onchange="this.form.submit()">
                     <option value="">All Ownership</option>
-                    @foreach(['Owned','Leased','Joint Venture','Managed'] as $own)
+                    @foreach($ownershipTypes as $own)
                         <option value="{{ $own }}" {{ request('type_of_ownership') == $own ? 'selected' : '' }}>{{ $own }}</option>
                     @endforeach
                 </select>
@@ -735,7 +611,7 @@
                         @if($unitCount)
                             <div style="font-family:'Outfit',sans-serif;font-weight:700;">{{ $unitCount }}</div>
                             <div style="font-size:11px;margin-top:2px;">
-                                <span style="color:#059669;font-weight:600;">{{ $occupiedCount }} occupied</span>
+                                <span style="color:var(--tone-success-fg);font-weight:600;">{{ $occupiedCount }} occupied</span>
                                 @if($unitCount > 0)
                                 <span style="color:var(--text-muted);">/ {{ $unitCount - $occupiedCount }} vacant</span>
                                 @endif
@@ -743,24 +619,15 @@
                         @else <span style="color:var(--text-muted);">—</span> @endif
                     </td>
                     <td onclick="event.stopPropagation()">
-                        <div class="action-btns" style="justify-content:flex-end;">
-                            <a href="{{ route('buildings.show', $building) }}?tab=floors" class="btn btn-outline btn-sm" title="Floors">
-                                <i class="fa-solid fa-layer-group"></i>
-                            </a>
-                            <a href="{{ route('buildings.show', $building) }}" class="btn btn-outline btn-sm">
-                                <i class="fa-regular fa-eye"></i>
-                            </a>
-                            <a href="{{ route('buildings.edit', $building) }}" class="btn btn-outline btn-sm">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </a>
-                            <form method="POST" action="{{ route('buildings.destroy', $building) }}"
-                                  onsubmit="return confirm('Delete this building? This cannot be undone.')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </form>
-                        </div>
+                        @include('partials.row-actions', ['label' => 'Actions for '.$building->property_name, 'items' => [
+                            ['label' => 'View building',   'icon' => 'fa-eye', 'url' => route('buildings.show', $building)],
+                            ['label' => 'View floors',     'icon' => 'fa-layer-group', 'url' => route('buildings.show', $building).'?tab=floors'],
+                            ['label' => 'Edit building',   'icon' => 'fa-pen-to-square', 'url' => route('buildings.edit', $building)],
+                            ['sep' => true],
+                            ['label' => 'Delete building', 'icon' => 'fa-trash-can', 'tone' => 'danger',
+                             'action' => route('buildings.destroy', $building), 'method' => 'DELETE',
+                             'confirm' => 'Delete '.$building->property_name.'? This cannot be undone.'],
+                        ]])
                     </td>
                 </tr>
                 @empty
@@ -790,14 +657,14 @@
             </p>
         </div>
         @else
-        <div class="buildings-grid">
+        <div class="card-grid buildings-grid">
             @foreach($buildings as $building)
             @php
                 $typeColors = [
-                    'Residential'  => '#10B981',
+                    'Residential'  => 'var(--chart-income)',
                     'Commercial'   => '#3B82F6',
-                    'Mixed Use'    => '#8B5CF6',
-                    'Industrial'   => '#F59E0B',
+                    'Mixed Use'    => 'var(--chart-profit)',
+                    'Industrial'   => 'var(--chart-debits)',
                     'Retail'       => '#EC4899',
                 ];
                 $accentColor = $typeColors[$building->property_type ?? ''] ?? 'var(--accent)';
@@ -806,12 +673,22 @@
                 $occupiedCount = $building->occupied_units_count ?? 0;
                 $images        = $building->images ?? collect();
                 $cardId      = 'card-'.$building->id;
+                /* Same figures the mobile card and the building's own page use —
+                   one source for the maths (DashboardAnalyticsService), so the
+                   list and the detail page can never disagree. */
+                $fin        = $financials[$building->id] ?? null;
+                /* Gated on there being units at all: the snapshot reports 0%
+                   for an empty building, and rendering that as "0% occupied"
+                   states a fact about nothing. */
+                $occupancy  = $unitCount > 0
+                    ? (int) ($fin['occupancy_percent'] ?? round($occupiedCount / $unitCount * 100))
+                    : null;
             @endphp
-            <div class="bldg-card" onclick="window.location='{{ route('buildings.show', $building) }}'">
+            <div class="card is-interactive bldg-card" onclick="window.location='{{ route('buildings.show', $building) }}'">
 
                 {{-- PHOTO AREA --}}
-                <div class="bldg-card-photo">
-                    <div class="bldg-card-type-bar" style="background: linear-gradient(90deg, {{ $accentColor }}, {{ $accentColor }}88);"></div>
+                <div class="card-media bldg-card-photo">
+                    <div class="card-media-bar" style="background: linear-gradient(90deg, {{ $accentColor }}, {{ $accentColor }}88);"></div>
 
                     @if($images->isNotEmpty())
                         <div class="photo-slides" id="{{ $cardId }}-slides">
@@ -840,20 +717,26 @@
                             <i class="fa-solid fa-camera" style="font-size:9px;"></i>
                             {{ $images->count() }}
                         </div>
+                        @isset($occupancy)
+                            <span class="card-media-pill bldg-occ-pill">{{ $occupancy }}% occupied</span>
+                        @endisset
                     @else
                         <div class="photo-placeholder">
                             <i class="fa-solid fa-building"></i>
                             <span>No photos yet</span>
                         </div>
+                        @isset($occupancy)
+                            <span class="card-media-pill bldg-occ-pill">{{ $occupancy }}% occupied</span>
+                        @endisset
                     @endif
                 </div>
 
                 {{-- CARD BODY --}}
-                <div class="bldg-card-body">
+                <div class="card-body is-stack bldg-card-body">
                     <div class="bldg-card-head">
                         <div>
                             <span class="badge badge-gold" style="font-size:11px;margin-bottom:6px;display:inline-block;">{{ $building->property_code }}</span>
-                            <div class="bldg-card-title">{{ $building->property_name }}</div>
+                            <div class="card-title">{{ $building->property_name }}</div>
                         </div>
                     </div>
                     <div class="bldg-card-badges">
@@ -884,26 +767,34 @@
                         </div>
                         @endif
                     </div>
-                    <div class="bldg-card-stats">
-                        <div class="bldg-stat-pill">
-                            <div class="bldg-stat-pill-val">{{ $floorCount ?: '—' }}</div>
-                            <div class="bldg-stat-pill-lbl">Floors</div>
+                    <div class="stat-well-row bldg-card-stats">
+                        <div class="stat-well">
+                            <div class="stat-well-val">{{ $floorCount ?: '—' }}</div>
+                            <div class="stat-well-lbl">Floors</div>
                         </div>
-                        <div class="bldg-stat-pill">
-                            <div class="bldg-stat-pill-val">{{ $unitCount ?: '—' }}</div>
-                            <div class="bldg-stat-pill-lbl">Units</div>
+                        <div class="stat-well">
+                            <div class="stat-well-val">{{ $unitCount ?: '—' }}</div>
+                            <div class="stat-well-lbl">Units</div>
                             @if($unitCount > 0)
-                            <div style="font-size:10px;margin-top:3px;line-height:1.3;">
-                                <span style="color:#059669;font-weight:600;">{{ $occupiedCount }} occ</span>
-                                <span style="color:var(--text-muted);"> / {{ $unitCount - $occupiedCount }} vac</span>
+                            <div class="bldg-occ-split">
+                                <span class="is-let">{{ $occupiedCount }} let</span>
+                                <span> / {{ $unitCount - $occupiedCount }} vac</span>
                             </div>
                             @endif
                         </div>
+                        @if($fin)
+                        <div class="stat-well">
+                            <div class="stat-well-val {{ $fin['net_income'] < 0 ? 'val-negative' : '' }}">
+                                {{ number_format($fin['net_income'], 0) }}
+                            </div>
+                            <div class="stat-well-lbl">Net / mo</div>
+                        </div>
+                        @endif
                     </div>
                 </div>
 
                 {{-- ACTIONS --}}
-                <div class="bldg-card-actions" onclick="event.stopPropagation()">
+                <div class="card-footer bldg-card-actions" onclick="event.stopPropagation()">
                     <a href="{{ route('buildings.show', $building) }}?tab=floors" class="btn btn-outline btn-sm" title="Floors">
                         <i class="fa-solid fa-layer-group"></i>
                     </a>
@@ -932,21 +823,7 @@
             Showing <strong>{{ $buildings->firstItem() ?? 0 }}–{{ $buildings->lastItem() ?? 0 }}</strong>
             of <strong>{{ $buildings->total() }}</strong> buildings
         </div>
-        <div class="pagination">
-            @if($buildings->onFirstPage())
-                <span class="page-btn" style="opacity:0.4;cursor:default;"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></span>
-            @else
-                <a href="{{ $buildings->previousPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></a>
-            @endif
-            @foreach($buildings->getUrlRange(max(1, $buildings->currentPage()-2), min($buildings->lastPage(), $buildings->currentPage()+2)) as $page => $url)
-                <a href="{{ $url }}" class="page-btn {{ $page == $buildings->currentPage() ? 'active' : '' }}">{{ $page }}</a>
-            @endforeach
-            @if($buildings->hasMorePages())
-                <a href="{{ $buildings->nextPageUrl() }}" class="page-btn"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></a>
-            @else
-                <span class="page-btn" style="opacity:0.4;cursor:default;"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></span>
-            @endif
-        </div>
+        {{ $buildings->links() }}
     </div>
 
 </div>
@@ -965,7 +842,7 @@
 
 <div class="modal-overlay" id="buildingModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
 
-    <div class="modal-box">
+    <div class="modal-box" style="--modal-w:680px">
 
         {{-- HEADER --}}
         <div class="modal-header">
@@ -1054,7 +931,7 @@
                             <div class="mfield-wrap">
                                 <select name="type_of_ownership" class="mfield-select {{ $errors->has('type_of_ownership') ? 'is-invalid' : '' }}">
                                     <option value="">Select…</option>
-                                    @foreach(['Owned','Leased','Joint Venture','Managed'] as $opt)
+                                    @foreach($ownershipTypes as $opt)
                                         <option value="{{ $opt }}" {{ $mval('type_of_ownership') == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                                     @endforeach
                                 </select>
@@ -1071,7 +948,7 @@
                             <div class="mfield-wrap">
                                 <select name="property_type" class="mfield-select {{ $errors->has('property_type') ? 'is-invalid' : '' }}">
                                     <option value="">Select…</option>
-                                    @foreach(['Residential','Commercial','Mixed Use','Industrial','Retail'] as $opt)
+                                    @foreach($buildingTypes as $opt)
                                         <option value="{{ $opt }}" {{ $mval('property_type') == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                                     @endforeach
                                 </select>
@@ -1206,9 +1083,9 @@
                     <div class="capacity-row">
 
                         @if($mshow('total_no_of_blocks'))
-                        <div class="cap-tile">
-                            <div class="cap-tile-icon"><i class="fa-solid fa-cubes-stacked"></i></div>
-                            <div class="cap-tile-label">Blocks</div>
+                        <div class="stat-well">
+                            <div class="stat-well-icon"><i class="fa-solid fa-cubes-stacked"></i></div>
+                            <div class="stat-well-lbl">Blocks</div>
                             <input type="number" name="total_no_of_blocks"
                                 value="{{ $mval('total_no_of_blocks') }}" placeholder="0" min="0">
                             @error('total_no_of_blocks')
@@ -1218,9 +1095,9 @@
                         @endif
 
                         @if($mshow('total_no_of_floors'))
-                        <div class="cap-tile">
-                            <div class="cap-tile-icon"><i class="fa-solid fa-layer-group"></i></div>
-                            <div class="cap-tile-label">Floors</div>
+                        <div class="stat-well">
+                            <div class="stat-well-icon"><i class="fa-solid fa-layer-group"></i></div>
+                            <div class="stat-well-lbl">Floors</div>
                             <input type="number" name="total_no_of_floors"
                                 value="{{ $mval('total_no_of_floors') }}" placeholder="0" min="0">
                             @error('total_no_of_floors')
@@ -1230,9 +1107,9 @@
                         @endif
 
                         @if($mshow('total_no_of_units'))
-                        <div class="cap-tile">
-                            <div class="cap-tile-icon"><i class="fa-solid fa-door-open"></i></div>
-                            <div class="cap-tile-label">Units</div>
+                        <div class="stat-well">
+                            <div class="stat-well-icon"><i class="fa-solid fa-door-open"></i></div>
+                            <div class="stat-well-lbl">Units</div>
                             <input type="number" name="total_no_of_units"
                                 value="{{ $mval('total_no_of_units') }}" placeholder="0" min="0">
                             @error('total_no_of_units')

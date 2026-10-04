@@ -1,0 +1,642 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PDF / PRINT STYLESHEET
+   The single stylesheet behind every PDF the app produces — the portfolio
+   export, the six list exports, the ten reports, invoices, EWA bills and
+   payment receipts. Paired with resources/views/layouts/pdf.blade.php; no PDF
+   view carries print CSS of its own any more.
+
+   Read this before editing a PDF view:
+
+   1. DomPDF supports no CSS custom properties, no flex and no grid. Every
+      colour below is a literal because it has to be, and it is the VALUE of a
+      token from app-core.css §1.1 (light) — named in a comment beside it so the
+      two can be kept in step. Always light: this is paper.
+
+   2. `*` MUST NOT be used to reset margins. In DomPDF the universal selector
+      matches the page box, so `* { margin: 0 }` silently zeroes the @page
+      margins and prints the document flush to the paper edge with the last
+      column clipped. Reset elements explicitly.
+
+   3. No floats. A float inside a fixed block breaks DomPDF's normal flow for
+      everything after it — it silently swallowed a whole document once. Lay
+      rows out with tables.
+
+   4. counter(pages) is unresolved by DomPDF's CPDF backend ("Page 1 of 0").
+      App\Support\PdfPageNumbers stamps the numbers after layout instead.
+
+   5. No landscape, anywhere. Wide tables fit A4 portrait by dropping to 8pt
+      (.is-dense) and truncating values in PHP, never by turning the paper.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page box ───────────────────────────────────────────────────────────────
+   The brief asks for `@page { margin: 0 }` with a 0.6in content padding. That
+   is the right instinct on screen but it does not survive DomPDF: pagination
+   happens on the page box, and a block's VERTICAL padding applies once — at the
+   start and end of the block, not on every page it spans. So page 1 got its
+   0.6in top inset, the final page got its bottom inset, and every page between
+   ran from paper edge to paper edge, with the last rows printing straight over
+   the running footer.
+
+   The margin therefore carries the inset, which is the only way to get it on
+   every page. The rendered result is what the brief describes — 0.6in of white
+   on all four sides at any data volume — and .pdf-page keeps a zero padding so
+   nothing double-insets. The bottom is 0.72in rather than 0.6in because the
+   fixed footer occupies that band and reserves no flow space of its own. */
+@page {
+    size: A4 portrait;
+    margin: 0.45in 0.45in 0.62in 0.45in;
+}
+
+/* Figtree, self-hosted from public/fonts — DomPDF ships only DejaVu, and a
+   font it cannot resolve falls back silently at a different width, which
+   reflows every fixed-layout table. Static instances, not the variable font:
+   DomPDF cannot select a weight off a wght axis. */
+@font-face {
+    font-family: 'Figtree';
+    font-style: normal;
+    font-weight: 400;
+    src: url('fonts/Figtree-400.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Figtree';
+    font-style: normal;
+    font-weight: 700;
+    src: url('fonts/Figtree-700.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Figtree';
+    font-style: normal;
+    font-weight: 800;
+    src: url('fonts/Figtree-800.ttf') format('truetype');
+}
+
+/* --text-primary #1E2C4F */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Figtree', 'DejaVu Sans', sans-serif;
+    font-size: 9pt;
+    line-height: 1.45;
+    color: #1E2C4F;
+    background: #FFFFFF;
+}
+div, span, table, thead, tbody, tfoot, tr, th, td, h1, h2, p, ul, li { margin: 0; padding: 0; }
+
+/* Zero: the inset lives on @page so that it repeats per page. Kept as a hook
+   for anything that needs to align to the content box. */
+.pdf-page { padding: 0; }
+
+/* ── Letterhead, page 1 — "Gold seam" ──────────────────────────────────────
+   Two rows: a company bar (logo | 3px gold seam | company block) and a title
+   plate.
+
+   The brief describes both rows as flex, with the seam a stretch-aligned child
+   between the logo and the company block. DomPDF implements neither flex nor
+   grid, so they are display:table / table-cell — the one layout mode it does
+   honour, and which gives the same two-column result with the company block
+   taking the remaining width. The 20px gap is cell padding, since there is no
+   gap property either.
+
+   What table-cell does NOT give is the stretch: nothing here makes a separate
+   seam element as tall as its sibling. So the seam is not an element — it is the
+   company block's left border. See .pdf-company-cell.has-seam below for the two
+   ways the element version failed. */
+.pdf-letterhead { display: table; width: 100%; }
+
+/* Sized in px because DomPDF scales the source (1350²) into the box, and it
+   will not infer one dimension from the other — so height 56px comes with an
+   explicit width. No frame, no plate: the mark is a shaped transparent logo
+   and either would draw a square edge around a round shape.
+
+   66px, not 56px: the cell absorbs the 10px that used to be the seam's left
+   margin, so removing the seam's own cell leaves the logo, the seam and the
+   text exactly where they were. The logo is display:block, so it stays flush
+   left in the wider cell. */
+.pdf-logo-cell { display: table-cell; width: 66px; vertical-align: middle; }
+.pdf-logo { display: block; width: 52px; height: 52px; }
+
+/* The seam — a LEFT BORDER on the company block, not an element of its own.
+   It has to be as tall as that block, and neither way of making a separate
+   element that tall survives DomPDF:
+     · a stated height is the bug it replaces. It was 52px, matched to the logo,
+       so the seam stopped at the division line and left the address and contact
+       lines outside it.
+     · height: 100% collapses the div to zero — the seam disappears completely,
+       which is worse than one that is too short.
+   A border is drawn down the full height of the box it belongs to, so a border
+   on the company block cannot fall short of the company block. The 3px width
+   and colour are unchanged; the border-radius is gone, being unavailable on a
+   3px edge, and invisible at this size.
+
+   The seam only appears alongside the logo, as before — hence the modifier
+   rather than putting the border on every company cell. 20px padding + the 3px
+   border reproduce the old 10px/3px/10px gap. */
+.pdf-company-cell { display: table-cell; vertical-align: middle; padding-left: 10px; }
+.pdf-company-cell.has-seam {
+    border-left: 3px solid #D8B25F;
+    padding-left: 20px;
+}
+/* --text-primary #1E2C4F */
+.pdf-company { font-size: 12pt; font-weight: 800; color: #1E2C4F; }
+/* --tone-accent-fg #84681E — gold ink, AA on white at this size. */
+.pdf-division {
+    margin: 3px 0 6px;
+    font-size: 7pt;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: #84681E;
+}
+/* --text-secondary #5D6880 */
+.pdf-org { font-size: 7pt; line-height: 1.6; color: #5D6880; }
+
+/* ── Title plate ─────────────────────────────────────────────────────────── */
+/* baseline-aligned row: table-cell with vertical-align: baseline. */
+.pdf-plate {
+    margin-top: 18px;
+    background: #F7F9FC;
+    border: 1px solid #E3E7EF;
+    border-radius: 10px;
+    padding: 13px 18px;
+}
+.pdf-plate-row { display: table; width: 100%; }
+/* Both cells top-aligned with the date nudged down: DomPDF accepts
+   vertical-align: baseline on a table-cell but aligns the box top anyway, which
+   left the 8.5pt date floating above the 14pt title's baseline. The 6px is the
+   difference between the two ascents, so the two now sit on one line. */
+.pdf-plate-main { display: table-cell; vertical-align: top; }
+.pdf-plate-date {
+    display: table-cell;
+    width: 30%;
+    padding-top: 6px;
+    text-align: right;
+    vertical-align: top;
+    font-size: 8.5pt;
+    color: #5D6880;
+}
+.pdf-title {
+    font-size: 14pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #1E2C4F;
+}
+.pdf-subtitle { margin-top: 4px; font-size: 8pt; color: #5D6880; }
+
+/* ── Report semantics ───────────────────────────────────────────────────────
+   The report templates ask for these by name. They lived in each template's
+   own <style> block before the shared stylesheet existed, and were dropped in
+   the move — leaving a closing balance that looked like a data row and ageing
+   buckets in body ink. Defined once here, in the same fixed semantic hexes the
+   app uses everywhere: green #059669, amber #D97706, red #DC2626.
+
+   Print-only palette: these are the light-theme values, deliberately. A
+   document has no dark mode. */
+
+/* The entity a report is about — a tenant, mostly — under the title. */
+.report-tenant {
+    margin-top: 14pt;
+    font-size: 11pt;
+    font-weight: 700;
+    /* --text-primary #1E2C4F */
+    color: #1E2C4F;
+    page-break-after: avoid;
+}
+
+/* Mid-table subtotals, a P&L net line and a ledger's closing balance are all
+   totals: same rule above them, same weight. The net line carries the heavier
+   top rule because it closes the statement. */
+.pdf-table tr.subtotal-row td,
+.pdf-table tr.closing-row td {
+    border-top: 1px solid #1E2C4F;
+    border-bottom: none;
+    padding-top: 5pt;
+    font-weight: 700;
+    /* #F7F9FC — the same tint as a striped row, so it reads as a summary of
+       the rows above rather than one more of them. */
+    background: #F7F9FC;
+}
+.pdf-table tr.net-row td {
+    border-top: 1.5px solid #1E2C4F;
+    border-bottom: none;
+    padding-top: 6pt;
+    font-weight: 800;
+    background: #F2F4F9;
+}
+
+/* Money direction. Owing is the exception, so it gets the ink; settled and a
+   zero overdue count stay quiet rather than shouting in green. */
+.owing, .net-owing, .overdue { color: #DC2626; font-weight: 700; }
+.settled, .net-credit { color: #059669; }
+/* --text-faint #8A93A8 — nothing outstanding, nothing to look at. */
+.overdue-zero, .postdated { color: #8A93A8; }
+
+/* Ageing buckets, matched to the coloured column headers they sit under. */
+.bucket-lt60   { color: #059669; }
+.bucket-b60120 { color: #D97706; }
+.bucket-gt120  { color: #DC2626; font-weight: 700; }
+
+/* Rent-schedule month status. Paid is the norm and stays quiet; the two that
+   need chasing carry the ink. */
+.status-paid         { color: #059669; }
+.status-partial      { color: #D97706; font-weight: 700; }
+.status-unpaid       { color: #DC2626; font-weight: 700; }
+.status-not_invoiced { color: #8A93A8; }
+
+/* A P&L reads in three tones: what came in, what went out, what is left. */
+.profit  { color: #059669; font-weight: 700; }
+.loss    { color: #DC2626; font-weight: 700; }
+.expense { color: #D97706; }
+
+/* ── Summary strip ──────────────────────────────────────────────────────────
+   One bordered row of equal cells split by hairlines. A table because it must
+   be equal-width and DomPDF has no grid; radius on the outer element only. */
+/* The frame is a wrapper, not the table: DomPDF ignores border-radius on a
+   table element, so the 8px would silently square off. */
+.pdf-summary-wrap {
+    margin-top: 16pt;
+    /* --card-border-ish #D9DEE9 · --page-bg-alt #F7F9FC */
+    border: 1px solid #D9DEE9;
+    border-radius: 8px;
+    background: #F7F9FC;
+}
+.pdf-summary {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+.pdf-summary td { padding: 8pt 10pt; }
+.pdf-summary td + td { border-left: 1px solid #D9DEE9; }
+.pdf-summary-label {
+    font-size: 7pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+    color: #5D6880;
+}
+.pdf-summary-value { font-size: 15pt; font-weight: 800; margin-top: 3pt; }
+/* --text-faint-ish #8A93A8 — absence, never a fabricated zero. */
+.pdf-summary-value.is-empty { color: #8A93A8; font-weight: 700; }
+
+/* One style for the column-subset note and any other line qualifying a
+   table. Directly above it, so it reads as part of the table. */
+.pdf-note { margin: 12pt 0 4pt; font-size: 7.5pt; color: #5D6880; }
+
+/* ── Section header (one entity: a property, a tenant, a batch) ─────────────
+   Band with a gold left border, rounded on the trailing side only. Kept with
+   the start of its table by break-inside on the wrapper. */
+.pdf-section { margin-top: 18pt; }
+.pdf-section-head {
+    /* #F2F4F9 band, 3px --accent #D8B25F rail */
+    background: #F2F4F9;
+    border-left: 3px solid #D8B25F;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+    padding: 7pt 10pt;
+    page-break-inside: avoid;
+    page-break-after: avoid;
+}
+.pdf-section-row { display: table; width: 100%; table-layout: fixed; }
+.pdf-section-name {
+    display: table-cell;
+    width: 76%;
+    font-size: 12pt;
+    font-weight: 800;
+    vertical-align: middle;
+}
+.pdf-section-code-cell { display: table-cell; width: 24%; text-align: right; vertical-align: middle; }
+/* Navy badge, white ink. */
+.pdf-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: #1E2C4F;
+    color: #FFFFFF;
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+.pdf-section-meta { margin-top: 4pt; font-size: 8.5pt; color: #5D6880; }
+
+.pdf-label {
+    margin: 12pt 0 4pt;
+    font-size: 7pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+    color: #5D6880;
+    page-break-after: avoid;
+}
+
+/* ── Tables ─────────────────────────────────────────────────────────────────
+   table-layout: fixed is what stops a long value widening a column past the
+   printable area. DomPDF has no text-overflow, so views also truncate in PHP. */
+.pdf-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin-top: 6pt;
+}
+.pdf-table th {
+    padding: 4pt 4pt;
+    text-align: left;
+    font-size: 6.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    /* --text-muted #626E85 */
+    color: #626E85;
+    /* --text-primary #1E2C4F */
+    border-bottom: 1.5px solid #1E2C4F;
+    /* A header never wraps. Labels are short by contract — NAME, CODE, FLOORS;
+       see pdfColumns() on each Export — so there is nothing to gain by breaking
+       one and a whole row of baselines to lose. */
+    white-space: nowrap;
+    word-break: keep-all;
+    hyphens: none;
+}
+.pdf-table td {
+    padding: 4pt 4pt;
+    font-size: 8.5pt;
+    /* #E3E7EF row separator */
+    border-bottom: 1px solid #E3E7EF;
+    vertical-align: top;
+    /* One line, always. DomPDF has no text-overflow, so the ellipsis is added
+       in PHP — ListingPdf caps each value to what its column holds — and nowrap
+       is what stops a value breaking mid-word. "Combo Test / Tower" and
+       "Capital / Governorate" were the defect this removes. */
+    white-space: nowrap;
+    overflow: hidden;
+}
+/* ── Pagination contract ─────────────────────────────────────────────────────
+   Measured against this DomPDF build with a probe that swept the preceding
+   block's height one point at a time, not assumed from the CSS spec — DomPDF
+   honours some break rules and silently drops others:
+
+     tr  page-break-inside: avoid   HONOURED — a row never splits.
+     thead                          repeats on every page it spans, by default.
+     tfoot                          rendered once, in place. Not repeated, so a
+                                    total row belongs there.
+     tbody  page-break-inside       DROPPED. Grouping rows in a tbody to keep
+                                    them together does nothing (7 of 61 sweep
+                                    heights still orphaned the total).
+     tr  page-break-before: avoid   HONOURED, and it is the only mechanism that
+                                    binds a row to the one above it: the same 61
+                                    heights orphaned 0 totals with it.
+     div page-break-after: avoid    HONOURED — carries a heading or a section
+                                    band onto the next page with its table.
+     div page-break-inside: avoid   HONOURED — a whole subsection travels as one.
+
+   One trap found the hard way: binding a row to the one above it moves the row
+   but NOT the table head, which DomPDF only re-draws when a break falls inside
+   the body. Putting page-break-before: avoid on the SECOND row therefore left
+   a heading and a bare column header alone at the foot of a page with all of
+   its rows overleaf — worse than what it set out to fix. So the rule is only
+   ever on a total row, where the row above it is never the first, and short
+   subsections get .pdf-keep instead, which moves heading, head and rows as one
+   block. Anything longer than that splits, and a split inside the body does
+   repeat the head. */
+.pdf-table tr { page-break-inside: avoid; }
+/* Explicit rather than relying on the UA default — the repeat is the guarantee
+   that a continuation page still says what its columns are. */
+.pdf-table thead { display: table-header-group; }
+.pdf-table tfoot { display: table-row-group; }
+/* A total alone at the top of a page asserts nothing; it must land under the
+   row it totals. */
+.pdf-table tfoot tr,
+.pdf-table tr.pdf-total,
+.pdf-table tr.subtotal-row,
+.pdf-table tr.net-row,
+.pdf-table tr.closing-row,
+/* The invoice, receipt and EWA-bill facsimiles keep their totals in the body
+   because their tables are fixed-height paper templates, padded with blank
+   rows. Same binding, no restructuring of a layout matched to printed paper. */
+tr.inv-total-row,
+tr.ewa-total-row { page-break-before: avoid; }
+/* Wraps a heading + its table when the table is short enough to travel whole.
+   Never put this on something taller than a page: DomPDF has to break it
+   anyway, and it breaks it worse. */
+.pdf-keep { page-break-inside: avoid; }
+.pdf-table th.right, .pdf-table td.right { text-align: right; }
+.pdf-table th.center, .pdf-table td.center { text-align: center; }
+/* Absence, in grey — distinct from a figure that is genuinely zero. */
+.pdf-empty { color: #8A93A8; }
+
+/* An empty table is not a table: one line, rather than a header row standing
+   over nothing with a totals rule under it. */
+.pdf-none {
+    margin-top: 6pt;
+    padding: 9pt 12pt;
+    border: 1px solid #E3E7EF;
+    border-radius: 6px;
+    background: #F7F9FC;
+    font-size: 8.5pt;
+    color: #8A93A8;
+}
+
+/* Wide tables trade type size for portrait, per spec: 8pt floor, never
+   landscape. */
+.pdf-table.is-dense th { font-size: 6pt; padding: 3pt 2pt; letter-spacing: 0.03em; }
+.pdf-table.is-dense td { font-size: 8pt; padding: 3pt 2pt; }
+
+/* Totals live inside the table, in tfoot — see the pagination contract. */
+.pdf-table tr.pdf-total td,
+.pdf-table tfoot td {
+    border-top: 1.5px solid #1E2C4F;
+    border-bottom: none;
+    padding-top: 6pt;
+    font-weight: 700;
+    text-align: right;
+}
+.pdf-table tr.pdf-total td.value,
+.pdf-table tfoot td.value { font-weight: 800; }
+
+.pdf-table tbody tr.is-striped td { background: #F7F9FC; }
+
+.pdf-blank {
+    padding: 20pt 4pt;
+    text-align: center;
+    font-size: 8.5pt;
+    color: #8A93A8;
+}
+/* An empty subsection is one line, not a table: column headers over nothing
+   read as data that failed to load, and a total under nothing is a fiction.
+   Dashed to read as a placeholder rather than a row. */
+.pdf-blank-line {
+    margin-top: 6pt;
+    padding: 9pt 10pt;
+    border: 1px dashed #D9DEE9;
+    border-radius: 6px;
+    background: #FBFCFE;
+    text-align: center;
+    font-size: 8.5pt;
+    color: #8A93A8;
+    page-break-inside: avoid;
+}
+
+/* ── Running footer, every page — "Gold accent" ────────────────────────────
+   Fixed, so it repeats on every page and consumes no flow space; @page's 0.72in
+   bottom margin is what reserves the band and keeps the last table row off it.
+
+   Three things DomPDF cannot do, and what replaces them:
+     · flex + space-between  → display:table with three cells
+     · linear-gradient       → the 2px rule is two table cells, a 56px gold one
+                               and a grey remainder. Deterministic, and it is
+                               the same two flat colours the gradient describes.
+     · counter(pages)        → not a DomPDF counter at all; it resolves to 0.
+                               The whole "PAGE 1 / 5" label is therefore drawn
+                               onto the canvas by App\Support\PdfPageNumbers
+                               after layout, when the total exists. Nothing in
+                               this file styles it — see .pdf-foot-right.
+   No floats anywhere: a float inside a fixed block breaks DomPDF's flow for
+   everything after it. */
+.pdf-footer {
+    position: fixed;
+    bottom: -0.46in; left: 0; right: 0;
+}
+
+/* The 2px rule: 56px of gold, then hairline grey to the edge.
+   One element, not two cells: DomPDF ignored a 56px width on a table-cell and
+   split the row ~43/57. A left border is measured exactly, so the gold is a
+   56px border and the grey is the box behind it. */
+.pdf-foot-rule {
+    height: 2px;
+    background: #E3E7EF;
+    border-left: 56px solid #D8B25F;
+}
+
+.pdf-foot-row { display: table; width: 100%; table-layout: fixed; padding: 10px 0; }
+.pdf-foot-left,
+.pdf-foot-mid,
+.pdf-foot-right { display: table-cell; vertical-align: middle; }
+.pdf-foot-left { width: 46%; }
+.pdf-foot-mid { width: 26%; text-align: center; font-size: 6.5pt; color: #8A93A8; }
+.pdf-foot-right { width: 28%; text-align: right; }
+
+/* 8px gap: cell padding, there being no gap property. */
+.pdf-foot-logo-cell { display: table-cell; width: 23px; vertical-align: middle; }
+/* 60%: present but recessive — the mark is a signature here, not a headline. */
+.pdf-foot-logo { display: block; width: 12px; height: 12px; opacity: 0.6; }
+.pdf-foot-name-cell { display: table-cell; vertical-align: middle; padding-left: 8px; font-size: 6.5pt; }
+.pdf-foot-company { font-weight: 700; color: #1E2C4F; }
+.pdf-foot-report { color: #8A93A8; }
+
+/* The page counter has no rule here on purpose. It is drawn by
+   App\Support\PdfPageNumbers, in 6.5pt/700 #1E2C4F with 0.06em tracking, on
+   the same baseline as this row's other text and flush to the @page margin —
+   the values above and in .pdf-foot-mid are what it mirrors, so change them
+   together.
+
+   There was a pill (#F2F4F9 fill, #E3E7EF hairline, 99px radius) for the stamp
+   to sit inside. It could not work: the counter cannot be flowed, so the pill
+   was flowed and the digits were drawn, and the two drifted until the number
+   printed above the capsule. The label carries itself instead. */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TRANSACTIONAL DOCUMENTS
+   An invoice, an EWA bill and a payment receipt are not reports: they carry an
+   addressee block, an amount in words, a divider column, signature lines. The
+   shared classes above give them their page box, letterhead, footer and type;
+   what follows is the anatomy that is genuinely theirs, moved here out of the
+   three <style> blocks they used to carry so that this file stays the only
+   print stylesheet in the app.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Invoice — resources/views/invoices/pdf.blade.php ── */
+.inv-meta-row {display: table; width: 100%; margin-bottom: 14px; }
+.inv-meta-left {display: table-cell; font-size: 11px; font-weight: 700; }
+.inv-meta-right {display: table-cell; text-align: right; font-size: 11px; font-weight: 700; }
+.inv-tenant-title {font-size: 12px; font-weight: 700; text-decoration: underline; margin-bottom: 8px; }
+.inv-tenant-line {font-size: 11px; margin-bottom: 3px; }
+.inv-tenant-line b {font-weight: 700; }
+.inv-rental-wrap {margin-top: 16px; border: 1.5px solid #111827; }
+.inv-rental-title {font-size: 11px; font-weight: 700; padding: 5px 8px; border-bottom: 1.5px solid #111827; }
+table.inv-rental {width: 100%; border-collapse: collapse; font-size: 10.5px; }
+table.inv-rental th {background: #D9D2B0; padding: 6px 6px; text-align: left; font-weight: 700;
+    border-bottom: 1.5px solid #111827; border-right: 1px solid #111827;
+}
+table.inv-rental th:last-child, table.inv-rental td:last-child {border-right: none; }
+table.inv-rental th.right, table.inv-rental td.right {text-align: right; }
+table.inv-rental td {padding: 3px 6px; border-bottom: 1px solid #94A3B8; border-right: 1px solid #94A3B8; height: 15px; }
+table.inv-rental tr.inv-empty-row td {height: 15px; }
+table.inv-rental tr.inv-total-row td {background: #D9D2B0; font-weight: 700; border-top: 1.5px solid #111827; border-bottom: none; }
+.inv-totals-box {width: 46%; margin: 0 0 0 auto; border: 1.5px solid #111827; border-top: none; }
+.inv-totals-box table {width: 100%; border-collapse: collapse; font-size: 10.5px; }
+.inv-totals-box td {padding: 5px 10px; border-bottom: 1px solid #94A3B8; }
+.inv-totals-box tr:last-child td {border-bottom: none; font-weight: 700; }
+.inv-totals-box td.right {text-align: right; font-weight: 700; }
+.inv-words-label {color: #991B1B; font-weight: 700; text-decoration: underline; font-size: 10.5px; margin: 12px 0 4px; }
+.inv-words-value {font-size: 11px; font-weight: 700; }
+.inv-remarks-label {font-weight: 700; text-decoration: underline; font-size: 10.5px; margin: 10px 0 4px; }
+.inv-remarks-value {font-size: 10.5px; }
+.inv-bank-label {color: #991B1B; font-weight: 700; text-decoration: underline; font-size: 10.5px; margin: 10px 0 4px; }
+.inv-bank-line {font-size: 10.5px; font-weight: 700; margin-bottom: 2px; }
+.inv-sign-block {text-align: right; font-size: 10.5px; font-weight: 700; margin-top: 10px; line-height: 1.5; }
+.inv-spacer {height: 6px; }
+
+/* ── EWA bill — resources/views/ewa-bills/pdf.blade.php ── */
+.ewa-meta-row {display: table; width: 100%; margin-bottom: 14px; }
+.ewa-meta-left {display: table-cell; font-size: 11px; font-weight: 700; }
+.ewa-meta-right {display: table-cell; text-align: right; font-size: 11px; font-weight: 700; }
+.ewa-tenant-title {font-size: 12px; font-weight: 700; text-decoration: underline; margin-bottom: 8px; }
+.ewa-tenant-line {font-size: 11px; margin-bottom: 3px; }
+.ewa-tenant-line b {font-weight: 700; }
+.ewa-supply-wrap {display: table; width: 100%; margin: 12px 0; padding: 8px 10px; background: #F0F9FF; border: 1px solid #BAE6FD; }
+.ewa-supply-cell {display: table-cell; padding-right: 14px; }
+.ewa-supply-lbl {font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #0369A1; margin-bottom: 2px; }
+.ewa-supply-val {font-size: 11px; font-weight: 700; color: #0F172A; }
+.ewa-rental-wrap {margin-top: 10px; border: 1.5px solid #111827; }
+.ewa-rental-title {font-size: 11px; font-weight: 700; padding: 5px 8px; border-bottom: 1.5px solid #111827; }
+table.ewa-rental {width: 100%; border-collapse: collapse; font-size: 10.5px; }
+table.ewa-rental th {background: #D9D2B0; padding: 6px 6px; text-align: left; font-weight: 700;
+    border-bottom: 1.5px solid #111827; border-right: 1px solid #111827;
+}
+table.ewa-rental th:last-child, table.ewa-rental td:last-child {border-right: none; }
+table.ewa-rental th.right, table.ewa-rental td.right {text-align: right; }
+table.ewa-rental td {padding: 5px 6px; border-bottom: 1px solid #94A3B8; border-right: 1px solid #94A3B8; height: 18px; }
+table.ewa-rental tr.ewa-deduction-row td {color: #059669; }
+table.ewa-rental tr.ewa-total-row td {background: #D9D2B0; font-weight: 700; border-top: 1.5px solid #111827; border-bottom: none; }
+.ewa-totals-box {width: 46%; margin: 0 0 0 auto; border: 1.5px solid #111827; border-top: none; }
+.ewa-totals-box table {width: 100%; border-collapse: collapse; font-size: 10.5px; }
+.ewa-totals-box td {padding: 5px 10px; border-bottom: 1px solid #94A3B8; }
+.ewa-totals-box tr:last-child td {border-bottom: none; font-weight: 700; }
+.ewa-totals-box td.right {text-align: right; font-weight: 700; }
+.ewa-words-label {color: #991B1B; font-weight: 700; text-decoration: underline; font-size: 10.5px; margin: 16px 0 4px; }
+.ewa-words-value {font-size: 11px; font-weight: 700; }
+.ewa-remarks-label {font-weight: 700; text-decoration: underline; font-size: 10.5px; margin: 14px 0 4px; }
+.ewa-remarks-value {font-size: 10.5px; }
+.ewa-bank-label {color: #991B1B; font-weight: 700; text-decoration: underline; font-size: 10.5px; margin: 14px 0 4px; }
+.ewa-bank-line {font-size: 10.5px; font-weight: 700; margin-bottom: 2px; }
+.ewa-sign-block {text-align: right; font-size: 10.5px; font-weight: 700; margin-top: 16px; line-height: 1.5; }
+.ewa-spacer {height: 10px; }
+
+/* ── Payment receipt — resources/views/payments/receipt.blade.php ── */
+.rv-dated-row {display: table; width: 100%; margin-bottom: 16px; }
+.rv-dated-row .rv-fill {display: table-cell; }
+.rv-dated-row .rv-lbl {display: table-cell; text-align: right; white-space: nowrap; padding-right: 8px; font-size: 10px; color: #4B5563; }
+.rv-dated-row .rv-val {display: table-cell; text-align: right; white-space: nowrap; font-weight: 700; font-size: 10px; width: 110px; }
+table.rv-rv {width: 100%; border-collapse: collapse; }
+table.rv-rv th {text-align: left; padding: 8px 6px; font-weight: 700; font-size: 9px; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #6B7280; background: #F9FAFB; border-bottom: 1.5px solid #111827;
+}
+table.rv-rv th.rv-amt-head {text-align: right; width: 110px; }
+table.rv-rv td {padding: 8px 6px; vertical-align: top; }
+table.rv-rv td.rv-amt {text-align: right; white-space: nowrap; width: 110px; font-weight: 600; }
+table.rv-rv .rv-particulars-col {width: auto; }
+table.rv-rv td.rv-divider, table.rv-rv th.rv-divider {width: 1px; padding: 0; background: #111827; }
+.rv-p-account {font-weight: 700; padding-bottom: 4px; }
+.rv-p-tenant {padding-left: 16px; padding-bottom: 4px; }
+.rv-p-category {padding-left: 16px; font-weight: 700; padding-bottom: 4px; }
+.rv-p-unit-line {padding-left: 32px; color: #374151; }
+.rv-p-unit-line .rv-cr {display: inline-block; width: 28px; text-align: right; font-weight: 600; }
+.rv-p-unit-line .rv-amt-inline {display: inline-block; width: 90px; text-align: right; font-weight: 600; }
+.rv-spacer td {padding: 0; height: 32px; }
+.rv-meta-row td {padding-top: 16px; padding-bottom: 4px; }
+.rv-meta-lbl {font-weight: 700; margin-bottom: 4px; }
+.rv-meta-val {padding-left: 16px; color: #374151; }
+.rv-total-row td {border-top: 1.5px solid #111827; padding-top: 10px; padding-bottom: 2px; }
+.rv-total-row td.rv-amt {font-weight: 700; font-size: 12px; }
+.rv-sign-block {display: table; width: 100%; margin-top: 64px; }
+.rv-sign-cell {display: table-cell; width: 50%; vertical-align: bottom; }
+.rv-sign-cell.right {text-align: right; }
+.rv-sign-line {border-top: 1px solid #111827; width: 190px; margin-left: auto; padding-top: 5px; font-size: 9.5px; color: #4B5563; }
+.rv-prepared-by {margin-top: 32px; font-size: 10.5px; color: #4B5563; }

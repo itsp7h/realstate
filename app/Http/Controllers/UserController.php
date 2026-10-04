@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
 use App\Models\User;
+use App\Support\RoleCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -27,12 +28,17 @@ class UserController extends Controller
 
         $users = $query->orderBy('name')->paginate(20)->withQueryString();
 
-        return view('users.index', compact('users'));
+        // The role filter and the role picker are both drawn from the catalog,
+        // so adding a role does not mean remembering to edit two <select>s.
+        return view('users.index', [
+            'users' => $users,
+            'roles' => RoleCatalog::roles(),
+        ]);
     }
 
     public function create()
     {
-        return view('users.create', ['record' => null]);
+        return view('users.create', ['record' => null, 'roles' => RoleCatalog::roles()]);
     }
 
     public function store(StoreUserRequest $request): RedirectResponse
@@ -48,7 +54,7 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        return view('users.create', ['record' => $user]);
+        return view('users.create', ['record' => $user, 'roles' => RoleCatalog::roles()]);
     }
 
     public function update(StoreUserRequest $request, User $user): RedirectResponse

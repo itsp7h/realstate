@@ -12,6 +12,7 @@ use App\Services\ProfitLossService;
 use App\Services\RentScheduleService;
 use App\Services\TenantLedgerService;
 use App\Services\VatReturnService;
+use App\Support\PdfPageNumbers;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -73,7 +74,7 @@ class ReportController extends Controller
             'total'  => $this->ledger->runningBalance($rows),
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream("statement-{$tenant->tenant_code}.pdf");
+        return PdfPageNumbers::stamp($pdf)->stream("statement-{$tenant->tenant_code}.pdf");
     }
 
     public function tenantStatementExport(Request $request)
@@ -126,7 +127,7 @@ class ReportController extends Controller
             'total'  => $this->ledger->runningBalance($rows),
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream("bill-wise-statement-{$tenant->tenant_code}.pdf");
+        return PdfPageNumbers::stamp($pdf)->stream("bill-wise-statement-{$tenant->tenant_code}.pdf");
     }
 
     public function billWiseStatementExport(Request $request)
@@ -177,7 +178,7 @@ class ReportController extends Controller
             'to'     => $to,
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream("ledger-{$tenant->tenant_code}.pdf");
+        return PdfPageNumbers::stamp($pdf)->stream("ledger-{$tenant->tenant_code}.pdf");
     }
 
     public function tenantLedgerExport(Request $request)
@@ -238,7 +239,7 @@ class ReportController extends Controller
             'to'     => $to,
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream("ageing-{$tenant->tenant_code}.pdf");
+        return PdfPageNumbers::stamp($pdf)->stream("ageing-{$tenant->tenant_code}.pdf");
     }
 
     public function tenantAgeingExport(Request $request)
@@ -276,9 +277,9 @@ class ReportController extends Controller
             'groups' => $groups,
             'from'   => $from,
             'to'     => $to,
-        ])->setPaper('a4', 'landscape');
+        ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream('group-outstanding-ageing.pdf');
+        return PdfPageNumbers::stamp($pdf)->stream('group-outstanding-ageing.pdf');
     }
 
     public function groupAgeingExport(Request $request)
@@ -325,9 +326,9 @@ class ReportController extends Controller
             'rows' => $rows,
             'from' => $from,
             'to'   => $to,
-        ])->setPaper('a4', 'landscape');
+        ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream('tenant-financial-summary.pdf');
+        return PdfPageNumbers::stamp($pdf)->stream('tenant-financial-summary.pdf');
     }
 
     public function financialSummaryExport(Request $request)
@@ -411,7 +412,7 @@ class ReportController extends Controller
             'to'        => $to,
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream('profit-and-loss.pdf');
+        return PdfPageNumbers::stamp($pdf)->stream('profit-and-loss.pdf');
     }
 
     public function profitLossExport(Request $request)
@@ -495,7 +496,7 @@ class ReportController extends Controller
             'rows'   => $rows,
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream("rent-schedule-{$tenant->tenant_code}.pdf");
+        return PdfPageNumbers::stamp($pdf)->stream("rent-schedule-{$tenant->tenant_code}.pdf");
     }
 
     public function rentScheduleExport(Request $request)
@@ -558,9 +559,9 @@ class ReportController extends Controller
             'totals'   => $this->vatReturn->totals($rows),
             'from'     => $from,
             'to'       => $to,
-        ])->setPaper('a4', 'landscape');
+        ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream('vat-return.pdf');
+        return PdfPageNumbers::stamp($pdf)->stream('vat-return.pdf');
     }
 
     public function vatReturnExport(Request $request)
@@ -602,9 +603,9 @@ class ReportController extends Controller
             'from'  => $from,
             'to'    => $to,
             'total' => $this->collectionReport->total($rows),
-        ])->setPaper('a4', 'landscape');
+        ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream('collection-report.pdf');
+        return PdfPageNumbers::stamp($pdf)->stream('collection-report.pdf');
     }
 
     public function collectionExport(Request $request)
