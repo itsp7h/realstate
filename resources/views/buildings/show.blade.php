@@ -224,7 +224,186 @@
 @endpush
 
 @section('content')
-<div class="container-fluid px-0">
+
+@php
+    $mobilePhoto = $building->images->first()?->url;
+    $mobileAddress = trim(implode(', ', array_filter([$building->area, $building->city])));
+    $mobileUnitFilters = [
+        ['id' => 'all',     'label' => 'All'],
+        ['id' => 'let',     'label' => 'Let'],
+        ['id' => 'vacant',  'label' => 'Vacant'],
+        ['id' => 'overdue', 'label' => 'Overdue'],
+    ];
+    $mobileStatusMeta = [
+        'let'     => ['label' => 'Let',     'tint' => 'var(--pm-page)',        'tone' => 'var(--pm-text-2)'],
+        'paid'    => ['label' => 'Paid',     'tint' => 'var(--pm-green-tint)', 'tone' => 'var(--pm-green-text)'],
+        'overdue' => ['label' => 'Overdue', 'tint' => 'var(--pm-red-tint)',    'tone' => 'var(--pm-red)'],
+        'vacant'  => ['label' => 'Vacant',   'tint' => 'var(--pm-page)',       'tone' => 'var(--pm-text-3)'],
+    ];
+@endphp
+
+{{-- MOBILE: pushed-screen header with a back chevron --}}
+<div class="pm-push-header">
+    <a href="{{ route('buildings.index') }}" class="pm-push-back"><i class="fa-solid fa-chevron-left"></i></a>
+    <div class="pm-header-text">
+        <div class="pm-title" style="font-size:19px;">{{ $building->property_name }}</div>
+        <div class="pm-subtitle">{{ $building->property_type ?? 'Property' }}</div>
+    </div>
+    <button type="button" class="pm-icon-btn" title="Notifications — coming soon"><i class="fa-regular fa-bell"></i></button>
+    <div class="pm-avatar" style="font-size:14px;">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
+</div>
+
+{{-- MOBILE: property detail (native app-style hero + row-card floors/units).
+     `.m-screen`'s default 18px top padding is kept here (not zeroed) so there's
+     breathing room between the pm-push-header above and the hero photo below —
+     `.pm-hero-wrap` no longer pulls itself up on top of it (see admin.blade.php). --}}
+<div class="m-screen">
+    <div class="pm-hero-wrap">
+        <div class="pm-hero-photo" id="pmHeroPhoto">
+            <div class="pm-hero-photo-img has-parallax" id="pmHeroPhotoImg" @if($mobilePhoto) style="background-image:url('{{ $mobilePhoto }}')" @endif></div>
+            @unless($mobilePhoto)
+                <div class="pm-property-photo-fallback"><i class="fa-solid fa-building"></i></div>
+            @endunless
+            <div class="pm-hero-topbar">
+                <span class="pm-hero-occ-pill"><i class="fa-solid fa-door-open"></i> {{ $dashboard['kpis']['occupancy_percent'] }}% occupied</span>
+                <a href="{{ route('buildings.edit', $building) }}" class="pm-hero-edit-btn" title="Edit building"><i class="fa-regular fa-pen-to-square"></i></a>
+            </div>
+            <div class="pm-hero-scrim">
+                <div class="pm-hero-name">{{ $building->property_name }}</div>
+                @if($mobileAddress)
+                    <div class="pm-hero-address"><i class="fa-solid fa-location-dot"></i> {{ $mobileAddress }}</div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <div style="background:linear-gradient(135deg,#10141F,#232B42);border-radius:18px;padding:20px;display:flex;gap:24px;">
+        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">INCOME &middot; {{ now()->format('M') }}</div><div style="font-size:21px;font-weight:800;color:#7ED8AC;">BHD {{ number_format($dashboard['kpis']['month_income'], 0) }}</div></div>
+        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">NET PROFIT</div><div style="font-size:21px;font-weight:800;color:{{ $dashboard['kpis']['month_profit'] < 0 ? '#F0A5A5' : '#E7B266' }};">BHD {{ number_format($dashboard['kpis']['month_profit'], 0) }}</div></div>
+    </div>
+
+    <div class="m-mini-row">
+        <div class="m-mini-stat"><div class="v">{{ $dashboard['kpis']['occupancy_percent'] }}%</div><div class="l">OCCUPANCY</div></div>
+        <div class="m-mini-stat"><div class="v">{{ $dashboard['kpis']['occupied_units'] }}/{{ $dashboard['kpis']['total_units'] }}</div><div class="l">UNITS LET</div></div>
+        <div class="m-mini-stat"><div class="v" style="font-size:14px;">{{ $building->property_type ?? '—' }}</div><div class="l">TYPE</div></div>
+    </div>
+
+    <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div class="pm-section-label" style="margin-bottom:0;">FLOORS &amp; UNITS</div>
+            <div style="font-size:11px;font-weight:600;color:var(--pm-text-2);">
+                Units <strong style="color:var(--pm-text);">{{ $dashboard['kpis']['total_units'] }}</strong>
+                &nbsp;Let <strong style="color:var(--pm-green-text);">{{ $dashboard['kpis']['occupied_units'] }}</strong>
+                &nbsp;Vacant <strong style="color:var(--pm-red);">{{ $dashboard['kpis']['vacant_units'] }}</strong>
+            </div>
+        </div>
+
+        <form method="GET" action="{{ route('buildings.show', $building) }}" class="pm-search-field" style="margin-bottom:8px;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" name="unit_search" value="{{ $unitSearch }}" placeholder="Search unit number or occupant" oninput="mDebounceSubmit(this)">
+            @if($unitFilter !== 'all')<input type="hidden" name="unit_filter" value="{{ $unitFilter }}">@endif
+        </form>
+
+        <div class="pm-chip-row" style="margin-bottom:12px;">
+            @foreach($mobileUnitFilters as $f)
+                <a href="{{ route('buildings.show', array_merge(['building' => $building], array_filter(['unit_search' => $unitSearch, 'unit_filter' => $f['id'] === 'all' ? null : $f['id']]))) }}"
+                   class="pm-chip {{ $unitFilter === $f['id'] ? 'active' : '' }}">{{ $f['label'] }}</a>
+            @endforeach
+        </div>
+
+        @if($floors->count() > 6)
+        <div class="pm-chip-row" style="margin-bottom:12px;">
+            @foreach($floors as $jf)
+                <a href="#pm-floor-{{ $jf->id }}" class="pm-chip" style="min-width:34px;text-align:center;">{{ $jf->floor_name }}</a>
+            @endforeach
+        </div>
+        @endif
+
+        <div>
+            @forelse($floorGroups as $group)
+                @php
+                    $isOpen = $loop->first || $unitSearch !== '' || $unitFilter !== 'all';
+                    $rows = $group['rows'];
+                    $capped = !$isOpen ? false : ($rows->count() > 8 && $showAllFloorId !== $group['id']);
+                    $visibleRows = $capped ? $rows->take(8) : $rows;
+                @endphp
+                <div id="pm-floor-{{ $group['id'] }}" class="pm-floor-section">
+                    <button type="button" class="pm-floor-row pm-ripple {{ $isOpen ? 'is-open' : '' }}" onclick="pmToggleFloor({{ $group['id'] }})" data-floor-toggle="{{ $group['id'] }}">
+                        <i class="fa-solid fa-layer-group" style="color:var(--pm-gold);font-size:13px;width:16px;text-align:center;"></i>
+                        <div style="flex:1;min-width:0;">
+                            <div class="pm-floor-name">{{ $group['name'] }}</div>
+                            <div class="pm-floor-meta">{{ $rows->count() }} units &middot; {{ $group['letCount'] }} let</div>
+                        </div>
+                        <i class="fa-solid fa-chevron-{{ $isOpen ? 'up' : 'down' }}" style="color:var(--pm-border-strong);font-size:12px;" data-floor-chevron="{{ $group['id'] }}"></i>
+                    </button>
+                    <div data-floor-body="{{ $group['id'] }}" class="pm-floor-units" style="{{ $isOpen ? '' : 'display:none;' }}">
+                        @foreach($visibleRows as $row)
+                            @php
+                                $meta = $mobileStatusMeta[$row['status']];
+                                $unitHref = $row['status'] === 'vacant' ? null : ($row['unit']->activeContract?->tenant_id ? route('tenants.show', $row['unit']->activeContract->tenant_id) : null);
+                            @endphp
+                            @if($unitHref)
+                            <a href="{{ $unitHref }}" class="pm-unit-card pm-ripple">
+                            @else
+                            <div class="pm-unit-card" title="Unit {{ $row['unit']->unit_name }} is vacant">
+                            @endif
+                                <div class="pm-unit-tile {{ $row['status'] === 'vacant' ? 'is-vacant' : 'is-let' }}">{{ $row['unit']->unit_name }}</div>
+                                <div style="flex:1;min-width:0;">
+                                    <div class="pm-unit-name">{{ $row['occupant'] ?? 'Vacant unit' }}</div>
+                                    @if(!is_null($row['rent']))
+                                        <div class="pm-unit-rent">BHD {{ number_format($row['rent'], 0) }} / mo</div>
+                                    @endif
+                                </div>
+                                <span class="pm-unit-badge" style="background:{{ $meta['tint'] }};color:{{ $meta['tone'] }};">{{ $meta['label'] }}</span>
+                            @if($unitHref)
+                            </a>
+                            @else
+                            </div>
+                            @endif
+                        @endforeach
+                        @if($capped)
+                            <a href="{{ route('buildings.show', array_merge(['building' => $building], array_filter(['unit_search' => $unitSearch, 'unit_filter' => $unitFilter !== 'all' ? $unitFilter : null]), ['show_all_floor' => $group['id']])) }}"
+                               class="pm-unit-more">
+                                Show all {{ $rows->count() }} units
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="pm-empty">No units match this search.</div>
+            @endforelse
+        </div>
+    </div>
+
+    <button type="button" class="pm-fab" style="position:fixed;border:0;" onclick="openExpenseSheet()" title="Record expense"><i class="fa-solid fa-plus"></i></button>
+</div>
+
+@include('components.expense-sheet', ['presetBuildingId' => $building->id])
+
+<script>
+function pmToggleFloor(id) {
+    document.querySelectorAll('[data-floor-body]').forEach(function (el) {
+        if (Number(el.dataset.floorBody) !== id) {
+            el.style.display = 'none';
+            document.querySelector('[data-floor-toggle="' + el.dataset.floorBody + '"]')?.classList.remove('is-open');
+            const chev = document.querySelector('[data-floor-chevron="' + el.dataset.floorBody + '"]');
+            if (chev) chev.className = 'fa-solid fa-chevron-down';
+        }
+    });
+    const body = document.querySelector('[data-floor-body="' + id + '"]');
+    const chevron = document.querySelector('[data-floor-chevron="' + id + '"]');
+    const isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : '';
+    document.querySelector('[data-floor-toggle="' + id + '"]').classList.toggle('is-open', !isOpen);
+    if (chevron) chevron.className = isOpen ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-up';
+}
+
+if (window.pmInitHeroParallax) {
+    window.pmInitHeroParallax(document.getElementById('pmHeroPhotoImg'), window);
+}
+</script>
+
+<div class="container-fluid px-0 m-hide-desktop-index">
 
     {{-- PAGE HEADER --}}
     <div class="page-header">
@@ -637,7 +816,7 @@
                                     @foreach($floors as $floor)
                                     <tr>
                                         <td class="ps-4 fw-bold text-dark">{{ $floor->floor_name }}</td>
-                                        <td>{!! $floor->floor_code ? "<span class='badge badge-soft-secondary'>{$floor->floor_code}</span>" : '<span class="text-muted">—</span>' !!}</td>
+                                        <td>@if($floor->floor_code)<span class="badge badge-soft-secondary">{{ $floor->floor_code }}</span>@else<span class="text-muted">—</span>@endif</td>
                                         <td>{{ $floor->block_name ?? '—' }}</td>
                                         <td><span class="badge bg-light text-dark border">{{ $floor->total_no_of_units ?? '—' }}</span></td>
                                         <td class="text-end pe-4">
@@ -692,9 +871,9 @@
                                         <td class="ps-4 fw-bold text-dark">{{ $unit->unit_name }}</td>
                                         <td>
                                             <div class="small text-muted mb-1">{{ $unit->floor?->floor_name ?? '—' }}</div>
-                                            {!! $unit->unit_type ? "<span class='badge badge-soft-primary'>{$unit->unit_type}</span>" : '' !!}
+                                            @if($unit->unit_type)<span class="badge badge-soft-primary">{{ $unit->unit_type }}</span>@endif
                                         </td>
-                                        <td>{!! $unit->unit_condition ? "<span class='badge badge-soft-secondary'>{$unit->unit_condition}</span>" : '<span class="text-muted">—</span>' !!}</td>
+                                        <td>@if($unit->unit_condition)<span class="badge badge-soft-secondary">{{ $unit->unit_condition }}</span>@else<span class="text-muted">—</span>@endif</td>
                                         <td>
                                             @if($unit->activeContract)
                                                 <span class="badge badge-soft-success"><i class="fa-solid fa-circle text-success" style="font-size:6px; vertical-align:middle; margin-right:4px;"></i>Occupied</span>
@@ -757,7 +936,7 @@
                                             <div class="small text-dark mb-1"><i class="fa-solid fa-phone text-muted me-1" style="width:14px;"></i> {{ $t->phone ?? '—' }}</div>
                                             <div class="small text-muted"><i class="fa-solid fa-envelope text-muted me-1" style="width:14px;"></i> {{ $t->email ?? '—' }}</div>
                                         </td>
-                                        <td>{!! $t->tenant_type ? "<span class='badge badge-soft-secondary'>".ucfirst($t->tenant_type)."</span>" : '—' !!}</td>
+                                        <td>@if($t->tenant_type)<span class="badge badge-soft-secondary">{{ ucfirst($t->tenant_type) }}</span>@else—@endif</td>
                                         <td class="text-end pe-4">
                                             {!! $activeContracts > 0 ? "<span class='badge badge-soft-success rounded-pill px-3 py-2'>$activeContracts active</span>" : '<span class="text-muted">—</span>' !!}
                                         </td>

@@ -230,8 +230,60 @@
     </div>
 </div>
 
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+@php
+    $leaseStatusLabels = ['active' => 'Active', 'expiring' => 'Expiring', 'upcoming' => 'Upcoming', 'expired' => 'Expired'];
+    $leaseBadgeColors = [
+        'active'   => ['#E6F6EE', '#17A96C'],
+        'expiring' => ['#FBF3E4', '#C08A2D'],
+        'upcoming' => ['#E9F0FD', '#4A7DF0'],
+        'expired'  => ['#F1F3F8', '#6B7688'],
+    ];
+@endphp
+<div class="m-screen">
+    <div style="background:linear-gradient(135deg,#10141F,#232B42);border-radius:18px;padding:20px;display:flex;gap:24px;">
+        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">ACTIVE CONTRACTS</div><div style="font-size:21px;font-weight:800;color:#7ED8AC;">{{ $stats['active'] }}</div></div>
+        <div style="flex:1;"><div style="font-size:10px;letter-spacing:1px;font-weight:600;color:#9FB0CE;">EXPIRING (30D)</div><div style="font-size:21px;font-weight:800;color:#E7B266;">{{ $stats['expiring'] }}</div></div>
+    </div>
+    <div class="m-action-row">
+        <button type="button" class="m-action-btn primary" onclick="openContractModal()">
+            <i class="fa-solid fa-plus"></i> New Contract
+        </button>
+    </div>
+    <div class="m-chip-row no-sb">
+        <a href="{{ route('lease-contracts.index') }}" class="m-chip {{ !request('status') ? 'active' : '' }}">All</a>
+        @foreach($leaseStatusLabels as $val => $label)
+            <a href="{{ route('lease-contracts.index', ['status' => $val]) }}" class="m-chip {{ request('status') === $val ? 'active' : '' }}">{{ $label }}</a>
+        @endforeach
+    </div>
+    <div class="m-row-list">
+        @forelse($contracts as $mContract)
+            @php
+                [$mBg, $mFg] = $leaseBadgeColors[$mContract->status] ?? ['#F1F3F8', '#6B7688'];
+            @endphp
+            <a href="{{ route('lease-contracts.show', $mContract) }}" class="m-row-card">
+                <div class="m-row-icon" style="background:var(--m-line);color:#8E9AAE;"><i class="fa-solid fa-file-contract"></i></div>
+                <div style="flex:1;min-width:0;">
+                    <div class="m-row-title">{{ $mContract->tenant_name }}</div>
+                    <div class="m-row-sub">{{ $mContract->property_code ?? '—' }}{{ $mContract->unit ? ' / '.$mContract->unit : '' }}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                    <div style="font-size:13.5px;font-weight:800;">{{ $mContract->rent_per_month ? number_format($mContract->rent_per_month, 0) : '—' }}</div>
+                    <span class="m-row-badge" style="background:{{ $mBg }};color:{{ $mFg }};">{{ $leaseStatusLabels[$mContract->status] ?? ucfirst($mContract->status) }}</span>
+                </div>
+            </a>
+        @empty
+            <div class="m-empty">
+                <div class="m-empty-icon"><i class="fa-solid fa-file-contract"></i></div>
+                <div class="m-empty-title">No contracts found</div>
+                <div class="m-empty-sub">Try adjusting your filters.</div>
+            </div>
+        @endforelse
+    </div>
+</div>
+
 {{-- STATS --}}
-<div class="stats-grid">
+<div class="stats-grid m-hide-desktop-index">
     <div class="stat-card">
         <div class="stat-icon gold"><i class="fa-solid fa-file-contract"></i></div>
         <div><div class="stat-val">{{ $stats['total'] }}</div><div class="stat-lbl">Total Contracts</div></div>
@@ -251,7 +303,7 @@
 </div>
 
 {{-- TABLE CARD --}}
-<div class="card" style="overflow:hidden;">
+<div class="card m-hide-desktop-index" style="overflow:hidden;">
 
     <form method="GET" action="{{ route('lease-contracts.index') }}" id="filterForm">
         <div class="filter-bar">

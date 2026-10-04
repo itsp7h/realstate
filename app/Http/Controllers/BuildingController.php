@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Building;
-use App\Models\CustomFieldDefinition;
-use App\Models\LeaseContract;
 use App\Http\Requests\StoreBuildingRequest;
 use App\Http\Requests\UpdateBuildingRequest;
 use App\Http\Requests\UpdateBuildingSettingsRequest;
+use App\Models\Building;
+use App\Models\CustomFieldDefinition;
+use App\Models\LeaseContract;
 use App\Services\DashboardAnalyticsService;
 use App\Services\FormConfigService;
 use Illuminate\Http\Request;
@@ -15,9 +15,7 @@ use Illuminate\Support\Carbon;
 
 class BuildingController extends Controller
 {
-    public function __construct(private DashboardAnalyticsService $analytics)
-    {
-    }
+    public function __construct(private DashboardAnalyticsService $analytics) {}
 
     public function index(Request $request)
     {
@@ -31,23 +29,30 @@ class BuildingController extends Controller
             ->withQueryString();
 
         $stats = [
-            'total'       => Building::count(),
+            'total' => Building::count(),
             'residential' => Building::where('property_type', 'Residential')->count(),
-            'commercial'  => Building::where('property_type', 'Commercial')->count(),
-            'properties'  => Building::count(),
+            'commercial' => Building::where('property_type', 'Commercial')->count(),
+            'properties' => Building::count(),
         ];
 
-        $formFields      = app(FormConfigService::class)->getFormFields('building');
+        $monthFrom = Carbon::today()->startOfMonth();
+        $monthTo = Carbon::today()->endOfMonth();
+        $financials = $buildings->getCollection()->mapWithKeys(
+            fn (Building $b) => [$b->id => $this->analytics->buildingSnapshot($b, $monthFrom, $monthTo)]
+        );
+
+        $formFields = app(FormConfigService::class)->getFormFields('building');
         $customFieldDefs = CustomFieldDefinition::getForForm('building');
 
-        return view('buildings.index', compact('buildings', 'stats', 'formFields', 'customFieldDefs'));
+        return view('buildings.index', compact('buildings', 'stats', 'financials', 'formFields', 'customFieldDefs'));
     }
 
     public function create()
     {
-        $building        = new Building();
-        $formFields      = app(FormConfigService::class)->getFormFields('building');
+        $building = new Building;
+        $formFields = app(FormConfigService::class)->getFormFields('building');
         $customFieldDefs = CustomFieldDefinition::getForForm('building');
+
         return view('buildings.create', compact('building', 'formFields', 'customFieldDefs'));
     }
 
@@ -56,16 +61,17 @@ class BuildingController extends Controller
         $validated = $request->validated();
         $validated['custom_fields'] = $request->input('custom_fields', []);
         Building::create($validated);
+
         return redirect()->route('buildings.index')
             ->with('success', 'Building created successfully.');
     }
 
-    public function show(Building $building)
+    public function show(Request $request, Building $building)
     {
         $building->load('images');
         $floors = $building->floors()->orderBy('floor_name')->get();
 
-        $units = $building->units()->with(['floor', 'activeContract'])->orderBy('unit_name')->get();
+        $units = $building->units()->with(['floor', 'activeContract.tenant.invoices'])->orderBy('unit_name')->get();
 
         $contracts = LeaseContract::where('property_code', $building->property_code)
             ->with('tenant')
@@ -77,13 +83,86 @@ class BuildingController extends Controller
 
         $dashboard = $this->analytics->buildingDashboard($building, $units, $contracts, Carbon::today()->year);
 
-        return view('buildings.show', compact('building', 'floors', 'units', 'contracts', 'tenants', 'dashboard'));
+        // ── Mobile "Floors & Units" data: server-side search/filter, per the
+        // Miknas design spec (unit number or occupant name search; All/Let/
+        // Vacant/Overdue chips). Computed here so the view stays presentation-only.
+        $unitSearch = trim((string) $request->input('unit_search', ''));
+        $unitFilter = $request->input('unit_filter', 'all');
+
+        $unitRows = $units->map(function ($unit) {
+            $contract = $unit->activeContract;
+            $tenant = $contract?->tenant;
+            $status = 'vacant';
+            if ($contract) {
+                $status = 'let';
+                if ($tenant && $tenant->invoices->isNotEmpty()) {
+                    $status = $tenant->invoices->contains('status', 'overdue') ? 'overdue' : 'paid';
+                }
+            }
+
+            return [
+                'unit' => $unit,
+                'occupant' => $tenant?->name,
+                'rent' => $contract?->rent_per_month,
+                'status' => $status,
+            ];
+        });
+
+        if ($unitSearch !== '') {
+            $unitRows = $unitRows->filter(
+                fn ($row) => str_contains(strtolower($row['unit']->unit_name), strtolower($unitSearch))
+                    || ($row['occupant'] && str_contains(strtolower($row['occupant']), strtolower($unitSearch)))
+            );
+        }
+
+        if (in_array($unitFilter, ['let', 'vacant', 'overdue'], true)) {
+            $unitRows = $unitRows->filter(fn ($row) => match ($unitFilter) {
+                'let' => in_array($row['status'], ['let', 'paid'], true),
+                'vacant' => $row['status'] === 'vacant',
+                'overdue' => $row['status'] === 'overdue',
+            });
+        }
+
+        $floorGroups = $floors->map(function ($floor) use ($unitRows) {
+            $rows = $unitRows->filter(fn ($row) => $row['unit']->floor_id === $floor->id)->values();
+
+            return [
+                'id' => $floor->id,
+                'name' => $floor->floor_name,
+                'rows' => $rows,
+                'letCount' => $rows->filter(fn ($row) => in_array($row['status'], ['let', 'paid', 'overdue'], true))->count(),
+            ];
+        });
+
+        // Units imported without a floor assignment still need somewhere to show up —
+        // common in this dataset, where most buildings have units but zero floor records.
+        $unassignedRows = $unitRows->filter(fn ($row) => $row['unit']->floor_id === null)->values();
+        if ($unassignedRows->isNotEmpty()) {
+            $floorGroups->push([
+                'id' => 0,
+                'name' => 'Unassigned Units',
+                'rows' => $unassignedRows,
+                'letCount' => $unassignedRows->filter(fn ($row) => in_array($row['status'], ['let', 'paid', 'overdue'], true))->count(),
+            ]);
+        }
+
+        $floorGroups = $floorGroups
+            ->filter(fn ($group) => ($unitSearch === '' && $unitFilter === 'all') || $group['rows']->isNotEmpty())
+            ->values();
+
+        $showAllFloorId = $request->integer('show_all_floor') ?: null;
+
+        return view('buildings.show', compact(
+            'building', 'floors', 'units', 'contracts', 'tenants', 'dashboard',
+            'floorGroups', 'unitSearch', 'unitFilter', 'showAllFloorId'
+        ));
     }
 
     public function edit(Building $building)
     {
-        $formFields      = app(FormConfigService::class)->getFormFields('building');
+        $formFields = app(FormConfigService::class)->getFormFields('building');
         $customFieldDefs = CustomFieldDefinition::getForForm('building');
+
         return view('buildings.edit', compact('building', 'formFields', 'customFieldDefs'));
     }
 
@@ -92,6 +171,7 @@ class BuildingController extends Controller
         $validated = $request->validated();
         $validated['custom_fields'] = $request->input('custom_fields', []);
         $building->update($validated);
+
         return redirect()->route('buildings.index')
             ->with('success', 'Building updated successfully.');
     }
@@ -99,6 +179,7 @@ class BuildingController extends Controller
     public function destroy(Building $building)
     {
         $building->delete();
+
         return redirect()->route('buildings.index')
             ->with('success', 'Building deleted.');
     }

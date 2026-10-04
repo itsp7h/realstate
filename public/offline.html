@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>You're offline — RealEstate Admin</title>
+<link rel="icon" href="/icons/favicon-32.png">
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+        background: #0B1120;
+        color: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100dvh;
+        padding: 32px calc(24px + env(safe-area-inset-right)) 32px calc(24px + env(safe-area-inset-left));
+        text-align: center;
+    }
+    .card { max-width: 340px; }
+    img { width: 64px; height: 64px; border-radius: 16px; margin-bottom: 24px; }
+    h1 { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+    p { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,.6); margin-bottom: 28px; }
+    button {
+        background: #E8B86D; color: #0B1120; border: none; border-radius: 10px;
+        padding: 12px 28px; font-size: 14px; font-weight: 700; cursor: pointer;
+        font-family: inherit;
+    }
+    button:active { transform: scale(.98); }
+</style>
+</head>
+<body>
+    <div class="card">
+        <img src="/icons/icon-192.png" alt="">
+        <h1>You're offline</h1>
+        <p>Promoseven Holdings Real Estate needs a connection to load your data. Reconnect and try again.</p>
+        <button onclick="location.reload()">Retry</button>
+    </div>
+</body>
+</html>

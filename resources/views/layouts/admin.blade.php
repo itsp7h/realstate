@@ -6,13 +6,97 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') — RealEstate Admin</title>
 
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#0B1120">
+    <link rel="icon" type="image/png" href="{{ asset('icons/favicon-32.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="P7H Real Estate">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+        }
+    </script>
+    <script>
+        (function () {
+            // Applied before first paint to avoid a flash of the wrong theme.
+            var saved = localStorage.getItem('p7-theme');
+            var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+
+    {{-- ── Native-style page transitions (progressive enhancement) ──────
+         Opts every same-origin navigation into the cross-document View
+         Transitions API. Unsupported browsers (older Safari/Firefox) just
+         ignore the @view-transition rule and keep today's hard navigation
+         — nothing to fall back to in JS. On mobile, navigating into or
+         out of a pushed screen (Tenant/Building detail) additionally gets
+         a directional slide via the `push`/`pop` transition types set in
+         the script below, instead of the browser's default cross-fade. --}}
+    <style>
+        @view-transition {
+            navigation: auto;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            ::view-transition-group(*),
+            ::view-transition-old(*),
+            ::view-transition-new(*) {
+                animation: none !important;
+            }
+        }
+        @media (max-width: 768px) {
+            @supports selector(:active-view-transition-type(pop)) {
+                ::view-transition-group(root) { animation-duration: .32s; }
+                ::view-transition-old(root), ::view-transition-new(root) {
+                    animation-timing-function: cubic-bezier(.32,.72,0,1);
+                }
+                :root:active-view-transition-type(push)::view-transition-old(root) { animation-name: pm-push-out; }
+                :root:active-view-transition-type(push)::view-transition-new(root) { animation-name: pm-push-in; }
+                :root:active-view-transition-type(pop)::view-transition-old(root) { animation-name: pm-pop-out; }
+                :root:active-view-transition-type(pop)::view-transition-new(root) { animation-name: pm-pop-in; }
+            }
+        }
+        @keyframes pm-push-out { to   { transform: translateX(-28%); opacity: .55; } }
+        @keyframes pm-push-in  { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes pm-pop-out  { to   { transform: translateX(100%); } }
+        @keyframes pm-pop-in   { from { transform: translateX(-28%); opacity: .55; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+    <script>
+        (function () {
+            // The back-chevron on a pushed screen is the only place a
+            // "pop" (backwards) navigation is initiated from; every other
+            // navigation defaults to "push" (see check below), so we only
+            // need to flag the back case before the browser unloads.
+            document.addEventListener('click', function (e) {
+                if (e.target.closest('.pm-push-back')) {
+                    sessionStorage.setItem('pm-nav-dir', 'pop');
+                }
+            }, true);
+
+            if (typeof PageRevealEvent === 'undefined') return;
+            window.addEventListener('pagereveal', function (e) {
+                if (!e.viewTransition) return;
+                var wasBack = sessionStorage.getItem('pm-nav-dir') === 'pop';
+                sessionStorage.removeItem('pm-nav-dir');
+                if (wasBack) {
+                    e.viewTransition.types.add('pop');
+                } else if (document.body.classList.contains('is-pushed-screen')) {
+                    e.viewTransition.types.add('push');
+                }
+            });
+        })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <style>
-        :root {
+        :root, :root[data-theme="light"] {
             --sidebar-bg:       #0B1120;
             --sidebar-border:   #1A2540;
             --sidebar-hover:    #131E35;
@@ -45,6 +129,90 @@
             --ease-spring:      cubic-bezier(.32,.72,0,1);
             --duration-sheet:   380ms;
             --scrim:            rgba(11,17,32,0.55);
+
+            /* ── Mobile app design tokens (Promoseven RE mobile spec) ── */
+            --m-bg:            #F4F1EA;
+            --m-card:          #FFFFFF;
+            --m-ink:           #17203A;
+            --m-muted:         #8E9AAE;
+            --m-faint:         #A7B0C0;
+            --m-line:          #F1F3F8;
+            --m-border:        #E4E9F0;
+
+            --m-navy:          #10141F;
+            --m-navy-2:        #1E2842;
+            --m-navy-line:     #1A2540;
+            --m-navy-active:   #1E2D4A;
+            --m-navy-text:     #8A9BBE;
+
+            --m-gold:          #E7B266;
+            --m-gold-deep:     #D99A3D;
+            --m-gold-text:     #C08A2D;
+            --m-gold-tint:     #FBF3E4;
+            --m-gold-on:       #2A2312;
+            --m-gold-grad:     linear-gradient(135deg,#EDBE78,#DC9E45);
+
+            --m-green:  #17A96C;  --m-green-tint:  #E6F6EE;
+            --m-red:    #D64545;  --m-red-tint:    #FCEBEB;
+            --m-blue:   #4A7DF0;  --m-blue-tint:   #E9F0FD;
+            --m-purple: #7A5AF8;  --m-purple-tint: #EFEBFD;
+
+            --m-r-card: 18px;  --m-r-btn: 12px;  --m-r-chip: 10px;  --m-r-badge: 7px;
+            --m-shadow: 0 1px 3px rgba(23,32,58,.05);
+            --m-shadow-float: 0 8px 24px rgba(23,32,58,.10);
+        }
+
+        /* ── Dark mode ──────────────────────────────────────
+             Retheme's the shared shell (sidebar, topbar, page bg,
+             cards, tables, inputs, alerts) which every page builds
+             on. Pages' own colored accents (status badge tints,
+             chart series colors) intentionally stay as-is in both
+             modes, same as most dark-mode products keep their tag
+             colors vivid rather than desaturating them. ── */
+        :root[data-theme="dark"] {
+            --sidebar-bg:       #0B1120;
+            --sidebar-border:   #1A2540;
+            --sidebar-hover:    #131E35;
+            --sidebar-active:   #1E2D4A;
+            --accent:           #E8B86D;
+            --accent-dim:       rgba(232,184,109,0.12);
+            --accent-glow:      rgba(232,184,109,0.25);
+            --page-bg:          #0D1220;
+            --card-bg:          #131A2B;
+            --card-border:      #232C42;
+            --text-primary:     #F1F4F9;
+            --text-secondary:   #B7C0D1;
+            --text-muted:       #7E8AA3;
+            --text-sidebar:     #8A9BBE;
+            --text-sidebar-active: #FFFFFF;
+            --input-bg:         #0F1524;
+            --input-border:     #2A3348;
+            --input-focus:      #E8B86D;
+            --danger:           #F87171;
+            --success:          #34D399;
+            --info:             #60A5FA;
+            --warning:          #FBBF24;
+            --shadow-sm:        0 1px 3px rgba(0,0,0,0.30), 0 1px 2px rgba(0,0,0,0.20);
+            --shadow-md:        0 4px 16px rgba(0,0,0,0.36), 0 2px 6px rgba(0,0,0,0.24);
+            --shadow-lg:        0 10px 40px rgba(0,0,0,0.45);
+            --radius:           12px;
+            --radius-sm:        8px;
+            --sidebar-width:    260px;
+            --sheet-radius:     22px;
+            --ease-spring:      cubic-bezier(.32,.72,0,1);
+            --duration-sheet:   380ms;
+            --scrim:            rgba(0,0,0,0.65);
+        }
+        :root[data-theme="dark"] body { background: var(--page-bg); }
+        :root[data-theme="dark"] thead th { background: #0F1526; }
+        :root[data-theme="dark"] tbody tr:hover td { background: #171F33; }
+        :root[data-theme="dark"] input[type="text"],
+        :root[data-theme="dark"] input[type="number"],
+        :root[data-theme="dark"] input[type="date"],
+        :root[data-theme="dark"] input[type="email"],
+        :root[data-theme="dark"] select,
+        :root[data-theme="dark"] textarea {
+            color-scheme: dark;
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -480,6 +648,29 @@
         }
         .sidebar-backdrop.show { opacity: 1; pointer-events: all; }
 
+        /* ── MORE SHEET (base positioning — this lives in the shared
+             layout, so unlike per-page modals it can't rely on that
+             page also defining .modal-overlay's fixed/centered base) ── */
+        #moreSheet {
+            position: fixed; inset: 0; z-index: 1050;
+            background: var(--scrim);
+            display: flex;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        #moreSheet.open { opacity: 1; pointer-events: all; }
+        /* The panel itself: same gap as #moreSheet above — pages that don't
+           define their own .modal-box (e.g. buildings.show, invoices.index,
+           payments.index, reports.index) leave this sheet with no background
+           at all, so the navy scrim shows straight through the "solid" card.
+           ID-scoped like #expenseModal's own copy of this rule so it can't
+           bleed into other pages' .modal-box instances. */
+        #moreSheet .modal-box {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.18);
+        }
+
         /* ── SCROLLBAR ────────────────────────────────────── */
         ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -500,15 +691,491 @@
     <style>
         @media (max-width: 768px) {
             #menuBtn { display: flex !important; }
+            body { font-family: 'Poppins', sans-serif; }
+            body.is-dashboard .topbar { display: none; }
+            body.is-dashboard .page-content,
+            body.is-mobile-screen .page-content { padding: 0 0 calc(78px + env(safe-area-inset-bottom)); }
+            body.is-pushed-screen .topbar { display: none; }
+
+            /* ── Touch/scroll physics — the tells that a page is "just a
+                 website" rather than an app. Kill the default blue/gray tap
+                 flash everywhere (chrome AND content — a stray highlight on
+                 a tenant note reads just as wrong as one on a button), and
+                 replace it with deliberate :active feedback below. Stop
+                 double-tap-to-zoom on anything interactive. Contain scroll
+                 so a drawer/sheet/list can't chain into the browser's
+                 pull-to-refresh. Text selection is only turned off on UI
+                 chrome (nav, buttons, tab bar) — real content stays
+                 selectable (tenant notes, addresses, invoice numbers, ...). ── */
+            * { -webkit-tap-highlight-color: transparent; }
+            a, button, [role="button"], input[type="submit"], input[type="button"] { touch-action: manipulation; }
+
+            html, body { overscroll-behavior-y: contain; }
+            .pm-scroll, .page-content, .sidebar, .modal-box, .m-chip-row, .pm-chip-row {
+                overscroll-behavior: contain;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .sidebar, .bottom-tabbar, .pm-header, .topbar, .pm-push-header,
+            .m-action-row, .m-mini-row, .m-chip-row, .pm-chip-row, .more-sheet-item,
+            .pm-fab, .pm-icon-btn, .pm-avatar, .tabbar-item {
+                -webkit-user-select: none; user-select: none;
+            }
+
+            /* ── Pressed-state feedback in place of the killed tap flash ── */
+            .m-action-btn, .pm-fab, .pm-icon-btn, .pm-avatar, .pm-chip, .m-chip,
+            .pm-row-icon, .m-row-card, .pm-property-card, .pm-action-row,
+            .more-sheet-item, .pm-push-back, .nav-item, a.pm-unit-card, .pm-hero-edit-btn {
+                transition: transform .12s ease, opacity .12s ease;
+            }
+            .m-action-btn:active, .pm-fab:active, .pm-icon-btn:active, .pm-avatar:active,
+            .pm-chip:active, .m-chip:active, .m-row-card:active, .pm-property-card:active,
+            .pm-action-row:active, .more-sheet-item:active, .pm-push-back:active, .nav-item:active,
+            a.pm-unit-card:active, .pm-hero-edit-btn:active {
+                transform: scale(0.96);
+                opacity: .8;
+            }
+            .tabbar-item:active { opacity: .55; }
+
+            /* ── Pushed-screen header (back chevron), e.g. Tenant detail ── */
+            .pm-push-header {
+                display: none;
+            }
+            body.is-pushed-screen .pm-push-header {
+                display: flex; align-items: center; gap: 12px;
+                padding: calc(14px + env(safe-area-inset-top)) 18px 12px;
+                background: var(--pm-surface); border-bottom: 1px solid var(--pm-border);
+                box-shadow: 0 1px 3px rgba(0,0,0,.06);
+            }
+            .pm-push-back {
+                flex: none; width: 34px; height: 34px; border-radius: 8px;
+                border: 1px solid var(--pm-border); background: var(--pm-surface); color: var(--pm-text-2);
+                font-size: 14px; cursor: pointer; text-decoration: none;
+                display: flex; align-items: center; justify-content: center;
+            }
 
             .sidebar {
                 width: clamp(260px, 84vw, 300px);
+                background: var(--m-navy);
                 transition: transform var(--duration-sheet) var(--ease-spring);
                 box-shadow: none;
             }
             .sidebar.open { box-shadow: var(--shadow-lg); }
+            .logo-desktop { display: none; }
+            .logo-mobile {
+                display: flex; align-items: center; gap: 12px;
+                padding: 24px 20px 18px; border-bottom: 1px solid var(--m-navy-line);
+            }
+            .logo-mobile-tile {
+                width: 40px; height: 40px; border-radius: 11px;
+                background: var(--m-gold); color: var(--m-navy);
+                display: flex; align-items: center; justify-content: center;
+                font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 15px;
+                box-shadow: 0 0 20px rgba(231,178,102,.25); flex-shrink: 0;
+            }
+            .logo-mobile-text strong { display: block; color: #fff; font-weight: 700; font-size: 14px; }
+            .logo-mobile-text span { color: var(--m-navy-text); font-size: 9.5px; letter-spacing: 1.2px; font-weight: 600; }
 
-            /* ── Bottom sheet ──────────────────────────────────────── */
+            .sidebar .nav-item { border-radius: 10px; font-family: 'Poppins', sans-serif; min-height: 44px; }
+            .sidebar .nav-item.active .nav-icon { color: var(--m-gold); }
+            .sidebar .nav-item.active::before { background: var(--m-gold); }
+
+            /* ── Shared mobile screen components (list pages) ───────
+                 Reused across Buildings/Floors/Units/Tenants/Maintenance/
+                 Invoices/Reports so each page doesn't repeat this CSS. ── */
+            .m-screen { font-family: 'Poppins', sans-serif; color: var(--m-ink); padding: 18px 18px calc(28px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; }
+
+            .m-action-row { display: flex; gap: 10px; }
+            .m-action-btn {
+                flex: 1; height: 46px; border-radius: var(--m-r-btn); font-weight: 600; font-size: 13px;
+                font-family: 'Poppins', sans-serif; cursor: pointer; display: flex; align-items: center;
+                justify-content: center; gap: 6px; text-decoration: none; border: none;
+            }
+            .m-action-btn.primary { background: var(--m-gold); color: var(--m-gold-on); font-weight: 700; flex: 1.4; }
+            .m-action-btn.outline { background: var(--m-card); border: 1.5px solid var(--m-border); color: #4A5568; }
+            .m-action-btn.green-outline { background: #F2FBF6; border: 1.5px solid #A8DFC6; color: var(--m-green); }
+
+            .m-mini-row { display: flex; gap: 10px; }
+            .m-mini-stat { flex: 1; background: var(--m-card); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; box-shadow: var(--m-shadow); }
+            .m-mini-stat .v { font-size: 19px; font-weight: 800; color: var(--m-ink); }
+            .m-mini-stat .l { font-size: 10.5px; color: var(--m-muted); }
+
+            .m-search-input {
+                height: 48px; border: 1.5px solid var(--m-border); border-radius: var(--m-r-btn);
+                padding: 0 16px; font-size: 13.5px; font-family: 'Poppins', sans-serif;
+                background: var(--m-card); outline: none; color: var(--m-ink); width: 100%;
+            }
+
+            .m-chip-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+            .m-chip-row.no-sb::-webkit-scrollbar { display: none; }
+            .m-chip {
+                height: 40px; padding: 0 16px; border-radius: 11px; font-size: 12.5px; font-weight: 600;
+                font-family: 'Poppins', sans-serif; cursor: pointer; flex-shrink: 0; display: flex;
+                align-items: center; text-decoration: none; border: 1.5px solid var(--m-border);
+                background: var(--m-card); color: #6B7688;
+            }
+            .m-chip.active { border-color: var(--m-gold); background: var(--m-gold); color: var(--m-gold-on); }
+
+            .m-row-list { display: flex; flex-direction: column; gap: 10px; }
+            .m-row-card {
+                background: var(--m-card); border-radius: 15px; padding: 14px 16px; display: flex;
+                align-items: center; gap: 13px; box-shadow: var(--m-shadow); text-decoration: none; color: inherit;
+                border: none; width: 100%; text-align: left; font-family: 'Poppins', sans-serif; cursor: pointer;
+            }
+            .m-row-icon { width: 42px; height: 42px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 17px; }
+            .m-row-title { font-size: 13.5px; font-weight: 700; color: var(--m-ink); }
+            .m-row-sub { font-size: 11px; color: var(--m-muted); margin-top: 1px; }
+            .m-row-chip { padding: 6px 9px; border-radius: 9px; background: var(--m-gold-tint); color: var(--m-gold-text); font-size: 10.5px; font-weight: 700; flex-shrink: 0; }
+            .m-row-badge { padding: 4px 10px; border-radius: 8px; font-size: 10.5px; font-weight: 600; flex-shrink: 0; }
+            .m-row-chevron { color: #C3CBD8; font-size: 14px; flex-shrink: 0; }
+
+            .m-empty { text-align: center; padding: 60px 24px; }
+            .m-empty-icon { width: 64px; height: 64px; border-radius: 18px; background: var(--m-gold-tint); display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--m-gold-text); margin: 0 auto 14px; }
+            .m-empty-title { font-size: 15px; font-weight: 700; color: var(--m-ink); margin-bottom: 4px; }
+            .m-empty-sub { font-size: 12px; color: var(--m-muted); }
+
+            /* Desktop list-page chrome each redesigned mobile screen replaces —
+               scoped to body.is-mobile-screen so untouched pages (Lease
+               Contracts, Expenses, Payments, ...) keep their normal header. */
+            body.is-mobile-screen .page-header,
+            body.is-mobile-screen .stats-grid,
+            body.is-mobile-screen .m-hide-desktop-index { display: none !important; }
+
+            /* ── Shared "pm-" design system (Miknas Property Manager
+                 mobile redesign) — tokens + components reused across every
+                 screen migrated to the new design (Home, Properties, ...).
+                 Pages not yet migrated keep using the --m-* / .m-screen
+                 system above untouched. ── */
+            :root {
+                --pm-gold:        #E8B86D;
+                --pm-gold-dark:   #B98A2E;
+                --pm-gold-tint:   rgba(232,184,109,0.12);
+                --pm-gold-glow:   rgba(232,184,109,0.25);
+                --pm-navy:        #0B1120;
+                --pm-navy-800:    #1A2540;
+                --pm-navy-text:   #8A9BBE;
+                --pm-text:        #0F172A;
+                --pm-text-2:      #475569;
+                --pm-text-3:      #94A3B8;
+                --pm-border:      #E2E8F0;
+                --pm-border-strong: #CBD5E1;
+                --pm-surface:     #FFFFFF;
+                --pm-page:        #F1F5F9;
+                --pm-page-alt:    #F8FAFC;
+                --pm-green:       #10B981;
+                --pm-green-tint:  rgba(16,185,129,0.12);
+                --pm-green-text:  #0F766E;
+                --pm-red:         #EF4444;
+                --pm-red-tint:    rgba(239,68,68,0.12);
+                --pm-warn:        #F59E0B;
+                --pm-warn-tint:   rgba(245,158,11,0.12);
+                --pm-info:        #3B82F6;
+            }
+
+            .pm-header {
+                flex: none; display: flex; align-items: center; gap: 12px;
+                padding: calc(14px + env(safe-area-inset-top)) 18px 12px;
+                background: var(--pm-surface); border-bottom: 1px solid var(--pm-border);
+                box-shadow: 0 1px 3px rgba(0,0,0,.06);
+            }
+            .pm-header-text { flex: 1; min-width: 0; }
+            .pm-title { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 21px; letter-spacing: -.2px; color: var(--pm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .pm-subtitle { font-size: 11px; font-weight: 500; color: var(--pm-text-3); margin-top: 1px; }
+            .pm-icon-btn {
+                position: relative; flex: none; width: 38px; height: 38px; border-radius: 8px;
+                border: 1px solid var(--pm-border); background: var(--pm-surface); color: var(--pm-text-2);
+                font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            }
+            .pm-icon-btn:active { background: var(--pm-page); }
+            .pm-dot { position: absolute; top: 6px; right: 7px; width: 8px; height: 8px; border-radius: 9999px; background: var(--pm-red); border: 1.5px solid var(--pm-surface); }
+            .pm-avatar {
+                flex: none; width: 38px; height: 38px; border-radius: 9999px; border: 0;
+                background: var(--pm-gold); color: var(--pm-navy); font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px;
+                display: flex; align-items: center; justify-content: center; cursor: pointer;
+                box-shadow: 0 0 0 3px var(--pm-gold-glow);
+            }
+
+            .pm-scroll { position: relative; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+            .pm-bottom-space { height: calc(96px + env(safe-area-inset-bottom)); }
+            .pm-section-label { font-size: 10px; font-weight: 700; letter-spacing: .7px; color: var(--pm-text-3); margin-bottom: 8px; }
+            .pm-empty { padding: 24px 16px; text-align: center; font-size: 12px; color: var(--pm-text-3); }
+
+            /* ── KPI cards (Home Portfolio, Property detail, ...) ──── */
+            .pm-kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+            .pm-kpi-card { background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+            .pm-kpi-label { font-size: 10px; font-weight: 700; letter-spacing: .7px; color: var(--pm-text-3); }
+            .pm-kpi-value { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 26px; color: var(--pm-text); margin-top: 6px; }
+            .pm-kpi-sub { font-size: 11px; font-weight: 600; color: var(--pm-text-2); margin-top: 2px; }
+            .pm-kpi-sub.is-green { color: var(--pm-green); }
+
+            /* ── Property card (Home/Properties) ──────────────────── */
+            .pm-property-card { background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,.08); text-decoration: none; color: inherit; display: block; }
+            .pm-property-photo { position: relative; height: 132px; background: var(--pm-border); background-size: cover; background-position: center; }
+            .pm-property-photo-fallback { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--pm-border-strong); font-size: 30px; }
+            .pm-property-kind { position: absolute; top: 10px; right: 10px; padding: 4px 9px; border-radius: 9999px; background: rgba(11,17,32,.72); color: var(--pm-gold); font-size: 10px; font-weight: 700; letter-spacing: .4px; }
+            .pm-property-body { padding: 14px; }
+            .pm-property-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 17px; color: var(--pm-text); }
+            .pm-property-address { font-size: 11.5px; color: var(--pm-text-2); margin-top: 3px; }
+            .pm-property-address i { color: var(--pm-gold); }
+            .pm-property-wells { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+            .pm-well { background: var(--pm-page); border-radius: 8px; padding: 9px 10px; }
+            .pm-well-label { font-size: 9.5px; font-weight: 700; color: var(--pm-text-3); letter-spacing: .5px; }
+            .pm-well-value { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px; color: var(--pm-text); margin-top: 2px; }
+
+            /* ── Action / list rows (needs-you-today, empty states, etc.) ── */
+            .pm-action-list { display: flex; flex-direction: column; gap: 8px; }
+            .pm-action-row { display: flex; align-items: center; gap: 12px; background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; padding: 12px 14px; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+            .pm-action-icon { flex: none; width: 34px; height: 34px; border-radius: 8px; background: var(--pm-gold-tint); color: var(--pm-gold); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+            .pm-action-title { font-size: 13.5px; font-weight: 600; color: var(--pm-text); }
+            .pm-action-sub { font-size: 11.5px; color: var(--pm-text-3); }
+            .pm-action-chevron { color: var(--pm-border-strong); font-size: 12px; }
+
+            /* ── FAB ──────────────────────────────────────────────── */
+            .pm-fab {
+                position: absolute; right: 18px; bottom: calc(112px + env(safe-area-inset-bottom));
+                width: 56px; height: 56px; border-radius: 9999px; border: 0; background: var(--pm-gold); color: var(--pm-navy);
+                font-size: 19px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center;
+                box-shadow: 0 10px 40px rgba(0,0,0,.10), 0 0 0 6px var(--pm-gold-glow); z-index: 20;
+            }
+
+            /* ── Search field + filter chips (Tenants, Property detail units) ── */
+            .pm-search-field {
+                display: flex; align-items: center; gap: 9px; background: var(--pm-surface);
+                border: 1px solid var(--pm-border-strong); border-radius: 8px; padding: 10px 12px;
+            }
+            .pm-search-field input {
+                flex: 1; border: 0; outline: none; font-size: 13.5px; color: var(--pm-text);
+                background: transparent; font-family: 'Plus Jakarta Sans', sans-serif;
+            }
+            .pm-search-field i { color: var(--pm-text-3); font-size: 13px; }
+            .pm-chip-row { display: flex; gap: 7px; overflow-x: auto; }
+            .pm-chip {
+                padding: 7px 13px; border-radius: 9999px; font-size: 12px; font-weight: 600;
+                text-decoration: none; white-space: nowrap; flex-shrink: 0;
+                border: 1px solid var(--pm-border); background: var(--pm-surface); color: var(--pm-text-2);
+            }
+            .pm-chip.active { border-color: var(--pm-navy); background: var(--pm-navy); color: #fff; }
+
+            /* ── Property detail: photo hero + floors & units native list ──
+                 Redesigned so the screen reads as an app detail screen (photo
+                 hero with identity baked into the image, a dark stat strip
+                 matching the Lease Contracts / Payments mobile screens, and
+                 a flat native row-card list) rather than a website's cropped
+                 photo + boxed accordion table. ── */
+            /* Horizontal-only bleed: cancels .m-screen's 18px side padding so the
+               hero photo spans edge-to-edge, but keeps the top margin at 0 so the
+               hero starts exactly at .m-screen's own top padding (see the
+               `.m-screen` top padding left in place in buildings/show.blade.php)
+               instead of being pulled up on top of the pm-push-header above it. */
+            .pm-hero-wrap { position: relative; margin: 0 -18px 0; }
+            .pm-hero-photo {
+                position: relative; height: 232px; background: var(--pm-navy-800);
+                background-size: cover; background-position: center;
+                overflow: hidden;
+            }
+            .pm-hero-scrim {
+                position: absolute; inset: 0;
+                background: linear-gradient(180deg, rgba(11,17,32,0) 40%, rgba(11,17,32,.90) 100%);
+                display: flex; flex-direction: column; justify-content: flex-end;
+                padding: 16px 18px 14px;
+            }
+            .pm-hero-topbar { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+            .pm-hero-occ-pill {
+                background: rgba(11,17,32,.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+                color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .2px;
+                padding: 7px 12px; border-radius: 9999px; display: flex; align-items: center; gap: 6px;
+                border: 1px solid rgba(255,255,255,.14);
+            }
+            .pm-hero-occ-pill i { color: var(--pm-gold); font-size: 9px; }
+            .pm-hero-edit-btn {
+                flex: none; width: 34px; height: 34px; border-radius: 9999px;
+                background: rgba(11,17,32,.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+                border: 1px solid rgba(255,255,255,.14); color: #fff;
+                display: flex; align-items: center; justify-content: center; font-size: 13px; text-decoration: none;
+            }
+            .pm-hero-name { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 22px; color: #fff; line-height: 1.15; text-shadow: 0 1px 8px rgba(0,0,0,.25); }
+            .pm-hero-address { font-size: 12px; color: rgba(255,255,255,.8); margin-top: 5px; display: flex; align-items: center; gap: 6px; }
+            .pm-hero-address i { color: var(--pm-gold); font-size: 11px; }
+
+            /* Floors & units — flat sections, no boxed accordion table */
+            .pm-floor-section { margin-bottom: 4px; }
+            .pm-floor-row {
+                display: flex; align-items: center; gap: 11px; padding: 12px 2px; cursor: pointer;
+                background: none; border: none; width: 100%; text-align: left; font-family: inherit;
+                border-bottom: 1px solid var(--pm-border);
+            }
+            .pm-floor-row.is-open { border-bottom-color: transparent; }
+            .pm-floor-name { font-size: 13.5px; font-weight: 700; color: var(--pm-text); }
+            .pm-floor-meta { font-size: 11px; color: var(--pm-text-3); margin-top: 1px; }
+            .pm-floor-units { display: flex; flex-direction: column; gap: 9px; padding: 12px 0 16px; }
+            .pm-unit-card {
+                display: flex; align-items: center; gap: 12px; padding: 12px 14px; text-decoration: none; color: inherit;
+                background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 14px;
+                box-shadow: 0 1px 3px rgba(0,0,0,.05);
+            }
+            div.pm-unit-card { cursor: default; }
+            .pm-unit-tile {
+                flex: none; width: 42px; height: 42px; border-radius: 12px; font-family: 'Outfit', sans-serif;
+                font-weight: 700; font-size: 12.5px; display: flex; align-items: center; justify-content: center;
+            }
+            .pm-unit-tile.is-let { background: var(--pm-navy); color: var(--pm-gold); }
+            .pm-unit-tile.is-vacant { background: var(--pm-page); color: var(--pm-text-3); }
+            .pm-unit-name { font-size: 13.5px; font-weight: 700; color: var(--pm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .pm-unit-rent { font-size: 11px; color: var(--pm-text-3); margin-top: 1px; }
+            .pm-unit-badge { padding: 4px 10px; border-radius: 9999px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+            .pm-unit-more {
+                display: block; text-align: center; padding: 11px 0; margin-top: 2px;
+                color: var(--pm-gold-dark); font-size: 12.5px; font-weight: 700; text-decoration: none;
+                background: var(--pm-page-alt); border-radius: 12px;
+            }
+
+            /* ═══════════════════════════════════════════════════════════
+               EXPERIMENT: "Depth & Motion" mobile layer (native-feel v2)
+               ───────────────────────────────────────────────────────────
+               Additive, opt-in only — every rule below is either a brand
+               new class/selector, or gated behind a modifier class
+               (`.is-*`) that must be added explicitly in markup. Nothing
+               here changes the default `.pm-*` / `.m-*` base rules above,
+               so screens that don't opt in (tenants.show, property-units,
+               floors, invoices, payments, lease-contracts, maintenance,
+               reports) render pixel-identical to before. Scoped to
+               Dashboard + Buildings (index/show) for this proof of
+               concept. Direction: two-layer "tonal" elevation (Material 3
+               surface + shadow) combined with iOS-style large titles,
+               spring-eased collapsing headers, a true sliding segmented
+               control, Material ripple feedback, and a hero parallax —
+               reading as native on both platforms rather than leaning
+               hard into one. ═══════════════════════════════════════════ */
+
+            /* Two-layer elevation: a soft ambient shadow + a tighter key
+               shadow, the way Material 3 composes elevation instead of a
+               single flat rgba blur. Reused directly on pm-property-card /
+               pm-kpi-card / pm-unit-card since those three are exclusive
+               to the screens in scope. */
+            :root {
+                --pm-elev-1: 0 1px 2px rgba(23,32,58,.06), 0 4px 12px rgba(23,32,58,.05);
+                --pm-elev-2: 0 2px 4px rgba(23,32,58,.08), 0 12px 28px rgba(23,32,58,.10);
+                --pm-elev-3: 0 4px 10px rgba(23,32,58,.12), 0 20px 44px rgba(23,32,58,.16);
+            }
+            :root[data-theme="dark"] {
+                --pm-elev-1: 0 1px 2px rgba(0,0,0,.35), 0 4px 14px rgba(0,0,0,.30);
+                --pm-elev-2: 0 2px 5px rgba(0,0,0,.40), 0 14px 32px rgba(0,0,0,.38);
+                --pm-elev-3: 0 4px 12px rgba(0,0,0,.45), 0 22px 48px rgba(0,0,0,.48);
+            }
+            .pm-property-card { box-shadow: var(--pm-elev-2); transition: box-shadow .18s ease, transform .12s ease; }
+            .pm-kpi-card { box-shadow: var(--pm-elev-1); transition: box-shadow .18s ease, transform .12s ease; }
+            .pm-unit-card { box-shadow: var(--pm-elev-1); }
+
+            /* Material-style ripple: opt in per element with class
+               `pm-ripple`. JS (below) spawns a `.pm-ripple-wave` span at
+               the touch point on pointerdown; this alone provides the
+               expanding-circle feedback, layered on top of the existing
+               scale-press so it reads as one native system rather than
+               two competing effects. */
+            .pm-ripple { position: relative; overflow: hidden; }
+            .pm-ripple-wave {
+                position: absolute; border-radius: 50%; pointer-events: none;
+                background: radial-gradient(circle, rgba(232,184,109,.35) 0%, rgba(232,184,109,0) 72%);
+                transform: scale(0); opacity: .9;
+                animation: pm-ripple-expand .5s cubic-bezier(.22,.72,.24,1) forwards;
+            }
+            @keyframes pm-ripple-expand {
+                to { transform: scale(1); opacity: 0; }
+            }
+
+            /* Large title + collapsing header, opt-in via `.pm-title.is-lg`
+               and `.pm-header.is-collapsible`. JS toggles `.is-collapsed`
+               on the header once the scroll container passes a threshold,
+               shrinking the title and fading in a solid header background
+               — the same "large title deflates into a compact bar" motion
+               as iOS navigation bars / Android's collapsing toolbar. */
+            .pm-title.is-lg {
+                font-size: 28px; font-weight: 800; letter-spacing: -.4px;
+                transition: font-size .28s var(--ease-spring);
+            }
+            .pm-header.is-collapsible {
+                transition: box-shadow .22s ease, background-color .22s ease;
+            }
+            .pm-header.is-collapsible.is-collapsed .pm-title.is-lg { font-size: 17px; }
+            .pm-greeting {
+                font-size: 12.5px; font-weight: 600; color: var(--pm-text-3);
+                margin-bottom: 2px; transition: opacity .2s ease, max-height .2s ease;
+            }
+            .pm-header.is-collapsible.is-collapsed .pm-greeting { opacity: 0; max-height: 0; margin: 0; overflow: hidden; }
+
+            /* Sliding-pill segmented control — a real thumb element that
+               animates position/width via spring easing, instead of just
+               toggling each button's own background. Dashboard-only
+               (`#pmSegment` doesn't exist elsewhere). */
+            .pm-segment { position: relative; }
+            .pm-segment-thumb {
+                position: absolute; top: 4px; bottom: 4px; left: 4px;
+                background: var(--pm-surface); border-radius: 7px;
+                box-shadow: 0 1px 3px rgba(0,0,0,.06);
+                transition: transform .32s var(--ease-spring), width .32s var(--ease-spring);
+                will-change: transform;
+            }
+            .pm-seg-btn { position: relative; z-index: 1; transition: color .18s ease; }
+
+            /* Tonal KPI stat chip — a small icon badge + trend row that
+               gives the flat KPI numbers below in dashboard.blade.php more
+               visual hierarchy than plain stacked text. */
+            .pm-kpi-icon {
+                width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+                display: flex; align-items: center; justify-content: center; font-size: 11px;
+            }
+            .pm-kpi-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+            /* Pull-to-refresh affordance — opt in with `data-pull-refresh`
+               on a `.pm-scroll` container. Pure CSS visual; JS below
+               drives the translateY/opacity via inline style + triggers
+               a real navigation refresh once the threshold is crossed. */
+            .pm-ptr-indicator {
+                position: absolute; top: 0; left: 0; right: 0; height: 64px;
+                display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px;
+                pointer-events: none; opacity: 0; transform: translateY(-100%);
+                z-index: 5;
+            }
+            .pm-ptr-spinner {
+                width: 26px; height: 26px; border-radius: 50%;
+                border: 2.5px solid var(--pm-border); border-top-color: var(--pm-gold);
+                transition: transform .1s linear;
+            }
+            .pm-ptr-spinner.is-loading { animation: pm-ptr-spin .6s linear infinite; }
+            @keyframes pm-ptr-spin { to { transform: rotate(360deg); } }
+
+            /* Pill-shaped iOS-style search field — opt in with
+               `.pm-search-field.is-pill` (buildings index only; the
+               default `.pm-search-field` used elsewhere is untouched). */
+            .pm-search-field.is-pill {
+                background: var(--pm-page); border: 1px solid transparent; border-radius: 12px;
+                padding: 11px 14px; box-shadow: inset 0 0 0 1px rgba(15,23,42,.04);
+            }
+            :root[data-theme="dark"] .pm-search-field.is-pill { box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); }
+
+            /* Roomier "big" empty state — opt in with `.pm-empty.is-lg`
+               (used only where explicitly added below). */
+            .pm-empty.is-lg { padding: 48px 24px; }
+            .pm-empty-icon-lg {
+                width: 60px; height: 60px; border-radius: 18px; margin: 0 auto 14px;
+                background: var(--pm-gold-tint); color: var(--pm-gold-dark);
+                display: flex; align-items: center; justify-content: center; font-size: 22px;
+            }
+
+            /* Hero parallax (Buildings detail) — the cover image lives in
+               its own layer (`.pm-hero-photo-img`) so the translate/scale
+               only ever moves pixels, never the topbar/scrim overlay
+               siblings sitting on top of it. Opt in with `.has-parallax`;
+               JS drives `--pm-parallax`. */
+            .pm-hero-photo-img {
+                position: absolute; inset: -20% 0; background-size: cover; background-position: center;
+            }
+            .pm-hero-photo-img.has-parallax {
+                transform: translateY(calc(var(--pm-parallax, 0) * 1px));
+                transition: transform .05s linear;
+            }
+
+            /* ── Bottom sheet (shared by modals + the More menu) ────── */
             .modal-overlay {
                 align-items: flex-end;
                 padding: 0;
@@ -538,6 +1205,34 @@
             }
             .sheet-handle.dragging { transition: none; }
 
+            /* ── Standard mobile header ───────────────────────────── */
+            .topbar {
+                height: auto;
+                padding: calc(18px + env(safe-area-inset-top)) 18px 12px;
+                gap: 10px;
+                font-family: 'Poppins', sans-serif;
+            }
+            .topbar-title { font-size: 19px; font-weight: 800; font-family: 'Poppins', sans-serif; }
+            #menuBtn, .topbar-actions .topbar-icon-btn { width: 40px; height: 40px; border-radius: 12px; }
+            .topbar .user-avatar { width: 40px; height: 40px; font-size: 14px; }
+
+            /* ── More sheet ───────────────────────────────────────── */
+            .more-sheet-item {
+                display: flex; align-items: center; gap: 14px;
+                width: 100%; padding: 12px 10px; border: none; background: none;
+                border-radius: 14px; cursor: pointer; text-align: left;
+                font-family: 'Poppins', sans-serif; min-height: 56px;
+                text-decoration: none; color: inherit;
+            }
+            .more-sheet-item:active { background: var(--m-line); }
+            .more-sheet-icon {
+                width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
+                display: flex; align-items: center; justify-content: center; font-size: 17px;
+            }
+            .more-sheet-label { font-size: 14px; font-weight: 700; color: var(--m-ink); }
+            .more-sheet-desc { font-size: 11px; color: var(--m-muted); margin-top: 1px; }
+            .more-sheet-item.danger .more-sheet-label { color: var(--m-red); }
+
             /* ── Bottom tab bar ──────────────────────────────────── */
             .page-content { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
 
@@ -546,8 +1241,8 @@
                 position: fixed;
                 left: 0; right: 0; bottom: 0;
                 z-index: 95;
-                background: var(--card-bg);
-                border-top: 1px solid var(--card-border);
+                background: var(--m-card);
+                border-top: 1px solid #E9EDF3;
                 padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
                 box-shadow: 0 -2px 16px rgba(0,0,0,0.05);
             }
@@ -560,15 +1255,15 @@
                 padding: 6px 2px;
                 border: none;
                 background: none;
-                color: var(--text-muted);
+                color: #9AA5B8;
                 text-decoration: none;
-                font-family: 'Plus Jakarta Sans', sans-serif;
-                font-size: 10.5px;
+                font-family: 'Poppins', sans-serif;
+                font-size: 10px;
                 font-weight: 600;
                 transition: color 0.15s ease;
             }
-            .tabbar-item i { font-size: 18px; transition: transform 0.15s var(--ease-spring); }
-            .tabbar-item.active { color: var(--accent); }
+            .tabbar-item i { font-size: 21px; transition: transform 0.15s var(--ease-spring); }
+            .tabbar-item.active { color: #B98A2E; }
             .tabbar-item.active i { transform: translateY(-1px); }
             .tabbar-item:active i { transform: scale(0.88); }
         }
@@ -576,18 +1271,170 @@
         @media (min-width: 769px) {
             .sheet-handle { display: none; }
             .bottom-tabbar { display: none; }
+            .logo-mobile { display: none; }
+            #moreSheet { display: none !important; }
+            .m-screen { display: none !important; }
         }
     </style>
 </head>
-<body>
+@php
+    $mobileRedesignedRoutes = [
+        'buildings.index', 'floors.global', 'property-units.index', 'tenants.index',
+        'maintenance.index', 'invoices.index', 'reports.index', 'tenants.show', 'buildings.show',
+        'lease-contracts.index', 'payments.index',
+    ];
+    $isMobileScreen = request()->routeIs($mobileRedesignedRoutes);
+    $pushedScreenRoutes = ['tenants.show', 'buildings.show'];
+    $isPushedScreen = request()->routeIs($pushedScreenRoutes);
+@endphp
+<body class="{{ request()->routeIs('dashboard') ? 'is-dashboard' : '' }} {{ $isMobileScreen ? 'is-mobile-screen' : '' }} {{ $isPushedScreen ? 'is-pushed-screen' : '' }}">
+
+{{-- ── EXPERIMENT: "Depth & Motion" shared helpers ─────────────────────
+     Declared immediately after <body> opens (before @yield('content')
+     renders) so any per-page script calling these — e.g. buildings/show
+     wiring up pmInitHeroParallax — always finds them already defined.
+     All opt-in: each helper only touches elements that carry the
+     relevant marker class/attribute, so pages that don't use them are
+     unaffected. ── --}}
+<script>
+(function () {
+    /* Material-style ripple on any `.pm-ripple` element. */
+    document.addEventListener('pointerdown', function (e) {
+        const el = e.target.closest('.pm-ripple');
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height) * 1.6;
+        const wave = document.createElement('span');
+        wave.className = 'pm-ripple-wave';
+        wave.style.width = wave.style.height = size + 'px';
+        wave.style.left = (e.clientX - rect.left - size / 2) + 'px';
+        wave.style.top = (e.clientY - rect.top - size / 2) + 'px';
+        el.appendChild(wave);
+        wave.addEventListener('animationend', () => wave.remove());
+    });
+
+    /* Collapsing large-title header: pass the header element, its
+       scroll container, and the pixel threshold to shrink at. */
+    window.pmInitCollapsingHeader = function (header, scroller, threshold) {
+        if (!header || !scroller) return;
+        threshold = threshold || 36;
+        const read = () => (scroller === window ? window.scrollY : scroller.scrollTop);
+        let ticking = false;
+        function update() {
+            header.classList.toggle('is-collapsed', read() > threshold);
+            ticking = false;
+        }
+        (scroller === window ? window : scroller).addEventListener('scroll', function () {
+            if (!ticking) { requestAnimationFrame(update); ticking = true; }
+        }, { passive: true });
+        update();
+    };
+
+    /* Hero parallax: pass the photo element + its scroll source (window
+       for normal-flow "pushed" screens like Building detail). */
+    window.pmInitHeroParallax = function (photo, scroller) {
+        if (!photo) return;
+        scroller = scroller || window;
+        let ticking = false;
+        function update() {
+            const y = scroller === window ? window.scrollY : scroller.scrollTop;
+            const clamped = Math.max(0, Math.min(y, 160));
+            photo.style.setProperty('--pm-parallax', (clamped * 0.35).toFixed(1));
+            ticking = false;
+        }
+        (scroller === window ? window : scroller).addEventListener('scroll', function () {
+            if (!ticking) { requestAnimationFrame(update); ticking = true; }
+        }, { passive: true });
+        update();
+    };
+
+    /* True sliding-pill segmented control. Pass the `.pm-segment`
+       wrapper; positions/sizes a `.pm-segment-thumb` under whichever
+       button carries `.active`, and keeps it in sync on click/resize. */
+    window.pmInitSegmentThumb = function (segment) {
+        if (!segment) return;
+        let thumb = segment.querySelector('.pm-segment-thumb');
+        if (!thumb) {
+            thumb = document.createElement('div');
+            thumb.className = 'pm-segment-thumb';
+            segment.prepend(thumb);
+        }
+        function place() {
+            const active = segment.querySelector('.pm-seg-btn.active');
+            if (!active) return;
+            thumb.style.width = active.offsetWidth + 'px';
+            thumb.style.transform = 'translateX(' + active.offsetLeft + 'px)';
+        }
+        segment.querySelectorAll('.pm-seg-btn').forEach((btn) => {
+            btn.addEventListener('click', () => requestAnimationFrame(place));
+        });
+        window.addEventListener('resize', place);
+        requestAnimationFrame(place);
+    };
+
+    /* Pull-to-refresh: attach to a `.pm-scroll` container. Only arms
+       when the container is already scrolled to the very top, so it
+       never fights normal scrolling. */
+    window.pmInitPullToRefresh = function (container) {
+        if (!container) return;
+        const indicator = document.createElement('div');
+        indicator.className = 'pm-ptr-indicator';
+        indicator.innerHTML = '<div class="pm-ptr-spinner"></div>';
+        container.prepend(indicator);
+        const spinner = indicator.querySelector('.pm-ptr-spinner');
+
+        let startY = null, pulling = false;
+        const threshold = 68;
+
+        container.addEventListener('touchstart', (e) => {
+            if (container.scrollTop > 0) { startY = null; return; }
+            startY = e.touches[0].clientY;
+            pulling = true;
+        }, { passive: true });
+
+        container.addEventListener('touchmove', (e) => {
+            if (!pulling || startY === null) return;
+            const dy = e.touches[0].clientY - startY;
+            if (dy <= 0) return;
+            const progress = Math.min(1, dy / threshold);
+            indicator.style.opacity = progress;
+            indicator.style.transform = 'translateY(' + (progress * 64 - 64) + '%)';
+            spinner.style.transform = 'rotate(' + (progress * 280) + 'deg)';
+        }, { passive: true });
+
+        container.addEventListener('touchend', (e) => {
+            if (!pulling || startY === null) return;
+            pulling = false;
+            const dy = (e.changedTouches[0].clientY - startY);
+            if (dy > threshold) {
+                spinner.classList.add('is-loading');
+                indicator.style.opacity = 1;
+                indicator.style.transform = 'translateY(0)';
+                window.location.reload();
+            } else {
+                indicator.style.opacity = 0;
+                indicator.style.transform = 'translateY(-100%)';
+            }
+            startY = null;
+        });
+    };
+})();
+</script>
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
-    <a href="{{ url('/') }}" class="sidebar-logo">
+    <a href="{{ url('/') }}" class="sidebar-logo logo-desktop">
         <div class="sidebar-logo-icon"><i class="fa-solid fa-building-columns"></i></div>
         <div class="sidebar-logo-text">
             <strong>RealEstate</strong>
             <span>Management Suite</span>
+        </div>
+    </a>
+    <a href="{{ url('/') }}" class="logo-mobile" style="text-decoration:none;">
+        <div class="logo-mobile-tile">P7</div>
+        <div class="logo-mobile-text">
+            <strong>Promoseven RE</strong>
+            <span>MANAGEMENT SUITE</span>
         </div>
     </a>
 
@@ -707,6 +1554,51 @@
 
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
+<!-- MORE SHEET (mobile bottom tab bar "More" destination) -->
+<div class="modal-overlay" id="moreSheet">
+    <div class="modal-box" style="max-width:100%;padding:14px 10px 20px;">
+        @unless(auth()->user()?->isMaintenance())
+        <a href="{{ route('floors.global') }}" class="more-sheet-item">
+            <div class="more-sheet-icon" style="background:var(--m-blue-tint);"><i class="fa-solid fa-layer-group" style="color:var(--m-blue);"></i></div>
+            <div><div class="more-sheet-label">Floors</div><div class="more-sheet-desc">Browse all floors</div></div>
+        </a>
+        <a href="{{ route('property-units.index') }}" class="more-sheet-item">
+            <div class="more-sheet-icon" style="background:var(--m-green-tint);"><i class="fa-solid fa-door-open" style="color:var(--m-green);"></i></div>
+            <div><div class="more-sheet-label">Property Units</div><div class="more-sheet-desc">Browse property units</div></div>
+        </a>
+        <a href="{{ route('lease-contracts.index') }}" class="more-sheet-item">
+            <div class="more-sheet-icon" style="background:var(--m-navy-active);"><i class="fa-solid fa-file-contract" style="color:#fff;"></i></div>
+            <div><div class="more-sheet-label">Lease Contracts</div><div class="more-sheet-desc">Browse lease agreements</div></div>
+        </a>
+        <a href="{{ route('invoices.index') }}" class="more-sheet-item">
+            <div class="more-sheet-icon" style="background:var(--m-gold-tint);"><i class="fa-solid fa-file-invoice-dollar" style="color:var(--m-gold-text);"></i></div>
+            <div><div class="more-sheet-label">Invoices</div><div class="more-sheet-desc">View and manage invoices</div></div>
+        </a>
+        <a href="{{ route('payments.index') }}" class="more-sheet-item">
+            <div class="more-sheet-icon" style="background:#E6F6EE;"><i class="fa-solid fa-money-bill-transfer" style="color:#17A96C;"></i></div>
+            <div><div class="more-sheet-label">Payments</div><div class="more-sheet-desc">Track received payments</div></div>
+        </a>
+        @endunless
+        @if(auth()->user()?->canViewReports())
+        <a href="{{ route('reports.index') }}" class="more-sheet-item">
+            <div class="more-sheet-icon" style="background:var(--m-purple-tint);"><i class="fa-solid fa-chart-bar" style="color:var(--m-purple);"></i></div>
+            <div><div class="more-sheet-label">Reports</div><div class="more-sheet-desc">Export portfolio reports</div></div>
+        </a>
+        @endif
+        <button type="button" class="more-sheet-item" id="moreMenuBtn">
+            <div class="more-sheet-icon" style="background:var(--m-navy-active);"><i class="fa-solid fa-bars" style="color:#fff;"></i></div>
+            <div><div class="more-sheet-label">Full menu</div><div class="more-sheet-desc">All sections</div></div>
+        </button>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="more-sheet-item danger">
+                <div class="more-sheet-icon" style="background:var(--m-red-tint);"><i class="fa-solid fa-right-from-bracket" style="color:var(--m-red);"></i></div>
+                <div><div class="more-sheet-label">Sign out</div><div class="more-sheet-desc">{{ auth()->user()->email ?? '' }}</div></div>
+            </button>
+        </form>
+    </div>
+</div>
+
 <!-- MAIN WRAP -->
 <div class="main-wrap">
     <!-- TOPBAR -->
@@ -716,6 +1608,7 @@
         </button>
         <div class="topbar-title">@yield('topbar-title', 'Dashboard')</div>
         <div class="topbar-actions">
+            <button class="topbar-icon-btn theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode"><i class="fa-solid fa-moon"></i></button>
             <button class="topbar-icon-btn"><i class="fa-regular fa-bell"></i></button>
             <button class="topbar-icon-btn"><i class="fa-regular fa-circle-question"></i></button>
             <div class="user-avatar" style="width:32px;height:32px;font-size:12px;cursor:pointer;">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
@@ -751,18 +1644,18 @@
 @endphp
 <nav class="bottom-tabbar" id="bottomTabbar">
     <a href="{{ url('/dashboard') }}" class="tabbar-item {{ $tabbarIsMain ? 'active' : '' }}">
-        <i class="fa-solid fa-gauge-high"></i> Dashboard
+        <i class="fa-solid fa-house"></i> Home
     </a>
     @unless(auth()->user()?->isMaintenance())
     <a href="{{ route('buildings.index') }}" class="tabbar-item {{ $tabbarIsBuildings ? 'active' : '' }}">
-        <i class="fa-solid fa-building"></i> Buildings
+        <i class="fa-solid fa-building"></i> Properties
     </a>
     <a href="{{ route('tenants.index') }}" class="tabbar-item {{ $tabbarIsTenants ? 'active' : '' }}">
         <i class="fa-solid fa-users"></i> Tenants
     </a>
     @endunless
     <a href="{{ route('maintenance.index') }}" class="tabbar-item {{ $tabbarIsMaintenance ? 'active' : '' }}">
-        <i class="fa-solid fa-wrench"></i> Maintenance
+        <i class="fa-solid fa-screwdriver-wrench"></i> Requests
     </a>
     <button type="button" class="tabbar-item {{ $tabbarIsMore ? 'active' : '' }}" id="moreTabBtn">
         <i class="fa-solid fa-ellipsis"></i> More
@@ -770,6 +1663,11 @@
 </nav>
 
 <script>
+let mDebounceTimer;
+function mDebounceSubmit(el) {
+    clearTimeout(mDebounceTimer);
+    mDebounceTimer = setTimeout(() => el.form.submit(), 500);
+}
 (function () {
     const MOBILE = 768;
     const sidebar = document.getElementById('sidebar');
@@ -791,8 +1689,21 @@
     menuBtn.addEventListener('click', () => {
         sidebar.classList.contains('open') ? closeDrawer() : openDrawer();
     });
-    document.getElementById('moreTabBtn')?.addEventListener('click', openDrawer);
     backdrop.addEventListener('click', closeDrawer);
+
+    // ── More sheet (bottom tab bar "More" destination) ───────────
+    const moreSheet = document.getElementById('moreSheet');
+    function openMoreSheet() {
+        moreSheet.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeMoreSheet() {
+        moreSheet.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    document.getElementById('moreTabBtn')?.addEventListener('click', openMoreSheet);
+    moreSheet.addEventListener('click', (e) => { if (e.target === moreSheet) closeMoreSheet(); });
+    document.getElementById('moreMenuBtn')?.addEventListener('click', () => { closeMoreSheet(); openDrawer(); });
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && sidebar.classList.contains('open')) closeDrawer();
     });
@@ -882,6 +1793,31 @@
     }
 
     document.querySelectorAll('.modal-overlay .modal-box').forEach(attachSheetHandle);
+})();
+
+/* ── Theme toggle ─────────────────────────────────────── */
+(function () {
+    const btns = document.querySelectorAll('.theme-toggle-btn');
+    if (!btns.length) return;
+
+    function syncIcons() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        btns.forEach(function (btn) {
+            const icon = btn.querySelector('i');
+            icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+        });
+    }
+    syncIcons();
+
+    btns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('p7-theme', next);
+            syncIcons();
+        });
+    });
 })();
 </script>
 

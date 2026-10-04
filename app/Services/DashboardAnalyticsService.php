@@ -123,7 +123,7 @@ class DashboardAnalyticsService
         ];
     }
 
-    private function buildingSnapshot(Building $building, Carbon $from, Carbon $to): array
+    public function buildingSnapshot(Building $building, Carbon $from, Carbon $to): array
     {
         $pl = $this->profitLoss->build($from, $to, $building->id);
 

@@ -7,6 +7,7 @@ use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
 use App\Models\Invoice;
 use App\Models\LeaseContract;
+use App\Models\Payment;
 use App\Models\Tenant;
 use App\Services\TenantMailer;
 use Illuminate\Support\Carbon;
@@ -57,7 +58,14 @@ class InvoiceController extends Controller
             'overdue'        => Invoice::where('status', 'overdue')->count(),
         ];
 
-        return view('invoices.index', compact('invoices', 'stats'));
+        $collectedThisMonth = (float) Payment::whereMonth('payment_date', now()->month)
+            ->whereYear('payment_date', now()->year)
+            ->sum('amount');
+        $outstanding = (float) Invoice::whereIn('status', ['issued', 'partially_paid', 'overdue'])
+            ->get()
+            ->sum(fn (Invoice $i) => $i->balance_due);
+
+        return view('invoices.index', compact('invoices', 'stats', 'collectedThisMonth', 'outstanding'));
     }
 
     /**

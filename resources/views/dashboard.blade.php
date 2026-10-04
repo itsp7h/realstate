@@ -423,62 +423,81 @@ a.dash-stat { text-decoration: none; cursor: pointer; }
 .property-expense-row .value { font-weight: 700; color: var(--text-primary); }
 .property-expense-empty { text-align: center; font-size: 12px; color: var(--text-muted); padding: 6px 0; }
 
-/* ── MOBILE FINANCE SUMMARY (hidden on desktop) ──────────── */
-.mobile-finance-tiles { display: none; }
-
 /* ── MOBILE PHOTO BADGE (overlaid on carousel, hidden on desktop) ── */
 .property-photo-badge { display: none; }
 
-/* ── MOBILE CARDS LAYOUT ──────────────────────────────────── */
+/* ── MOBILE DASHBOARD (hidden on desktop) ──────────────────── */
+.m-dash { display: none; }
+
+/* ── MOBILE DASHBOARD — Miknas Property Manager design ──────
+     The desktop dashboard sections below are replaced wholesale by the
+     .pm-* markup on mobile — not squeezed responsively — since the
+     mobile spec is a different screen, not a narrower desktop one. ── */
 @media (max-width: 768px) {
-    .mobile-finance-tiles {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin-bottom: 20px;
+    .page-header, .dash-stats, .data-hero,
+    .finance-card, .property-section-head, .property-grid, .dash-grid {
+        display: none !important;
     }
-    .mobile-finance-tile {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius);
-        padding: 16px 16px;
-    }
-    .mobile-finance-label {
-        font-size: 10.5px; font-weight: 700; color: var(--text-muted);
-        text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;
-    }
-    .mobile-finance-value { font-family: 'Outfit', sans-serif; font-size: 21px; font-weight: 800; color: var(--text-primary); line-height: 1.1; }
-    .mobile-finance-value.positive { color: var(--success); }
-    .mobile-finance-value.negative { color: var(--danger); }
-    .mobile-finance-sub { font-size: 10.5px; color: var(--text-muted); margin-top: 4px; }
 
-    .property-photo-badge {
-        display: inline-flex;
-        position: absolute;
-        top: 10px; right: 10px;
-        z-index: 2;
-        background: rgba(11,17,32,0.72);
-        color: #fff;
-        border: none;
-        backdrop-filter: blur(3px);
+    .m-dash {
+        display: flex; flex-direction: column; font-family: 'Plus Jakarta Sans', sans-serif;
+        position: fixed; inset: 0; z-index: 10; background: var(--pm-page);
     }
-    .property-title-row .badge { display: none; }
 
-    .property-grid { grid-template-columns: 1fr; gap: 14px; margin-bottom: 22px; }
-    .property-carousel { height: 148px; }
-    .property-body { padding: 14px 16px 16px; }
-    .property-name { font-size: 15.5px; }
-    .property-address { margin-bottom: 14px; font-size: 11.5px; }
-    .property-period-label { margin-bottom: 8px; }
-    .property-stats-row { gap: 6px; margin-bottom: 14px; }
-    .property-stat-box { padding: 8px 5px; }
-    .property-stat-value { font-size: 13.5px; }
-    .property-expense-list { padding: 10px 12px; }
+    /* ── Segmented control ───────────────────────────────── */
+    .pm-segment-wrap { padding: 16px 18px 0; }
+    .pm-segment { display: flex; gap: 4px; padding: 4px; background: var(--pm-border); border-radius: 10px; }
+    .pm-seg-btn {
+        flex: 1; padding: 8px 0; border: 0; border-radius: 7px; font-size: 12px; font-weight: 600;
+        cursor: pointer; background: transparent; color: var(--pm-text-2); font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .pm-seg-btn.active { background: var(--pm-surface); color: var(--pm-text); box-shadow: 0 1px 3px rgba(0,0,0,.06); }
 
-    .dash-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
-    .dash-stat { padding: 14px 12px; gap: 10px; }
-    .dash-stat-val { font-size: 19px; }
-    .dash-stat-lbl { font-size: 11px; }
+    .pm-dash-layout { padding: 16px 18px 0; display: flex; flex-direction: column; gap: 14px; }
+    .pm-dash-layout[hidden] { display: none; }
+
+    /* ── Today: navy hero ─────────────────────────────────── */
+    .pm-hero-card { background: var(--pm-navy); border-radius: 12px; padding: 18px; box-shadow: 0 10px 40px rgba(0,0,0,.10); }
+    .pm-hero-top-row { display: flex; justify-content: space-between; align-items: flex-start; }
+    .pm-hero-label { font-size: 10px; font-weight: 700; letter-spacing: .8px; color: var(--pm-navy-text); }
+    .pm-hero-figure { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 38px; color: #fff; line-height: 1.1; margin-top: 8px; }
+    .pm-hero-sub { font-size: 12px; font-weight: 500; color: var(--pm-navy-text); margin-top: 2px; }
+    .pm-hero-icon { width: 44px; height: 44px; border-radius: 9999px; background: var(--pm-gold-tint); color: var(--pm-gold); display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+    .pm-hero-bar { height: 6px; border-radius: 9999px; background: var(--pm-navy-800); margin-top: 16px; overflow: hidden; }
+    .pm-hero-bar-fill { height: 100%; border-radius: 9999px; background: var(--pm-gold); box-shadow: 0 0 12px var(--pm-gold-glow); }
+    .pm-hero-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 18px; }
+    .pm-hero-stat { border-left: 1px solid var(--pm-navy-800); padding-left: 10px; }
+    .pm-hero-stat-label { font-size: 9.5px; font-weight: 700; color: var(--pm-navy-text); letter-spacing: .5px; }
+    .pm-hero-stat-value { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 19px; color: #fff; margin-top: 2px; }
+
+    /* ── Today: compact property rows ─────────────────────── */
+    .pm-compact-row { display: flex; align-items: center; gap: 12px; background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; padding: 12px 14px; text-decoration: none; }
+    .pm-compact-tile { flex: none; width: 40px; height: 40px; border-radius: 9px; background: var(--pm-navy); color: var(--pm-gold); font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center; }
+    .pm-compact-name { font-size: 14px; font-weight: 600; color: var(--pm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pm-compact-sub { font-size: 11.5px; color: var(--pm-text-3); }
+    .pm-compact-figure { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 15px; color: var(--pm-text); text-align: right; }
+    .pm-compact-net { font-size: 10.5px; font-weight: 600; text-align: right; }
+
+    /* ── Cash flow: ledger card ───────────────────────────── */
+    .pm-ledger-card { background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .pm-ledger-head { display: flex; justify-content: space-between; align-items: center; padding: 13px 15px; border-bottom: 1px solid var(--pm-border); }
+    .pm-ledger-head-label { font-size: 10px; font-weight: 700; letter-spacing: .7px; color: var(--pm-text-3); }
+    .pm-ledger-head-meta { font-size: 11px; font-weight: 600; color: var(--pm-gold-dark); }
+    .pm-ledger-row { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-bottom: 1px solid var(--pm-border); }
+    .pm-ledger-icon { flex: none; width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    .pm-ledger-label { font-size: 13px; font-weight: 600; color: var(--pm-text); }
+    .pm-ledger-meta { font-size: 11px; color: var(--pm-text-3); }
+    .pm-ledger-amount { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 15px; }
+    .pm-ledger-net { display: flex; justify-content: space-between; align-items: center; padding: 14px 15px; background: var(--pm-page); }
+    .pm-ledger-net-label { font-size: 12px; font-weight: 700; color: var(--pm-text-2); letter-spacing: .3px; }
+    .pm-ledger-net-value { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 20px; color: var(--pm-text); }
+
+    /* ── Cash flow: occupancy rows ─────────────────────────── */
+    .pm-occ-row { display: flex; align-items: center; gap: 11px; background: var(--pm-surface); border: 1px solid var(--pm-border); border-radius: 12px; padding: 11px 14px; text-decoration: none; }
+    .pm-occ-name { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; color: var(--pm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pm-occ-bar { flex: none; width: 70px; height: 6px; border-radius: 9999px; background: var(--pm-border); overflow: hidden; }
+    .pm-occ-bar-fill { height: 100%; background: var(--pm-gold); }
+    .pm-occ-pct { flex: none; width: 38px; text-align: right; font-size: 11.5px; font-weight: 700; color: var(--pm-text-2); }
 }
 </style>
 @endpush
@@ -623,10 +642,323 @@ document.querySelectorAll('.property-carousel').forEach(function (carousel) {
         });
     });
 })();
+
+/* ── MOBILE DASHBOARD: Portfolio / Today / Cash flow segmented control ── */
+(function () {
+    const segment = document.getElementById('pmSegment');
+    if (!segment) return;
+
+    const buttons = segment.querySelectorAll('.pm-seg-btn');
+    const layouts = document.querySelectorAll('.pm-dash-layout');
+    const STORAGE_KEY = 'pm-dash-tab';
+
+    function show(tab) {
+        buttons.forEach((b) => b.classList.toggle('active', b.dataset.seg === tab));
+        layouts.forEach((l) => { l.hidden = l.dataset.layout !== tab; });
+    }
+
+    buttons.forEach((btn) => {
+        btn.addEventListener('click', function () {
+            localStorage.setItem(STORAGE_KEY, btn.dataset.seg);
+            show(btn.dataset.seg);
+        });
+    });
+
+    show(localStorage.getItem(STORAGE_KEY) || 'cards');
+
+    if (window.pmInitSegmentThumb) window.pmInitSegmentThumb(segment);
+})();
+
+/* ── MOBILE DASHBOARD: collapsing large title + pull-to-refresh ──── */
+(function () {
+    const header = document.getElementById('pmDashHeader');
+    const scroll = document.getElementById('pmDashScroll');
+    if (window.pmInitCollapsingHeader) window.pmInitCollapsingHeader(header, scroll, 24);
+    if (window.pmInitPullToRefresh) window.pmInitPullToRefresh(scroll);
+})();
 </script>
 @endpush
 
 @section('content')
+
+@php
+    $portfolioIncome = $buildingPerformance->sum('total_income');
+    $portfolioNet = $buildingPerformance->sum('net_income');
+    $portfolioExpense = $portfolioIncome - $portfolioNet;
+    $elecTotal  = $buildingPerformance->sum(fn ($p) => $p['expenses']['electricity']);
+    $waterTotal = $buildingPerformance->sum(fn ($p) => $p['expenses']['water']);
+    $maintTotal = $buildingPerformance->sum(fn ($p) => $p['expenses']['maintenance']);
+    $otherTotal = $buildingPerformance->sum(fn ($p) => $p['expenses']['other']);
+
+    $needsToday = array_filter([
+        $portfolioMetrics['overdueCount'] > 0 ? [
+            'icon' => 'fa-solid fa-sack-dollar',
+            'title' => 'BHD ' . number_format($portfolioMetrics['outstanding'], 0) . ' overdue rent',
+            'sub' => $portfolioMetrics['overdueCount'] . ' ' . \Illuminate\Support\Str::plural('tenant', $portfolioMetrics['overdueCount']) . ' overdue',
+            'href' => route('invoices.index', ['status' => 'overdue']),
+        ] : null,
+        $portfolioMetrics['openMaintenance'] > 0 ? [
+            'icon' => 'fa-solid fa-screwdriver-wrench',
+            'title' => $portfolioMetrics['openMaintenance'] . ' open ' . \Illuminate\Support\Str::plural('request', $portfolioMetrics['openMaintenance']),
+            'sub' => 'Needs triage',
+            'href' => route('maintenance.index'),
+        ] : null,
+        $portfolioMetrics['expiringLeases'] > 0 ? [
+            'icon' => 'fa-solid fa-file-signature',
+            'title' => $portfolioMetrics['expiringLeases'] . ' ' . \Illuminate\Support\Str::plural('lease', $portfolioMetrics['expiringLeases']) . ' ending soon',
+            'sub' => 'Within 30 days',
+            'href' => route('tenants.index'),
+        ] : null,
+        [
+            'icon' => 'fa-solid fa-wand-magic-sparkles',
+            'title' => 'Smart import',
+            'sub' => 'Bring in properties from a spreadsheet',
+            'onclick' => 'openSmartImport()',
+        ],
+    ]);
+@endphp
+
+{{-- ═══════════════════════════════ MOBILE DASHBOARD ═══════════════════════════════ --}}
+@php
+    $mHour = (int) now()->format('G');
+    $mGreeting = $mHour < 12 ? 'Good morning' : ($mHour < 17 ? 'Good afternoon' : 'Good evening');
+@endphp
+<div class="m-dash">
+    <div class="pm-header is-collapsible" id="pmDashHeader">
+        <div class="pm-header-text">
+            <div class="pm-greeting">{{ $mGreeting }}, {{ explode(' ', auth()->user()->name ?? 'there')[0] }}</div>
+            <div class="pm-title is-lg" id="pmDashTitle">Dashboard</div>
+            <div class="pm-subtitle">{{ now()->format('F Y') }} &middot; {{ $stats['buildings'] }} {{ \Illuminate\Support\Str::plural('property', $stats['buildings']) }}</div>
+        </div>
+        <button type="button" class="pm-icon-btn theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode"><i class="fa-solid fa-moon"></i></button>
+        <button type="button" class="pm-icon-btn" title="Notifications — coming soon">
+            <i class="fa-regular fa-bell"></i>
+            @if($portfolioMetrics['overdueCount'] > 0 || $portfolioMetrics['openMaintenance'] > 0)
+                <span class="pm-dot"></span>
+            @endif
+        </button>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="pm-avatar" title="Sign out">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</button>
+        </form>
+    </div>
+
+    <div class="pm-scroll" id="pmDashScroll">
+        <div class="pm-segment-wrap">
+            <div class="pm-segment" id="pmSegment">
+                <button type="button" class="pm-seg-btn active" data-seg="cards">Portfolio</button>
+                <button type="button" class="pm-seg-btn" data-seg="pulse">Today</button>
+                <button type="button" class="pm-seg-btn" data-seg="ledger">Cash flow</button>
+            </div>
+        </div>
+
+        {{-- ── Portfolio layout ─────────────────────────────────── --}}
+        <div class="pm-dash-layout" data-layout="cards">
+            <div class="pm-kpi-grid">
+                <div class="pm-kpi-card">
+                    <div class="pm-kpi-top">
+                        <div class="pm-kpi-label">COLLECTED &mdash; {{ now()->format('M') }}</div>
+                        <div class="pm-kpi-icon" style="background:var(--pm-green-tint);color:var(--pm-green-text);"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                    </div>
+                    <div class="pm-kpi-value">BHD {{ number_format($portfolioMetrics['collected'], 0) }}</div>
+                    <div class="pm-kpi-sub is-green"><i class="fa-solid fa-arrow-up"></i> of BHD {{ number_format($portfolioMetrics['billed'], 0) }} billed</div>
+                </div>
+                <div class="pm-kpi-card">
+                    <div class="pm-kpi-top">
+                        <div class="pm-kpi-label">OUTSTANDING</div>
+                        <div class="pm-kpi-icon" style="background:var(--pm-red-tint);color:var(--pm-red);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    </div>
+                    <div class="pm-kpi-value" style="color:var(--pm-red);">BHD {{ number_format($portfolioMetrics['outstanding'], 0) }}</div>
+                    <div class="pm-kpi-sub">{{ $portfolioMetrics['overdueCount'] }} {{ \Illuminate\Support\Str::plural('tenant', $portfolioMetrics['overdueCount']) }} overdue</div>
+                </div>
+            </div>
+
+            @forelse($buildingPerformance as $perf)
+                @php
+                    $b = $perf['building'];
+                    $photo = $b->images->first()?->url;
+                    $address = trim(implode(', ', array_filter([$b->area, $b->city])));
+                    $netColor = $perf['net_income'] >= 0 ? 'var(--pm-text)' : 'var(--pm-red)';
+                @endphp
+                <a href="{{ route('buildings.show', $b) }}" class="pm-property-card pm-ripple">
+                    <div class="pm-property-photo" @if($photo) style="background-image:url('{{ $photo }}')" @endif>
+                        @unless($photo)
+                            <div class="pm-property-photo-fallback"><i class="fa-solid fa-building"></i></div>
+                        @endunless
+                        <span class="pm-property-kind">{{ $b->property_type ?? 'Active' }}</span>
+                    </div>
+                    <div class="pm-property-body">
+                        <div class="pm-property-name">{{ $b->property_name }}</div>
+                        @if($address)
+                        <div class="pm-property-address"><i class="fa-solid fa-location-dot"></i> {{ $address }}</div>
+                        @endif
+                        <div class="pm-property-wells">
+                            <div class="pm-well"><div class="pm-well-label">INCOME</div><div class="pm-well-value">BHD {{ number_format($perf['total_income'], 0) }}</div></div>
+                            <div class="pm-well"><div class="pm-well-label">NET</div><div class="pm-well-value" style="color:{{ $netColor }};">BHD {{ number_format($perf['net_income'], 0) }}</div></div>
+                            <div class="pm-well"><div class="pm-well-label">OCCUPIED</div><div class="pm-well-value">{{ $perf['occupancy_percent'] }}%</div></div>
+                        </div>
+                    </div>
+                </a>
+            @empty
+                <div class="pm-empty">No properties yet</div>
+            @endforelse
+        </div>
+
+        {{-- ── Today layout ─────────────────────────────────────── --}}
+        <div class="pm-dash-layout" data-layout="pulse" hidden>
+            <div class="pm-hero-card">
+                <div class="pm-hero-top-row">
+                    <div>
+                        <div class="pm-hero-label">PORTFOLIO &mdash; {{ strtoupper(now()->format('F Y')) }}</div>
+                        <div class="pm-hero-figure">BHD {{ number_format($portfolioMetrics['collected'], 0) }}</div>
+                        <div class="pm-hero-sub">collected of BHD {{ number_format($portfolioMetrics['billed'], 0) }} billed</div>
+                    </div>
+                    <div class="pm-hero-icon"><i class="fa-solid fa-building-columns"></i></div>
+                </div>
+                <div class="pm-hero-bar"><div class="pm-hero-bar-fill" style="width:{{ $portfolioMetrics['collectedPct'] }}%"></div></div>
+                <div class="pm-hero-stats">
+                    <div class="pm-hero-stat"><div class="pm-hero-stat-label">UNITS</div><div class="pm-hero-stat-value">{{ $stats['units'] }}</div></div>
+                    <div class="pm-hero-stat"><div class="pm-hero-stat-label">OCCUPANCY</div><div class="pm-hero-stat-value" style="color:var(--pm-gold);">{{ $portfolioMetrics['occupancyPct'] }}%</div></div>
+                    <div class="pm-hero-stat"><div class="pm-hero-stat-label">OVERDUE</div><div class="pm-hero-stat-value" style="color:var(--pm-red);">{{ $portfolioMetrics['overdueCount'] }}</div></div>
+                </div>
+            </div>
+
+            <div>
+                <div class="pm-section-label">NEEDS YOU TODAY</div>
+                <div class="pm-action-list">
+                    @foreach($needsToday as $item)
+                        @if(isset($item['onclick']))
+                        <button type="button" class="pm-action-row" style="width:100%;border:1px solid var(--pm-border);cursor:pointer;font-family:inherit;" onclick="{{ $item['onclick'] }}">
+                        @else
+                        <a href="{{ $item['href'] }}" class="pm-action-row">
+                        @endif
+                            <div class="pm-action-icon"><i class="{{ $item['icon'] }}"></i></div>
+                            <div style="flex:1;min-width:0;text-align:left;">
+                                <div class="pm-action-title">{{ $item['title'] }}</div>
+                                <div class="pm-action-sub">{{ $item['sub'] }}</div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right pm-action-chevron"></i>
+                        @if(isset($item['onclick']))
+                        </button>
+                        @else
+                        </a>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+
+            <div>
+                <div class="pm-section-label">PROPERTIES</div>
+                <div class="pm-action-list">
+                    @forelse($buildingPerformance as $perf)
+                        @php
+                            $b = $perf['building'];
+                            $initials = collect(explode(' ', $b->property_name))->map(fn($w) => $w[0] ?? '')->take(2)->implode('');
+                            $netColor = $perf['net_income'] >= 0 ? 'var(--pm-text-2)' : 'var(--pm-red)';
+                        @endphp
+                        <a href="{{ route('buildings.show', $b) }}" class="pm-compact-row">
+                            <div class="pm-compact-tile">{{ strtoupper($initials) }}</div>
+                            <div style="flex:1;min-width:0;">
+                                <div class="pm-compact-name">{{ $b->property_name }}</div>
+                                <div class="pm-compact-sub">{{ $perf['occupancy_percent'] }}% occupied</div>
+                            </div>
+                            <div>
+                                <div class="pm-compact-figure">BHD {{ number_format($perf['total_income'], 0) }}</div>
+                                <div class="pm-compact-net" style="color:{{ $netColor }};">net BHD {{ number_format($perf['net_income'], 0) }}</div>
+                            </div>
+                        </a>
+                    @empty
+                        <div class="pm-empty">No properties yet</div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        {{-- ── Cash flow layout ─────────────────────────────────── --}}
+        <div class="pm-dash-layout" data-layout="ledger" hidden>
+            <div class="pm-ledger-card">
+                <div class="pm-ledger-head">
+                    <div class="pm-ledger-head-label">{{ strtoupper(now()->format('F')) }} LEDGER</div>
+                    <div class="pm-ledger-head-meta">BHD, month to date</div>
+                </div>
+                <div class="pm-ledger-row">
+                    <div class="pm-ledger-icon" style="background:var(--pm-green-tint);color:var(--pm-green-text);"><i class="fa-solid fa-sack-dollar"></i></div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="pm-ledger-label">Rent collected</div>
+                        <div class="pm-ledger-meta">Accrued across {{ $stats['buildings'] }} {{ \Illuminate\Support\Str::plural('property', $stats['buildings']) }}</div>
+                    </div>
+                    <div class="pm-ledger-amount" style="color:var(--pm-green-text);">+{{ number_format($portfolioIncome, 0) }}</div>
+                </div>
+                @if($portfolioMetrics['outstanding'] > 0)
+                <div class="pm-ledger-row">
+                    <div class="pm-ledger-icon" style="background:var(--pm-red-tint);color:var(--pm-red);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="pm-ledger-label">Rent outstanding</div>
+                        <div class="pm-ledger-meta">{{ $portfolioMetrics['overdueCount'] }} {{ \Illuminate\Support\Str::plural('tenant', $portfolioMetrics['overdueCount']) }} overdue</div>
+                    </div>
+                    <div class="pm-ledger-amount" style="color:var(--pm-red);">-{{ number_format($portfolioMetrics['outstanding'], 0) }}</div>
+                </div>
+                @endif
+                @if($elecTotal + $waterTotal > 0)
+                <div class="pm-ledger-row">
+                    <div class="pm-ledger-icon" style="background:var(--pm-warn-tint);color:var(--pm-warn);"><i class="fa-solid fa-bolt"></i></div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="pm-ledger-label">Utilities</div>
+                        <div class="pm-ledger-meta">Electricity &amp; water</div>
+                    </div>
+                    <div class="pm-ledger-amount" style="color:var(--pm-text-2);">-{{ number_format($elecTotal + $waterTotal, 0) }}</div>
+                </div>
+                @endif
+                @if($maintTotal > 0)
+                <div class="pm-ledger-row">
+                    <div class="pm-ledger-icon" style="background:var(--pm-info);color:#fff;background-color:rgba(59,130,246,.12);color:var(--pm-info);"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="pm-ledger-label">Maintenance</div>
+                        <div class="pm-ledger-meta">Approved repairs</div>
+                    </div>
+                    <div class="pm-ledger-amount" style="color:var(--pm-text-2);">-{{ number_format($maintTotal, 0) }}</div>
+                </div>
+                @endif
+                @if($otherTotal > 0)
+                <div class="pm-ledger-row">
+                    <div class="pm-ledger-icon" style="background:var(--pm-page);color:var(--pm-text-2);"><i class="fa-solid fa-receipt"></i></div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="pm-ledger-label">Other expenses</div>
+                        <div class="pm-ledger-meta">Recorded this month</div>
+                    </div>
+                    <div class="pm-ledger-amount" style="color:var(--pm-text-2);">-{{ number_format($otherTotal, 0) }}</div>
+                </div>
+                @endif
+                <div class="pm-ledger-net">
+                    <div class="pm-ledger-net-label">NET POSITION</div>
+                    <div class="pm-ledger-net-value">BHD {{ number_format($portfolioNet, 0) }}</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="pm-section-label">OCCUPANCY BY PROPERTY</div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    @forelse($buildingPerformance as $perf)
+                        @php $b = $perf['building']; $pct = min(100, max(0, (int) $perf['occupancy_percent'])); @endphp
+                        <a href="{{ route('buildings.show', $b) }}" class="pm-occ-row">
+                            <div class="pm-occ-name">{{ $b->property_name }}</div>
+                            <div class="pm-occ-bar"><div class="pm-occ-bar-fill" style="width:{{ $pct }}%"></div></div>
+                            <div class="pm-occ-pct">{{ $pct }}%</div>
+                        </a>
+                    @empty
+                        <div class="pm-empty">No properties yet</div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        <div class="pm-bottom-space"></div>
+    </div>
+
+    <button type="button" class="pm-fab" style="border:0;" onclick="openExpenseSheet()" title="Record expense"><i class="fa-solid fa-plus"></i></button>
+</div>
+
+@include('components.expense-sheet')
 
 <div class="page-header">
     <div>
@@ -634,25 +966,6 @@ document.querySelectorAll('.property-carousel').forEach(function (carousel) {
         <p class="page-header-sub">Overview of your real estate portfolio</p>
     </div>
 </div>
-
-{{-- MOBILE FINANCE SUMMARY (real portfolio totals, same source as the chart below) --}}
-@php
-    $portfolioIncome = $buildingPerformance->sum('total_income');
-    $portfolioNet = $buildingPerformance->sum('net_income');
-@endphp
-<div class="mobile-finance-tiles">
-    <div class="mobile-finance-tile">
-        <div class="mobile-finance-label">This Month &middot; Income</div>
-        <div class="mobile-finance-value">BHD {{ number_format($portfolioIncome, 0) }}</div>
-        <div class="mobile-finance-sub">Across {{ $buildingPerformance->count() }} {{ Str::plural('property', $buildingPerformance->count()) }}</div>
-    </div>
-    <div class="mobile-finance-tile">
-        <div class="mobile-finance-label">This Month &middot; Net</div>
-        <div class="mobile-finance-value {{ $portfolioNet >= 0 ? 'positive' : 'negative' }}">BHD {{ number_format($portfolioNet, 0) }}</div>
-        <div class="mobile-finance-sub">{{ now()->format('F Y') }} portfolio</div>
-    </div>
-</div>
-
 {{-- STATS --}}
 <div class="dash-stats">
     <a href="{{ route('buildings.index') }}" class="dash-stat">

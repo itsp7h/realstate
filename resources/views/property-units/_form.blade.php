@@ -471,7 +471,7 @@
                             <i class="fa-solid fa-align-left u-field-icon"></i>
                             <input type="text" name="description"
                                 class="u-input {{ $errors->has('description') ? 'is-invalid' : '' }}"
-                                value="{{ $uval('description') }}" placeholder="e.g. Miknas Plaza 2 - Flat 11" maxlength="500">
+                                value="{{ $uval('description') }}" placeholder="e.g. Miknas Plaza 2 - Flat 11" maxlength="255">
                         </div>
                         @error('description') <div class="u-field-error"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div> @enderror
                     </div>

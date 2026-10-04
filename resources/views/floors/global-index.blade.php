@@ -210,6 +210,42 @@
     </div>
 </div>
 
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+<div class="m-screen">
+    <div class="m-action-row">
+        <a href="{{ route('export.floors', array_filter(['building_id' => $buildingId ?? null])) }}" class="m-action-btn green-outline">Export</a>
+        <button type="button" class="m-action-btn outline" onclick="openImport_floors()">Import</button>
+        <button type="button" class="m-action-btn primary" onclick="openAddFloorModal()">+ Add Floor</button>
+    </div>
+    <div class="m-chip-row no-sb">
+        <a href="{{ route('floors.global') }}" class="m-chip {{ !$buildingId ? 'active' : '' }}">All</a>
+        @foreach($buildings as $b)
+            <a href="{{ route('floors.global', ['building_id' => $b->id]) }}" class="m-chip {{ (string) $buildingId === (string) $b->id ? 'active' : '' }}">{{ $b->property_code }}</a>
+        @endforeach
+    </div>
+    <div class="m-row-list">
+        @forelse($floors as $floor)
+            @php $uCount = $floor->total_no_of_units ?? $floor->units_count; @endphp
+            <a href="{{ route('buildings.show', $floor->building) }}?tab=floors" class="m-row-card">
+                <span class="m-row-chip">{{ $floor->building->property_code }}</span>
+                <div style="flex:1;min-width:0;">
+                    <div class="m-row-title">{{ $floor->floor_name }}</div>
+                    <div class="m-row-sub">{{ $floor->building->property_name }}{{ $floor->block_name ? ' · '.$floor->block_name : '' }}</div>
+                </div>
+                @if($floor->floor_code)
+                    <span class="m-row-badge" style="background:var(--m-line);color:#6B7688;">{{ $floor->floor_code }}</span>
+                @endif
+            </a>
+        @empty
+            <div class="m-empty">
+                <div class="m-empty-icon"><i class="fa-solid fa-layer-group"></i></div>
+                <div class="m-empty-title">No floors found</div>
+                <div class="m-empty-sub">Try a different building filter or add a new floor.</div>
+            </div>
+        @endforelse
+    </div>
+</div>
+
 @include('components.import-modal', [
     'type'        => 'floors',
     'label'       => 'Floors',
@@ -238,7 +274,7 @@
 </div>
 
 {{-- FILTER + TABLE --}}
-<div class="card" style="overflow:hidden;">
+<div class="card m-hide-desktop-index" style="overflow:hidden;">
 
     {{-- FILTER --}}
     <form method="GET" action="{{ route('floors.global') }}" id="filterForm">
