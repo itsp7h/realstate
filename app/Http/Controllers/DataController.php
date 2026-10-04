@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Exports\UnifiedExport;
+use App\Support\NaturalOrder;
+use App\Support\PdfPageNumbers;
 use App\Models\Building;
 use App\Models\Floor;
 use App\Models\PropertyUnit;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -178,12 +182,82 @@ class DataController extends Controller
 
     // ── EXPORT ────────────────────────────────────────────────────────────────
 
-    public function export(): BinaryFileResponse
+    public function export(string $format = 'xlsx'): BinaryFileResponse|Response
     {
-        return Excel::download(
-            new UnifiedExport(),
-            'real-estate-data-' . now()->format('Y-m-d') . '.xlsx'
+        $name = 'real-estate-data-' . now()->format('Y-m-d');
+
+        if ($format === 'pdf') {
+            return $this->exportPdf($name);
+        }
+
+        return Excel::download(new UnifiedExport(), $name . '.xlsx');
+    }
+
+    /**
+     * The same three datasets as the workbook, as a document.
+     *
+     * Not three flat sheets stacked: a spreadsheet's job is 21 columns you can
+     * sort, a document's job is to be read, so the units are nested under the
+     * building they belong to and the column set is trimmed to what someone
+     * reads on paper. Everything the workbook carries is still in the workbook.
+     */
+    private function exportPdf(string $name): Response
+    {
+        $buildings = Building::query()
+            ->with([
+                // withCount, not floors.total_no_of_units: that column is only
+                // written by the importer when the sheet carries a Floor Units
+                // value, so it was null on every floor here and the document
+                // printed a dash beside a floor holding 25 units.
+                'floors' => fn ($q) => $q->withCount('units')->orderBy('floor_code'),
+                'units'  => fn ($q) => $q->orderBy('unit_name'),
+            ])
+            ->orderBy('property_name')
+            ->get();
+
+        // SQL sorts "Floor 10" between "Floor 1" and "Floor 2". Reordered here
+        // because SQLite has no natural collation; see NaturalOrder.
+        NaturalOrder::relations($buildings, [
+            'floors' => ['floor_name', 'floor_code'],
+            'units'  => ['unit_name'],
+        ]);
+
+        // Units whose property_code matches no building would otherwise be
+        // silently dropped from a document that claims to hold everything.
+        $orphanUnits = NaturalOrder::sort(
+            PropertyUnit::query()->whereNull('building_id')->get(),
+            'property_code',
+            'unit_name'
         );
+
+        // Rent stays null when no unit in scope carries a figure at all. SQL
+        // SUM over nothing but NULLs is 0, which printed "0.000" under rows
+        // that each read "—" — a total asserting a fact the data does not have.
+        // A stored 0 counts as nothing for the same reason it does in the rows:
+        // blank money cells in the import landed in the column as 0.
+        $rentTotal = PropertyUnit::whereNotNull('rent_per_month')->where('rent_per_month', '!=', 0)->exists()
+            ? (float) PropertyUnit::whereNotNull('rent_per_month')->sum('rent_per_month')
+            : null;
+
+        $pdf = Pdf::loadView('data.export-pdf', [
+            'buildings'   => $buildings,
+            'orphanUnits' => $orphanUnits,
+            'totals'      => [
+                'buildings' => $buildings->count(),
+                'floors'    => Floor::count(),
+                'units'     => PropertyUnit::count(),
+                'rent'      => $rentTotal,
+            ],
+            // Reconciliation: the strip counts every row in the table, the
+            // sections render what hangs off a building. Orphans are listed
+            // separately, so these must agree — if they ever don't, the
+            // document says so rather than quietly showing fewer.
+            'unlisted'    => [
+                'floors' => Floor::whereNull('building_id')->count(),
+            ],
+        ])->setPaper('a4', 'portrait');
+
+        return PdfPageNumbers::stamp($pdf)->stream($name . '.pdf');
     }
 
     // ── IMPORT ────────────────────────────────────────────────────────────────

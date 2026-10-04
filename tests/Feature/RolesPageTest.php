@@ -79,7 +79,7 @@ class RolesPageTest extends TestCase
         // The page's whole value is being checkable, so the enforcement
         // column must actually reach the markup.
         $response->assertSee('RestrictDestructiveActions', false);
-        $response->assertSee('RestrictMaintenanceRole', false);
+        $response->assertSee('RestrictScopedRoles', false);
         $response->assertSee('role:admin', false);
     }
 

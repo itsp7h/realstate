@@ -7,8 +7,13 @@
 
 @section('page-title', 'VAT Return')
 @section('page-subtitle', 'Invoice-level VAT schedule, ready to hand to the accountant for filing')
+@section('page-back')
+    <a href="{{ route('reports.index') }}" class="btn btn-outline" aria-label="Back to Reports">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Reports</span>
+    </a>
+@endsection
+
 @section('page-actions')
-    <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
     @if($rows->isNotEmpty())
     <button type="button" class="btn btn-outline"
             onclick="openReportPdf('{{ route('reports.vat-return.pdf', request()->only(['building_id','date_from','date_to'])) }}', 'VAT Return{{ $building ? ' — '.$building->property_name : '' }}')">
@@ -16,8 +21,7 @@
     </button>
     <a href="{{ route('reports.vat-return.pdf', request()->only(['building_id','date_from','date_to'])) }}"
        target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
-    <a href="{{ route('reports.vat-return.export', request()->only(['building_id','date_from','date_to'])) }}"
-       class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
+    <x-export-button href="{{ route('reports.vat-return.export', request()->only(['building_id','date_from','date_to'])) }}" label="Export XLSX" icon="fa-file-excel" />
     @endif
 @endsection
 

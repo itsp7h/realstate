@@ -10,6 +10,7 @@ use App\Models\LeaseContract;
 use App\Models\Payment;
 use App\Models\Tenant;
 use App\Services\TenantMailer;
+use App\Support\PdfPageNumbers;
 use Illuminate\Support\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
@@ -221,7 +222,7 @@ class InvoiceController extends Controller
         $pdf = Pdf::loadView('invoices.pdf', compact('invoice'))
                   ->setPaper('a4', 'portrait');
 
-        return $pdf->download("invoice-{$invoice->invoice_number}.pdf");
+        return PdfPageNumbers::stamp($pdf)->download("invoice-{$invoice->invoice_number}.pdf");
     }
 
     public function pdfPreview(Invoice $invoice): Response
@@ -230,6 +231,6 @@ class InvoiceController extends Controller
         $pdf = Pdf::loadView('invoices.pdf', compact('invoice'))
                   ->setPaper('a4', 'portrait');
 
-        return $pdf->stream("invoice-{$invoice->invoice_number}.pdf");
+        return PdfPageNumbers::stamp($pdf)->stream("invoice-{$invoice->invoice_number}.pdf");
     }
 }

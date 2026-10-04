@@ -74,8 +74,14 @@ class MobileDashHeaderTest extends TestCase
             ->getContent();
 
         $this->assertStringContainsString('id="alertsSheet"', $html);
-        $this->assertStringContainsString("getElementById('pmAlertsBtn')", $html);
-        $this->assertStringContainsString("btn.addEventListener('click', open)", $html);
+
+        // The open/close is markup, not a page script: the bell points at the
+        // sheet and the layout's one sheet handler does the rest — the
+        // aria-expanded, the scroll lock, the focus move, Escape and the
+        // focus trap. This page used to carry its own copy of all of that.
+        $this->assertStringContainsString('data-sheet-open="alertsSheet"', $html);
+        $this->assertStringContainsString('[data-sheet-open]', $html);
+        $this->assertStringNotContainsString("btn.addEventListener('click', open)", $html);
     }
 
     public function test_the_today_view_is_still_reachable_by_deep_link(): void

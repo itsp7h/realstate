@@ -9,29 +9,49 @@
 @section('page-subtitle')
     {{ $invoice->tenant_name }} &mdash; {{ $invoice->property_name }}{{ $invoice->unit ? ' / '.$invoice->unit : '' }}
 @endsection
+@section('page-back')
+    <a href="{{ route('invoices.index') }}" class="btn btn-outline" aria-label="Back to invoices">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back</span>
+    </a>
+@endsection
+
+{{-- One set of controls for both sizes. Desktop is the row it always was:
+     .inv-act-primary is display:contents, so Preview and Download sit in the
+     header flex row exactly as before. Under 600px the shared app bar (Back ·
+     title · ⋯) takes over and this row becomes the two primary buttons
+     beneath it, with Edit and Delete moved into #invActionSheet. --}}
 @section('page-actions')
-    <a href="{{ route('invoices.index') }}" class="btn btn-outline">
-        <i class="fa-solid fa-arrow-left"></i> Back
-    </a>
-    <button type="button" class="btn btn-outline"
-            onclick="openInvPdf('{{ route('invoices.pdf.preview', $invoice) }}', '{{ $invoice->invoice_number }}', '{{ route('invoices.pdf', $invoice) }}')">
-        <i class="fa-solid fa-file-pdf"></i> Preview PDF
-    </button>
-    <a href="{{ route('invoices.pdf', $invoice) }}" class="btn btn-outline" download>
-        <i class="fa-solid fa-download"></i> Download
-    </a>
+    <div class="inv-act-primary">
+        <button type="button" class="btn btn-outline inv-act-preview"
+                onclick="openInvPdf('{{ route('invoices.pdf.preview', $invoice) }}', '{{ $invoice->invoice_number }}', '{{ route('invoices.pdf', $invoice) }}')">
+            <i class="fa-solid fa-file-pdf"></i> Preview PDF
+        </button>
+        <a href="{{ route('invoices.pdf', $invoice) }}" class="btn btn-outline inv-act-download" download>
+            <i class="fa-solid fa-download"></i> Download
+        </a>
+    </div>
     @if($invoice->status !== 'paid' && $invoice->status !== 'cancelled')
-    <a href="{{ route('invoices.edit', $invoice) }}" class="btn btn-outline">
+    <a href="{{ route('invoices.edit', $invoice) }}" class="btn btn-outline inv-act-sheeted">
         <i class="fa-solid fa-pen"></i> Edit
     </a>
     @endif
-    <form method="POST" action="{{ route('invoices.destroy', $invoice) }}"
+    {{-- Stays a real form on every width; on the phone it is hidden and the
+         sheet's Delete row submits it by id, so the CSRF token, the DELETE
+         method and the confirm all keep working untouched. --}}
+    <form method="POST" id="invDeleteForm" class="inv-act-sheeted" action="{{ route('invoices.destroy', $invoice) }}"
           onsubmit="return confirm('Delete invoice {{ $invoice->invoice_number }}? This cannot be undone.')">
         @csrf @method('DELETE')
-        <button type="submit" class="btn btn-danger btn-sm">
+        <button type="submit" class="btn btn-danger">
             <i class="fa-solid fa-trash"></i> Delete
         </button>
     </form>
+@endsection
+
+@section('page-overflow')
+    <button type="button" class="btn btn-outline btn-icon" id="invMoreBtn"
+            aria-label="More invoice actions" aria-haspopup="dialog" aria-expanded="false" aria-controls="invActionSheet">
+        <i class="fa-solid fa-ellipsis"></i>
+    </button>
 @endsection
 
 @push('styles')
@@ -95,6 +115,103 @@
 .pay-amount-wrap input { padding-right: 46px; }
 .pay-amount-wrap::after { content: 'BHD'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: var(--fs-xs); font-weight: 700; color: var(--text-muted); pointer-events: none; }
 
+/* The wrapper around Preview/Download adds no box on desktop, so the header
+   row is the flex row it always was. */
+.inv-act-primary { display: contents; }
+.inv-datestamp { margin-left: auto; text-align: right; font-size: var(--fs-sm); color: var(--text-muted); }
+.inv-datestamp strong { color: var(--text-primary); }
+.inv-notes-head { gap: var(--sp-4); }
+.payment-actions, .note-actions { display: flex; gap: 6px; }
+
+/* ── Phone ───────────────────────────────────────────────────────────────
+     Everything on this page that reads as a desktop row — three meta
+     columns, a record and its three buttons on one line, a right-aligned
+     date stamp — gets a line of its own instead of a squeezed share. */
+@media (max-width: 768px) {
+    .inv-number { font-size: 24px; }
+    .inv-datestamp { margin-left: 0; text-align: left; width: 100%; }
+
+    /* Label / value list rather than three columns 90px wide. */
+    .inv-meta { grid-template-columns: 1fr; gap: 0; margin-top: var(--sp-4); }
+    .inv-meta-item {
+        display: flex; align-items: baseline; justify-content: space-between;
+        gap: var(--sp-4); padding: 10px 0; border-bottom: 1px solid var(--row-border);
+    }
+    .inv-meta-item:last-child { border-bottom: none; }
+    .inv-meta-item span { margin-bottom: 0; }
+    .inv-meta-item strong { text-align: right; }
+
+    /* The record on the first line, its actions on a full-width second one at
+       touch size — three 32px buttons beside a wrapping payment number is the
+       worst of both. */
+    .payment-row, .note-row { flex-wrap: wrap; row-gap: 10px; padding: 14px 0; }
+    /* The cluster carries the touch height and its buttons stretch into it, so
+       the row's own layout never restyles .btn itself. */
+    .payment-actions, .note-actions {
+        flex: 1 0 100%;
+        gap: var(--sp-2);
+        align-items: stretch;
+        min-height: var(--h-control-lg);
+    }
+    .payment-actions form, .note-actions form { display: contents; }
+    .payment-actions .btn, .note-actions .btn { flex: 1; }
+
+    /* Both totals share a line; the action takes its own. */
+    .inv-notes-head { flex-wrap: wrap; gap: var(--sp-3) var(--sp-4); }
+    .inv-notes-head > .btn { flex: 1 0 100%; }
+}
+
+/* ── Phone action row (≤600px) ───────────────────────────────────────────
+     app-core's §7.3b app bar supplies Back · title · ⋯; what belongs to this
+     page is the pair beneath it — Preview and Download, half the row each —
+     and moving Edit / Delete into the sheet behind the ⋯. */
+@media (max-width: 600px) {
+    .inv-act-primary {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--sp-2);
+        width: 100%;
+    }
+    /* Scoped through the header so it outweighs app-core's own
+       `.shell-pagehead-actions .btn` sizing, which is the more specific of
+       the two and would otherwise hold these at the 44px minimum. */
+    .shell-pagehead-actions .inv-act-preview,
+    .shell-pagehead-actions .inv-act-download {
+        min-height: 48px;
+        padding: 0 var(--sp-2);
+        border-radius: var(--radius-lg);
+        font-weight: 700;
+        gap: var(--sp-2);
+    }
+    /* Filled against the outlined Download so the pair has an order to it.
+       Navy, not the app's gold: gold means create/confirm everywhere else and
+       this only opens a viewer. */
+    .shell-pagehead-actions .inv-act-preview,
+    .shell-pagehead-actions .inv-act-preview:hover,
+    .shell-pagehead-actions .inv-act-preview:active {
+        background: var(--text-primary);
+        border-color: var(--text-primary);
+        color: var(--ink-on-fill);
+    }
+    /* Dark mode inverts --text-primary to near-white, which would put white
+       text on a white fill; the sidebar's active navy is the equivalent lift
+       against the dark page. */
+    [data-theme="dark"] .shell-pagehead-actions .inv-act-preview,
+    [data-theme="dark"] .shell-pagehead-actions .inv-act-preview:hover,
+    [data-theme="dark"] .shell-pagehead-actions .inv-act-preview:active {
+        background: var(--sidebar-active);
+        border-color: var(--sidebar-border);
+        color: var(--ink-on-fill);
+    }
+
+    /* Edit and Delete are in #invActionSheet at this width. Scoped through
+       the header so it outweighs app-core's `> form { display: contents }`,
+       which is the more specific of the two on the delete form. */
+    .shell-pagehead-actions > .inv-act-sheeted { display: none; }
+    /* With those two gone the row holds only the pair, so it stops being a
+       wrap grid and lets .inv-act-primary own the width. */
+    .shell-pagehead-actions { display: block; }
+}
 </style>
 @endpush
 
@@ -113,8 +230,8 @@
                 <span class="status-badge {{ $invoice->type }}">{{ $invoice->type_label }}</span>
             </div>
         </div>
-        <div style="text-align:right;font-size:12px;color:var(--text-muted)">
-            <div>Invoice Date <strong style="color:var(--text-primary)">{{ $invoice->invoice_date->format('d M Y') }}</strong></div>
+        <div class="inv-datestamp">
+            <div>Invoice Date <strong>{{ $invoice->invoice_date->format('d M Y') }}</strong></div>
             @if($invoice->status === 'overdue')
             <div style="margin-top:4px"><span style="font-size:11px;color:var(--tone-danger-fg);font-weight:600">Overdue</span></div>
             @endif
@@ -125,7 +242,11 @@
             <div class="inv-meta-item">
                 <span>Tenant</span>
                 <strong>
-                    @if($invoice->tenant)
+                    {{-- The payer's name links through to the tenant record only
+                         for a role that can open one. An Accountant reads this
+                         invoice but is refused the portfolio, so it gets the
+                         name as plain text rather than a link into a 403. --}}
+                    @if($invoice->tenant && auth()->user()?->canAccessPortfolio())
                         <a href="{{ route('tenants.show', $invoice->tenant) }}" style="color:var(--text-primary);text-decoration:none">{{ $invoice->tenant_name }}</a>
                     @else
                         {{ $invoice->tenant_name }}
@@ -222,9 +343,11 @@
             <span style="font-size:12px;font-weight:600;color:var(--text-muted);background:var(--page-bg);padding:2px 8px;border-radius:20px">{{ $invoice->payments->count() }}</span>
         </div>
         @if($invoice->balance_due > 0.001 && $invoice->status !== 'cancelled')
-        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('payFormCard').classList.toggle('open')">
-            <i class="fa-solid fa-plus"></i> Record Payment
-        </button>
+        <div class="card-header-actions">
+            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('payFormCard').classList.toggle('open')">
+                <i class="fa-solid fa-plus"></i> Record Payment
+            </button>
+        </div>
         @endif
     </div>
     <div class="card-body" style="padding-top:6px;padding-bottom:6px">
@@ -236,7 +359,7 @@
                 <div class="payment-sub">{{ $pmt->payment_date->format('d M Y') }} &bull; {{ $pmt->method_label }}@if($pmt->reference) &bull; {{ $pmt->reference }}@endif @if($pmt->ewaBill) &bull; also covers {{ $pmt->ewaBill->bill_number }}@endif</div>
             </div>
             <div class="payment-amt">{{ number_format($pmt->amount, 3) }}</div>
-            <div style="display:flex;gap:6px" onclick="event.stopPropagation()">
+            <div class="payment-actions" onclick="event.stopPropagation()">
                 <button type="button" class="btn btn-outline btn-sm" title="Preview Receipt"
                         onclick="openInvPdf('{{ route('invoices.payments.receipt.preview', [$invoice, $pmt]) }}', '{{ $pmt->payment_number }}', '{{ route('invoices.payments.receipt', [$invoice, $pmt]) }}')">
                     <i class="fa-solid fa-eye"></i>
@@ -339,7 +462,7 @@
             Credit &amp; Debit Notes
             <span style="font-size:12px;font-weight:600;color:var(--text-muted);background:var(--page-bg);padding:2px 8px;border-radius:20px">{{ $invoice->invoiceNotes->count() }}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:16px">
+        <div class="card-header-actions inv-notes-head">
             <div class="note-mini-stat">Total Credited <strong style="color:var(--tone-success-fg)">{{ number_format($invoice->total_credit_notes, 3) }}</strong></div>
             <div class="note-mini-stat">Total Debited <strong style="color:var(--tone-warning-fg)">{{ number_format($invoice->total_debit_notes, 3) }}</strong></div>
             @if($invoice->status !== 'cancelled')
@@ -359,7 +482,7 @@
             </div>
             <div class="note-amt {{ $note->type }}">{{ $note->type === 'credit' ? '−' : '+' }}{{ number_format($note->amount, 3) }}</div>
             @if($invoice->status !== 'cancelled')
-            <div onclick="event.stopPropagation()">
+            <div class="note-actions" onclick="event.stopPropagation()">
                 <form method="POST" action="{{ route('invoices.notes.destroy', [$invoice, $note]) }}"
                       onsubmit="return confirm('Remove {{ $note->type_label }} {{ $note->note_number }}?')">
                     @csrf @method('DELETE')
@@ -419,6 +542,37 @@
     </div>
 </div>
 
+{{-- PHONE ACTION SHEET — Edit / Delete, behind the header's ⋯ button.
+     Built from the shared .modal-overlay + .more-sheet-item system, which
+     app-mobile.css already turns into a bottom sheet with a drag handle, a
+     scrim, and safe-area padding — the same object as the More sheet in the
+     tab bar, so this is not a second sheet implementation. --}}
+<div class="modal-overlay inv-action-sheet" id="invActionSheet" role="dialog" aria-modal="true"
+     aria-label="Invoice actions">
+    <div class="modal-box">
+        @if($invoice->status !== 'paid' && $invoice->status !== 'cancelled')
+        <a href="{{ route('invoices.edit', $invoice) }}" class="more-sheet-item">
+            <div class="more-sheet-icon" style="background:var(--tone-accent-bg)">
+                <i class="fa-solid fa-pen" style="color:var(--tone-accent-fg)"></i>
+            </div>
+            <div>
+                <div class="more-sheet-label">Edit invoice</div>
+                <div class="more-sheet-desc">Change lines, dates or amounts</div>
+            </div>
+        </a>
+        @endif
+        <button type="submit" form="invDeleteForm" class="more-sheet-item danger">
+            <div class="more-sheet-icon" style="background:var(--tone-danger-bg)">
+                <i class="fa-solid fa-trash" style="color:var(--tone-danger-fg)"></i>
+            </div>
+            <div>
+                <div class="more-sheet-label">Delete invoice</div>
+                <div class="more-sheet-desc">{{ $invoice->invoice_number }} — this cannot be undone</div>
+            </div>
+        </button>
+    </div>
+</div>
+
 {{-- PDF PREVIEW MODAL --}}
 <div class="pdf-viewer-overlay" id="invPdfModal" onclick="closeInvPdf(event)">
     <div class="pdf-viewer" onclick="event.stopPropagation()">
@@ -456,6 +610,35 @@ function closeInvPdfBtn() {
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeInvPdfBtn();
 });
+
+/* Phone action sheet. Open/close only — the drag handle, the scrim and the
+   slide-up are the shared sheet layer's, attached by the layout. */
+(function () {
+    var sheet = document.getElementById('invActionSheet');
+    var trigger = document.getElementById('invMoreBtn');
+    if (!sheet || !trigger) return;
+
+    function open() {
+        sheet.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+        sheet.querySelector('.more-sheet-item')?.focus();
+    }
+    function close() {
+        if (!sheet.classList.contains('open')) return;
+        sheet.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+        // The drawer and the other sheets share this lock, so only release it
+        // if nothing else is still holding the page open.
+        document.body.style.overflow =
+            document.querySelector('.sidebar.open, .modal-overlay.open') ? 'hidden' : '';
+        trigger.focus();
+    }
+
+    trigger.addEventListener('click', open);
+    sheet.addEventListener('click', function (e) { if (e.target === sheet) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+})();
 
 (function () {
     var form = document.getElementById('payFormCard')?.querySelector('form');

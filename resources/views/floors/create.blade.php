@@ -18,11 +18,13 @@
 @section('page-subtitle')
     Add a new floor to <strong>{{ $building->property_name }}</strong>
 @endsection
-@section('page-actions')
-    <a href="{{ route('floors.index', $building) }}" class="btn btn-outline">
-        <i class="fa-solid fa-arrow-left"></i> Back to Floors
+@section('page-back')
+    <a href="{{ route('floors.index', $building) }}" class="btn btn-outline" aria-label="Back to Floors">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back to Floors</span>
     </a>
 @endsection
+
+
 
 {{-- PAGE HEADER --}}
 

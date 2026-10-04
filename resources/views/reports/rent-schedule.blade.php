@@ -7,8 +7,13 @@
 
 @section('page-title', 'Rent Payment Schedule')
 @section('page-subtitle', 'Month-by-month rent history for a single tenant')
+@section('page-back')
+    <a href="{{ route('reports.index') }}" class="btn btn-outline" aria-label="Back to Reports">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Reports</span>
+    </a>
+@endsection
+
 @section('page-actions')
-    <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
     @if($tenant)
     <button type="button" class="btn btn-outline"
             onclick="openReportPdf('{{ route('reports.rent-schedule.pdf', request()->only(['tenant_id','date_from','date_to'])) }}', 'Rent Payment Schedule — {{ $tenant->name }}')">
@@ -16,8 +21,7 @@
     </button>
     <a href="{{ route('reports.rent-schedule.pdf', request()->only(['tenant_id','date_from','date_to'])) }}"
        target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
-    <a href="{{ route('reports.rent-schedule.export', request()->only(['tenant_id','date_from','date_to'])) }}"
-       class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
+    <x-export-button href="{{ route('reports.rent-schedule.export', request()->only(['tenant_id','date_from','date_to'])) }}" label="Export XLSX" icon="fa-file-excel" />
     @endif
 @endsection
 

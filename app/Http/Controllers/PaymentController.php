@@ -6,6 +6,7 @@ use App\Http\Requests\StorePaymentRequest;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Services\TenantMailer;
+use App\Support\PdfPageNumbers;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -83,7 +84,7 @@ class PaymentController extends Controller
         $pdf = Pdf::loadView('payments.receipt', compact('payment', 'invoice'))
                   ->setPaper('a4', 'portrait');
 
-        return $pdf->download("receipt-{$payment->payment_number}.pdf");
+        return PdfPageNumbers::stamp($pdf)->download("receipt-{$payment->payment_number}.pdf");
     }
 
     public function receiptPreview(Invoice $invoice, Payment $payment): Response
@@ -92,6 +93,6 @@ class PaymentController extends Controller
         $pdf = Pdf::loadView('payments.receipt', compact('payment', 'invoice'))
                   ->setPaper('a4', 'portrait');
 
-        return $pdf->stream("receipt-{$payment->payment_number}.pdf");
+        return PdfPageNumbers::stamp($pdf)->stream("receipt-{$payment->payment_number}.pdf");
     }
 }

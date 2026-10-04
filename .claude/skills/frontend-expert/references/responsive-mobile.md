@@ -29,7 +29,7 @@ A screen is on exactly one of these:
 | System | What it is | Where |
 |---|---|---|
 | `.pm-*` | Current "Property Manager" pass: headers, KPI cards, property cards, action rows, FAB, hero, floors/units lists, plus the opt-in Depth & Motion layer (ripple, collapsing large title, sliding segmented control, parallax, pull-to-refresh) | `app-mobile.css` |
-| `.m-*` | First mobile pass: `.m-screen`, `.m-action-row`, `.m-mini-stat`, `.m-search-input`, `.m-chip-row > .m-chip`, `.m-row-list > .m-row-card` (`.m-row-icon/.m-row-title/.m-row-sub/.m-row-badge/.m-row-chevron`), `.m-empty` | `app-mobile.css` |
+| `.m-*` | The list-screen system: `.m-screen`, `.m-action-row`, `.ps-stat-strip > .ps-stat`, `.m-search`, `.m-chip-row > .m-chip` (`.m-chip-count`, `.m-chip-sep`), `.m-row-list > .m-row-card` (`.m-row-thumb/.m-row-title/.m-row-sub/.m-row-occ/.m-row-amount/.m-row-chevron`), `.m-empty`. Assembled by `components/mobile-list` — see below. `.m-mini-stat`, `.m-search-input`, `.m-row-icon` and `.m-row-badge` were retired into these. | `app-mobile.css` |
 | fallback | No opt-in: app-core §5 responsive rules apply, including the table→card transformation | `app-core.css` |
 
 Opt-in is per route via `$mobileRedesignedRoutes` in the layout, which adds
@@ -39,6 +39,37 @@ maintained, not extended.
 A mobile screen is authored as a separate block in the same Blade file
 (`<div class="m-screen">…</div>` / the `.pm-*` markup), hidden on desktop by the
 mobile stylesheet — not as a second route or a duplicated controller.
+
+## List screens: one order, from the component
+
+Every filtered list on the phone comes in this order, and no page writes it:
+
+    header → actions (Add + More) → stats → search → chips → rows
+
+`components/mobile-list.blade.php` draws it. A page says what it *has* and the
+component decides where it goes:
+
+```blade
+<x-mobile-list :actions="[...]" :stats="[...]" :search="[...]" :chips="$chips">
+    @forelse($rows as $row) … .m-row-card … @empty … .m-empty … @endforelse
+</x-mobile-list>
+```
+
+- Every prop is optional — Payments has no create verb, Maintenance no figures,
+  Floors no search term. An omitted section closes the gap; it does not leave
+  one.
+- The component also owns the **reveal queue**: each section takes the next
+  `--ps-step` and hands the rows the one after as `--ps-row-step`, which the
+  `.m-row-list > :nth-child()` rules turn into each row's delay. Never write
+  `--ps-step` on a row by hand — the number depends on how many sections are
+  above it, which is not a page's business.
+- Sections sit **12px** apart, declared once on `.m-screen`. The `16px` above
+  the first one is the page inset, not a section gap.
+- Two facets in one chip row (Buildings filters by type *and* ownership) are
+  separated by `['sep' => true]` → `.m-chip-sep`, and compose in the URL: a
+  chip carries the other facet through and clears itself when it is the
+  active one.
+- `tests/Feature/MobileListOrderTest.php` pins all of the above, per route.
 
 ## Table → card (fallback path)
 

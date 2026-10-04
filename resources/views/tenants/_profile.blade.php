@@ -98,13 +98,6 @@
     .profile-meta { display: flex; align-items: center; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
     .profile-actions { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
 
-    .detail-icon {
-        width: 38px; height: 38px; border-radius: var(--radius-sm);
-        background: var(--accent-dim); color: var(--accent);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 15px; flex-shrink: 0;
-    }
-
     /* ── Mobile tenant hero (Miknas Property Manager design) ──────
          Shown only on mobile, above the same tabs/content desktop uses
          below — adds the design's rent/lease summary + quick actions
@@ -146,6 +139,107 @@
             display: flex; align-items: center; justify-content: center;
         }
     }
+
+    /* The phone-length tab label is the hidden half of the pair until the
+       phone breakpoint swaps them. */
+    .tp-tab-narrow { display: none; }
+
+    /* ── The mobile app layer (≤768px) ────────────────────────────
+         Two fixes, both about the screen's edges.
+
+         Scoped to body.is-pushed-screen — the class the layout puts on
+         the tenant/building detail routes — because this same partial is
+         also injected into the tenants-index profile modal, which brings
+         its own padding and must not get a second helping.
+
+         1. The gutter. body.is-mobile-screen zeroes .page-content's
+            padding so each mobile screen can own its own; the .m-screen
+            pages set 18px, but this page never did, so its sections ran
+            to the viewport edge. app-core's bare .card carries no padding
+            of its own either (it expects a .card-header/.card-body
+            inside), so the overview cards had their labels hard against
+            — and past — that edge. Both are fixed here.
+
+         2. The tab bar. Seven tabs are ~1010px of row; on any phone width
+            they wrapped into a four-row block taller than the hero above
+            it. It becomes one thumb-scrolled row instead, the way every
+            other chip row in the mobile app already behaves — the
+            half-visible tab at the edge is the affordance that there is
+            more to the right.
+
+         The breakpoint is 768px, not 640px, because that is where the
+         mobile layer itself begins: .page-content loses its padding and
+         the phone hero appears at 768, so anything narrower than that
+         needs these two fixes, not just phone widths. ── */
+    @media (max-width: 768px) {
+        body.is-pushed-screen .pm-tenant-hero,
+        body.is-pushed-screen .tab-panel {
+            padding-left: 18px;
+            padding-right: 18px;
+            box-sizing: border-box;
+        }
+
+        /* One row, scrolled by thumb. The rule below it belongs to the
+           container, not the row, so it stays put while the tabs move. */
+        body.is-pushed-screen .tp-tabs {
+            flex-wrap: nowrap;
+            gap: 4px;
+            padding: 0 18px;
+            margin-bottom: 18px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            /* A hairline on a phone, not the desktop bar's 2px. */
+            border-bottom-width: 1px;
+            border-bottom-color: var(--ps-border-soft);
+        }
+        body.is-pushed-screen .tp-tabs::-webkit-scrollbar { display: none; }
+
+        body.is-pushed-screen .tp-tabs .tab-btn {
+            flex: none;
+            white-space: nowrap;
+            gap: 7px;
+            padding: 12px 14px;
+            font-weight: 700;
+            color: var(--ps-muted-deep);
+            /* The desktop tab pulls itself down over the bar's rule to sit
+               flush with it. Here the bar is a scroll container, and
+               overflow-x:auto clips vertically too — that -2px took the
+               active tab's gold indicator with it. The indicator sits
+               directly above the hairline instead. */
+            margin-bottom: 0;
+        }
+        body.is-pushed-screen .tp-tabs .tab-btn.active {
+            color: var(--ps-gold-text-deep);
+            font-weight: 800;
+            border-bottom: 2.5px solid var(--ps-gold-dark);
+        }
+        /* A count, not a status — the quiet track grey rather than the gold
+           tint app-core gives it, so it reads as metadata beside a label
+           that is itself gold when active. */
+        body.is-pushed-screen .tp-tabs .tab-badge {
+            background: var(--ps-track);
+            color: var(--ps-muted-deep);
+            border-radius: var(--ps-r-pill);
+            padding: 1px 8px;
+            font-size: 12px;
+        }
+    }
+
+    /* ── Phone only (≤600px) ──────────────────────────────────────
+         Below this width the long tab labels stop being affordable and
+         app-core's auto-fill detail grid is down to a single column,
+         which makes eight one-line facts an eight-screen scroll.
+
+         600px, not the 640px the brief asked for: app-core §1.0 fixes the
+         breakpoint scale at 430/600/768/900/1200/1400 and
+         UiConsistencyTest fails any view that invents one in between, so
+         a phone rule goes on the phone breakpoint the rest of the app
+         already folds at. ── */
+    @media (max-width: 600px) {
+        body.is-pushed-screen .tp-tabs .tp-tab-wide { display: none; }
+        body.is-pushed-screen .tp-tabs .tp-tab-narrow { display: inline; }
+    }
 </style>
 
 @php
@@ -172,14 +266,16 @@
         <span style="padding:5px 11px;border-radius:99px;font-size:.625rem;font-weight:600;letter-spacing:.04em;background:{{ $mobileStatusMeta['tint'] }};color:{{ $mobileStatusMeta['tone'] }};flex-shrink:0;">{{ $mobileStatusMeta['label'] }}</span>
     </div>
 
-    <div class="pm-kpi-grid">
-        <div class="pm-kpi-card">
-            <div class="pm-kpi-label">Monthly rent</div>
-            <div class="pm-kpi-value">{{ $mobileLease?->rent_per_month ? 'BHD '.number_format($mobileLease->rent_per_month, 0) : '—' }}</div>
+    {{-- The shared stat strip, not a two-up of gold-topped KPI cards: this
+         screen shows two figures, and figures have one component. --}}
+    <div class="ps-stat-strip">
+        <div class="ps-stat">
+            <div class="ps-stat-value">{{ $mobileLease?->rent_per_month ? number_format($mobileLease->rent_per_month, 0) : '—' }}</div>
+            <div class="ps-stat-label">Rent BHD / mo</div>
         </div>
-        <div class="pm-kpi-card">
-            <div class="pm-kpi-label">Lease ends</div>
-            <div class="pm-kpi-value">{{ $mobileLease?->lease_end_date?->format('d M Y') ?? '—' }}</div>
+        <div class="ps-stat">
+            <div class="ps-stat-value is-word">{{ $mobileLease?->lease_end_date?->format('d M Y') ?? '—' }}</div>
+            <div class="ps-stat-label">Lease ends</div>
         </div>
     </div>
 
@@ -259,12 +355,13 @@
 </div>
 
 {{-- TABS --}}
-<div class="tab-bar">
+<div class="tab-bar tp-tabs">
     <button class="tab-btn" id="tab-overview" onclick="switchTab('overview')">
-        <i class="fa-solid fa-address-card detail-item"></i> Overview
+        <i class="fa-solid fa-address-card"></i> Overview
     </button>
     <button class="tab-btn" id="tab-leases" onclick="switchTab('leases')">
-        <i class="fa-solid fa-file-contract"></i> Lease Contracts
+        <i class="fa-solid fa-file-contract"></i>
+        <span class="tp-tab-wide">Lease Contracts</span><span class="tp-tab-narrow">Contracts</span>
         <span class="tab-badge">{{ $tenant->leaseContracts->count() }}</span>
     </button>
     <button class="tab-btn" id="tab-invoices" onclick="switchTab('invoices')">
@@ -272,7 +369,8 @@
         <span class="tab-badge">{{ $tenant->invoices->count() }}</span>
     </button>
     <button class="tab-btn" id="tab-payments" onclick="switchTab('payments')">
-        <i class="fa-solid fa-money-bill-transfer"></i> Payments &amp; Receipts
+        <i class="fa-solid fa-money-bill-transfer"></i>
+        <span class="tp-tab-wide">Payments &amp; Receipts</span><span class="tp-tab-narrow">Payments</span>
         <span class="tab-badge">{{ $tenant->payments->count() }}</span>
     </button>
     <button class="tab-btn" id="tab-ewa" onclick="switchTab('ewa')">
@@ -280,92 +378,66 @@
         <span class="tab-badge">{{ $tenant->ewaBills->count() }}</span>
     </button>
     <button class="tab-btn" id="tab-notes" onclick="switchTab('notes')">
-        <i class="fa-solid fa-file-invoice-dollar"></i> Credit &amp; Debit Notes
+        <i class="fa-solid fa-file-invoice-dollar"></i>
+        <span class="tp-tab-wide">Credit &amp; Debit Notes</span><span class="tp-tab-narrow">Credit Notes</span>
         <span class="tab-badge">{{ $tenant->invoiceNotes->count() }}</span>
     </button>
     <button class="tab-btn" id="tab-ledger" onclick="switchTab('ledger')">
-        <i class="fa-solid fa-calendar-check"></i> Rent Ledger
+        <i class="fa-solid fa-calendar-check"></i>
+        <span class="tp-tab-wide">Rent Ledger</span><span class="tp-tab-narrow">Ledger</span>
         <span class="tab-badge">{{ $rentSchedule->count() }}</span>
     </button>
 </div>
 
-{{-- ===================== OVERVIEW TAB ===================== --}}
+{{-- ===================== OVERVIEW TAB =====================
+     Was seven .card.detail-item blocks in a grid, five of them reading
+     "Not provided" in italic grey beside a tinted icon tile. On a tenant
+     with nothing but a name that is a whole screen spent announcing
+     absence, in three accent colours that encode nothing.
+
+     Two compact cards now, on the shared .kv-card (app-core §4.3c). What
+     is on file reads as a value; what is not offers to be filled. The
+     Add links carry ?focus=<field>, which the edit form uses to put the
+     cursor in the field the reader tapped rather than at the top of a
+     form they have to re-scan. ── --}}
 <div class="tab-panel" id="panel-overview">
-<div class="detail-grid">
+@php
+    $tpEdit  = route('tenants.edit', $tenant);
+    /* One link per field, so a tap lands on the field it came from. */
+    $tpFill  = fn (string $field) => route('tenants.edit', [$tenant, 'focus' => $field]);
+    /* Nationality and address share a row, so it needs both halves: the
+       parts that are filled, and whether anything is still missing. */
+    $tpWhere = array_values(array_filter([$tenant->nationality_country, $tenant->address]));
+@endphp
+<div class="kv-stack">
 
-    <div class="card detail-item">
-        <div class="detail-icon"><i class="fa-solid fa-id-card detail-item"></i></div>
-        <div>
-            <div class="detail-label">ID / CR Number</div>
-            <div class="detail-value {{ $tenant->id_cr_number ? '' : 'is-empty' }}">
-                {{ $tenant->id_cr_number ?? 'Not provided' }}
-            </div>
-        </div>
-    </div>
+    <x-kv-card
+        title="Contact & ID"
+        :edit="$tpEdit"
+        :rows="[
+            ['icon' => 'fa-phone', 'label' => 'Phone',
+             'value' => $tenant->phone,
+             'href'  => $tenant->phone ? 'tel:'.$tenant->phone : null,
+             'add'   => $tenant->phone ? null : $tpFill('phone')],
+            ['icon' => 'fa-envelope', 'label' => 'Email',
+             'value' => $tenant->email,
+             'href'  => $tenant->email ? 'mailto:'.$tenant->email : null,
+             'add'   => $tenant->email ? null : $tpFill('email')],
+            ['icon' => 'fa-id-card', 'label' => 'ID / CR number',
+             'value' => $tenant->id_cr_number,
+             'add'   => $tenant->id_cr_number ? null : $tpFill('id_cr_number')],
+        ]" />
 
-    <div class="card detail-item">
-        <div class="detail-icon"><i class="fa-solid fa-phone"></i></div>
-        <div>
-            <div class="detail-label">Phone</div>
-            <div class="detail-value {{ $tenant->phone ? '' : 'is-empty' }}">
-                @if($tenant->phone)
-                    <a href="tel:{{ $tenant->phone }}">{{ $tenant->phone }}</a>
-                @else
-                    Not provided
-                @endif
-            </div>
-        </div>
-    </div>
-
-    <div class="card detail-item">
-        <div class="detail-icon" style="background:var(--tone-info-bg);color:var(--info);"><i class="fa-solid fa-envelope"></i></div>
-        <div>
-            <div class="detail-label">Email Address</div>
-            <div class="detail-value {{ $tenant->email ? '' : 'is-empty' }}">
-                @if($tenant->email)
-                    <a href="mailto:{{ $tenant->email }}">{{ $tenant->email }}</a>
-                @else
-                    Not provided
-                @endif
-            </div>
-        </div>
-    </div>
-
-    <div class="card detail-item">
-        <div class="detail-icon" style="background:var(--tone-success-bg);color:var(--success);"><i class="fa-solid fa-earth-americas"></i></div>
-        <div>
-            <div class="detail-label">Nationality / Country</div>
-            <div class="detail-value {{ $tenant->nationality_country ? '' : 'is-empty' }}">
-                {{ $tenant->nationality_country ?? 'Not provided' }}
-            </div>
-        </div>
-    </div>
-
-    <div class="card detail-item">
-        <div class="detail-icon" style="background:var(--tone-warning-bg);color:var(--tone-warning-fg);"><i class="fa-solid fa-location-dot"></i></div>
-        <div>
-            <div class="detail-label">Address</div>
-            <div class="detail-value {{ $tenant->address ? '' : 'is-empty' }}">
-                {{ $tenant->address ?? 'Not provided' }}
-            </div>
-        </div>
-    </div>
-
-    <div class="card detail-item">
-        <div class="detail-icon"><i class="fa-regular fa-calendar-plus"></i></div>
-        <div>
-            <div class="detail-label">Created At</div>
-            <div class="detail-value">{{ $tenant->created_at->format('d M Y, H:i') }}</div>
-        </div>
-    </div>
-
-    <div class="card detail-item">
-        <div class="detail-icon"><i class="fa-regular fa-calendar-check"></i></div>
-        <div>
-            <div class="detail-label">Last Updated</div>
-            <div class="detail-value">{{ $tenant->updated_at->format('d M Y, H:i') }}</div>
-        </div>
-    </div>
+    <x-kv-card
+        :rows="[
+            ['icon' => 'fa-location-dot', 'label' => 'Nationality · Address',
+             'value' => implode(' · ', $tpWhere),
+             'add'   => count($tpWhere) === 2 ? null : $tpFill($tenant->nationality_country ? 'address' : 'nationality_country')],
+        ]"
+        :meta="[
+            ['label' => 'Created', 'value' => $tenant->created_at->format('d M Y')],
+            ['label' => 'Updated', 'value' => $tenant->updated_at->format('d M Y')],
+        ]" />
 
 </div>
 </div>
@@ -741,12 +813,27 @@ document.addEventListener('keydown', function (e) {
     // the index page, so its presence tells us which context we're in.
     const inModal = !!document.getElementById('tenantProfileModal');
 
+    /* On a phone the seven tabs are one scrolling row, so the active one can
+       start off-screen — landing on ?tab=ledger would show a bar that looks
+       like it begins at Overview. Centre it in the container by setting
+       scrollLeft directly: scrollIntoView() would also scroll the page
+       itself, which on load yanks the reader past the hero. */
+    const revealTab = function (btn) {
+        const bar = btn.closest('.tp-tabs');
+        if (!bar || bar.scrollWidth <= bar.clientWidth) return;   // not scrolling (desktop)
+        const offset = btn.getBoundingClientRect().left - bar.getBoundingClientRect().left;
+        const target = bar.scrollLeft + offset - (bar.clientWidth - btn.offsetWidth) / 2;
+        bar.scrollLeft = Math.max(0, Math.min(target, bar.scrollWidth - bar.clientWidth));
+    };
+
     window.switchTab = function (tab) {
         const root = inModal ? document.getElementById('tenantProfileBody') : document;
         root.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         root.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        root.querySelector('#tab-' + tab).classList.add('active');
+        const btn = root.querySelector('#tab-' + tab);
+        btn.classList.add('active');
         root.querySelector('#panel-' + tab).classList.add('active');
+        revealTab(btn);
         if (!inModal) {
             history.replaceState(null, '', '?tab=' + tab);
         }
@@ -755,5 +842,16 @@ document.addEventListener('keydown', function (e) {
     const validTabs = ['overview', 'leases', 'invoices', 'payments', 'ewa', 'notes', 'ledger'];
     const urlTab = inModal ? null : new URLSearchParams(window.location.search).get('tab');
     switchTab(validTabs.includes(urlTab) ? urlTab : 'overview');
+
+    /* The icon font lands after this script runs, and every tab gets wider when
+       it does — so the position worked out above is short by the time the row
+       is on screen. Measure it again once the fonts are in. */
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(function () {
+            const active = (inModal ? document.getElementById('tenantProfileBody') : document)
+                .querySelector('.tp-tabs .tab-btn.active');
+            if (active) revealTab(active);
+        });
+    }
 })();
 </script>

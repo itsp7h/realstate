@@ -165,6 +165,64 @@ class PaletteSearchTest extends TestCase
         $this->assertSame(['Maintenance'], $labels);
     }
 
+    public function test_the_accountant_role_searches_invoices_and_not_the_portfolio(): void
+    {
+        $tenant = $this->makeTenant();
+        $this->makeBuilding();
+        MaintenanceRequest::create([
+            'date'               => '2026-05-21',
+            'property'           => 'Marina Bay Tower',
+            'tenant'             => 'Ahmed Ali',
+            'flat'               => '3B',
+            'contact_no'         => '+973 3300 0000',
+            'available_datetime' => '2026-05-22 10:00:00',
+            'apartment_status'   => 'occupied',
+            'job_order'          => 'JO-MARINA-1',
+        ]);
+
+        $invoice = new Invoice([
+            'invoice_number' => 'INV-MARINA-1',
+            'tenant_id'      => $tenant->id,
+            'tenant_name'    => $tenant->name,
+            'property_name'  => 'Marina Bay Tower',
+            'type'           => 'rent',
+            'lines'          => [['property_name' => 'Marina Bay Tower', 'unit' => 'Flat 1', 'amount' => 100.000]],
+            'vat_rate'       => 0,
+            'invoice_date'   => '2026-03-01',
+            'status'         => 'issued',
+        ]);
+        $invoice->recomputeTotals();
+        $invoice->save();
+
+        $groups = $this->actingAs(User::factory()->accountant()->create())
+            ->getJson(route('search', ['q' => 'Marina']))
+            ->json('groups');
+
+        // Every portfolio group links to a show page this role answers 403 on,
+        // and Maintenance is outside its scope entirely.
+        $this->assertSame(['Invoices'], array_column($groups, 'label'));
+    }
+
+    public function test_the_jump_list_offers_a_role_only_what_it_can_open(): void
+    {
+        $html = $this->actingAs(User::factory()->accountant()->create())
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->getContent();
+
+        $jump = \Illuminate\Support\Str::between($html, 'data-palette-jump', 'data-palette-results');
+
+        foreach (['Invoices', 'Payments', 'EWA bills', 'Expenses', 'Revenue', 'Report library'] as $row) {
+            $this->assertStringContainsString('>'.$row.'<', $jump, "The palette should offer [{$row}].");
+        }
+
+        // Ungated before this role existed: a confined account was offered
+        // Buildings and got a 403 for taking the offer.
+        foreach (['Buildings', 'Floors', 'Units', 'Tenants', 'Leases', 'Maintenance'] as $row) {
+            $this->assertStringNotContainsString('>'.$row.'<', $jump, "The palette should not offer [{$row}].");
+        }
+    }
+
     public function test_a_guest_cannot_search(): void
     {
         auth()->logout();

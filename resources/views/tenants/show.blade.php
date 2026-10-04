@@ -14,11 +14,13 @@
 @endsection
 @section('page-title', 'Tenant Profile')
 @section('page-subtitle', 'Full details for this tenant record')
-@section('page-actions')
-    <a href="{{ route('tenants.index') }}" class="btn btn-outline">
-        <i class="fa-solid fa-arrow-left"></i> Back
+@section('page-back')
+    <a href="{{ route('tenants.index') }}" class="btn btn-outline" aria-label="Back">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back</span>
     </a>
 @endsection
+
+
 
 {{-- MOBILE: pushed-screen header with a back chevron, per the Miknas design --}}
 <div class="pm-push-header">
@@ -32,7 +34,7 @@
          compute portfolio metrics — it's the way there, not the count. --}}
     <a href="{{ route('dashboard') }}#today" class="pm-icon-btn" title="Alerts"
        aria-label="Show what needs you today"><i class="fa-regular fa-bell" aria-hidden="true"></i></a>
-    <div class="pm-avatar" style="font-size:14px;">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
+    <x-avatar class="pm-avatar" tag="div" style="font-size:14px;" />
 </div>
 
 

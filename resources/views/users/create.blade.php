@@ -28,9 +28,13 @@
 @section('page-subtitle')
     {{ $record ? 'Update this account\'s details or role' : 'Create a new account that can sign in to this system' }}
 @endsection
-@section('page-actions')
-    <a href="{{ route('users.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
+@section('page-back')
+    <a href="{{ route('users.index') }}" class="btn btn-outline" aria-label="Back">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back</span>
+    </a>
 @endsection
+
+
 
 
 <form method="POST" action="{{ $record ? route('users.update', $record) : route('users.store') }}" novalidate>
@@ -56,13 +60,24 @@
 
                 <div class="form-group">
                     <label class="form-label" for="role">Role <span class="required">*</span></label>
-                    <select id="role" name="role" class="form-control {{ $errors->has('role') ? 'is-invalid' : '' }}" required>
+                    <select id="role" name="role" class="form-control {{ $errors->has('role') ? 'is-invalid' : '' }}"
+                            required aria-describedby="roleHint">
                         <option value="">— Select —</option>
-                        @foreach(['admin' => 'Admin', 'user' => 'User', 'maintenance' => 'Maintenance'] as $value => $label)
-                        <option value="{{ $value }}" {{ old('role', $record?->role) === $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @foreach($roles as $r)
+                        <option value="{{ $r['key'] }}" {{ old('role', $record?->role) === $r['key'] ? 'selected' : '' }}>{{ $r['label'] }} — {{ $r['scope'] }}</option>
                         @endforeach
                     </select>
-                    <div class="form-hint">Only Admin can delete records, view Reports, and manage Users. Maintenance accounts can only access Maintenance Requests.</div>
+                    {{-- The selected role's own one-line summary, read straight from
+                         RoleCatalog, so this hint cannot contradict the Roles page the
+                         way a hand-written sentence listing three roles just did. --}}
+                    <div class="form-hint" id="roleHint" aria-live="polite"
+                         data-role-hints='@json(collect($roles)->pluck('summary', 'key'))'>
+                        {{ collect($roles)->firstWhere('key', old('role', $record?->role))['summary']
+                            ?? 'Pick a role to see what it can reach.' }}
+                    </div>
+                    <div class="form-hint">
+                        <a href="{{ route('roles.index') }}">Roles &amp; Permissions</a> lists every capability, role by role.
+                    </div>
                     @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
@@ -96,3 +111,20 @@
 </form>
 
 @endsection
+
+@push('scripts')
+<script>
+/* Swaps the hint under the Role field for the chosen role's summary. Text only,
+   from a map rendered server-side — no fetch, and the field is fully usable
+   with this script absent (the hint just stays on whatever loaded). */
+(function () {
+    const select = document.getElementById('role');
+    const hint = document.getElementById('roleHint');
+    if (!select || !hint) return;
+    const summaries = JSON.parse(hint.dataset.roleHints || '{}');
+    select.addEventListener('change', function () {
+        hint.textContent = summaries[this.value] || 'Pick a role to see what it can reach.';
+    });
+})();
+</script>
+@endpush

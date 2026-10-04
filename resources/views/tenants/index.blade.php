@@ -2,13 +2,16 @@
 
 @section('title', 'Tenants')
 @section('topbar-title', 'Tenants')
+@section('topbar-count', number_format($tenants->total()))
 
 @section('page-title', 'Tenants')
 @section('page-subtitle', 'Manage all tenant profiles and contact records')
 @section('page-actions')
-    <a href="{{ route('export.tenants', request()->only(['search','tenant_type','company_name'])) }}" class="btn btn-outline">
-        <i class="fa-solid fa-file-export"></i> Export
-    </a>
+    @include('partials.export-menu', [
+        'route'  => 'export.tenants',
+        'params' => request()->only(['search','tenant_type','company_name']),
+        'sub'    => 'All 7 columns, import-ready',
+    ])
     <button type="button" class="btn btn-outline" onclick="openImport_tenants()">
         <i class="fa-solid fa-file-import"></i> Import
     </button>
@@ -101,78 +104,92 @@
 
 {{-- PAGE HEADER --}}
 
-{{-- ═══════════════════════ MOBILE SCREEN (Miknas Property Manager design) ═══════════════════════ --}}
-<div class="m-screen">
-    <div class="pm-search-field">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <form method="GET" action="{{ route('tenants.index') }}" style="flex:1;">
-            @if(request('status'))<input type="hidden" name="status" value="{{ request('status') }}">@endif
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search tenants or units"
-                   oninput="mDebounceSubmit(this)">
-        </form>
-    </div>
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
+     Was the odd one out: its own search wrapper, its own chip class, rows
+     built from .pm-action-row with an inline avatar, a section eyebrow with
+     a loose count beside it, and a FAB for the create verb that every other
+     screen puts in the actions row. All five are the shared components
+     now. ── --}}
+@php
+    $tenantFilters = [
+        ['id' => null,      'label' => 'All'],
+        ['id' => 'paid',    'label' => 'Paid'],
+        ['id' => 'overdue', 'label' => 'Overdue'],
+    ];
+    $activeStatus = request('status');
+    $tenantChips  = array_map(fn ($f) => [
+        'label'  => $f['label'],
+        'href'   => route('tenants.index', array_filter(['search' => request('search'), 'status' => $f['id']])),
+        'active' => $activeStatus === $f['id'],
+        'count'  => $f['id'] ? $tenants->total() : null,
+    ], $tenantFilters);
+@endphp
+<x-mobile-list
+    :actions="[
+        'primary' => ['label' => 'Add tenant', 'onclick' => 'openTenantModal()'],
+        'sheet'   => [
+            'id'    => 'tenantsMoreSheet',
+            'title' => 'More',
+            'sub'   => 'Import and export this list',
+            'items' => [
+                ['icon' => 'fa-wand-magic-sparkles', 'label' => 'Smart import',
+                 'desc' => 'Bring in tenants from a spreadsheet',
+                 'onclick' => 'openImport_tenants()'],
+                ['icon' => 'fa-file-excel', 'label' => 'Export to Excel',
+                 'desc' => 'The list as it is filtered now',
+                 'href' => route('export.tenants', array_merge(request()->only(['search','status','tenant_type']), ['format' => 'xlsx']))],
+                ['icon' => 'fa-file-pdf', 'label' => 'Export to PDF',
+                 'desc' => 'The list as it is filtered now',
+                 'href' => route('export.tenants', array_merge(request()->only(['search','status','tenant_type']), ['format' => 'pdf']))],
+            ],
+        ],
+    ]"
+    :search="[
+        'action'      => route('tenants.index'),
+        'placeholder' => 'Search tenants or units',
+        'aria'        => 'Search tenants',
+        'keep'        => ['status'],
+    ]"
+    :chips="$tenantChips">
 
-    @php
-        $tenantFilters = [
-            ['id' => null,      'label' => 'All'],
-            ['id' => 'paid',    'label' => 'Paid'],
-            ['id' => 'overdue', 'label' => 'Overdue'],
-        ];
-        $activeStatus = request('status');
-    @endphp
-    <div class="pm-chip-row">
-        @foreach($tenantFilters as $f)
-            <a href="{{ route('tenants.index', array_filter(['search' => request('search'), 'status' => $f['id']])) }}"
-               class="pm-chip {{ $activeStatus === $f['id'] ? 'active' : '' }}">{{ $f['label'] }}</a>
-        @endforeach
-    </div>
-
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="pm-section-label" style="margin-bottom:0;">Leases</div>
-        <div style="font-size:.8rem;font-weight:500;color:var(--ps-muted-deep);">{{ $tenants->total() }}</div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:8px;">
-        @forelse($tenants as $tenant)
-            @php
-                $lease = $tenant->activeLease;
-                $statusMeta = match ($tenant->rentStatus) {
-                    'paid'    => ['label' => 'Paid',    'tone' => 'var(--pm-green-text)'],
-                    'overdue' => ['label' => 'Overdue', 'tone' => 'var(--pm-red)'],
-                    default   => null,
-                };
-            @endphp
-            <a href="{{ route('tenants.show', $tenant) }}" class="pm-action-row" style="text-decoration:none;">
-                <div style="flex:none;width:38px;height:38px;border-radius:99px;background:var(--ps-placeholder);color:var(--ps-gold);font-weight:600;font-size:.8rem;display:flex;align-items:center;justify-content:center;">
-                    {{ strtoupper(substr($tenant->name, 0, 2)) }}
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div class="pm-action-title">{{ $tenant->name }}</div>
-                    <div class="pm-action-sub">{{ $lease?->property_code ?? '—' }}{{ $lease?->unit ? ' · '.$lease->unit : '' }}</div>
-                </div>
-                @if($lease?->rent_per_month)
-                    <div style="text-align:right;flex-shrink:0;">
-                        <div style="font-family:'Poppins',system-ui,sans-serif;font-weight:700;font-size:1rem;color:var(--ps-navy);">BHD {{ number_format($lease->rent_per_month, 0) }}</div>
-                        @if($statusMeta)
-                            <div style="font-size:.7rem;font-weight:600;margin-top:2px;color:{{ $statusMeta['tone'] }};">{{ $statusMeta['label'] }}</div>
-                        @endif
-                    </div>
+    @forelse($tenants as $tenant)
+        @php
+            $lease = $tenant->activeLease;
+            $rentStatus = match ($tenant->rentStatus) {
+                'paid'    => 'Paid',
+                'overdue' => 'Overdue',
+                default   => null,
+            };
+        @endphp
+        <a href="{{ route('tenants.show', $tenant) }}" class="m-row-card ps-reveal">
+            <span class="m-row-thumb">
+                <span class="m-row-initials">{{ strtoupper(substr($tenant->name, 0, 2)) }}</span>
+            </span>
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $tenant->name }}</span>
+                <span class="m-row-sub">{{ $lease?->property_code ?? 'No active lease' }}{{ $lease?->unit ? ' · '.$lease->unit : '' }}</span>
+                {{-- The chip already says Paid or Overdue when one is
+                     active; repeating it on every row says nothing. --}}
+                @if($rentStatus && ! $activeStatus)
+                    <span class="m-row-sub {{ $rentStatus === 'Overdue' ? 'is-down' : '' }}">Rent {{ strtolower($rentStatus) }}</span>
                 @endif
-            </a>
-        @empty
-            <div class="pm-empty">
-                @if($activeStatus)
-                    No tenants match this filter.
-                @else
-                    <div class="m-empty-title">No tenants found</div>
-                    <div class="m-empty-sub">Try adjusting your search, or add a new tenant.</div>
-                @endif
-            </div>
-        @endforelse
-    </div>
-
-    <button type="button" class="pm-fab" style="position:fixed;border:0;" onclick="openTenantModal()" title="Add a tenant"><i class="fa-solid fa-plus"></i></button>
-</div>
+            </span>
+            @if($lease?->rent_per_month)
+                <span class="m-row-amount">BHD {{ number_format($lease->rent_per_month, 0) }}</span>
+            @endif
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+        </a>
+    @empty
+        <div class="m-empty">
+            <div class="m-empty-icon"><i class="fa-solid fa-users" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No tenants here</div>
+            <div class="m-empty-sub">Try a different search, or add a tenant.</div>
+            <button type="button" class="m-action-btn primary" onclick="openTenantModal()">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>Add tenant
+            </button>
+        </div>
+    @endforelse
+</x-mobile-list>
 
 {{-- STATS --}}
 <div class="stats-grid">

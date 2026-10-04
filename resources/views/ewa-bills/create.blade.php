@@ -7,9 +7,9 @@
     {{ $record ? 'Edit EWA Bill' : 'New EWA Bill' }}
 @endsection
 @section('page-subtitle', 'Electricity & Water Authority — Kingdom of Bahrain')
-@section('page-actions')
-    <a href="{{ route('ewa-bills.index') }}" class="btn btn-outline">
-        <i class="fa-solid fa-arrow-left"></i> Back
+@section('page-back')
+    <a href="{{ route('ewa-bills.index') }}" class="btn btn-outline" aria-label="Back">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back</span>
     </a>
 @endsection
 

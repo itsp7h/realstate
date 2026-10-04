@@ -236,8 +236,10 @@ Upload → Detect → Map columns → Preview → Import. Every step is cancella
 
 ## 6. Component rules
 
-- **Buttons**: `.btn` + `.btn-primary` (gold gradient, navy ink) / `.btn-success` /
-  `.btn-outline` / `.btn-sm`. One primary per screen region. Icon + label, icon first, 10px gap.
+- **Buttons**: `.btn` + `.btn-primary` (gold gradient, navy ink) / `.btn-outline` /
+  `.btn-export` / `.btn-sm`. One primary per screen region. Icon + label, icon first, 10px gap.
+  `.btn-export` is the app's one Export button (navy ink, card surface) and is rendered
+  only through `<x-export-button>` — never hand-styled, and never green.
 - **Badges**: `.badge` + `.badge-gold|green|blue|red|neutral`. 11px/700, uppercase off,
   pill radius. Status only.
 - **Cards**: `--card-bg`, 1px `--card-border`, `--radius`, `--shadow-sm`. Hover lift

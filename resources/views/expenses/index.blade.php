@@ -2,6 +2,7 @@
 
 @section('title', 'Expenses')
 @section('topbar-title', 'Expenses')
+@section('topbar-count', number_format($expenses->total()))
 
 @push('styles')
 <style>
@@ -22,66 +23,67 @@
 
 
 {{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
-     Same .m-screen / .m-row-card architecture as Payments, Invoices and
-     Lease Contracts. Every value carries a visible label so nothing
-     renders as a bare figure. ── --}}
-<div class="m-screen">
-    <div class="m-mini-row">
-        <div class="m-mini-stat">
-            <div class="v">{{ $stats['total'] }}</div>
-            <div class="l">Entries</div>
-        </div>
-        <div class="m-mini-stat">
-            <div class="v">{{ number_format($stats['total_amount'], 0) }}</div>
-            <div class="l">Total (BHD)</div>
-        </div>
-        <div class="m-mini-stat">
-            <div class="v">{{ number_format($stats['this_month'], 0) }}</div>
-            <div class="l">This Month (BHD)</div>
-        </div>
-    </div>
+     header → actions → stats → search → chips → rows, on the shared
+     components. Nothing on this screen is expenses-specific except the
+     copy and the route names. ── --}}
+@php
+    $expCategory = request('category');
+    $expChips    = [[
+        'label'  => 'All',
+        'href'   => route('expenses.index', array_filter(['search' => request('search')])),
+        'active' => ! $expCategory,
+    ]];
+    foreach ($categories as $expVal => $expLabel) {
+        $expChips[] = [
+            'label'  => $expLabel,
+            'href'   => route('expenses.index', array_filter(['search' => request('search'), 'category' => $expVal])),
+            'active' => $expCategory === $expVal,
+        ];
+    }
+@endphp
+<x-mobile-list
+    :actions="['primary' => ['label' => 'Add expense', 'href' => route('expenses.create')]]"
+    :stats="[
+        ['value' => $stats['total'],        'label' => 'Entries'],
+        ['money' => $stats['total_amount'], 'label' => 'Total BHD'],
+        ['money' => $stats['this_month'],   'label' => now()->format('M').' BHD'],
+    ]"
+    :search="[
+        'action'      => route('expenses.index'),
+        'placeholder' => 'Search description or vendor',
+        'aria'        => 'Search expenses',
+        'keep'        => ['category'],
+    ]"
+    :chips="$expChips">
 
-    <div class="m-chip-row no-sb">
-        <a href="{{ route('expenses.index') }}" class="m-chip {{ !request('category') ? 'active' : '' }}">All</a>
-        @foreach($categories as $val => $label)
-            <a href="{{ route('expenses.index', ['category' => $val]) }}"
-               class="m-chip {{ request('category') === $val ? 'active' : '' }}">{{ $label }}</a>
-        @endforeach
-    </div>
-
-    <div class="m-row-list">
-        @forelse($expenses as $expense)
-            <a href="{{ route('expenses.edit', $expense) }}" class="m-row-card">
-                <div class="m-row-icon" style="background:var(--ps-danger-bg);color:var(--ps-danger);">
-                    <i class="fa-solid fa-receipt"></i>
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div class="m-row-title">{{ $expense->description ?: $expense->category_label }}</div>
-                    <div class="m-row-sub">
-                        {{ $expense->building->property_name ?? 'No building' }}@if($expense->unit) &middot; Unit {{ $expense->unit->unit_name }}@endif
-                    </div>
-                    <div class="m-row-sub">
-                        Dated {{ $expense->expense_date->format('d M Y') }}@if($expense->vendor_name) &middot; Vendor {{ $expense->vendor_name }}@endif
-                    </div>
-                </div>
-                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-                    <div style="font-family:'Poppins',system-ui,sans-serif;font-size:1rem;font-weight:700;color:var(--ps-danger);">
-                        BHD {{ number_format($expense->amount, 3) }}
-                    </div>
-                    <span class="m-row-badge" style="background:var(--ps-danger-bg);color:var(--ps-danger);">
-                        {{ $expense->category_label }}
-                    </span>
-                </div>
+    @forelse($expenses as $expense)
+        <a href="{{ route('expenses.edit', $expense) }}" class="m-row-card ps-reveal">
+            <span class="m-row-thumb"><i class="fa-solid fa-receipt" aria-hidden="true"></i></span>
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $expense->description ?: $expense->category_label }}</span>
+                <span class="m-row-sub">
+                    {{ $expense->building->property_name ?? 'No building' }}@if($expense->unit) &middot; Unit {{ $expense->unit->unit_name }}@endif
+                </span>
+                {{-- The category repeats the active chip, so it only earns
+                     a line when no chip is filtering by it. --}}
+                <span class="m-row-sub">
+                    {{ $expense->expense_date->format('d M Y') }}@unless(request('category')) &middot; {{ $expense->category_label }}@endunless
+                </span>
+            </span>
+            <span class="m-row-amount">BHD {{ number_format($expense->amount, 0) }}</span>
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+        </a>
+    @empty
+        <div class="m-empty">
+            <div class="m-empty-icon"><i class="fa-solid fa-receipt" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No expenses yet</div>
+            <div class="m-empty-sub">Record what a property cost you, and it shows up here.</div>
+            <a href="{{ route('expenses.create') }}" class="m-action-btn primary">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>Add expense
             </a>
-        @empty
-            <div class="m-empty">
-                <div class="m-empty-icon"><i class="fa-solid fa-receipt"></i></div>
-                <div class="m-empty-title">No expenses recorded yet</div>
-                <div class="m-empty-sub">Try adjusting your filters.</div>
-            </div>
-        @endforelse
-    </div>
-</div>
+        </div>
+    @endforelse
+</x-mobile-list>
 
 <div class="stats-grid m-hide-desktop-index">
     <div class="stat-card">

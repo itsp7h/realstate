@@ -9,9 +9,9 @@
 @section('page-subtitle')
     {{ $record ? 'Update invoice details' : 'Create a new tax invoice for a tenant, covering one or more rental lines' }}
 @endsection
-@section('page-actions')
-    <a href="{{ route('invoices.index') }}" class="btn btn-outline">
-        <i class="fa-solid fa-arrow-left"></i> Back
+@section('page-back')
+    <a href="{{ route('invoices.index') }}" class="btn btn-outline" aria-label="Back">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back</span>
     </a>
 @endsection
 

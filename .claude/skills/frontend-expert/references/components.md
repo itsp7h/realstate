@@ -36,11 +36,17 @@ One hierarchy, one box — variants change **color only**.
 | `.btn.btn-outline` | secondary actions, and every table-row action |
 | `.btn.btn-ghost` | tertiary / low-noise (toolbars, card headers) |
 | `.btn.btn-danger` | destructive — soft by default, filled on hover |
-| `.btn.btn-success` | confirming / positive |
+| `.btn.btn-export` | every Export trigger — render it via `<x-export-button>`, never by hand |
 | `.btn-sm` / `.btn-lg` / `.btn-icon` / `.btn-block` | dense rows / forms & mobile / icon-only / full width |
 
 Icon-only buttons need `aria-label`. Icons sit before the label and never
 outweigh it. A `<a>` styled as a button still needs a real `href`.
+
+Export is not a free choice. Every export trigger — a list toolbar's menu, a
+report's XLSX link, the Import/Export page — is `<x-export-button>`, which is
+`.btn.btn-export` and nothing else. `partials/export-menu.blade.php` wraps it in
+the two-format popover. There is no green button in the system any more; the
+`.btn-success` variant was deleted so the old Export style cannot come back.
 
 ## Forms (§4.2)
 

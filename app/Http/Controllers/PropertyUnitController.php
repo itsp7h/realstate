@@ -137,8 +137,13 @@ class PropertyUnitController extends Controller
             ->with('success', 'Property unit deleted.');
     }
 
-    public function export(Request $request)
+    public function export(Request $request, string $format = 'xlsx')
     {
-        return redirect()->route('export.units', $request->only(['search', 'property_code', 'unit_type', 'unit_condition']));
+        // Forwards the format too, or asking this alias for a PDF would
+        // silently hand back the spreadsheet.
+        return redirect()->route('export.units', array_merge(
+            ['format' => $format],
+            $request->only(['search', 'property_code', 'unit_type', 'unit_condition']),
+        ));
     }
 }

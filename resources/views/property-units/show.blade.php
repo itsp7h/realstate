@@ -24,10 +24,13 @@
         <span class="badge badge-gray" style="font-size:12px;">{{ $unit->unit_condition }}</span>
     @endif
 @endsection
-@section('page-actions')
-    <a href="{{ route('property-units.index') }}" class="btn btn-outline">
-        <i class="fa-solid fa-arrow-left"></i> Back
+@section('page-back')
+    <a href="{{ route('property-units.index') }}" class="btn btn-outline" aria-label="Back">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back</span>
     </a>
+@endsection
+
+@section('page-actions')
     <a href="{{ route('property-units.edit', $unit) }}" class="btn btn-primary">
         <i class="fa-regular fa-pen-to-square"></i> Edit Unit
     </a>

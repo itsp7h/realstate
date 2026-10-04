@@ -2,13 +2,16 @@
 
 @section('title', 'Lease Contracts')
 @section('topbar-title', 'Lease Contracts')
+@section('topbar-count', number_format($contracts->total()))
 
 @section('page-title', 'Lease Contracts')
 @section('page-subtitle', 'Manage all lease agreements and contract records')
 @section('page-actions')
-    <a href="{{ route('export.contracts', request()->only(['search','property_code'])) }}" class="btn btn-outline">
-        <i class="fa-solid fa-file-export"></i> Export
-    </a>
+    @include('partials.export-menu', [
+        'route'  => 'export.contracts',
+        'params' => request()->only(['search','property_code']),
+        'sub'    => 'All 26 columns, import-ready',
+    ])
     <button type="button" class="btn btn-outline" onclick="openImport_contracts()">
         <i class="fa-solid fa-file-import"></i> Import
     </button>
@@ -136,54 +139,81 @@
 {{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
 @php
     $leaseStatusLabels = ['active' => 'Active', 'expiring' => 'Expiring', 'upcoming' => 'Upcoming', 'expired' => 'Expired'];
-    $leaseBadgeColors = [
-        'active'   => ['var(--ps-success-bg)', 'var(--ps-success)'],
-        'expiring' => ['var(--ps-warning-bg)', 'var(--ps-warning)'],
-        'upcoming' => ['var(--ps-info-bg)',    'var(--ps-info)'],
-        'expired'  => ['var(--ps-bg)',         'var(--ps-muted-deep)'],
-    ];
 @endphp
-<div class="m-screen">
-    <div class="ps-stat-strip">
-        <div class="ps-stat"><div class="ps-stat-label">Active contracts</div><div class="ps-stat-value">{{ $stats['active'] }}</div></div>
-        <div class="ps-stat"><div class="ps-stat-label">Expiring (30d)</div><div class="ps-stat-value is-gold">{{ $stats['expiring'] }}</div></div>
-    </div>
-    <div class="m-action-row">
-        <button type="button" class="m-action-btn primary" onclick="openContractModal()">
-            <i class="fa-solid fa-plus"></i> New Contract
-        </button>
-    </div>
-    <div class="m-chip-row no-sb">
-        <a href="{{ route('lease-contracts.index') }}" class="m-chip {{ !request('status') ? 'active' : '' }}">All</a>
-        @foreach($leaseStatusLabels as $val => $label)
-            <a href="{{ route('lease-contracts.index', ['status' => $val]) }}" class="m-chip {{ request('status') === $val ? 'active' : '' }}">{{ $label }}</a>
-        @endforeach
-    </div>
-    <div class="m-row-list">
-        @forelse($contracts as $mContract)
-            @php
-                [$mBg, $mFg] = $leaseBadgeColors[$mContract->status] ?? ['var(--ps-bg)', 'var(--ps-muted-deep)'];
-            @endphp
-            <a href="{{ route('lease-contracts.show', $mContract) }}" class="m-row-card">
-                <div class="m-row-icon" style="background:var(--ps-gold-tint);color:var(--ps-gold-text);"><i class="fa-solid fa-file-contract"></i></div>
-                <div style="flex:1;min-width:0;">
-                    <div class="m-row-title">{{ $mContract->tenant_name }}</div>
-                    <div class="m-row-sub">{{ $mContract->property_code ?? '—' }}{{ $mContract->unit ? ' / '.$mContract->unit : '' }}</div>
-                </div>
-                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-                    <div style="font-size:13.5px;font-weight:800;">{{ $mContract->rent_per_month ? number_format($mContract->rent_per_month, 0) : '—' }}</div>
-                    <span class="m-row-badge" style="background:{{ $mBg }};color:{{ $mFg }};">{{ $leaseStatusLabels[$mContract->status] ?? ucfirst($mContract->status) }}</span>
-                </div>
-            </a>
-        @empty
-            <div class="m-empty">
-                <div class="m-empty-icon"><i class="fa-solid fa-file-contract"></i></div>
-                <div class="m-empty-title">No contracts found</div>
-                <div class="m-empty-sub">Try adjusting your filters.</div>
-            </div>
-        @endforelse
-    </div>
-</div>
+@php
+    $leaseStatus = request('status');
+    $leaseChips  = [[
+        'label'  => 'All',
+        'href'   => route('lease-contracts.index', array_filter(['search' => request('search')])),
+        'active' => ! $leaseStatus,
+    ]];
+    foreach ($leaseStatusLabels as $leaseVal => $leaseLabel) {
+        $leaseChips[] = [
+            'label'  => $leaseLabel,
+            'href'   => route('lease-contracts.index', array_filter(['search' => request('search'), 'status' => $leaseVal])),
+            'active' => $leaseStatus === $leaseVal,
+        ];
+    }
+@endphp
+<x-mobile-list
+    :actions="[
+        'primary' => ['label' => 'New contract', 'onclick' => 'openContractModal()'],
+        'sheet'   => [
+            'id'    => 'leaseMoreSheet',
+            'title' => 'More',
+            'sub'   => 'Import and export this list',
+            'items' => [
+                ['icon' => 'fa-wand-magic-sparkles', 'label' => 'Smart import',
+                 'desc' => 'Bring in contracts from a spreadsheet',
+                 'onclick' => 'openImport_contracts()'],
+                ['icon' => 'fa-file-excel', 'label' => 'Export to Excel',
+                 'desc' => 'The list as it is filtered now',
+                 'href' => route('export.contracts', array_merge(request()->only(['search','status','property_code']), ['format' => 'xlsx']))],
+                ['icon' => 'fa-file-pdf', 'label' => 'Export to PDF',
+                 'desc' => 'The list as it is filtered now',
+                 'href' => route('export.contracts', array_merge(request()->only(['search','status','property_code']), ['format' => 'pdf']))],
+            ],
+        ],
+    ]"
+    :stats="[
+        ['value' => $stats['active'],                    'label' => 'Active'],
+        ['value' => $stats['expiring'],                  'label' => 'Expiring 30d'],
+        ['value' => number_format($contracts->total()),  'label' => 'Listed'],
+    ]"
+    :search="[
+        'action'      => route('lease-contracts.index'),
+        'placeholder' => 'Search tenant, property or unit',
+        'aria'        => 'Search contracts',
+        'keep'        => ['status'],
+    ]"
+    :chips="$leaseChips">
+
+    @forelse($contracts as $mContract)
+        <a href="{{ route('lease-contracts.show', $mContract) }}" class="m-row-card ps-reveal">
+            <span class="m-row-thumb"><i class="fa-solid fa-file-contract" aria-hidden="true"></i></span>
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $mContract->tenant_name }}</span>
+                <span class="m-row-sub">{{ $mContract->property_code ?? '—' }}{{ $mContract->unit ? ' / '.$mContract->unit : '' }}</span>
+                <span class="m-row-sub is-strong">
+                    {{ $mContract->rent_per_month ? 'BHD '.number_format($mContract->rent_per_month, 0).' / mo' : 'Rent not set' }}
+                </span>
+            </span>
+            @unless(request('status'))
+                <span class="status-badge {{ $mContract->status }}">{{ $leaseStatusLabels[$mContract->status] ?? ucfirst($mContract->status) }}</span>
+            @endunless
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+        </a>
+    @empty
+        <div class="m-empty">
+            <div class="m-empty-icon"><i class="fa-solid fa-file-contract" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No contracts here</div>
+            <div class="m-empty-sub">Put a tenant in a unit, and the lease shows up here.</div>
+            <button type="button" class="m-action-btn primary" onclick="openContractModal()">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>New contract
+            </button>
+        </div>
+    @endforelse
+</x-mobile-list>
 
 {{-- STATS --}}
 <div class="stats-grid m-hide-desktop-index">

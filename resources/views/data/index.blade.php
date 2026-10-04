@@ -22,6 +22,18 @@
 
 /* ── PANEL CARD ────────────────────────────────────────── */
 
+/* ── EXPORT ACTIONS ────────────────────────────────────── */
+/* Two equal buttons, stacking under 600px where side-by-side would put each
+   label on two lines. */
+.export-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-3);
+    margin-top: var(--sp-2);
+}
+.export-actions > .btn { justify-content: center; }
+@media (max-width: 600px) { .export-actions { grid-template-columns: 1fr; } }
+
 /* ── FLOW STEPS ────────────────────────────────────────── */
 .flow-steps {
     display: flex;
@@ -295,7 +307,7 @@
             </div>
             <div>
                 <div class="card-title">Export Data</div>
-                <div class="card-subtitle">Download all records as a multi-sheet XLSX file</div>
+                <div class="card-subtitle">Download all records as a multi-sheet XLSX workbook or a PDF document</div>
             </div>
         </div>
         <div class="card-body">
@@ -336,14 +348,20 @@
                     </div>
                     <div class="flow-body">
                         <div class="flow-title">Import-ready format</div>
-                        <div class="flow-desc">The exported file uses the same column headers as the import template — you can re-import it directly after editing.</div>
+                        <div class="flow-desc">The XLSX uses the same column headers as the import template — you can re-import it directly after editing. The PDF nests each property's floors and units for reading, and is not re-importable.</div>
                     </div>
                 </div>
             </div>
 
-            <a href="{{ route('data.export') }}" class="btn btn-success" style="width:100%;justify-content:center;margin-top:8px;">
-                <i class="fa-solid fa-file-excel"></i> Export All Data
-            </a>
+            {{-- Two formats, both named, both the one Export button — the
+                 format is the choice here, not the emphasis, and the icon
+                 says which file comes back. --}}
+            <div class="export-actions">
+                <x-export-button href="{{ route('data.export', 'xlsx') }}"
+                                 label="Export XLSX" icon="fa-file-excel" />
+                <x-export-button href="{{ route('data.export', 'pdf') }}"
+                                 label="Export PDF" icon="fa-file-pdf" />
+            </div>
 
         </div>
     </div>

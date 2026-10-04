@@ -2,6 +2,7 @@
 
 @section('title', 'Revenue')
 @section('topbar-title', 'Revenue')
+@section('topbar-count', number_format($revenues->total()))
 
 @push('styles')
 <style>
@@ -22,66 +23,63 @@
 
 
 {{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
-     Same .m-screen / .m-row-card architecture as Payments, Invoices and
-     Lease Contracts. Every value carries a visible label so nothing
-     renders as a bare figure. ── --}}
-<div class="m-screen">
-    <div class="m-mini-row">
-        <div class="m-mini-stat">
-            <div class="v">{{ $stats['total'] }}</div>
-            <div class="l">Entries</div>
-        </div>
-        <div class="m-mini-stat">
-            <div class="v">{{ number_format($stats['total_amount'], 0) }}</div>
-            <div class="l">Total (BHD)</div>
-        </div>
-        <div class="m-mini-stat">
-            <div class="v">{{ number_format($stats['this_month'], 0) }}</div>
-            <div class="l">This Month (BHD)</div>
-        </div>
-    </div>
+     The shared components, same order as every other list screen. ── --}}
+@php
+    $revCategory = request('category');
+    $revChips    = [[
+        'label'  => 'All',
+        'href'   => route('revenues.index', array_filter(['search' => request('search')])),
+        'active' => ! $revCategory,
+    ]];
+    foreach ($categories as $revVal => $revLabel) {
+        $revChips[] = [
+            'label'  => $revLabel,
+            'href'   => route('revenues.index', array_filter(['search' => request('search'), 'category' => $revVal])),
+            'active' => $revCategory === $revVal,
+        ];
+    }
+@endphp
+<x-mobile-list
+    :actions="['primary' => ['label' => 'Add revenue', 'href' => route('revenues.create')]]"
+    :stats="[
+        ['value' => $stats['total'],        'label' => 'Entries'],
+        ['money' => $stats['total_amount'], 'label' => 'Total BHD'],
+        ['money' => $stats['this_month'],   'label' => now()->format('M').' BHD'],
+    ]"
+    :search="[
+        'action'      => route('revenues.index'),
+        'placeholder' => 'Search description or source',
+        'aria'        => 'Search revenue',
+        'keep'        => ['category'],
+    ]"
+    :chips="$revChips">
 
-    <div class="m-chip-row no-sb">
-        <a href="{{ route('revenues.index') }}" class="m-chip {{ !request('category') ? 'active' : '' }}">All</a>
-        @foreach($categories as $val => $label)
-            <a href="{{ route('revenues.index', ['category' => $val]) }}"
-               class="m-chip {{ request('category') === $val ? 'active' : '' }}">{{ $label }}</a>
-        @endforeach
-    </div>
-
-    <div class="m-row-list">
-        @forelse($revenues as $revenue)
-            <a href="{{ route('revenues.edit', $revenue) }}" class="m-row-card">
-                <div class="m-row-icon" style="background:var(--ps-success-bg);color:var(--ps-success);">
-                    <i class="fa-solid fa-sack-dollar"></i>
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div class="m-row-title">{{ $revenue->description ?: $revenue->category_label }}</div>
-                    <div class="m-row-sub">
-                        {{ $revenue->building->property_name ?? 'No building' }}@if($revenue->unit) &middot; Unit {{ $revenue->unit->unit_name }}@endif
-                    </div>
-                    <div class="m-row-sub">
-                        Dated {{ $revenue->revenue_date->format('d M Y') }}@if($revenue->source_name) &middot; Source {{ $revenue->source_name }}@endif
-                    </div>
-                </div>
-                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-                    <div style="font-family:'Poppins',system-ui,sans-serif;font-size:1rem;font-weight:700;color:var(--ps-success);">
-                        BHD {{ number_format($revenue->amount, 3) }}
-                    </div>
-                    <span class="m-row-badge" style="background:var(--ps-success-bg);color:var(--ps-success);">
-                        {{ $revenue->category_label }}
-                    </span>
-                </div>
+    @forelse($revenues as $revenue)
+        <a href="{{ route('revenues.edit', $revenue) }}" class="m-row-card ps-reveal">
+            <span class="m-row-thumb"><i class="fa-solid fa-sack-dollar" aria-hidden="true"></i></span>
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $revenue->description ?: $revenue->category_label }}</span>
+                <span class="m-row-sub">
+                    {{ $revenue->building->property_name ?? 'No building' }}@if($revenue->unit) &middot; Unit {{ $revenue->unit->unit_name }}@endif
+                </span>
+                <span class="m-row-sub">
+                    {{ $revenue->revenue_date->format('d M Y') }}@unless(request('category')) &middot; {{ $revenue->category_label }}@endunless
+                </span>
+            </span>
+            <span class="m-row-amount">BHD {{ number_format($revenue->amount, 0) }}</span>
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+        </a>
+    @empty
+        <div class="m-empty">
+            <div class="m-empty-icon"><i class="fa-solid fa-sack-dollar" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No revenue yet</div>
+            <div class="m-empty-sub">Record money coming in outside rent, and it shows up here.</div>
+            <a href="{{ route('revenues.create') }}" class="m-action-btn primary">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>Add revenue
             </a>
-        @empty
-            <div class="m-empty">
-                <div class="m-empty-icon"><i class="fa-solid fa-sack-dollar"></i></div>
-                <div class="m-empty-title">No revenue recorded yet</div>
-                <div class="m-empty-sub">Try adjusting your filters.</div>
-            </div>
-        @endforelse
-    </div>
-</div>
+        </div>
+    @endforelse
+</x-mobile-list>
 
 <div class="stats-grid m-hide-desktop-index">
     <div class="stat-card">

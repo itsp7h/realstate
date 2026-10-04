@@ -78,9 +78,11 @@ class SignOutDialogTest extends TestCase
     {
         $page = $this->page();
 
-        // Sidebar footer, More sheet row, mobile dashboard avatar. Matching
-        // the closing bracket keeps the JS selector out of the count.
-        $this->assertSame(3, substr_count($page, 'data-signout-form>'));
+        // Sidebar footer, More sheet row, and the avatar in each of the two
+        // mobile header variants — the compact one's used to be an inert
+        // <div> with cursor:pointer, and is the same control as Home's now.
+        // Matching the closing bracket keeps the JS selector out of the count.
+        $this->assertSame(4, substr_count($page, 'data-signout-form>'));
         $this->assertStringContainsString('form[data-signout-form]', $page);
     }
 

@@ -11,15 +11,15 @@ use Tests\TestCase;
  * The two restriction middlewares, exercised through a real session.
  *
  * These exist because of a bug the rest of the suite structurally could not
- * see. RestrictDestructiveActions and RestrictMaintenanceRole were registered
+ * see. RestrictDestructiveActions and RestrictScopedRoles were registered
  * with $middleware->append(), which is the GLOBAL stack — it runs before
  * StartSession, so $request->user() there is always null on a browser request.
  * The consequences were opposite and both wrong:
  *
  *   • RestrictDestructiveActions failed CLOSED: a null user cannot delete, so
  *     every DELETE in the application answered 403, including an admin's.
- *   • RestrictMaintenanceRole failed OPEN: a null user is not "maintenance",
- *     so that role's confinement never applied to a real request at all.
+ *   • RestrictScopedRoles failed OPEN: a null user matches no confined role,
+ *     so those roles' confinement never applied to a real request at all.
  *
  * Every other test in the suite used actingAs(), which sets the user on the
  * guard directly and therefore resolves even before a session exists — so the
@@ -99,6 +99,60 @@ class RestrictionMiddlewareOrderTest extends TestCase
     public function test_the_maintenance_role_still_cannot_delete_through_a_real_session(): void
     {
         $this->signIn($this->user('maintenance'));
+        $tenant = Tenant::create(['name' => 'Protected Tenant', 'tenant_type' => 'individual']);
+
+        $this->delete(route('tenants.destroy', $tenant))->assertForbidden();
+        $this->assertDatabaseHas('tenants', ['id' => $tenant->id]);
+    }
+
+    public function test_the_accountant_role_is_confined_to_the_ledger_and_the_reports(): void
+    {
+        $this->signIn($this->user('accountant'));
+
+        // Its own half of the app.
+        $this->get(route('invoices.index'))->assertOk();
+        $this->get(route('payments.index'))->assertOk();
+        $this->get(route('ewa-bills.index'))->assertOk();
+        $this->get(route('expenses.index'))->assertOk();
+        $this->get(route('revenues.index'))->assertOk();
+        $this->get(route('reports.index'))->assertOk();
+        $this->get(route('dashboard'))->assertOk();
+        $this->get(route('profile.edit'))->assertOk();
+
+        // The portfolio is not, including the read-only pages.
+        $this->get(route('buildings.index'))->assertForbidden();
+        $this->get(route('property-units.index'))->assertForbidden();
+        $this->get(route('tenants.index'))->assertForbidden();
+        $this->get(route('lease-contracts.index'))->assertForbidden();
+
+        // Nor is the module it has no part in, nor configuration, nor admin.
+        $this->get(route('maintenance.index'))->assertForbidden();
+        $this->get(route('form-configs.index'))->assertForbidden();
+        $this->get(route('users.index'))->assertForbidden();
+        $this->get(route('data.index'))->assertForbidden();
+    }
+
+    /**
+     * The payer autocomplete on the invoice form is the one portfolio path an
+     * Accountant may call, and it must not drag the rest of the tenant routes
+     * in with it — the allowlist matches on path, not on method.
+     */
+    public function test_the_accountant_reaches_the_tenant_lookup_but_not_the_tenant_records(): void
+    {
+        $this->signIn($this->user('accountant'));
+        $tenant = Tenant::create(['name' => 'Acme Holdings', 'tenant_type' => 'individual']);
+
+        $this->get(route('tenants.search', ['q' => 'Acme']))->assertOk();
+
+        $this->get(route('tenants.show', $tenant))->assertForbidden();
+        $this->get(route('tenants.edit', $tenant))->assertForbidden();
+        $this->put(route('tenants.update', $tenant), ['name' => 'Renamed'])->assertForbidden();
+        $this->assertDatabaseHas('tenants', ['id' => $tenant->id, 'name' => 'Acme Holdings']);
+    }
+
+    public function test_the_accountant_role_cannot_delete_through_a_real_session(): void
+    {
+        $this->signIn($this->user('accountant'));
         $tenant = Tenant::create(['name' => 'Protected Tenant', 'tenant_type' => 'individual']);
 
         $this->delete(route('tenants.destroy', $tenant))->assertForbidden();

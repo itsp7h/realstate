@@ -607,6 +607,61 @@ textarea:focus-visible {
     color: var(--on-accent);
     flex-shrink: 0;
 }
+/* ── §4.x  Upload row ────────────────────────────────────────────────────────
+   A file input with a preview beside it — branding's logo and favicon, and a
+   profile photo. It lived in branding.blade.php's @push('styles') until a
+   second page needed it, which is exactly the line at which a page-local rule
+   becomes a shared component.
+
+   .is-round is for an avatar: the same row, but the preview is the circle the
+   photo will actually be drawn in, so what you see before saving is what the
+   account chip shows after. */
+.upload-row { display: flex; flex-wrap: wrap; gap: var(--sp-4); align-items: flex-start; }
+.upload-preview {
+    width: 88px; height: 88px; flex: none;
+    border: 1.5px solid var(--card-border); border-radius: var(--radius-sm);
+    background: var(--page-bg-alt);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.upload-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.upload-preview i { font-size: var(--fs-xl); color: var(--text-muted); }
+.upload-fields { flex: 1; min-width: 200px; }
+
+.upload-preview.is-round {
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    color: var(--on-accent);
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 700;
+}
+.upload-preview.is-round img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; }
+
+/* ── Avatar photo ────────────────────────────────────────────────────────────
+   The image inside an avatar disc — the sidebar footer, the account chip, the
+   sign-out dialog, the mobile header. One rule, because five places draw the
+   same object and a photo that crops differently in each reads as four
+   different avatars.
+
+   object-fit: cover so a portrait or a landscape both fill the circle instead
+   of squashing; inset border because a light photo against a light chip needs
+   an edge to sit on. The disc keeps its gradient underneath, which is what
+   shows while the image loads. */
+.avatar-photo {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    box-shadow: inset 0 0 0 1px rgba(11,17,32,0.10);
+}
+/* The disc stops being a lettered tile when it holds a photo: no gradient
+   behind a transparent PNG, and no padding to misalign the crop. */
+.user-avatar.has-photo,
+.shell-avatar.has-photo,
+.pm-avatar.has-photo,
+.signout-avatar.has-photo { background: var(--page-bg); padding: 0; overflow: hidden; }
+
 .user-info { min-width: 0; }
 .user-info strong {
     display: block;
@@ -762,7 +817,7 @@ textarea:focus-visible {
      outline   secondary actions, and every table row action
      ghost     tertiary / low-noise (toolbar, inside a card header)
      danger    destructive; soft by default, filled on hover
-     success   confirming / positive
+     export    every Export trigger in the app — see the note on .btn-export
      Sizes: .btn-sm (dense, table rows) · default · .btn-lg (forms, mobile) */
 
 .btn {
@@ -828,12 +883,35 @@ textarea:focus-visible {
 }
 .btn-danger:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
 
-.btn-success {
-    background: var(--tone-success-bg);
-    border-color: var(--tone-success-border);
-    color: var(--tone-success-fg);
+/* The one Export button. Every export trigger in the app is this object —
+   list toolbars, the dashboard header, the Import/Export page, every report —
+   and it is the navy secondary: primary ink on the card surface, hairline
+   border, the standard control height and radius, hover and focus from .btn.
+
+   It is a named variant rather than a reuse of .btn-outline because Export was
+   the one action that kept drifting: soft green on Buildings, Units and Floors,
+   outline on Tenants, Leases and the EWA summary, gold on all ten reports —
+   three answers to the same question on three tabs of the same app. A class of
+   its own gives the sweep something to assert against, and the export button
+   sits a step above the outline actions beside it (primary ink, not secondary),
+   which is the emphasis the green fill was reaching for.
+
+   Render it through <x-export-button>, never by hand. The green variant it
+   replaces (.btn-success) is gone on purpose — there is no second style to
+   fall back to. */
+.btn-export {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+    color: var(--text-primary);
 }
-.btn-success:hover { background: var(--success); border-color: var(--success); color: #fff; }
+.btn-export:hover {
+    background: var(--page-bg);
+    border-color: var(--accent-strong);
+    color: var(--text-primary);
+}
+/* The chevron on a menu trigger: subordinate to the label it hangs off, so it
+   is smaller than the leading icon and does not read as a second action. */
+.btn-export .btn-caret { font-size: 9px; opacity: 0.75; }
 
 .btn-sm { min-height: var(--h-control-sm); padding: 0 13px; font-size: var(--fs-sm); gap: 6px; }
 .btn-lg { min-height: var(--h-control-lg); padding: 0 var(--sp-6); font-size: 14.5px; }
@@ -868,6 +946,9 @@ textarea:focus-visible {
     transition: background var(--dur-fast), color var(--dur-fast);
 }
 .topbar-icon-btn:hover { background: var(--page-bg); color: var(--text-primary); }
+/* The one that carries a count. Positioned so .shell-bell-badge — the same
+   badge the desktop shell bell uses — has something to anchor to. */
+.topbar-bell { position: relative; }
 
 /* Row of actions in a table's Actions column, or a card footer. */
 .action-btns { display: flex; gap: 6px; align-items: center; }
@@ -1417,6 +1498,17 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
     letter-spacing: 0.04em;
 }
 
+/* A card whose content is a form: the form is the card's flex child, so it has
+   to be the growing column too. Without this, .card-footer's margin-top:auto
+   has nothing to push against — the footer floats wherever the fields happen to
+   end, which left the Password card's action 190px above its own bottom edge. */
+.card > form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
 /* ── Footer ─────────────────────────────────────────────────────────────── */
 .card-footer {
     display: flex;
@@ -1424,6 +1516,10 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
     justify-content: flex-end;
     gap: 10px;
     flex-wrap: wrap;
+    /* Pinned to the bottom of the card. .card is a flex column, so in a grid
+       row of equal-height cards this puts every action button on one line
+       rather than leaving each one wherever its own content happened to end. */
+    margin-top: auto;
     padding: var(--sp-3) var(--card-pad-x);
     border-top: 1px solid var(--card-border);
     background: var(--page-bg-alt);
@@ -1693,6 +1789,114 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
 .detail-value.is-empty { color: var(--text-muted); font-weight: 400; font-style: italic; }
 .detail-value a { color: var(--info); text-decoration: none; }
 .detail-value a:hover { text-decoration: underline; }
+
+/* ── §4.3c  Key/value card ──────────────────────────────────────────────────
+     A record's fields as a list, not as a grid of cards.
+
+     §4.3b's .detail-grid gives every field its own card, its own icon tile and
+     three lines of height. On a tenant with nothing but a name that produced
+     seven cards, five of them saying "Not provided" in italic grey beside a
+     coloured icon — a screen that spends its whole vertical budget announcing
+     absence, in three accent colours that encode nothing, and reads like a
+     form that failed to load.
+
+     This is the same information as a definition list: label left, value
+     right, one hairline between rows. A field that is empty does not report
+     its emptiness — it offers to be filled ("Add ›"), which is the only thing
+     a reader can usefully do about it. Five dead rows become five
+     affordances, and each one drops from a card to a single line.
+
+     Use .detail-grid when most fields are filled and each value is worth its
+     own block (a lease's terms). Use this when the record is sparse, or when
+     the reader's job is to notice what is missing.
+
+     Markup:  .kv-stack > .kv-card > [.kv-head] .kv-row* [.kv-meta]  */
+.kv-stack { display: flex; flex-direction: column; gap: var(--sp-3); }
+/* A row this shape only works while the card is narrow: label hard left,
+   value hard right, and on a 1440px page that is a foot of empty carpet
+   between "Phone" and the number. So above the mobile fold the cards sit
+   side by side and each one caps at a readable measure — the same reason a
+   column of prose is not set to the width of the window. */
+@media (min-width: 769px) {
+    .kv-stack { flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
+    .kv-stack > .kv-card { flex: 1 1 320px; min-width: 0; max-width: 460px; }
+}
+.kv-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--card-radius);
+    overflow: hidden;          /* so the first row's corners follow the card's */
+}
+/* Title, and the one verb that acts on every row under it. The Edit link is
+   the card's only accent: a row's own affordance is the value slot. */
+.kv-head {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+    padding: var(--sp-3) 14px;
+}
+.kv-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-base); font-weight: 700; line-height: var(--lh-tight);
+    color: var(--text-primary);
+}
+.kv-edit {
+    flex: none;
+    font-size: var(--fs-xs); font-weight: 600; text-decoration: none;
+    color: var(--tone-accent-fg);
+}
+.kv-edit:hover { text-decoration: underline; }
+
+/* One field. The label is the fixed part and the value is the elastic one, so
+   a long address wraps against the right edge instead of pushing the label
+   off the left. */
+.kv-row {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 13px 14px;
+    border-top: 1px solid var(--card-border);
+    min-height: 44px;          /* the row is a tap target when it carries a link */
+    box-sizing: border-box;
+}
+.kv-row > .kv-icon {
+    flex: none; width: 16px; align-self: center;
+    font-size: 14px; color: var(--text-muted); text-align: center;
+}
+.kv-label {
+    flex: none;
+    font-size: var(--fs-sm); line-height: var(--lh-snug); color: var(--text-secondary);
+}
+.kv-value {
+    flex: 1; min-width: 0; text-align: right;
+    font-size: var(--fs-sm); font-weight: 600; line-height: var(--lh-snug);
+    color: var(--text-primary);
+    overflow-wrap: anywhere;   /* an email must wrap, not widen the card */
+}
+.kv-value a { color: inherit; text-decoration: none; }
+.kv-value a:hover { text-decoration: underline; }
+/* Nothing on file. Muted, because it is not a value — and weighted, because
+   it is a control. The chevron is the affordance: this goes somewhere. */
+.kv-add {
+    font-weight: 600; color: var(--text-muted); text-decoration: none;
+    white-space: nowrap;
+}
+.kv-add:hover { color: var(--tone-accent-fg); text-decoration: none; }
+.kv-add > i { font-size: 9px; margin-left: 3px; opacity: .8; }
+
+/* The footer: when a record was made, and when it last changed. Two pairs on
+   one row, set as eyebrows — this is provenance, not content, and it should
+   read after everything above it. */
+.kv-meta {
+    display: flex; gap: var(--sp-5);
+    padding: 12px 14px;
+    border-top: 1px solid var(--card-border);
+}
+.kv-meta-label {
+    font-size: var(--fs-2xs); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-muted);
+}
+.kv-meta-value {
+    margin-top: 2px;
+    font-size: var(--fs-sm); font-weight: 600; color: var(--text-primary);
+}
 
 /* ── §4.4  Stat cards ───────────────────────────────────────────────────────
      Was nine separate components (.stat-card, .pay-stat, .exp-stat,
@@ -3508,7 +3712,9 @@ td.col-actions .action-btns { justify-content: flex-end; }
     .card-footer > .btn { flex: 1; }
 
     .card-header-actions { margin-left: 0; width: 100%; }
-    .card-header-actions > .btn { flex: 1; }
+    /* Full width and full touch height: a .btn-sm sized for a desktop card
+       header is a 32px target once it is the only action on a phone row. */
+    .card-header-actions > .btn { flex: 1; min-height: var(--h-control-lg); }
     /* A header with only an icon button (a close, a menu) keeps it inline
        rather than stretching it across the card. */
     .card-header-actions:has(> .btn-icon:only-child),
@@ -3521,6 +3727,15 @@ td.col-actions .action-btns { justify-content: flex-end; }
 
     .empty-state  { padding: var(--sp-10) 18px; }
     .tab-btn      { padding: 11px var(--sp-4); }
+
+    /* ── Divided figure grid ────────────────────────────────────────────────
+         Three or four cells across a phone clip their own figures — a balance
+         of 500.000 renders as "500.0". Two across, at the figure size that
+         still fits three digits and three decimals at 360px. */
+    .figure-split { grid-template-columns: repeat(2, 1fr); }
+    .figure-split-cell { padding: var(--sp-3) var(--sp-3); }
+    .figure-split-cell > strong,
+    .figure-split-value { font-size: 19px; }
 }
 
 /* ── Small phone ────────────────────────────────────────────────────────── */
@@ -3540,7 +3755,7 @@ td.col-actions .action-btns { justify-content: flex-end; }
 
 /* ── Print — reports and statements get printed from the browser too ────── */
 @media print {
-    .sidebar, .topbar, .bottom-tabbar, .page-header-actions,
+    .sidebar, .topbar, .ps-bottom-bar, .page-header-actions,
     .filter-bar, .table-footer, .sidebar-backdrop, .skip-link,
     .shell-sidebar, .shell-topbar,
     .shell-pagehead-actions, .palette { display: none; }
@@ -4140,10 +4355,21 @@ body.app-shell {
 .shell-pagehead {
     display: flex;
     align-items: flex-start;
-    gap: var(--sp-5);
+    /* Column gap is the action row's own 12px, so the back button reads as the
+       first control of that group rather than a separate island; the 20px
+       stays as the row gap for a header that wraps. */
+    row-gap: var(--sp-5);
+    column-gap: var(--sp-3);
     flex-wrap: wrap;
 }
-.shell-pagehead-text { flex: 1; min-width: 0; }
+/* The back slot leads the DOM (see the layout) and CSS puts it back where it
+   has always been on desktop: at the head of the trailing action group. */
+.shell-pagehead-text    { order: 1; flex: 1; min-width: 0; }
+.shell-pagehead-back    { order: 2; }
+.shell-pagehead-actions { order: 3; }
+/* A phone affordance only — the overflow trigger has no desktop job, because
+   everything behind it is already in the action row at this width. */
+.shell-pagehead-more    { order: 4; display: none; }
 .shell-pagehead .breadcrumb { margin-bottom: 8px; }
 .shell-pagehead-title {
     margin: 0;
@@ -4347,7 +4573,12 @@ body.app-shell {
      truth about what a click does. */
 .shell-bell,
 .shell-helpbtn,
+.shell-headmenu,
 .shell-account { position: relative; display: flex; }
+/* A page-header action that opens a format menu rather than firing straight
+   off (Export → xlsx | pdf). Narrower than the top-bar panels: it holds two
+   choices, not a feed. */
+.shell-headmenu > .shell-pop { width: 244px; }
 /* Count riding the bell. Tabular figures so 3 and 11 sit the same, and the
    ring in --topbar-bg keeps it legible where it overlaps the glyph. */
 .shell-bell-badge {
@@ -4427,6 +4658,17 @@ body.app-shell {
 .shell-menu-item.is-danger { color: var(--tone-danger-fg); }
 .shell-menu-item.is-danger:hover { background: var(--tone-danger-bg); }
 .shell-menu-item.is-danger > i { color: var(--tone-danger-fg); }
+/* Two lines where the choice needs qualifying — the format's name, then what
+   you get. The icon stays top-aligned against the pair. */
+.shell-menu-item.has-sub { align-items: flex-start; padding-top: 9px; padding-bottom: 9px; }
+.shell-menu-item.has-sub > i { margin-top: 2px; }
+.shell-menu-item-sub {
+    display: block;
+    margin-top: 2px;
+    font-size: var(--fs-xs);
+    font-weight: 400;
+    color: var(--text-muted);
+}
 /* Identity block at the head of the account panel. */
 .shell-pop-identity { padding: 12px 14px; border-bottom: 1px solid var(--card-border); }
 .shell-pop-identity strong { display: block; font-size: var(--fs-sm); color: var(--text-primary); }
@@ -4588,32 +4830,118 @@ body.app-shell {
 
     body.app-shell { height: auto; overflow: visible; display: block; padding: 0; background: var(--page-bg); }
     .shell-frame { display: block; border-radius: 0; overflow: visible; }
-    .shell-content { overflow: visible; }
+    /* 18px, the gutter the .pm-* / .m-* mobile screens use, so a page on the
+       shell and a page on the mobile app layer line their content — and their
+       back buttons — up at the same inset. Desktop keeps 26px. */
+    .shell-content { overflow: visible; padding-left: 18px; padding-right: 18px; padding-top: 18px; }
     /* ── The page header on mobile ──────────────────────────────────────
        Stacked, not shrunk: title, description, then the actions as a
        full-width row of equal buttons. Hidden only on the routes that draw
        their own header (the .m-screen / .pm-* app layer), which is what
        body.is-mobile-screen and body.is-dashboard mark. */
+    /* No side padding: .shell-content already gutters the column, and adding
+       16px on top of it indented the title and the back button 16px further
+       in than every card below them. Top padding only. */
     .shell-pagehead {
         display: block;
-        padding: var(--sp-4) var(--sp-4) 0;
+        padding: var(--sp-4) 0 0;
     }
     .shell-pagehead-title { font-size: 22px; }
     .shell-pagehead-sub { font-size: 13px; }
+    /* The actions wrap onto a half-width grid instead of sizing to their
+       labels: one action fills the row, two split it, and an odd last one
+       — usually the destructive action — gets a full-width row of its own.
+       All of them are --h-control-lg so every tap target clears 44px. */
     .shell-pagehead-actions {
         width: 100%;
         margin-top: var(--sp-4);
         flex-wrap: wrap;
+        gap: var(--sp-2);
     }
-    .shell-pagehead-actions > .shell-headbtn,
-    .shell-pagehead-actions > .btn {
-        flex: 1 1 auto;
+    /* A <form> here is a submit wrapper, not a layout box (@csrf and
+       @method render display:none), so its button becomes the flex item
+       and lines up with the plain links beside it. */
+    .shell-pagehead-actions > form { display: contents; }
+    .shell-pagehead-actions .shell-headbtn,
+    .shell-pagehead-actions .btn {
+        flex: 1 1 calc(50% - var(--sp-2));
         min-width: 0;
         justify-content: center;
         min-height: var(--h-control-lg);
+        padding: 0 var(--sp-3);
+        font-size: var(--fs-base);   /* normalises a .btn-sm dropped in here */
     }
     body.is-mobile-screen .shell-pagehead,
     body.is-dashboard .shell-pagehead { display: none; }
+}
+
+/* ── §7.3b  Page header on a phone — the app bar ─────────────────────────────
+     Under 600px a detail page's header is the shape a phone app uses: a 44px
+     icon-only back button, the title beside it, an optional ⋯ on the trailing
+     edge, and the page's own actions on the row beneath. A full-width "← Back"
+     button below the title — which is what the action row alone produced — is
+     the widest, loudest control on the screen for the least interesting thing
+     on it.
+
+     Applies to every page that fills the page-back slot, which is what keeps
+     the header one object across the app instead of a per-page arrangement.
+     600px, not 640: the app's breakpoints are fixed (§1.0) and pages inventing
+     their own is what UiConsistencyTest exists to stop. */
+@media (max-width: 600px) {
+    .shell-pagehead.has-back {
+        display: grid;
+        grid-template-columns: var(--h-control-lg) minmax(0, 1fr);
+        grid-template-areas: "back title";
+        align-items: center;
+        column-gap: var(--sp-3);
+        row-gap: var(--sp-4);
+    }
+    /* Only pages that actually have actions get the second row; otherwise the
+       row-gap would leave a band of dead space under the title. */
+    .shell-pagehead.has-back.has-actions {
+        grid-template-areas:
+            "back title"
+            "actions actions";
+    }
+    .shell-pagehead.has-back.has-overflow {
+        grid-template-columns: var(--h-control-lg) minmax(0, 1fr) var(--h-control-lg);
+        grid-template-areas: "back title more";
+    }
+    .shell-pagehead.has-back.has-overflow.has-actions {
+        grid-template-areas:
+            "back title more"
+            "actions actions actions";
+    }
+    .shell-pagehead.has-back > .shell-pagehead-back    { grid-area: back; }
+    .shell-pagehead.has-back > .shell-pagehead-text    { grid-area: title; }
+    .shell-pagehead.has-back > .shell-pagehead-actions { grid-area: actions; margin-top: 0; }
+    .shell-pagehead.has-back > .shell-pagehead-more    { grid-area: more; display: block; }
+
+    /* Icon only, 44px square. The label stays in the DOM for desktop and for
+       assistive tech — the control carries its own aria-label — and is only
+       dropped from the layout here. */
+    .shell-pagehead-back > .btn,
+    .shell-pagehead-more > .btn {
+        width: var(--h-control-lg);
+        min-height: var(--h-control-lg);
+        padding: 0;
+        justify-content: center;
+        border-radius: var(--radius-lg);
+        font-size: var(--fs-md);
+    }
+    .shell-pagehead-back .pagehead-back-label { display: none; }
+
+    /* The back icon is the way up now, so the trail is duplicate chrome, and
+       the title can take the room it frees. */
+    .shell-pagehead.has-back .breadcrumb { display: none; }
+    .shell-pagehead.has-back .shell-pagehead-title { font-size: 22px; font-weight: 800; }
+    /* One line: a wrapped subtitle pushes the whole page down and the row it
+       sits in is a header, not a paragraph. */
+    .shell-pagehead.has-back .shell-pagehead-sub {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 }
 
 /* The top bar hamburger hides the sidebar. Desktop only — ≤768px the drawer

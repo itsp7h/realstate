@@ -26,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->overrideAzureMailerFromDatabase();
         $this->shareAttentionFeedWithTheShell();
+        $this->refreshTheAttentionFeedOnWrite();
     }
 
     /**
@@ -34,10 +35,18 @@ class AppServiceProvider extends ServiceProvider
      * the layout is the narrowest way to do that: it runs only when the shell
      * actually renders, and the feed itself is cached for a minute, so this is
      * not a query per page view.
+     *
+     * 'dashboard' is named alongside it because that page reads the feed in a
+     * @php block of its own (its "Needs you today" segment lists the same
+     * items the bell counts), and a composer on the layout fires only once the
+     * child view has already been evaluated — so the layout binding alone left
+     * $attentionItems undefined there. This is one binding of one computed
+     * value, not a second computation: any page that needs the items in its
+     * own PHP joins this list rather than deriving its own.
      */
     private function shareAttentionFeedWithTheShell(): void
     {
-        View::composer('layouts.admin', function ($view) {
+        View::composer(['layouts.admin', 'dashboard'], function ($view) {
             $feed = app(AttentionFeed::class);
             $user = auth()->user();
 
@@ -46,6 +55,24 @@ class AppServiceProvider extends ServiceProvider
                 'attentionCount' => $feed->count($user),
             ]);
         });
+    }
+
+    /**
+     * One place decides when the bell's number is stale.
+     *
+     * The count is derived from invoices, leases and maintenance requests, and
+     * is cached for a minute — so without this, raising a request or settling
+     * an invoice left every bell in the app showing the old number until the
+     * cache expired. Hooking the models themselves means no controller has to
+     * remember to call forget(): the count updates wherever the write happens,
+     * including from a console command, a queue job or a seeder.
+     */
+    private function refreshTheAttentionFeedOnWrite(): void
+    {
+        foreach (AttentionFeed::SOURCE_MODELS as $model) {
+            $model::saved(fn () => AttentionFeed::forget());
+            $model::deleted(fn () => AttentionFeed::forget());
+        }
     }
 
     /**

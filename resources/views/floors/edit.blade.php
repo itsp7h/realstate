@@ -20,11 +20,13 @@
 @section('page-subtitle')
     Editing floor in <strong>{{ $building->property_name }}</strong>
 @endsection
-@section('page-actions')
-    <a href="{{ route('buildings.show', $building) }}?tab=floors" class="btn btn-outline">
-        <i class="fa-solid fa-arrow-left"></i> Back to Floors
+@section('page-back')
+    <a href="{{ route('buildings.show', $building) }}?tab=floors" class="btn btn-outline" aria-label="Back to Floors">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back to Floors</span>
     </a>
 @endsection
+
+
 
 {{-- PAGE HEADER --}}
 

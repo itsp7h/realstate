@@ -8,16 +8,8 @@
 
 @push('styles')
 <style>
-.branding-upload { display: flex; flex-wrap: wrap; gap: var(--sp-4); align-items: flex-start; }
-.branding-preview {
-    width: 88px; height: 88px; flex: none;
-    border: 1.5px solid var(--card-border); border-radius: var(--radius-sm);
-    background: var(--page-bg-alt);
-    display: flex; align-items: center; justify-content: center; overflow: hidden;
-}
-.branding-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.branding-preview i { font-size: var(--fs-xl); color: var(--text-muted); }
-.branding-upload-fields { flex: 1; min-width: 200px; }
+/* The upload row moved to app-core (.upload-row / .upload-preview /
+   .upload-fields) when the profile page needed the same thing. */
 .color-field { display: flex; align-items: center; gap: var(--sp-2); }
 .color-field input[type="color"] {
     width: 44px; height: var(--h-control); padding: 2px; flex: none;
@@ -41,7 +33,7 @@
                 <div class="card-header-icon"><i class="fa-solid fa-signature"></i></div>
                 <div class="card-header-text">
                     <div class="card-title">Site Identity</div>
-                    <div class="card-subtitle">Names shown in the sidebar, browser tab, and on printed documents</div>
+                    <div class="card-subtitle">Names and contact details shown in the sidebar, browser tab, and on printed documents</div>
                 </div>
             </div>
             <div class="card-body">
@@ -64,7 +56,7 @@
                         <p class="field-help">Used on invoices, receipts, and other exported documents.</p>
                         @error('company_name')<p class="field-error">{{ $message }}</p>@enderror
                     </div>
-                    <div class="form-group col-span-full">
+                    <div class="form-group">
                         <label class="form-label" for="tagline">Tagline</label>
                         <input type="text" id="tagline" name="tagline"
                                class="form-control {{ $errors->has('tagline') ? 'is-invalid' : '' }}"
@@ -72,6 +64,15 @@
                                placeholder="e.g. Management Suite">
                         <p class="field-help">Short line shown under the site name in the sidebar.</p>
                         @error('tagline')<p class="field-error">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="company_email">Contact Email</label>
+                        <input type="email" id="company_email" name="company_email"
+                               class="form-control {{ $errors->has('company_email') ? 'is-invalid' : '' }}"
+                               value="{{ old('company_email', $setting->company_email) }}" maxlength="255"
+                               placeholder="e.g. realestateaccounts@promoseven.com">
+                        <p class="field-help">Printed on the PDF letterhead beside the address, CR number, and phone. Left off entirely when blank.</p>
+                        @error('company_email')<p class="field-error">{{ $message }}</p>@enderror
                     </div>
                 </div>
             </div>
@@ -89,15 +90,15 @@
                 <div class="form-grid cols-2">
                     <div class="form-group">
                         <label class="form-label" for="logo">Logo</label>
-                        <div class="branding-upload">
-                            <div class="branding-preview" id="logo-preview">
+                        <div class="upload-row">
+                            <div class="upload-preview" id="logo-preview">
                                 @if($setting->logoUrl())
                                     <img src="{{ $setting->logoUrl() }}" alt="Current logo">
                                 @else
                                     <i class="fa-solid fa-image" aria-hidden="true"></i>
                                 @endif
                             </div>
-                            <div class="branding-upload-fields">
+                            <div class="upload-fields">
                                 <input type="file" id="logo" name="logo" data-preview="logo-preview"
                                        class="form-control {{ $errors->has('logo') ? 'is-invalid' : '' }}"
                                        accept=".png,.jpg,.jpeg,.svg">
@@ -114,15 +115,15 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="favicon">Favicon</label>
-                        <div class="branding-upload">
-                            <div class="branding-preview" id="favicon-preview">
+                        <div class="upload-row">
+                            <div class="upload-preview" id="favicon-preview">
                                 @if($setting->faviconUrl())
                                     <img src="{{ $setting->faviconUrl() }}" alt="Current favicon">
                                 @else
                                     <i class="fa-solid fa-star" aria-hidden="true"></i>
                                 @endif
                             </div>
-                            <div class="branding-upload-fields">
+                            <div class="upload-fields">
                                 <input type="file" id="favicon" name="favicon" data-preview="favicon-preview"
                                        class="form-control {{ $errors->has('favicon') ? 'is-invalid' : '' }}"
                                        accept=".png,.ico">
@@ -204,17 +205,6 @@ document.querySelectorAll('.color-field').forEach(function (field) {
     });
 });
 
-document.querySelectorAll('input[type="file"][data-preview]').forEach(function (input) {
-    input.addEventListener('change', function () {
-        var file = input.files[0];
-        var box = document.getElementById(input.dataset.preview);
-        if (!file || !box) return;
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            box.innerHTML = '<img src="' + e.target.result + '" alt="Preview">';
-        };
-        reader.readAsDataURL(file);
-    });
-});
+/* The file-input preview is in the layout now — two pages use it. */
 </script>
 @endpush

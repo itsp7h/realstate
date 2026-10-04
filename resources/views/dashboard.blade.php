@@ -1,6 +1,14 @@
 @extends('layouts.admin')
 
 @section('title', 'Dashboard')
+
+{{-- Home has no create verb of its own, so the one floating button is the
+     thing you most often arrive wanting to do. It renders inside the
+     layout's bottom bar, beside the tab pill. --}}
+@section('mobile-fab')
+    <button type="button" class="pm-fab" onclick="openExpenseSheet()" title="Record an expense"
+            aria-label="Record an expense"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
+@endsection
 @section('topbar-title', 'Dashboard')
 
 {{-- The 54px shell page header — DESKTOP-UI.md §4.2. The page does not
@@ -11,13 +19,22 @@
     {{ $stats['buildings'] === 0 ? 'No buildings yet' : 'All buildings' }}
 @endsection
 @section('page-actions')
-    <a href="{{ route('data.export') }}" class="shell-headbtn">
-        <i class="fa-solid fa-file-export" aria-hidden="true"></i> Export
-    </a>
+    {{-- Export asks for a format rather than assuming one. It was a bare link
+         to the workbook, so the PDF the same endpoint now renders had no way
+         in. The shared partial owns the menu and the button, so the dashboard's
+         Export is the same object as every list's. --}}
+    @include('partials.export-menu', [
+        'route'  => 'data.export',
+        'id'     => 'export-format-menu',
+        'sub'    => 'Every field, import-ready',
+        'pdfSub' => 'Nested by property, for reading',
+    ])
     {{-- §2 also lists a Filter button. The dashboard has nothing to filter —
          every figure is the whole portfolio for the current month — so it is
          left out rather than rendered inert. --}}
-    <button type="button" class="shell-headbtn is-primary" onclick="openSmartImport()">
+    {{-- Same .btn family as the Export beside it — page actions are one
+         system on every other page, and the dashboard was the exception. --}}
+    <button type="button" class="btn btn-primary" onclick="openSmartImport()">
         <i class="fa-solid fa-plus" aria-hidden="true"></i> Smart import
     </button>
 @endsection
@@ -517,16 +534,103 @@
     }
 
     /* ── Segmented control ───────────────────────────────── */
-    .pm-segment-wrap { padding: 16px 18px 0; }
+    .pm-segment-wrap { padding: 16px 16px 0; }
     .pm-segment { display: flex; gap: 4px; padding: var(--sp-1); background: var(--ps-track); border-radius: var(--ps-r-btn); }
     .pm-seg-btn {
         flex: 1; min-height: 40px; border: 0; border-radius: 9px; font-size: .8rem; font-weight: 500;
         cursor: pointer; background: transparent; color: var(--ps-muted); font-family: 'Poppins', system-ui, sans-serif;
     }
-    .pm-seg-btn.active { background: var(--ps-surface); color: var(--ps-navy); font-weight: 600; box-shadow: 0 2px 6px rgba(30,44,79,.10); }
+    /* --ps-ink, not --ps-navy. The two are the same value in light, which is
+       why this looked right for so long, but --ps-navy is the token for navy
+       FILLS and never flips — so in dark the active tab was navy text on the
+       dark surface it had just been given, and the selected tab was the one
+       you could not read. */
+    .pm-seg-btn.active { background: var(--ps-surface); color: var(--ps-ink); font-weight: 600; box-shadow: 0 2px 6px rgba(30,44,79,.10); }
 
-    .pm-dash-layout { padding: 16px 18px 0; display: flex; flex-direction: column; gap: 14px; }
+    /* 12px, the same section gap .m-screen gives every list screen: Home
+       sat at 14 and the lists at 12, which is the drift this consolidation
+       exists to remove — the number belongs to the system, not the page. */
+    .pm-dash-layout { padding: 16px 16px 0; display: flex; flex-direction: column; gap: 12px; }
     .pm-dash-layout[hidden] { display: none; }
+
+    /* ── Occupancy card ───────────────────────────────────
+         The one figure the other two are downstream of, so it leads. Three
+         columns: the ring, the two counts it splits into, the way to act on
+         the second of them. */
+    .dashm-occ {
+        display: flex; align-items: center; gap: 14px;
+        background: var(--ps-surface);
+        border: 1px solid var(--ps-border-soft);
+        border-radius: var(--ps-r-card-sm);
+        padding: 16px 14px;
+        box-shadow: var(--ps-card-shadow);
+    }
+    .dashm-ring { flex: none; position: relative; width: 96px; height: 96px; }
+    .dashm-ring svg { width: 96px; height: 96px; transform: rotate(-90deg); }
+    .dashm-ring circle { fill: none; stroke-width: 10; }
+    .dashm-ring-track { stroke: var(--ps-track); }
+    .dashm-ring-fill { stroke: var(--ps-gold-dark); stroke-linecap: round; }
+    .dashm-ring-text {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .dashm-ring-pct {
+        font-family: 'Poppins', system-ui, sans-serif; font-weight: 700;
+        font-size: 1.1875rem; line-height: 1.1; color: var(--ps-ink);
+    }
+    .dashm-ring-cap {
+        font-size: .46875rem; font-weight: 600; letter-spacing: .14em;
+        color: var(--ps-faint); margin-top: 2px;
+    }
+
+    .dashm-occ-figures {
+        flex: 1; min-width: 0;
+        display: flex; flex-direction: column;
+    }
+    /* The rule between them is the divider the two counts share; it belongs
+       to the second row so the first has no stray edge above it. */
+    .dashm-occ-figure + .dashm-occ-figure {
+        border-top: 1px solid var(--ps-border-soft);
+        margin-top: 10px; padding-top: 10px;
+    }
+    /* Same label as the stat strip's, down to the token: .12em and the
+       muted grey that clears AA, not the decorative one. */
+    .dashm-occ-label {
+        font-size: .5625rem; font-weight: 600; letter-spacing: .12em;
+        color: var(--ps-muted); line-height: 1.4;
+    }
+    .dashm-occ-value {
+        font-family: 'Poppins', system-ui, sans-serif; font-weight: 700;
+        font-size: 1rem; line-height: 1.3; color: var(--ps-ink); margin-top: 2px;
+    }
+    .dashm-occ-value span { font-size: .75rem; font-weight: 500; color: var(--ps-muted); }
+
+    .dashm-occ-cta {
+        flex: none; display: flex; flex-direction: column; align-items: center; gap: 6px;
+        width: 84px; text-decoration: none;
+    }
+    .dashm-occ-cta-icon {
+        width: 40px; height: 40px; border-radius: var(--ps-r-pill);
+        background: var(--ps-gold-tint); color: var(--ps-gold-text);
+        display: flex; align-items: center; justify-content: center; font-size: 15px;
+    }
+    .dashm-occ-cta-text {
+        font-size: .65625rem; font-weight: 600; line-height: 1.3; text-align: center;
+        color: var(--ps-gold-text);
+    }
+    /* The chevron rides the last word, so it can never be orphaned onto a
+       line of its own — which is what "List / vacancies / ›" was. */
+    .dashm-occ-cta-end { white-space: nowrap; }
+    .dashm-occ-cta-text i { font-size: 8px; }
+
+
+
+    /* 320px: the occupancy card is the only thing on this screen wide
+       enough to need tightening. */
+    @media (max-width: 430px) {
+        .dashm-occ { gap: 10px; padding: 14px 12px; }
+        .dashm-occ-cta { max-width: 62px; }
+    }
 
     /* ── Alerts sheet (the bell) ──────────────────────────── */
     /* The sheet's chrome — modal padding and footer buttons — lives in
@@ -539,7 +643,7 @@
     .alerts-clear-icon {
         width: 52px; height: 52px; margin: 0 auto 14px;
         border-radius: var(--ps-r-pill);
-        background: var(--ps-success-bg); color: var(--ps-success);
+        background: var(--ps-gold-tint); color: var(--ps-gold-text);
         display: flex; align-items: center; justify-content: center; font-size: 22px;
     }
     .alerts-clear-title { font-size: 1rem; font-weight: 600; color: var(--ps-ink); }
@@ -596,7 +700,7 @@
     .pm-compact-net { font-size: .7rem; font-weight: 600; text-align: right; }
 
     /* ── Cash flow: ledger card ───────────────────────────── */
-    .pm-ledger-card { background: var(--ps-surface); border: 1px solid var(--ps-border); border-top: 3px solid var(--ps-gold); border-radius: var(--ps-r-card-sm); overflow: hidden; box-shadow: var(--ps-card-shadow); }
+    .pm-ledger-card { background: var(--ps-surface); border: 1px solid var(--ps-border); border-radius: var(--ps-r-card-sm); overflow: hidden; box-shadow: var(--ps-card-shadow); }
     .pm-ledger-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 15px; border-bottom: 1px solid var(--ps-border); }
     .pm-ledger-head-label { font-size: .6rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--ps-gold-text); }
     .pm-ledger-head-meta { font-size: .8rem; font-weight: 500; color: var(--ps-muted); }
@@ -608,13 +712,6 @@
     .pm-ledger-net { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 15px; background: var(--ps-bg); }
     .pm-ledger-net-label { font-size: .8rem; font-weight: 600; color: var(--ps-muted-deep); }
     .pm-ledger-net-value { font-family: 'Poppins', system-ui, sans-serif; font-weight: 700; font-size: 1.35rem; letter-spacing: -.01em; color: var(--ps-navy); }
-
-    /* ── Cash flow: occupancy rows ─────────────────────────── */
-    .pm-occ-row { display: flex; align-items: center; gap: 12px; min-height: var(--ps-touch); background: var(--ps-surface); border: 1px solid var(--ps-border); border-radius: var(--ps-r-card-sm); padding: 11px 15px; text-decoration: none; box-shadow: var(--ps-card-shadow); }
-    .pm-occ-name { flex: 1; min-width: 0; font-size: .9375rem; font-weight: 600; color: var(--ps-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pm-occ-bar { flex: none; width: 70px; height: 6px; border-radius: var(--ps-r-pill); background: var(--ps-track); overflow: hidden; }
-    .pm-occ-bar-fill { height: 100%; background: var(--ps-btn-grad); }
-    .pm-occ-pct { flex: none; width: 40px; text-align: right; font-size: .8rem; font-weight: 600; color: var(--ps-muted-deep); }
 }
 </style>
 @endpush
@@ -651,7 +748,7 @@ function closeSmartImport() {
 function smartImportFileChosen(input) {
     const file = input.files[0];
     if (!file) return;
-    document.getElementById('smartImportFileName').textContent = '📄 ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+    document.getElementById('smartImportFileName').textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
     document.getElementById('smartImportDropLabel').textContent = 'File selected — ready to import';
     document.getElementById('smartImportSubmit').disabled = false;
 }
@@ -815,34 +912,15 @@ function smartImportFileChosen(input) {
 /* ── MOBILE DASHBOARD: the bell's alerts sheet ────────────────────
    The bell opens a sheet rather than re-selecting a tab: switching to
    Today is invisible when Today is already the remembered tab, which
-   made every tap after the first one look like nothing happened. */
+   made every tap after the first one look like nothing happened.
+
+   Opening and closing it is [data-sheet-open] / [data-sheet-close] in the
+   markup — the layout's one sheet handler does the aria-expanded, the
+   scroll lock, the focus move and Escape. All that is left here is the one
+   behaviour that belongs to this sheet: the row that hands off to the full
+   list, which has to close before it scrolls. */
 (function () {
-    const btn = document.getElementById('pmAlertsBtn');
-    const sheet = document.getElementById('alertsSheet');
-    if (!btn || !sheet) return;
-
-    function open() {
-        sheet.classList.add('open');
-        document.body.style.overflow = 'hidden';
-        sheet.querySelector('.pm-action-row, [data-alerts-close]')?.focus();
-    }
-
-    function close() {
-        sheet.classList.remove('open');
-        document.body.style.overflow = document.querySelector('.sidebar.open, .modal-overlay.open') ? 'hidden' : '';
-        btn.focus();
-    }
-
-    btn.addEventListener('click', open);
-    sheet.querySelectorAll('[data-alerts-close]').forEach((b) => b.addEventListener('click', close));
-    sheet.addEventListener('click', (e) => { if (e.target === sheet) close(); });
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && sheet.classList.contains('open')) close();
-    });
-
-    // The full list, for when the summary isn't enough.
     document.getElementById('alertsOpenToday')?.addEventListener('click', () => {
-        close();
         if (window.pmRevealAlerts) window.pmRevealAlerts();
     });
 })();
@@ -868,36 +946,34 @@ function smartImportFileChosen(input) {
     $maintTotal = $buildingPerformance->sum(fn ($p) => $p['expenses']['maintenance']);
     $otherTotal = $buildingPerformance->sum(fn ($p) => $p['expenses']['other']);
 
-    // The real alerts, tone-tagged: these are what the mobile bell counts and
-    // lists. Smart import is appended below rather than being one of them —
-    // it is an always-present shortcut, not something that needs you.
-    $mAlerts = array_values(array_filter([
-        $portfolioMetrics['overdueCount'] > 0 ? [
-            'tone' => 'danger',
-            'icon' => 'fa-solid fa-sack-dollar',
-            'title' => 'BHD ' . number_format($portfolioMetrics['outstanding'], 0) . ' overdue rent',
-            'sub' => $portfolioMetrics['overdueCount'] . ' ' . \Illuminate\Support\Str::plural('tenant', $portfolioMetrics['overdueCount']) . ' overdue',
-            'href' => route('invoices.index', ['status' => 'overdue']),
-        ] : null,
-        $portfolioMetrics['openMaintenance'] > 0 ? [
-            'tone' => 'warning',
-            'icon' => 'fa-solid fa-screwdriver-wrench',
-            'title' => $portfolioMetrics['openMaintenance'] . ' open ' . \Illuminate\Support\Str::plural('request', $portfolioMetrics['openMaintenance']),
-            'sub' => 'Needs triage',
-            'href' => route('maintenance.index'),
-        ] : null,
-        $portfolioMetrics['expiringLeases'] > 0 ? [
-            'tone' => 'info',
-            'icon' => 'fa-solid fa-file-signature',
-            'title' => $portfolioMetrics['expiringLeases'] . ' ' . \Illuminate\Support\Str::plural('lease', $portfolioMetrics['expiringLeases']) . ' ending soon',
-            'sub' => 'Within 30 days',
-            'href' => route('tenants.index'),
-        ] : null,
-    ]));
+    /* The bell, this segment, and the badge on every other screen all read
+       one feed now: App\Services\AttentionFeed, shared onto the layout as
+       $attentionItems / $attentionCount by AppServiceProvider.
 
-    $mAlertCount = count($mAlerts);
+       This page used to derive its own list from $portfolioMetrics, and the
+       two disagreed on four separate axes — the feed counts records where
+       this counted categories (three rows, so it could never exceed 3), it
+       reads Invoice::status='overdue' where this read overdue *tenants*, it
+       splits maintenance into assessed-and-waiting versus not-yet-assessed
+       where this had one "open", and it drops the accounting items for a
+       Maintenance user where this showed them to everyone. That is why the
+       same bell read 1 here and 2 on Buildings.
 
-    $needsToday = array_merge($mAlerts, [[
+       $attentionRows is presentation only: the feed's shape with the icon
+       prefix and the `href` key the two Today lists below expect. No count
+       is derived from it — $attentionCount is the number, everywhere. */
+    $attentionRows = array_map(fn ($item) => [
+        'tone'  => $item['tone'],
+        'icon'  => 'fa-solid '.$item['icon'],
+        'title' => $item['title'],
+        'sub'   => $item['sub'],
+        'href'  => $item['url'],
+    ], $attentionItems);
+
+    // Smart import is appended rather than being one of them — it is an
+    // always-present shortcut, not something that needs you, so it must not
+    // reach the bell or its count.
+    $needsToday = array_merge($attentionRows, [[
         'icon' => 'fa-solid fa-wand-magic-sparkles',
         'title' => 'Smart import',
         'sub' => 'Bring in properties from a spreadsheet',
@@ -911,25 +987,42 @@ function smartImportFileChosen(input) {
     $mGreeting = $mHour < 12 ? 'Good morning' : ($mHour < 17 ? 'Good afternoon' : 'Good evening');
 @endphp
 <div class="m-dash">
+    {{-- The eyebrow is its own full-width row, above the title/controls row.
+         Beside the three 44px controls it had ~133px to work with, and
+         "GOOD AFTERNOON, {NAME}" at .18em tracking wrapped onto a second
+         line for every name — an eyebrow row that isn't a row. --}}
     <div class="pm-header is-collapsible" id="pmDashHeader">
+        {{-- .pm-greeting::before already draws the language's gold dash, so
+             the eyebrow needs no element of its own — adding one drew two. --}}
+        <div class="pm-greeting">{{ $mGreeting }}, {{ explode(' ', auth()->user()->name ?? 'there')[0] }}</div>
+        <div class="pm-header-row">
         <div class="pm-header-text">
-            <div class="pm-greeting">{{ $mGreeting }}, {{ explode(' ', auth()->user()->name ?? 'there')[0] }}</div>
             <div class="pm-title is-lg" id="pmDashTitle">Dashboard</div>
             <div class="pm-subtitle">{{ now()->format('F Y') }} &middot; {{ $stats['buildings'] }} {{ \Illuminate\Support\Str::plural('property', $stats['buildings']) }}</div>
         </div>
-        <button type="button" class="pm-icon-btn theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode"><i class="fa-solid fa-moon"></i></button>
+        {{-- The controls are their own 8px row, the same element the compact
+             variant has in .topbar-actions, so the gap between the discs is
+             set in one place and the title↔controls gutter in another. --}}
+        <div class="pm-header-actions">
+        {{-- The theme toggle moved to More. Three 44px discs plus the title
+             left the title truncating at 320px, and switching theme is a
+             once-a-day action sitting beside two you use constantly. --}}
         {{-- The bell was inert with a live red dot on it — it promised unread
              items and did nothing when tapped. The alerts it was hinting at
              already exist as "NEEDS YOU TODAY" in the Today segment, so the
              bell now takes you straight there instead of to a dead tooltip. --}}
         <button type="button" class="pm-icon-btn" id="pmAlertsBtn" title="Alerts"
-                aria-label="{{ $mAlertCount > 0
-                    ? $mAlertCount . ' ' . \Illuminate\Support\Str::plural('alert', $mAlertCount) . ' — show what needs you today'
+                data-sheet-open="alertsSheet"
+                aria-haspopup="dialog" aria-controls="alertsSheet" aria-expanded="false"
+                aria-label="{{ $attentionCount > 0
+                    ? $attentionCount . ' ' . \Illuminate\Support\Str::plural('alert', $attentionCount) . ' — show what needs you today'
                     : 'No alerts — show what needs you today' }}">
             <i class="fa-regular fa-bell" aria-hidden="true"></i>
-            @if($mAlertCount > 0)
-                <span class="pm-dot"></span>
-            @endif
+            {{-- A counter, not a dot: the compact header's bell already shows
+                 one, and two spellings of "unread" across two screens is the
+                 thing the header system is meant to stop. The count is known
+                 here, so it is shown. --}}
+            @include('partials.bell-badge', ['count' => $attentionCount])
         </button>
         {{-- Asks first. This avatar is 44px from the notification bell and the
              theme toggle, and a single tap used to end the session outright —
@@ -937,9 +1030,11 @@ function smartImportFileChosen(input) {
              against, and it hands off to the same #signOutDialog sheet. --}}
         <form method="POST" action="{{ route('logout') }}" data-signout-form>
             @csrf
-            <button type="submit" class="pm-avatar" title="Sign out"
-                    aria-label="Sign out of {{ auth()->user()->email ?? 'this account' }}">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</button>
+            <x-avatar class="pm-avatar" tag="button" type="submit" title="Sign out"
+                      aria-label="Sign out of {{ auth()->user()->email ?? 'this account' }}" />
         </form>
+        </div>
+        </div>
     </div>
 
     <div class="pm-scroll" id="pmDashScroll">
@@ -953,54 +1048,144 @@ function smartImportFileChosen(input) {
 
         {{-- ── Portfolio layout ─────────────────────────────────── --}}
         <div class="pm-dash-layout" data-layout="cards">
-            <div class="pm-kpi-grid">
-                <div class="pm-kpi-card">
-                    <div class="pm-kpi-top">
-                        <div class="pm-kpi-label">COLLECTED &mdash; {{ now()->format('M') }}</div>
-                        <div class="pm-kpi-icon" style="background:var(--pm-green-tint);color:var(--pm-green-text);"><i class="fa-solid fa-arrow-trend-up"></i></div>
+
+            {{-- Occupancy leads, because it is the one number that explains
+                 the other two: money collected and money outstanding are both
+                 downstream of how much of the portfolio is let. The ring is an
+                 SVG rather than a conic-gradient so the rounded cap and the
+                 track render identically in both themes. --}}
+            @php
+                $occPct    = (int) $portfolioMetrics['occupancyPct'];
+                $unitsLet  = (int) $stats['occupied'];
+                $unitsAll  = (int) $stats['units'];
+                $vacant    = max(0, $unitsAll - $unitsLet);
+                // r = (96 - stroke 10) / 2; the dash array is the full
+                // circumference so the offset can be read as "the part not yet
+                // filled" rather than a magic number.
+                $ringCirc  = 2 * M_PI * 43;
+                $ringFill  = $ringCirc * (1 - min(100, max(0, $occPct)) / 100);
+            @endphp
+            <div class="dashm-occ">
+                <div class="dashm-ring" role="img"
+                     aria-label="{{ $occPct }}% of the portfolio is occupied — {{ $unitsLet }} of {{ $unitsAll }} {{ \Illuminate\Support\Str::plural('unit', $unitsAll) }} let">
+                    <svg viewBox="0 0 96 96" aria-hidden="true">
+                        <circle class="dashm-ring-track" cx="48" cy="48" r="43"></circle>
+                        <circle class="dashm-ring-fill" cx="48" cy="48" r="43"
+                                stroke-dasharray="{{ round($ringCirc, 2) }}"
+                                stroke-dashoffset="{{ round($ringFill, 2) }}"></circle>
+                    </svg>
+                    <div class="dashm-ring-text" aria-hidden="true">
+                        <div class="dashm-ring-pct">{{ $occPct }}%</div>
+                        <div class="dashm-ring-cap">OCCUPIED</div>
                     </div>
-                    <div class="pm-kpi-value">BHD {{ number_format($portfolioMetrics['collected'], 0) }}</div>
-                    <div class="pm-kpi-sub is-green"><i class="fa-solid fa-arrow-up"></i> of BHD {{ number_format($portfolioMetrics['billed'], 0) }} billed</div>
                 </div>
-                <div class="pm-kpi-card">
-                    <div class="pm-kpi-top">
-                        <div class="pm-kpi-label">OUTSTANDING</div>
-                        <div class="pm-kpi-icon" style="background:var(--pm-red-tint);color:var(--pm-red);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+
+                <div class="dashm-occ-figures">
+                    <div class="dashm-occ-figure">
+                        <div class="dashm-occ-label">UNITS LET</div>
+                        <div class="dashm-occ-value">{{ $unitsLet }} <span>of {{ $unitsAll }}</span></div>
                     </div>
-                    <div class="pm-kpi-value" style="color:var(--pm-red);">BHD {{ number_format($portfolioMetrics['outstanding'], 0) }}</div>
-                    <div class="pm-kpi-sub">{{ $portfolioMetrics['overdueCount'] }} {{ \Illuminate\Support\Str::plural('tenant', $portfolioMetrics['overdueCount']) }} overdue</div>
+                    <div class="dashm-occ-figure">
+                        <div class="dashm-occ-label">VACANT</div>
+                        <div class="dashm-occ-value">{{ $vacant }} <span>{{ \Illuminate\Support\Str::plural('unit', $vacant) }}</span></div>
+                    </div>
+                </div>
+
+                {{-- The vacancies are the action the card exists to offer, so
+                     it links to that list already filtered rather than to the
+                     units index for the reader to narrow themselves. --}}
+                <a class="dashm-occ-cta" href="{{ route('property-units.index', ['occupancy' => 'vacant']) }}"
+                   aria-label="List the {{ $vacant }} vacant {{ \Illuminate\Support\Str::plural('unit', $vacant) }}">
+                    <span class="dashm-occ-cta-icon"><i class="fa-solid fa-door-open" aria-hidden="true"></i></span>
+                    <span class="dashm-occ-cta-text">List <span class="dashm-occ-cta-end">vacancies <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span></span>
+                </a>
+            </div>
+
+            {{-- Money, on the shared stat strip — the same object the list
+                 screens use, wearing the one variant that exists: the navy
+                 plate. This screen is the reason the variant exists. The
+                 ring above is portfolio *state* and the rows below are
+                 destinations; these three numbers are the subject, and on a
+                 page of white cards the only way to say that is a change of
+                 surface. One plate, lit from the top right.
+
+                 The gold picks out exactly one of the three. Collected and
+                 billed are history; what is owed is the only figure that
+                 asks for something, and the row directly beneath it is the
+                 asking. A zero owed asks for nothing and takes the quiet
+                 ink instead — see .is-zero in app-mobile.css. --}}
+            @php $owed = (float) $portfolioMetrics['outstanding']; @endphp
+            <div class="ps-stat-strip is-navy">
+                <div class="ps-stat">
+                    <div class="ps-stat-value {{ \App\Support\MoneyFormat::isZero($portfolioMetrics['collected']) ? 'is-zero' : '' }}">{{ \App\Support\MoneyFormat::figure($portfolioMetrics['collected']) }}</div>
+                    <div class="ps-stat-label">{{ now()->format('M') }} BHD</div>
+                </div>
+                <div class="ps-stat">
+                    <div class="ps-stat-value {{ \App\Support\MoneyFormat::isZero($portfolioMetrics['billed']) ? 'is-zero' : '' }}">{{ \App\Support\MoneyFormat::figure($portfolioMetrics['billed']) }}</div>
+                    <div class="ps-stat-label">Billed BHD</div>
+                </div>
+                <div class="ps-stat">
+                    <div class="ps-stat-value is-owed {{ \App\Support\MoneyFormat::isZero($owed) ? 'is-zero' : '' }}">{{ \App\Support\MoneyFormat::figure($owed) }}</div>
+                    <div class="ps-stat-label">Owed BHD</div>
                 </div>
             </div>
 
-            @forelse($buildingPerformance as $perf)
-                @php
-                    $b = $perf['building'];
-                    $photo = $b->images->first()?->url;
-                    $address = trim(implode(', ', array_filter([$b->area, $b->city])));
-                    $netColor = $perf['net_income'] >= 0 ? 'var(--pm-text)' : 'var(--pm-red)';
-                @endphp
-                <a href="{{ route('buildings.show', $b) }}" class="pm-property-card pm-ripple">
-                    <div class="pm-property-photo" @if($photo) style="background-image:url('{{ $photo }}')" @endif>
-                        @unless($photo)
-                            <div class="pm-property-photo-fallback"><i class="fa-solid fa-building"></i></div>
-                        @endunless
-                        <span class="pm-property-kind">{{ $b->property_type ?? 'Active' }}</span>
-                    </div>
-                    <div class="pm-property-body">
-                        <div class="pm-property-name">{{ $b->property_name }}</div>
-                        @if($address)
-                        <div class="pm-property-address"><i class="fa-solid fa-location-dot"></i> {{ $address }}</div>
-                        @endif
-                        <div class="pm-property-wells">
-                            <div class="pm-well"><div class="pm-well-label">INCOME</div><div class="pm-well-value">BHD {{ number_format($perf['total_income'], 0) }}</div></div>
-                            <div class="pm-well"><div class="pm-well-label">NET</div><div class="pm-well-value" style="color:{{ $netColor }};">BHD {{ number_format($perf['net_income'], 0) }}</div></div>
-                            <div class="pm-well"><div class="pm-well-label">OCCUPIED</div><div class="pm-well-value">{{ $perf['occupancy_percent'] }}%</div></div>
-                        </div>
-                    </div>
+            {{-- Only when something is actually owed: a zero here is good
+                 news and gets no call to action. When it does appear it is
+                 the one alert on the screen, so it wears red rather than
+                 the gold tile every other row wears — gold is the brand's
+                 accent, red is "this needs you", and a row that mixes the
+                 two says neither. --}}
+            @if($owed > 0)
+                <a class="pm-action-row is-alert" href="{{ route('invoices.index', ['status' => 'overdue']) }}">
+                    <span class="pm-action-icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
+                    <span style="flex:1;min-width:0;">
+                        <span class="pm-action-title">Chase what's owed</span>
+                        <span class="pm-action-sub">BHD {{ number_format($owed, 0) }} across overdue invoices</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right pm-action-chevron" aria-hidden="true"></i>
                 </a>
-            @empty
-                <div class="pm-empty">No properties yet</div>
-            @endforelse
+            @endif
+
+            {{-- A row per building, on the shared list row — the same object
+                 Buildings and every other list screen is built from. It used
+                 to be a near-identical copy of it under its own .dashm-prop
+                 names. --}}
+            <div>
+                <div class="pm-section-label">By property</div>
+                <div class="m-row-list">
+                    @forelse($buildingPerformance as $perf)
+                        @php
+                            $b = $perf['building'];
+                            $photo = $b->images->first()?->url;
+                            $occ = (int) $perf['occupancy_percent'];
+                            $step = min(8, $loop->index);
+                        @endphp
+                        <a href="{{ route('buildings.show', $b) }}" class="m-row-card ps-reveal" style="--ps-step:{{ $step }}">
+                            <span class="m-row-thumb">
+                                @if($photo)
+                                    <img src="{{ $photo }}" alt="" loading="lazy">
+                                @else
+                                    <i class="fa-regular fa-building" aria-hidden="true"></i>
+                                @endif
+                            </span>
+                            <span class="m-row-text">
+                                <span class="m-row-title">{{ $b->property_name }}</span>
+                                @if($b->city)<span class="m-row-sub">{{ $b->city }}</span>@endif
+                            </span>
+                            <span class="m-row-occ">
+                                <span class="m-row-bar">
+                                    <span class="m-row-bar-fill" style="--ps-pct:{{ $occ }}%;--ps-step:{{ $step }}"></span>
+                                </span>
+                                <span class="m-row-pct">{{ $occ }}%</span>
+                            </span>
+                            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+                        </a>
+                    @empty
+                        <div class="pm-empty">No properties yet</div>
+                    @endforelse
+                </div>
+            </div>
         </div>
 
         {{-- ── Today layout ─────────────────────────────────────── --}}
@@ -1017,7 +1202,7 @@ function smartImportFileChosen(input) {
                 <div class="pm-hero-bar"><div class="pm-hero-bar-fill" style="width:{{ $portfolioMetrics['collectedPct'] }}%"></div></div>
                 <div class="pm-hero-stats">
                     <div class="pm-hero-stat"><div class="pm-hero-stat-label">UNITS</div><div class="pm-hero-stat-value">{{ $stats['units'] }}</div></div>
-                    <div class="pm-hero-stat"><div class="pm-hero-stat-label">OCCUPANCY</div><div class="pm-hero-stat-value" style="color:var(--pm-gold);">{{ $portfolioMetrics['occupancyPct'] }}%</div></div>
+                    <div class="pm-hero-stat"><div class="pm-hero-stat-label">OCCUPANCY</div><div class="pm-hero-stat-value" style="color:var(--ps-gold-text);">{{ $portfolioMetrics['occupancyPct'] }}%</div></div>
                     <div class="pm-hero-stat"><div class="pm-hero-stat-label">OVERDUE</div><div class="pm-hero-stat-value" style="color:var(--pm-red);">{{ $portfolioMetrics['overdueCount'] }}</div></div>
                 </div>
             </div>
@@ -1081,12 +1266,16 @@ function smartImportFileChosen(input) {
                     <div class="pm-ledger-head-meta">BHD, month to date</div>
                 </div>
                 <div class="pm-ledger-row">
-                    <div class="pm-ledger-icon" style="background:var(--pm-green-tint);color:var(--pm-green-text);"><i class="fa-solid fa-sack-dollar"></i></div>
+                    {{-- Gold, not green. The palette on this screen is navy,
+                         gold, and red for true alerts only — income is not an
+                         alert and it is not a fourth colour either. The sign
+                         and the label carry the direction. --}}
+                    <div class="pm-ledger-icon" style="background:var(--ps-gold-tint);color:var(--ps-gold-text);"><i class="fa-solid fa-sack-dollar"></i></div>
                     <div style="flex:1;min-width:0;">
                         <div class="pm-ledger-label">Rent collected</div>
                         <div class="pm-ledger-meta">Accrued across {{ $stats['buildings'] }} {{ \Illuminate\Support\Str::plural('property', $stats['buildings']) }}</div>
                     </div>
-                    <div class="pm-ledger-amount" style="color:var(--pm-green-text);">+{{ number_format($portfolioIncome, 0) }}</div>
+                    <div class="pm-ledger-amount" style="color:var(--ps-ink);">+{{ number_format($portfolioIncome, 0) }}</div>
                 </div>
                 @if($portfolioMetrics['outstanding'] > 0)
                 <div class="pm-ledger-row">
@@ -1135,14 +1324,27 @@ function smartImportFileChosen(input) {
             </div>
 
             <div>
-                <div class="pm-section-label">OCCUPANCY BY PROPERTY</div>
-                <div style="display:flex;flex-direction:column;gap:8px;">
+                <div class="pm-section-label">Occupancy by property</div>
+                <div class="m-row-list">
                     @forelse($buildingPerformance as $perf)
-                        @php $b = $perf['building']; $pct = min(100, max(0, (int) $perf['occupancy_percent'])); @endphp
-                        <a href="{{ route('buildings.show', $b) }}" class="pm-occ-row">
-                            <div class="pm-occ-name">{{ $b->property_name }}</div>
-                            <div class="pm-occ-bar"><div class="pm-occ-bar-fill" style="width:{{ $pct }}%"></div></div>
-                            <div class="pm-occ-pct">{{ $pct }}%</div>
+                        @php
+                            $b = $perf['building'];
+                            $pct = min(100, max(0, (int) $perf['occupancy_percent']));
+                            $step = min(8, $loop->index);
+                        @endphp
+                        <a href="{{ route('buildings.show', $b) }}" class="m-row-card ps-reveal" style="--ps-step:{{ $step }}">
+                            <span class="m-row-thumb"><i class="fa-regular fa-building" aria-hidden="true"></i></span>
+                            <span class="m-row-text">
+                                <span class="m-row-title">{{ $b->property_name }}</span>
+                                @if($b->city)<span class="m-row-sub">{{ $b->city }}</span>@endif
+                            </span>
+                            <span class="m-row-occ">
+                                <span class="m-row-bar">
+                                    <span class="m-row-bar-fill" style="--ps-pct:{{ $pct }}%;--ps-step:{{ $step }}"></span>
+                                </span>
+                                <span class="m-row-pct">{{ $pct }}%</span>
+                            </span>
+                            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
                         </a>
                     @empty
                         <div class="pm-empty">No properties yet</div>
@@ -1151,10 +1353,7 @@ function smartImportFileChosen(input) {
             </div>
         </div>
 
-        <div class="pm-bottom-space"></div>
     </div>
-
-    <button type="button" class="pm-fab" style="border:0;" onclick="openExpenseSheet()" title="Record expense"><i class="fa-solid fa-plus"></i></button>
 </div>
 
 {{-- ═══════════════════════ ALERTS SHEET (the bell) ═══════════════════════
@@ -1163,7 +1362,7 @@ function smartImportFileChosen(input) {
      silent no-op once Today is already the remembered tab, so from the
      second tap onwards the bell looked dead. A sheet always answers.
 
-     It reads the same $mAlerts the Today segment does; the tones are the
+     It reads the same shared feed the Today segment does; the tones are the
      app's six semantic ones, so overdue money is danger, an open request is
      warning, and a lease running out is info. --}}
 <div class="modal-overlay" id="alertsSheet" role="dialog" aria-modal="true" aria-labelledby="alertsSheetTitle">
@@ -1174,23 +1373,23 @@ function smartImportFileChosen(input) {
                 <div class="modal-header-text">
                     <div class="modal-header-title" id="alertsSheetTitle">Alerts</div>
                     <div class="modal-header-sub">
-                        @if($mAlertCount)
-                            {{ $mAlertCount }} {{ \Illuminate\Support\Str::plural('thing', $mAlertCount) }} {{ $mAlertCount === 1 ? 'needs' : 'need' }} you today
+                        @if($attentionCount)
+                            {{ $attentionCount }} {{ \Illuminate\Support\Str::plural('thing', $attentionCount) }} {{ $attentionCount === 1 ? 'needs' : 'need' }} you today
                         @else
                             {{ now()->format('l, j F') }}
                         @endif
                     </div>
                 </div>
-                <button type="button" class="modal-close-btn" data-alerts-close aria-label="Close">
+                <button type="button" class="modal-close-btn" data-sheet-close aria-label="Close">
                     <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                 </button>
             </div>
         </div>
 
         <div class="modal-body">
-            @if($mAlertCount)
+            @if($attentionCount)
                 <div class="pm-action-list">
-                    @foreach($mAlerts as $alert)
+                    @foreach($attentionRows as $alert)
                         <a href="{{ $alert['href'] }}" class="pm-action-row">
                             <div class="pm-action-icon" style="background:var(--tone-{{ $alert['tone'] }}-bg);color:var(--tone-{{ $alert['tone'] }}-fg);">
                                 <i class="{{ $alert['icon'] }}" aria-hidden="true"></i>
@@ -1215,7 +1414,7 @@ function smartImportFileChosen(input) {
         </div>
 
         <div class="modal-footer alerts-footer">
-            <button type="button" class="btn btn-outline" id="alertsOpenToday">
+            <button type="button" class="btn btn-outline" id="alertsOpenToday" data-sheet-close>
                 <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Open the Today view
             </button>
         </div>
@@ -1386,14 +1585,10 @@ function smartImportFileChosen(input) {
                 <div class="dash-attention-label">Needs your attention</div>
                 <div class="dash-attention-list">
                     @forelse($needsToday as $item)
-                        @php
-                            $rowTone = match(true) {
-                                str_contains($item['icon'], 'sack-dollar')        => 'danger',
-                                str_contains($item['icon'], 'screwdriver-wrench') => 'warning',
-                                str_contains($item['icon'], 'file-signature')     => 'info',
-                                default                                          => 'info',
-                            };
-                        @endphp
+                        {{-- The feed tags every item with its own tone, so this
+                             no longer sniffs the icon class to guess one — a
+                             fourth place the same decision was being made. --}}
+                        @php $rowTone = $item['tone'] ?? 'info'; @endphp
                         @if(isset($item['href']))
                             <a href="{{ $item['href'] }}" class="dash-attention-row">
                         @else

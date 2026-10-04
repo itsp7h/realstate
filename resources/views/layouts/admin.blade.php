@@ -117,8 +117,15 @@
        'when' gates an item on the signed-in user's role, mirroring the
        ≤768px drawer below. ── */
     $railUser  = auth()->user();
-    $railAll   = ! $railUser?->isMaintenance();
     $railAdmin = (bool) $railUser?->isAdmin();
+    /* Gates named after the area, not the role — see the capability methods on
+       App\Models\User. Two roles are now confined to a slice of the app
+       (Maintenance, Accountant), so "not Maintenance" is no longer the same
+       question as "may reach the portfolio". */
+    $railPortfolio   = (bool) $railUser?->canAccessPortfolio();
+    $railAccounting  = (bool) $railUser?->canAccessAccounting();
+    $railMaintenance = (bool) $railUser?->canAccessMaintenance();
+    $railConfig      = (bool) $railUser?->canOpenConfiguration();
 
     $navGroups = [
         'OVERVIEW' => [
@@ -126,28 +133,28 @@
             ['route' => 'admin.audit-log', 'label' => 'Activity Feed', 'icon' => 'fa-clock-rotate-left', 'when' => $railAdmin],
         ],
         'PORTFOLIO' => [
-            ['route' => 'buildings.index',       'label' => 'Buildings',   'icon' => 'fa-building',      'when' => $railAll, 'count' => $stats['buildings'] ?? null],
-            ['route' => 'floors.global',         'label' => 'Floors',      'icon' => 'fa-layer-group',   'when' => $railAll, 'count' => $stats['floors'] ?? null],
-            ['route' => 'property-units.index',  'label' => 'Units',       'icon' => 'fa-door-open',     'when' => $railAll, 'count' => $stats['units'] ?? null],
-            ['route' => 'tenants.index',         'label' => 'Tenants',     'icon' => 'fa-users',         'when' => $railAll],
-            ['route' => 'lease-contracts.index', 'label' => 'Leases',      'icon' => 'fa-file-contract', 'when' => $railAll],
+            ['route' => 'buildings.index',       'label' => 'Buildings',   'icon' => 'fa-building',      'when' => $railPortfolio, 'count' => $stats['buildings'] ?? null],
+            ['route' => 'floors.global',         'label' => 'Floors',      'icon' => 'fa-layer-group',   'when' => $railPortfolio, 'count' => $stats['floors'] ?? null],
+            ['route' => 'property-units.index',  'label' => 'Units',       'icon' => 'fa-door-open',     'when' => $railPortfolio, 'count' => $stats['units'] ?? null],
+            ['route' => 'tenants.index',         'label' => 'Tenants',     'icon' => 'fa-users',         'when' => $railPortfolio],
+            ['route' => 'lease-contracts.index', 'label' => 'Leases',      'icon' => 'fa-file-contract', 'when' => $railPortfolio],
             /* One item, five destinations. The five accounting pages are one
                piece of work to the user, so they are one row that opens —
                not five top-level rows competing with Buildings. */
-            ['label' => 'Bills & Payments', 'icon' => 'fa-file-invoice-dollar', 'when' => $railAll, 'children' => [
+            ['label' => 'Bills & Payments', 'icon' => 'fa-file-invoice-dollar', 'when' => $railAccounting, 'children' => [
                 ['route' => 'invoices.index',  'label' => 'Invoices'],
                 ['route' => 'payments.index',  'label' => 'Payments'],
                 ['route' => 'ewa-bills.index', 'label' => 'EWA Bills'],
                 ['route' => 'expenses.index',  'label' => 'Expenses'],
                 ['route' => 'revenues.index',  'label' => 'Revenue'],
             ]],
-            ['route' => 'maintenance.index',     'label' => 'Maintenance', 'icon' => 'fa-screwdriver-wrench'],
+            ['route' => 'maintenance.index',     'label' => 'Maintenance', 'icon' => 'fa-screwdriver-wrench', 'when' => $railMaintenance],
             ['route' => 'reports.index',         'label' => 'Reports',     'icon' => 'fa-chart-pie',     'when' => (bool) $railUser?->canViewReports()],
         ],
         'CONFIGURATION' => [
             ['route' => 'users.index',              'label' => 'Users',               'icon' => 'fa-user-shield', 'when' => $railAdmin],
             ['route' => 'roles.index',              'label' => 'Roles & Permissions', 'icon' => 'fa-user-lock',   'when' => $railAdmin],
-            ['label' => 'Settings', 'icon' => 'fa-gear', 'when' => $railAll, 'children' => [
+            ['label' => 'Settings', 'icon' => 'fa-gear', 'when' => $railConfig, 'children' => [
                 ['route' => 'form-configs.index',       'label' => 'Forms & Templates'],
                 ['route' => 'data.index',               'label' => 'Import & Export'],
                 ['route' => 'settings.branding.edit',   'label' => 'Branding',       'when' => $railAdmin],
@@ -203,30 +210,82 @@
      unaffected. ── --}}
 <script>
 (function () {
-    /* Material-style ripple on any `.pm-ripple` element. */
-    document.addEventListener('pointerdown', function (e) {
-        const el = e.target.closest('.pm-ripple');
-        if (!el) return;
-        const rect = el.getBoundingClientRect();
-        const size = Math.max(rect.width, rect.height) * 1.6;
-        const wave = document.createElement('span');
-        wave.className = 'pm-ripple-wave';
-        wave.style.width = wave.style.height = size + 'px';
-        wave.style.left = (e.clientX - rect.left - size / 2) + 'px';
-        wave.style.top = (e.clientY - rect.top - size / 2) + 'px';
-        el.appendChild(wave);
-        wave.addEventListener('animationend', () => wave.remove());
-    });
+    /* The ripple is gone: every tappable element already takes the
+       0.98 press scale from app-mobile.css, and two feedback systems
+       firing on one tap read as a glitch rather than as depth. */
+
+    /* Reduced motion is checked once, here, and every helper below
+       obeys it — an animation that respects the setting in CSS but not
+       in JS still moves. */
+    const psStill = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* Figures count up on arrival: 600ms, phone only, zeros skipped
+       (there is nothing to count to, and a "0" that ticks reads as a
+       loading state). The prefix and suffix around the number are kept
+       verbatim, so "BHD 24,850" and "63%" both survive. */
+    window.psInitCountUp = function (root) {
+        if (psStill || window.innerWidth > 768) return;
+        (root || document).querySelectorAll('.ps-stat-value, [data-countup]').forEach(function (el) {
+            if (el.dataset.countupDone) return;
+            const raw = el.textContent.trim();
+            const m = raw.match(/^(\D*?)([\d,]+(?:\.\d+)?)(\D*)$/);
+            if (!m) return;
+            const target = parseFloat(m[2].replace(/,/g, ''));
+            if (!isFinite(target) || target === 0) return;
+            const decimals = (m[2].split('.')[1] || '').length;
+            const grouped = m[2].includes(',');
+            el.dataset.countupDone = '1';
+            const start = performance.now();
+            (function step(now) {
+                const t = Math.min(1, (now - start) / 600);
+                /* ease-out cubic, so it decelerates into the real figure */
+                const v = target * (1 - Math.pow(1 - t, 3));
+                const shown = decimals ? v.toFixed(decimals) : String(Math.round(v));
+                el.textContent = m[1] + (grouped ? Number(shown).toLocaleString('en-US', {
+                    minimumFractionDigits: decimals, maximumFractionDigits: decimals,
+                }) : shown) + m[3];
+                if (t < 1) requestAnimationFrame(step);
+                else el.textContent = raw;
+            })(start);
+        });
+    };
+
+    /* The bell's count pops once, on the load where it went up — not on
+       every page view that happens to have a non-zero count. The last
+       seen number lives in sessionStorage, so it is per tab and never
+       leaves the device. */
+    window.psInitBellPop = function () {
+        if (psStill) return;
+        const badges = document.querySelectorAll('[data-bell-count]');
+        const count = badges.length ? parseInt(badges[0].dataset.bellCount, 10) || 0 : 0;
+        let seen = 0;
+        try { seen = parseInt(sessionStorage.getItem('psBellSeen'), 10) || 0; } catch (e) { seen = 0; }
+        if (count > seen) {
+            badges.forEach(function (b) {
+                b.classList.add('is-pop');
+                b.addEventListener('animationend', () => b.classList.remove('is-pop'), { once: true });
+            });
+        }
+        try { sessionStorage.setItem('psBellSeen', String(count)); } catch (e) { /* private mode */ }
+    };
 
     /* Collapsing large-title header: pass the header element, its
-       scroll container, and the pixel threshold to shrink at. */
+       scroll container, and the pixel threshold to shrink at.
+
+       Toggles two classes off one listener. `.is-scrolled` is the bottom
+       hairline, and appears as soon as anything has moved under the header —
+       that is the whole signal it carries, so its threshold is 0, not the
+       caller's. `.is-collapsed` is the title shrink at the caller's
+       threshold, and only .is-collapsible headers style it. */
     window.pmInitCollapsingHeader = function (header, scroller, threshold) {
         if (!header || !scroller) return;
         threshold = threshold || 36;
         const read = () => (scroller === window ? window.scrollY : scroller.scrollTop);
         let ticking = false;
         function update() {
-            header.classList.toggle('is-collapsed', read() > threshold);
+            const y = read();
+            header.classList.toggle('is-scrolled', y > 0);
+            header.classList.toggle('is-collapsed', y > threshold);
             ticking = false;
         }
         (scroller === window ? window : scroller).addEventListener('scroll', function () {
@@ -440,7 +499,7 @@
         </a>
     </div>
 
-    @unless(auth()->user()?->isMaintenance())
+    @if(auth()->user()?->canAccessPortfolio())
     <div class="sidebar-section">
         <div class="sidebar-section-label">Property Management</div>
         <a href="{{ route('buildings.index') }}" class="nav-item {{ request()->is('buildings*') && !request()->is('floors') ? 'active' : '' }}">
@@ -453,24 +512,28 @@
             <i class="fa-solid fa-door-open nav-icon"></i> Units
         </a>
     </div>
-    @endunless
+    @endif
 
+    @if(auth()->user()?->canAccessPortfolio() || auth()->user()?->canAccessMaintenance())
     <div class="sidebar-section">
         <div class="sidebar-section-label">Management</div>
-        @unless(auth()->user()?->isMaintenance())
+        @if(auth()->user()?->canAccessPortfolio())
         <a href="{{ route('tenants.index') }}" class="nav-item {{ request()->is('tenants*') ? 'active' : '' }}">
             <i class="fa-solid fa-users nav-icon"></i> Tenants
         </a>
         <a href="{{ route('lease-contracts.index') }}" class="nav-item {{ request()->is('lease-contracts*') ? 'active' : '' }}">
             <i class="fa-solid fa-file-contract nav-icon"></i> Lease Contracts
         </a>
-        @endunless
+        @endif
+        @if(auth()->user()?->canAccessMaintenance())
         <a href="{{ route('maintenance.index') }}" class="nav-item {{ request()->is('maintenance*') ? 'active' : '' }}">
             <i class="fa-solid fa-wrench nav-icon"></i> Maintenance
         </a>
+        @endif
     </div>
+    @endif
 
-    @unless(auth()->user()?->isMaintenance())
+    @if(auth()->user()?->canAccessAccounting())
     <div class="sidebar-section">
         <div class="sidebar-section-label">Accounting</div>
         <a href="{{ route('invoices.index') }}" class="nav-item {{ request()->is('invoices*') ? 'active' : '' }}">
@@ -489,6 +552,7 @@
             <i class="fa-solid fa-sack-dollar nav-icon"></i> Revenue
         </a>
     </div>
+    @endif
 
     @if(auth()->user()?->canViewReports())
     <div class="sidebar-section">
@@ -499,6 +563,7 @@
     </div>
     @endif
 
+    @if(auth()->user()?->canOpenConfiguration())
     <div class="sidebar-section">
         <div class="sidebar-section-label">Form / Template Management</div>
         <a href="{{ route('form-configs.index') }}?tab=forms"
@@ -510,6 +575,7 @@
             <i class="fa-solid fa-layer-group nav-icon"></i> Template Management
         </a>
     </div>
+    @endif
 
     @if(auth()->user()?->isAdmin())
     <div class="sidebar-section">
@@ -531,11 +597,10 @@
         </a>
     </div>
     @endif
-    @endunless
 
     <div class="sidebar-footer">
         <div class="sidebar-user">
-            <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
+            <x-avatar class="user-avatar" tag="div" />
             <div class="user-info">
                 <strong>{{ auth()->user()->name ?? 'Unknown' }}</strong>
                 <span>{{ auth()->user()->role_label ?? '' }}</span>
@@ -556,36 +621,54 @@
 <!-- MORE SHEET (mobile bottom tab bar "More" destination) -->
 <div class="modal-overlay" id="moreSheet">
     <div class="modal-box" style="max-width:100%;padding:14px 10px 20px;">
-        @unless(auth()->user()?->isMaintenance())
+        @if(auth()->user()?->canAccessPortfolio())
         <a href="{{ route('floors.global') }}" class="more-sheet-item">
-            <div class="more-sheet-icon" style="background:var(--m-blue-tint);"><i class="fa-solid fa-layer-group" style="color:var(--m-blue);"></i></div>
+            <div class="more-sheet-icon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div>
             <div><div class="more-sheet-label">Floors</div><div class="more-sheet-desc">Browse all floors</div></div>
         </a>
         <a href="{{ route('property-units.index') }}" class="more-sheet-item">
-            <div class="more-sheet-icon" style="background:var(--m-green-tint);"><i class="fa-solid fa-door-open" style="color:var(--m-green);"></i></div>
+            <div class="more-sheet-icon"><i class="fa-solid fa-door-open" aria-hidden="true"></i></div>
             <div><div class="more-sheet-label">Property Units</div><div class="more-sheet-desc">Browse property units</div></div>
         </a>
         <a href="{{ route('lease-contracts.index') }}" class="more-sheet-item">
-            <div class="more-sheet-icon" style="background:var(--m-navy-active);"><i class="fa-solid fa-file-contract" style="color:#fff;"></i></div>
+            <div class="more-sheet-icon"><i class="fa-solid fa-file-contract" aria-hidden="true"></i></div>
             <div><div class="more-sheet-label">Lease Contracts</div><div class="more-sheet-desc">Browse lease agreements</div></div>
         </a>
+        @endif
+        @if(auth()->user()?->canAccessAccounting())
         <a href="{{ route('invoices.index') }}" class="more-sheet-item">
-            <div class="more-sheet-icon" style="background:var(--m-gold-tint);"><i class="fa-solid fa-file-invoice-dollar" style="color:var(--m-gold-text);"></i></div>
+            <div class="more-sheet-icon"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i></div>
             <div><div class="more-sheet-label">Invoices</div><div class="more-sheet-desc">View and manage invoices</div></div>
         </a>
         <a href="{{ route('payments.index') }}" class="more-sheet-item">
-            <div class="more-sheet-icon" style="background:var(--tone-success-bg);"><i class="fa-solid fa-money-bill-transfer" style="color:var(--tone-success-fg);"></i></div>
+            <div class="more-sheet-icon"><i class="fa-solid fa-money-bill-transfer" aria-hidden="true"></i></div>
             <div><div class="more-sheet-label">Payments</div><div class="more-sheet-desc">Track received payments</div></div>
         </a>
-        @endunless
+        @endif
         @if(auth()->user()?->canViewReports())
         <a href="{{ route('reports.index') }}" class="more-sheet-item">
-            <div class="more-sheet-icon" style="background:var(--m-purple-tint);"><i class="fa-solid fa-chart-bar" style="color:var(--m-purple);"></i></div>
+            <div class="more-sheet-icon"><i class="fa-solid fa-chart-bar" aria-hidden="true"></i></div>
             <div><div class="more-sheet-label">Reports</div><div class="more-sheet-desc">Export portfolio reports</div></div>
         </a>
         @endif
+        {{-- Help used to be a "?" popover in the top bar. The header now has
+             three fixed slots and no room for a fourth, and this sheet is
+             where the phone keeps everything that isn't a tab. --}}
+        <button type="button" class="more-sheet-item" id="moreHelpBtn"
+                aria-haspopup="dialog" aria-controls="helpSheet" aria-expanded="false">
+            <div class="more-sheet-icon"><i class="fa-regular fa-circle-question" aria-hidden="true"></i></div>
+            <div><div class="more-sheet-label">Help</div><div class="more-sheet-desc">How this app works</div></div>
+        </button>
+        {{-- Theme lives here now. It was a third 44px disc in the Home
+             header, beside two controls you reach for constantly, and it
+             pushed the title into an ellipsis at 320px. Same .theme-toggle-btn
+             class, so the one handler in this layout still drives it. --}}
+        <button type="button" class="more-sheet-item theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode">
+            <div class="more-sheet-icon"><i class="fa-solid fa-moon" aria-hidden="true"></i></div>
+            <div><div class="more-sheet-label">Theme</div><div class="more-sheet-desc">Switch between light and dark</div></div>
+        </button>
         <button type="button" class="more-sheet-item" id="moreMenuBtn">
-            <div class="more-sheet-icon" style="background:var(--m-navy-active);"><i class="fa-solid fa-bars" style="color:#fff;"></i></div>
+            <div class="more-sheet-icon"><i class="fa-solid fa-bars" aria-hidden="true"></i></div>
             <div><div class="more-sheet-label">Full menu</div><div class="more-sheet-desc">All sections</div></div>
         </button>
         {{-- Asks first. A tap here used to end the session outright, and this
@@ -596,10 +679,60 @@
         <form method="POST" action="{{ route('logout') }}" data-signout-form>
             @csrf
             <button type="submit" class="more-sheet-item danger">
-                <div class="more-sheet-icon" style="background:var(--m-red-tint);"><i class="fa-solid fa-right-from-bracket" style="color:var(--m-red);"></i></div>
+                <div class="more-sheet-icon is-danger"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i></div>
                 <div><div class="more-sheet-label">Sign out</div><div class="more-sheet-desc">{{ auth()->user()->email ?? '' }}</div></div>
             </button>
         </form>
+    </div>
+</div>
+
+{{-- ═══════════════════════════ HELP SHEET ═══════════════════════════
+     Where the top bar's "?" popover went. Same rows as
+     partials/help-panel (which the desktop shell still uses), redrawn in
+     the sheet language the phone already speaks — a .modal-overlay
+     becomes a bottom sheet under 768px. No keyboard block: there is no
+     keyboard here, and the command palette isn't rendered below 769px. --}}
+<div class="modal-overlay" id="helpSheet" role="dialog" aria-modal="true"
+     aria-labelledby="helpSheetTitle">
+    <div class="modal-box" style="--modal-w:440px;">
+        <div class="modal-header">
+            <div class="modal-header-top">
+                <div class="modal-header-icon"><i class="fa-regular fa-circle-question" aria-hidden="true"></i></div>
+                <div class="modal-header-text">
+                    <div class="modal-header-title" id="helpSheetTitle">Help</div>
+                    <div class="modal-header-sub">How this app works</div>
+                </div>
+                <button type="button" class="modal-close-btn" data-help-close aria-label="Close">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            <p class="shell-helptip">
+                <i class="fa-regular fa-lightbulb" aria-hidden="true"></i>
+                <span>Tap any row in a list to open that record — the edit and delete buttons still work on their own.</span>
+            </p>
+
+            <a href="{{ route('dashboard') }}" class="more-sheet-item">
+                <div class="more-sheet-icon"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i></div>
+                <div><div class="more-sheet-label">Start from the dashboard</div><div class="more-sheet-desc">Today, cash flow and the portfolio</div></div>
+            </a>
+
+            @if(auth()->user()?->canViewReports())
+                <a href="{{ route('reports.index') }}" class="more-sheet-item">
+                    <div class="more-sheet-icon"><i class="fa-regular fa-file-lines" aria-hidden="true"></i></div>
+                    <div><div class="more-sheet-label">Reports &amp; statements</div><div class="more-sheet-desc">Export what you need to send</div></div>
+                </a>
+            @endif
+
+            @if(auth()->user()?->isAdmin())
+                <a href="{{ route('roles.index') }}" class="more-sheet-item">
+                    <div class="more-sheet-icon"><i class="fa-solid fa-user-shield" aria-hidden="true"></i></div>
+                    <div><div class="more-sheet-label">Who can see what</div><div class="more-sheet-desc">Roles and permissions</div></div>
+                </a>
+            @endif
+        </div>
     </div>
 </div>
 
@@ -636,7 +769,7 @@
              mistake worth preventing is signing the wrong person out. --}}
         <div class="modal-body">
             <div class="signout-identity" id="signOutIdentity">
-                <span class="signout-avatar">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</span>
+                <x-avatar class="signout-avatar" />
                 <span class="signout-identity-text">
                     <strong>{{ auth()->user()->name ?? 'Guest' }}</strong>
                     <span>{{ auth()->user()->email ?? '' }}</span>
@@ -655,6 +788,72 @@
                     <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sign out
                 </button>
             </form>
+        </div>
+    </div>
+</div>
+
+{{-- ═══════════════ MOBILE NOTIFICATIONS (the topbar bell) ═══════════════
+     The phone's counterpart to the shell bell, and the bell for every route
+     that draws the ≤768px .topbar — the dashboard and the pushed detail
+     screens hide that bar and carry their own. Same AttentionFeed behind it,
+     and the same rule: every row deep-links into the already-filtered list it
+     describes, so this never becomes a fifth place where invoices live.
+
+     A .modal-overlay rather than a .shell-pop dropdown, because app-mobile.css
+     converts one into a bottom sheet under 768px — which also hands it the
+     drag-to-dismiss handle and the safe-area padding every other sheet in the
+     app already has. --}}
+<div class="modal-overlay" id="topbarAlertsSheet" role="dialog" aria-modal="true"
+     aria-labelledby="topbarAlertsTitle">
+    <div class="modal-box" style="--modal-w:440px;">
+        <div class="modal-header">
+            <div class="modal-header-top">
+                <div class="modal-header-icon"><i class="fa-regular fa-bell" aria-hidden="true"></i></div>
+                <div class="modal-header-text">
+                    <div class="modal-header-title" id="topbarAlertsTitle">Needs attention</div>
+                    <div class="modal-header-sub">
+                        @if($attentionCount)
+                            {{ $attentionCount }} {{ \Illuminate\Support\Str::plural('thing', $attentionCount) }} {{ $attentionCount === 1 ? 'needs' : 'need' }} you today
+                        @else
+                            {{ now()->format('l, j F') }}
+                        @endif
+                    </div>
+                </div>
+                <button type="button" class="modal-close-btn" data-sheet-close aria-label="Close">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            @if($attentionCount)
+                <div class="pm-action-list">
+                    @foreach($attentionItems as $item)
+                        <a href="{{ $item['url'] }}" class="pm-action-row">
+                            <div class="pm-action-icon" style="background:var(--tone-{{ $item['tone'] }}-bg);color:var(--tone-{{ $item['tone'] }}-fg);">
+                                <i class="fa-solid {{ $item['icon'] }}" aria-hidden="true"></i>
+                            </div>
+                            <div style="flex:1;min-width:0;">
+                                <div class="pm-action-title">{{ $item['title'] }}</div>
+                                <div class="pm-action-sub">{{ $item['sub'] }}</div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right pm-action-chevron" aria-hidden="true"></i>
+                        </a>
+                    @endforeach
+                </div>
+            @else
+                {{-- An empty bell still has to say something. Naming what it
+                     checked is what makes "nothing" trustworthy. --}}
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fa-regular fa-circle-check" aria-hidden="true"></i></div>
+                    <h4>You're all clear</h4>
+                    <p>No overdue rent, no open requests, and no leases ending in the next 30 days.</p>
+                </div>
+            @endif
+        </div>
+
+        <div class="modal-footer alerts-footer">
+            <a class="btn btn-outline" href="{{ route('dashboard') }}">Open the dashboard</a>
         </div>
     </div>
 </div>
@@ -691,9 +890,7 @@
                     title="Notifications"
                     aria-label="Notifications{{ $attentionCount ? ' — '.$attentionCount.' need attention' : '' }}">
                 <i class="fa-regular fa-bell" aria-hidden="true"></i>
-                @if($attentionCount)
-                    <span class="shell-bell-badge">{{ $attentionCount > 99 ? '99+' : $attentionCount }}</span>
-                @endif
+                @include('partials.bell-badge', ['count' => $attentionCount])
             </button>
 
             <div class="shell-pop shell-notif" id="shell-notif" hidden role="dialog" aria-label="Needs attention">
@@ -745,7 +942,7 @@
             <button type="button" class="shell-user" data-pop-toggle
                     aria-expanded="false" aria-controls="shell-account-menu"
                     aria-haspopup="true" title="Account">
-                <span class="shell-avatar">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</span>
+                <x-avatar class="shell-avatar" />
                 <span>
                     <span class="shell-user-name">{{ auth()->user()->name ?? 'Guest' }}</span>
                     <span class="shell-user-role">{{ auth()->user()->role_label ?? '' }}</span>
@@ -774,24 +971,52 @@
     </div>
 
         <!-- TOPBAR (≤768px only; the shell toolbar and page header replace it above) -->
-        <header class="topbar">
-            <button class="topbar-icon-btn" style="display:none" id="menuBtn">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-            <div class="topbar-title">@yield('topbar-title', 'Dashboard')</div>
-            <div class="topbar-actions">
-                <button class="topbar-icon-btn theme-toggle-btn" title="Switch theme" aria-label="Switch to dark mode"><i class="fa-solid fa-moon"></i></button>
-                <button class="topbar-icon-btn"><i class="fa-regular fa-bell"></i></button>
-                <div class="shell-helpbtn" data-pop>
-                    <button type="button" class="topbar-icon-btn" data-pop-toggle
-                            aria-expanded="false" aria-controls="topbar-help"
-                            aria-haspopup="true" title="Help" aria-label="Help">
-                        <i class="fa-regular fa-circle-question" aria-hidden="true"></i>
-                    </button>
+        {{-- The compact header variant: one row, title left, the same three
+             controls right. There is no hamburger — the bottom tab bar is the
+             only navigation on a phone, and the drawer it used to open is
+             reached from More → Full menu. The help "?" left for the same
+             reason (More → Help): the header carries exactly two slots, in
+             one order, on every screen — notifications · avatar — so
+             switching tabs never moves them.
 
-                    @include('partials.help-panel', ['id' => 'topbar-help', 'shortcuts' => false])
-                </div>
-                <div class="user-avatar" style="width:32px;height:32px;font-size:12px;cursor:pointer;">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
+             `topbar-count` is the optional number beside the title ("Buildings
+             4"). A screen that doesn't set the section renders no span. --}}
+        <header class="topbar">
+            <div class="topbar-title">
+                <span class="topbar-title-text">@yield('topbar-title', 'Dashboard')</span>
+                @hasSection('topbar-count')
+                    <span class="topbar-count">@yield('topbar-count')</span>
+                @endif
+            </div>
+            <div class="topbar-actions">
+                {{-- Two controls, and the same two on every screen: bell then
+                     avatar. Theme moved to More — see the note on the Home
+                     header, which lost the same third disc. --}}
+                {{-- The bell was a bare <button> with nothing behind it: no
+                     type (so it submitted any form it landed in), no label for
+                     a screen reader, no count, and no handler. It is the same
+                     control as the shell bell now, reading the same
+                     AttentionFeed — it just answers with #topbarAlertsSheet,
+                     because under 768px app-mobile.css turns a .modal-overlay
+                     into a bottom sheet, which is the phone's answer to a
+                     dropdown. --}}
+                <button type="button" class="pm-icon-btn" id="topbarAlertsBtn"
+                        data-sheet-open="topbarAlertsSheet"
+                        aria-haspopup="dialog" aria-controls="topbarAlertsSheet"
+                        aria-expanded="false" title="Notifications"
+                        aria-label="Notifications{{ $attentionCount ? ' — '.$attentionCount.' need attention' : ' — nothing needs your attention' }}">
+                    <i class="fa-regular fa-bell" aria-hidden="true"></i>
+                    @include('partials.bell-badge', ['count' => $attentionCount])
+                </button>
+                {{-- Was an inert <div> with cursor:pointer on it — it looked
+                     tappable and did nothing. It is the dashboard header's
+                     control now, down to the confirmation sheet, so the third
+                     slot means the same thing on every screen. --}}
+                <form method="POST" action="{{ route('logout') }}" data-signout-form>
+                    @csrf
+                    <x-avatar class="pm-avatar" tag="button" type="submit" title="Sign out"
+                              aria-label="Sign out of {{ auth()->user()->email ?? 'this account' }}" />
+                </form>
             </div>
         </header>
 
@@ -803,8 +1028,44 @@
                  drawing its own .page-header would otherwise show two titles,
                  and its primary action lives in that block, so migrating a
                  page means defining these three sections and deleting its
-                 .page-header. --}}
-            <header class="shell-pagehead">
+                 .page-header.
+
+                 Four slots, in DOM order back · text · actions · overflow:
+
+                   page-back      the way up. First in the DOM so it is the
+                                  first thing after the landmark for a screen
+                                  reader and the first tab stop; CSS `order`
+                                  puts it back at the head of the action group
+                                  on desktop, and under 600px app-core lifts
+                                  it beside the title as a 44px icon button.
+                                  Every detail page defines this rather than
+                                  opening its action row with its own Back —
+                                  that is what makes the phone header the same
+                                  object on all of them.
+                   page-actions   the page's own actions.
+                   page-overflow  a phone-only trigger (a ⋯ opening a sheet)
+                                  for actions that do not fit that header.
+
+                 The has-* classes tell the CSS which slots are filled, so the
+                 phone grid can drop a row or a column instead of leaving a
+                 gap where an empty one would be. --}}
+            @php
+                /* Built in PHP rather than as three inline @hasSection blocks:
+                   Blade leaves a directive uncompiled when it sits flush
+                   against the @endif before it, which put a raw
+                   `@hasSection(...)` into the compiled class attribute and
+                   made the whole layout a parse error. */
+                $headSlots = collect([
+                    'page-back'     => 'has-back',
+                    'page-actions'  => 'has-actions',
+                    'page-overflow' => 'has-overflow',
+                ])->filter(fn ($class, $section) => trim($__env->yieldContent($section)) !== '')
+                  ->values()->implode(' ');
+            @endphp
+            <header class="shell-pagehead {{ $headSlots }}">
+@hasSection('page-back')
+                <div class="shell-pagehead-back">@yield('page-back')</div>
+@endif
                 <div class="shell-pagehead-text">
 @hasSection('page-breadcrumb')
                     <nav class="breadcrumb" aria-label="Breadcrumb">@yield('page-breadcrumb')</nav>
@@ -813,6 +1074,9 @@
                     <div class="shell-pagehead-sub">@yield('page-subtitle')</div>
                 </div>
                 <div class="shell-pagehead-actions">@yield('page-actions')</div>
+@hasSection('page-overflow')
+                <div class="shell-pagehead-more">@yield('page-overflow')</div>
+@endif
             </header>
 @endif
 
@@ -840,27 +1104,63 @@
     $tabbarIsBuildings = request()->is('buildings*') && !request()->is('floors');
     $tabbarIsTenants = request()->is('tenants*');
     $tabbarIsMaintenance = request()->is('maintenance*');
-    $tabbarIsMore = !$tabbarIsMain && !$tabbarIsBuildings && !$tabbarIsTenants && !$tabbarIsMaintenance;
+    $tabbarIsInvoices = request()->is('invoices*');
+    $tabbarIsPayments = request()->is('payments*');
+    $tabbarUser = auth()->user();
+    /* A role without the portfolio gets its own two tabs rather than an empty
+       bar: Accountant lands on Invoices and Payments, which is its work. */
+    $tabbarPortfolio  = (bool) $tabbarUser?->canAccessPortfolio();
+    $tabbarAccounting = ! $tabbarPortfolio && (bool) $tabbarUser?->canAccessAccounting();
+    $tabbarMaintenance = (bool) $tabbarUser?->canAccessMaintenance();
+    $tabbarIsMore = !$tabbarIsMain
+        && !($tabbarPortfolio && ($tabbarIsBuildings || $tabbarIsTenants))
+        && !($tabbarAccounting && ($tabbarIsInvoices || $tabbarIsPayments))
+        && !($tabbarMaintenance && $tabbarIsMaintenance);
 @endphp
+{{-- The label is wrapped, not dropped, on inactive tabs: only the active tab
+     shows it, and the inactive ones clip theirs to zero width (see
+     .tabbar-label) rather than removing it, so the tab keeps its accessible
+     name and the expand has something to animate. --}}
+{{-- The fixed row that holds the tab pill and, when a screen asks for one,
+     the FAB. Both are static children of it, so the FAB sits beside the pill
+     instead of over it, and no screen has to position either. --}}
+<div class="ps-bottom-bar">
 <nav class="bottom-tabbar" id="bottomTabbar">
     <a href="{{ url('/dashboard') }}" class="tabbar-item {{ $tabbarIsMain ? 'active' : '' }}">
-        <i class="fa-solid fa-house"></i> Home
+        <i class="fa-solid fa-house"></i><span class="tabbar-label">Home</span>
     </a>
-    @unless(auth()->user()?->isMaintenance())
+    @if($tabbarPortfolio)
     <a href="{{ route('buildings.index') }}" class="tabbar-item {{ $tabbarIsBuildings ? 'active' : '' }}">
-        <i class="fa-solid fa-building"></i> Properties
+        <i class="fa-solid fa-building"></i><span class="tabbar-label">Properties</span>
     </a>
     <a href="{{ route('tenants.index') }}" class="tabbar-item {{ $tabbarIsTenants ? 'active' : '' }}">
-        <i class="fa-solid fa-users"></i> Tenants
+        <i class="fa-solid fa-users"></i><span class="tabbar-label">Tenants</span>
     </a>
-    @endunless
+    @elseif($tabbarAccounting)
+    <a href="{{ route('invoices.index') }}" class="tabbar-item {{ $tabbarIsInvoices ? 'active' : '' }}">
+        <i class="fa-solid fa-file-invoice-dollar"></i><span class="tabbar-label">Invoices</span>
+    </a>
+    <a href="{{ route('payments.index') }}" class="tabbar-item {{ $tabbarIsPayments ? 'active' : '' }}">
+        <i class="fa-solid fa-money-bill-transfer"></i><span class="tabbar-label">Payments</span>
+    </a>
+    @endif
+    @if($tabbarMaintenance)
     <a href="{{ route('maintenance.index') }}" class="tabbar-item {{ $tabbarIsMaintenance ? 'active' : '' }}">
-        <i class="fa-solid fa-screwdriver-wrench"></i> Requests
+        <i class="fa-solid fa-screwdriver-wrench"></i><span class="tabbar-label">Requests</span>
     </a>
+    @endif
     <button type="button" class="tabbar-item {{ $tabbarIsMore ? 'active' : '' }}" id="moreTabBtn">
-        <i class="fa-solid fa-ellipsis"></i> More
+        <i class="fa-solid fa-ellipsis"></i><span class="tabbar-label">More</span>
     </button>
 </nav>
+{{-- The FAB, rendered here or not at all. A screen opts in by defining
+     `mobile-fab`, and a screen whose own actions row already carries a
+     primary create button must not — two "+" buttons on one screen is the
+     duplicate-add-button the sweep is meant to end. --}}
+@hasSection('mobile-fab')
+    @yield('mobile-fab')
+@endif
+</div>
 
 <script>
 let mDebounceTimer;
@@ -868,6 +1168,17 @@ function mDebounceSubmit(el) {
     clearTimeout(mDebounceTimer);
     mDebounceTimer = setTimeout(() => el.form.submit(), 500);
 }
+/* A chip row scrolls, and the chip that is doing the filtering is not always
+   in the first screenful of it — Buildings carries ten, Maintenance seven. A
+   filtered list whose row reads "All" because the active chip is 300px off
+   the right edge is a screen lying about its own state, so bring it into
+   view on arrival. Instant, not smooth: this is the page's starting
+   position, not a movement the reader should watch. */
+document.querySelectorAll('.m-chip-row').forEach(function (row) {
+    const on = row.querySelector('.m-chip.active');
+    if (! on || row.scrollWidth <= row.clientWidth) return;
+    row.scrollLeft = Math.max(0, on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2);
+});
 (function () {
     const MOBILE = 768;
     const sidebar = document.getElementById('sidebar');
@@ -886,10 +1197,104 @@ function mDebounceSubmit(el) {
         backdrop.classList.remove('show');
         document.body.style.overflow = '';
     }
-    menuBtn.addEventListener('click', () => {
+    /* Optional since the header hamburger was removed: the drawer is opened
+       from More → Full menu now. The lookup stays so a future header that
+       wants one keeps working, and so this IIFE doesn't die on a null. */
+    menuBtn?.addEventListener('click', () => {
         sidebar.classList.contains('open') ? closeDrawer() : openDrawer();
     });
     backdrop.addEventListener('click', closeDrawer);
+
+    /* ── Compact header hairline (every tab except Home) ──────────
+       Home's header lives inside .m-dash and watches #pmDashScroll; this one
+       is sticky in normal flow, so the window is its scroller. Same helper,
+       so both variants gain and lose the hairline at the same moment. The
+       threshold is only for `.is-collapsed`, which this header doesn't
+       style — it is not .is-collapsible. */
+    /* All three header variants — compact, pushed-detail and Home — take the
+       hairline from the same helper, so it appears at the same moment on
+       each. (Home's lives inside .m-dash and is wired in dashboard.blade.php,
+       which owns its scroller.) */
+    ['header.topbar', '.pm-push-header'].forEach(function (sel) {
+        const header = document.querySelector(sel);
+        if (header && window.pmInitCollapsingHeader) {
+            window.pmInitCollapsingHeader(header, window, 24);
+        }
+    });
+
+    /* The two polish helpers every screen gets: figures count up, and the
+       bell's count pops on the load where it went up. */
+    if (window.psInitCountUp) window.psInitCountUp(document);
+    if (window.psInitBellPop) window.psInitBellPop();
+
+    /* ── Sheets, generically ──────────────────────────────────────
+       Any .modal-overlay opens from `[data-sheet-open="<its id>"]` and
+       closes from `[data-sheet-close]`, click-away or Escape. Four
+       screens had a hand-written copy of exactly this — open, aria-expanded,
+       scroll lock, focus the first row, hand focus back on close — and the
+       copies had drifted. The scroll-lock release checks for another open
+       overlay or drawer so closing one sheet cannot unlock the page under
+       a second. */
+    let psSheet = null;        /* the sheet this handler opened, if any */
+    let psSheetOpener = null;  /* the control that opened it, for focus return */
+    function psOpenSheet(sheet, opener) {
+        if (!sheet) return;
+        sheet.classList.add('open');
+        psSheet = sheet;
+        psSheetOpener = opener || null;
+        opener?.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+        sheet.querySelector('.more-sheet-item, .modal-close-btn')?.focus();
+    }
+    function psCloseSheet(sheet) {
+        if (!sheet) return;
+        sheet.classList.remove('open');
+        psSheetOpener?.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow =
+            document.querySelector('.sidebar.open, .modal-overlay.open') ? 'hidden' : '';
+        if (psSheetOpener && psSheetOpener.offsetParent !== null) psSheetOpener.focus();
+        if (sheet === psSheet) { psSheet = null; psSheetOpener = null; }
+    }
+    document.addEventListener('click', function (e) {
+        const opener = e.target.closest('[data-sheet-open]');
+        if (opener) {
+            psOpenSheet(document.getElementById(opener.dataset.sheetOpen), opener);
+            return;
+        }
+        const closer = e.target.closest('[data-sheet-close]');
+        if (closer) { psCloseSheet(closer.closest('.modal-overlay')); return; }
+        /* Click-away, but only on a sheet this handler opened — the page's own
+           modals keep their own scrim behaviour. */
+        if (psSheet && e.target === psSheet) psCloseSheet(psSheet);
+    });
+    /* Rotating the phone past the breakpoint can take a sheet's trigger away
+       with it — a sheet left open would then be an overlay with no way out. */
+    window.addEventListener('resize', function () {
+        if (window.innerWidth > 768 && psSheet?.classList.contains('open')) psCloseSheet(psSheet);
+    });
+
+    /* Escape closes only what this handler opened, for the same reason.
+       Tab is kept inside the open sheet: it is a modal dialog, and tabbing
+       out of one into the page behind it leaves a screen-reader user
+       reading a list they cannot see. */
+    document.addEventListener('keydown', function (e) {
+        if (! psSheet?.classList.contains('open')) return;
+        if (e.key === 'Escape') { psCloseSheet(psSheet); return; }
+        if (e.key !== 'Tab') return;
+
+        const focusable = [...psSheet.querySelectorAll(
+            'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
+        )].filter((el) => el.offsetParent !== null);
+        if (! focusable.length) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault(); last.focus();
+        } else if (! e.shiftKey && document.activeElement === last) {
+            e.preventDefault(); first.focus();
+        }
+    });
 
     // ── More sheet (bottom tab bar "More" destination) ───────────
     const moreSheet = document.getElementById('moreSheet');
@@ -904,6 +1309,27 @@ function mDebounceSubmit(el) {
     document.getElementById('moreTabBtn')?.addEventListener('click', openMoreSheet);
     moreSheet.addEventListener('click', (e) => { if (e.target === moreSheet) closeMoreSheet(); });
     document.getElementById('moreMenuBtn')?.addEventListener('click', () => { closeMoreSheet(); openDrawer(); });
+
+    // ── Help sheet (More → Help; replaces the top bar's "?" popover) ──
+    const helpSheet = document.getElementById('helpSheet');
+    const helpBtn = document.getElementById('moreHelpBtn');
+    function closeHelpSheet() {
+        helpSheet.classList.remove('open');
+        document.body.style.overflow = '';
+        helpBtn?.setAttribute('aria-expanded', 'false');
+    }
+    helpBtn?.addEventListener('click', () => {
+        closeMoreSheet();
+        helpSheet.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        helpBtn.setAttribute('aria-expanded', 'true');
+    });
+    helpSheet.addEventListener('click', (e) => {
+        if (e.target === helpSheet || e.target.closest('[data-help-close]')) closeHelpSheet();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && helpSheet.classList.contains('open')) closeHelpSheet();
+    });
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && sidebar.classList.contains('open')) closeDrawer();
     });
@@ -1067,6 +1493,32 @@ function mDebounceSubmit(el) {
         const first = items[0], last = items[items.length - 1];
         if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
         else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+})();
+
+
+/* ── File-input preview ───────────────────────────────────
+   Any [type=file][data-preview] swaps the named box's contents for the chosen
+   image before upload — the branding logo and favicon, and the profile photo.
+   A round preview keeps its shape because .upload-preview.is-round owns that,
+   not the markup this writes. */
+(function () {
+    document.querySelectorAll('input[type="file"][data-preview]').forEach(function (input) {
+        input.addEventListener('change', function () {
+            var file = input.files[0];
+            var box = document.getElementById(input.dataset.preview);
+            if (!file || !box) return;
+
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                box.innerHTML = '<img src="' + e.target.result + '" alt="Preview">';
+                // Choosing a replacement and also ticking "remove" is a
+                // contradiction; the file wins, so untick it.
+                var remove = document.getElementById('remove_' + input.id);
+                if (remove) remove.checked = false;
+            };
+            reader.readAsDataURL(file);
+        });
     });
 })();
 

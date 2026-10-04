@@ -35,24 +35,27 @@
     ];
 @endphp
 
-{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
+     A library, not a ledger: no stats, no filters, no create verb — just
+     the shared row, once per report. ── --}}
 <div class="m-screen">
     <div class="m-row-list">
         @foreach($reports as $r)
-            <a href="{{ route($r['route']) }}" class="m-row-card">
-                <div class="m-row-icon" style="background:{{ $r['bg'] }};color:{{ $r['fg'] }};"><i class="fa-solid {{ $r['icon'] }}"></i></div>
-                <div style="flex:1;min-width:0;">
-                    <div class="m-row-title">{{ $r['name'] }}</div>
-                    <div class="m-row-sub" style="line-height:1.4;">{{ $r['desc'] }}</div>
-                </div>
-                <i class="fa-solid fa-chevron-right m-row-chevron"></i>
+            <a href="{{ route($r['route']) }}" class="m-row-card ps-reveal"
+               style="--ps-step:{{ min(8, $loop->index) }}">
+                <span class="m-row-thumb"><i class="fa-solid {{ $r['icon'] }}" aria-hidden="true"></i></span>
+                <span class="m-row-text">
+                    <span class="m-row-title">{{ $r['name'] }}</span>
+                    <span class="m-row-sub">{{ $r['desc'] }}</span>
+                </span>
+                <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
             </a>
         @endforeach
     </div>
-    <div style="font-size:.8rem;color:var(--ps-muted-deep);line-height:1.65;padding:0 4px;">
-        <i class="fa-solid fa-circle-info"></i>
-        Draft reports — "On Account" credit balances and post-dated cheques aren't tracked yet, so those columns aren't included.
-    </div>
+    <p class="m-empty-sub" style="padding:0 2px;">
+        Draft reports — "On Account" credit balances and post-dated cheques aren't tracked yet,
+        so those columns aren't included.
+    </p>
 </div>
 
 {{-- ═══════════════════════ DESKTOP — archetype E · library ═══════════════════════ --}}

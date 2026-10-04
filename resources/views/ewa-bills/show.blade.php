@@ -9,8 +9,13 @@
 @section('page-subtitle')
     {{ $bill->tenant_name }}{{ $bill->property_name ? ' — '.$bill->property_name : '' }}{{ $bill->unit ? ' / '.$bill->unit : '' }}
 @endsection
+@section('page-back')
+    <a href="{{ route('ewa-bills.index') }}" class="btn btn-outline" aria-label="Back">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back</span>
+    </a>
+@endsection
+
 @section('page-actions')
-    <a href="{{ route('ewa-bills.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
     <button type="button" class="btn btn-outline" onclick="openPdfPreview()">
         <i class="fa-solid fa-eye"></i> Preview PDF
     </button>

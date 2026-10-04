@@ -299,16 +299,29 @@ class PaymentTest extends TestCase
         $this->assertStringNotContainsString('EWA :', $html);
     }
 
-    public function test_receipt_stylesheet_does_not_zero_out_page_margin(): void
+    public function test_the_receipt_keeps_a_printable_inset(): void
     {
-        // DomPDF silently cancels an @page margin if the stylesheet also
-        // has a bare `* { margin: 0 }` reset — this bit us once (the
-        // receipt looked print-ready but rendered with 0mm margins). Guard
-        // against reintroducing exactly that combination.
-        $source = file_get_contents(resource_path('views/payments/receipt.blade.php'));
+        // DomPDF silently cancels an @page margin if the stylesheet also has a
+        // bare `* { margin: 0 }` reset — this bit us once (the receipt looked
+        // print-ready but rendered with 0mm margins).
+        //
+        // The receipt carries no CSS of its own any more; it extends
+        // layouts/pdf.blade.php, where @page margin is deliberately 0 and the
+        // printable inset is .pdf-page's padding instead. So the guard moved to
+        // the shared stylesheet, and checks the inset exists one way or the
+        // other rather than assuming which.
+        $receipt = file_get_contents(resource_path('views/payments/receipt.blade.php'));
+        $this->assertStringContainsString("@extends('layouts.pdf')", $receipt);
+        $this->assertStringNotContainsString('<style>', $receipt);
 
-        $this->assertMatchesRegularExpression('/@page\s*\{[^}]*margin-left\s*:\s*\d/', $source);
-        $this->assertDoesNotMatchRegularExpression('/\*\s*\{[^}]*\bmargin\s*:\s*0/', $source);
+        $css = file_get_contents(public_path('css/pdf.css'));
+
+        // Anchored at a RULE, not a mention: pdf.css documents the trap in a
+        // comment, and an unanchored pattern flags its own warning.
+        $this->assertDoesNotMatchRegularExpression('/^\s*\*[\s,{][^}]*margin\s*:/m', $css);
+        // The inset is on @page so that it repeats on every page; see
+        // PdfPageLayoutTest for why a wrapper's padding cannot carry it.
+        $this->assertMatchesRegularExpression('/@page\s*\{[^}]*margin:\s*0\.45in/', $css);
     }
 
     // ── PAYMENT METHODS ───────────────────────────────────────────

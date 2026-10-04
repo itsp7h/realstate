@@ -20,9 +20,11 @@
     {{ count($rows) }} file(s) processed from this batch
 @endsection
 @section('page-actions')
-    <a href="{{ route('ewa-bills.summary.export', $batch) }}" class="btn btn-outline">
-        <i class="fa-solid fa-file-excel"></i> Download Excel
-    </a>
+    @include('partials.export-menu', [
+        'route'  => 'ewa-bills.summary.export',
+        'params' => ['batch' => $batch],
+        'sub'    => 'All 22 columns of the batch',
+    ])
     <a href="{{ route('ewa-bills.summary.create') }}" class="btn btn-primary">
         <i class="fa-solid fa-rotate"></i> Process Another Batch
     </a>

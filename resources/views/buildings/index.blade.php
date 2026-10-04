@@ -2,13 +2,16 @@
 
 @section('title', 'Buildings')
 @section('topbar-title', 'Buildings')
+@section('topbar-count', number_format($buildings->total()))
 
 @section('page-title', 'Buildings')
 @section('page-subtitle', 'Manage all building and property records')
 @section('page-actions')
-    <a href="{{ route('export.buildings', request()->only(['search','property_type','type_of_ownership'])) }}" class="btn btn-success">
-        <i class="fa-solid fa-file-excel"></i> Export
-    </a>
+    @include('partials.export-menu', [
+        'route'  => 'export.buildings',
+        'params' => request()->only(['search','property_type','type_of_ownership']),
+        'sub'    => 'All 13 columns, import-ready',
+    ])
     <button type="button" class="btn btn-outline" onclick="openImport_buildings()">
         <i class="fa-solid fa-file-import"></i> Import
     </button>
@@ -331,77 +334,140 @@
 
 @section('content')
 
+{{-- The two filterable facets, written once. They were spelled out four
+     times in this file — both filter selects and both create-form selects —
+     so a type you could create was not necessarily a type you could filter
+     by, and now the mobile chips read from the same two lines. --}}
+@php
+    $buildingTypes  = ['Residential', 'Commercial', 'Mixed Use', 'Industrial', 'Retail'];
+    $ownershipTypes = ['Owned', 'Leased', 'Joint Venture', 'Managed'];
+@endphp
+
 {{-- PAGE HEADER --}}
 
-{{-- ═══════════════════════ MOBILE SCREEN (Miknas Property Manager design) ═══════════════════════ --}}
-<div class="m-screen">
-    <div class="pm-search-field is-pill">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <form method="GET" action="{{ route('buildings.index') }}" style="flex:1;">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search property name or code"
-                   style="width:100%;border:0;outline:none;font-size:1rem;color:var(--ps-navy);background:transparent;font-family:'Poppins',system-ui,sans-serif;"
-                   oninput="mDebounceSubmit(this)">
-        </form>
-    </div>
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
+     This screen was the prototype for the shared system — its row, its
+     reveal and its bar-draw are now .m-row-card, .ps-reveal and
+     .m-row-bar in app-mobile.css. The section order and the reveal queue
+     have moved out too, into components/mobile-list: this was the one
+     list screen that led with the search pill, which put its Add button
+     in a different place than on the other ten.
 
-    <div style="display:flex;flex-direction:column;gap:10px;">
-        @forelse($buildings as $building)
-            @php
-                $fin = $financials[$building->id] ?? null;
-                $totalUnits = $building->units_count ?? 0;
-                $occupied = $building->occupied_units_count ?? 0;
-                $photo = $building->images->first()?->url;
-                $netColor = ($fin && $fin['net_income'] < 0) ? 'var(--pm-red)' : 'var(--pm-text)';
-            @endphp
-            <a href="{{ route('buildings.show', $building) }}" class="pm-property-card pm-ripple">
-                <div style="display:flex;align-items:stretch;gap:12px;padding:14px;">
-                    <div style="flex:none;width:96px;height:112px;border-radius:10px;overflow:hidden;background:var(--pm-border);@if($photo) background-image:url('{{ $photo }}');background-size:cover;background-position:center; @endif">
-                        @unless($photo)
-                            <div class="pm-property-photo-fallback"><i class="fa-solid fa-building"></i></div>
-                        @endunless
-                    </div>
-                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;">
-                        <div class="pm-property-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $building->property_name }}</div>
-                        <div class="pm-property-address" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><i class="fa-solid fa-location-dot"></i>&nbsp;{{ $building->property_type ?? 'Property' }} &middot; {{ $occupied }} of {{ $totalUnits }} units let</div>
-                    </div>
-                    <i class="fa-solid fa-chevron-right pm-action-chevron" style="align-self:center;"></i>
-                </div>
-                @if($fin)
-                <div class="pm-property-wells" style="margin:0 14px 14px;">
-                    <div class="pm-well"><div class="pm-well-label">INCOME</div><div class="pm-well-value">BHD {{ number_format($fin['total_income'], 0) }}</div></div>
-                    <div class="pm-well"><div class="pm-well-label">NET</div><div class="pm-well-value" style="color:{{ $netColor }};">BHD {{ number_format($fin['net_income'], 0) }}</div></div>
-                    <div class="pm-well"><div class="pm-well-label">OCCUPIED</div><div class="pm-well-value">{{ $fin['occupancy_percent'] }}%</div></div>
-                </div>
+     Its filters had no mobile path at all — the two selects lived in the
+     desktop filter bar and nothing replaced them on the phone. They are
+     chips now, two facets in one row with a hairline between them. The
+     facets compose (Residential AND Leased), each chip clears itself when
+     tapped again, and All drops both while keeping the search. No counts
+     on them: the strip directly above already says how many. ── --}}
+@php
+    $bldType = request('property_type');
+    $bldOwn  = request('type_of_ownership');
+
+    /* One chip's link: it carries the other facet and the search through
+       untouched, and sets — or, when it is already the active one, clears
+       — its own. */
+    $bldFacet = function (string $key, string $value) use ($bldType, $bldOwn) {
+        $params = ['search' => request('search'), 'property_type' => $bldType, 'type_of_ownership' => $bldOwn];
+        $params[$key] = ($params[$key] === $value) ? null : $value;
+
+        return route('buildings.index', array_filter($params));
+    };
+
+    $bldChips = [[
+        'label'  => 'All',
+        'href'   => route('buildings.index', array_filter(['search' => request('search')])),
+        'active' => ! $bldType && ! $bldOwn,
+    ]];
+    foreach ($buildingTypes as $bldOpt) {
+        $bldChips[] = ['label' => $bldOpt, 'href' => $bldFacet('property_type', $bldOpt), 'active' => $bldType === $bldOpt];
+    }
+    $bldChips[] = ['sep' => true];
+    foreach ($ownershipTypes as $bldOpt) {
+        $bldChips[] = ['label' => $bldOpt, 'href' => $bldFacet('type_of_ownership', $bldOpt), 'active' => $bldOwn === $bldOpt];
+    }
+@endphp
+<x-mobile-list
+    :actions="[
+        'primary' => ['label' => 'Add a property', 'onclick' => 'openBuildingModal()'],
+        'sheet'   => [
+            'id'    => 'bldmMoreSheet',
+            'title' => 'More',
+            'sub'   => 'Import and export this list',
+            'items' => [
+                ['icon' => 'fa-wand-magic-sparkles', 'label' => 'Smart import',
+                 'desc' => 'Bring in properties from a spreadsheet',
+                 'onclick' => 'openImport_buildings()'],
+                ['icon' => 'fa-file-excel', 'label' => 'Export to Excel',
+                 'desc' => 'The list as it is filtered now',
+                 'href' => route('export.buildings', array_merge(request()->only(['search','property_type','type_of_ownership']), ['format' => 'xlsx']))],
+                ['icon' => 'fa-file-pdf', 'label' => 'Export to PDF',
+                 'desc' => 'The list as it is filtered now',
+                 'href' => route('export.buildings', array_merge(request()->only(['search','property_type','type_of_ownership']), ['format' => 'pdf']))],
+            ],
+        ],
+    ]"
+    :stats="[
+        ['value' => $stats['total'],       'label' => 'Total'],
+        ['value' => $stats['residential'], 'label' => 'Residential'],
+        ['value' => $stats['commercial'],  'label' => 'Commercial'],
+    ]"
+    :search="[
+        'action'      => route('buildings.index'),
+        'placeholder' => 'Search property name or code',
+        'aria'        => 'Search properties',
+        'keep'        => ['property_type', 'type_of_ownership'],
+    ]"
+    :chips="$bldChips">
+
+    @forelse($buildings as $building)
+        @php
+            $fin        = $financials[$building->id] ?? null;
+            $totalUnits = $building->units_count ?? 0;
+            $occupied   = $building->occupied_units_count ?? 0;
+            $photo      = $building->images->first()?->url;
+            $occPct     = $fin['occupancy_percent'] ?? \App\Support\Occupancy::percent($occupied, $totalUnits);
+            $net        = $fin['net_income'] ?? 0;
+            // The three wells said "BHD 0" three times on a portfolio with
+            // no ledger yet. The net only earns its place once it is a
+            // number worth reading.
+            $showNet    = $fin && (int) round($net) !== 0;
+        @endphp
+        <a href="{{ route('buildings.show', $building) }}" class="m-row-card ps-reveal">
+            <span class="m-row-thumb">
+                @if($photo)
+                    <img src="{{ $photo }}" alt="" loading="lazy">
+                @else
+                    <i class="fa-regular fa-building" aria-hidden="true"></i>
                 @endif
-            </a>
-        @empty
-            <div class="pm-empty is-lg">
-                <div class="pm-empty-icon-lg"><i class="fa-solid fa-building-circle-exclamation"></i></div>
-                <div class="m-empty-title">No buildings found</div>
-                <div class="m-empty-sub" style="margin-bottom:18px;">Try adjusting your search, or add a new building.</div>
-                <button type="button" onclick="openBuildingModal()" class="m-action-btn primary pm-ripple" style="flex:none;display:inline-flex;padding:0 24px;">
-                    <i class="fa-solid fa-plus"></i>Add a property
-                </button>
-            </div>
-        @endforelse
+            </span>
 
-        <div class="m-action-row" style="margin-top:4px;">
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $building->property_name }}</span>
+                <span class="m-row-sub">{{ $building->property_type ?? 'Property' }} &middot; {{ $occupied }} of {{ $totalUnits }} let</span>
+                @if($showNet)
+                    <span class="m-row-sub {{ $net < 0 ? 'is-down' : 'is-strong' }}">BHD {{ number_format($net, 0) }} net</span>
+                @endif
+            </span>
+
+            <span class="m-row-occ">
+                <span class="m-row-bar">
+                    <span class="m-row-bar-fill" style="--ps-pct:{{ $occPct }}%"></span>
+                </span>
+                <span class="m-row-pct">{{ $occPct }}%</span>
+            </span>
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+        </a>
+    @empty
+        <div class="m-empty ps-reveal">
+            <div class="m-empty-icon"><i class="fa-solid fa-building-circle-exclamation" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No properties here</div>
+            <div class="m-empty-sub">Try a different search, or add a property.</div>
             <button type="button" onclick="openBuildingModal()" class="m-action-btn primary">
-                <i class="fa-solid fa-plus"></i>Add a property
-            </button>
-            <button type="button" onclick="openImport_buildings()" class="m-action-btn outline">
-                <i class="fa-solid fa-wand-magic-sparkles"></i>Smart import
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>Add a property
             </button>
         </div>
-    </div>
-
-    <a href="{{ route('export.buildings', request()->only(['search','property_type','type_of_ownership'])) }}"
-       style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;font-size:.85rem;font-weight:600;color:var(--ps-gold-text-deep);text-decoration:none;">
-        <i class="fa-solid fa-file-excel"></i> Export all to Excel
-    </a>
-
-    <button type="button" class="pm-fab" style="position:fixed;border:0;" onclick="openExpenseSheet()" title="Record expense"><i class="fa-solid fa-plus"></i></button>
-</div>
+    @endforelse
+</x-mobile-list>
 
 @include('components.expense-sheet')
 
@@ -453,7 +519,7 @@
                 <label>Property Type</label>
                 <select name="property_type" onchange="this.form.submit()">
                     <option value="">All Types</option>
-                    @foreach(['Residential','Commercial','Mixed Use','Industrial','Retail'] as $type)
+                    @foreach($buildingTypes as $type)
                         <option value="{{ $type }}" {{ request('property_type') == $type ? 'selected' : '' }}>{{ $type }}</option>
                     @endforeach
                 </select>
@@ -462,7 +528,7 @@
                 <label>Ownership</label>
                 <select name="type_of_ownership" onchange="this.form.submit()">
                     <option value="">All Ownership</option>
-                    @foreach(['Owned','Leased','Joint Venture','Managed'] as $own)
+                    @foreach($ownershipTypes as $own)
                         <option value="{{ $own }}" {{ request('type_of_ownership') == $own ? 'selected' : '' }}>{{ $own }}</option>
                     @endforeach
                 </select>
@@ -865,7 +931,7 @@
                             <div class="mfield-wrap">
                                 <select name="type_of_ownership" class="mfield-select {{ $errors->has('type_of_ownership') ? 'is-invalid' : '' }}">
                                     <option value="">Select…</option>
-                                    @foreach(['Owned','Leased','Joint Venture','Managed'] as $opt)
+                                    @foreach($ownershipTypes as $opt)
                                         <option value="{{ $opt }}" {{ $mval('type_of_ownership') == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                                     @endforeach
                                 </select>
@@ -882,7 +948,7 @@
                             <div class="mfield-wrap">
                                 <select name="property_type" class="mfield-select {{ $errors->has('property_type') ? 'is-invalid' : '' }}">
                                     <option value="">Select…</option>
-                                    @foreach(['Residential','Commercial','Mixed Use','Industrial','Retail'] as $opt)
+                                    @foreach($buildingTypes as $opt)
                                         <option value="{{ $opt }}" {{ $mval('property_type') == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                                     @endforeach
                                 </select>

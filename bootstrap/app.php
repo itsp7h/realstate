@@ -36,8 +36,8 @@ return Application::configure(basePath: dirname(__DIR__))
         //
         // With these registered globally, RestrictDestructiveActions saw a null
         // user on every browser request and refused every DELETE — including an
-        // admin's — while RestrictMaintenanceRole failed open, so that role's
-        // confinement never applied to a real request at all. Neither showed up
+        // admin's — while RestrictScopedRoles failed open, so the confined
+        // roles' confinement never applied to a real request at all. Neither showed up
         // in the suite because actingAs() sets the user on the guard directly,
         // which makes it resolvable even before the session starts.
         //
@@ -47,7 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // remembering to guard it.
         $middleware->web(append: [
             \App\Http\Middleware\RestrictDestructiveActions::class,
-            \App\Http\Middleware\RestrictMaintenanceRole::class,
+            \App\Http\Middleware\RestrictScopedRoles::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

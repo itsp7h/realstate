@@ -2,6 +2,7 @@
 
 @section('title', 'Payments')
 @section('topbar-title', 'Payments')
+@section('topbar-count', number_format($payments->total()))
 
 @push('styles')
 <style>
@@ -15,44 +16,61 @@
 @section('page-subtitle', 'All payments received across invoices')
 
 
-{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
+     No actions row: a payment is recorded against an invoice, so there is
+     no "add payment" here to be primary. ── --}}
 @php
-    $payMethodLabels = ['cash' => 'Cash', 'bank_transfer' => 'Bank Transfer', 'cheque' => 'Cheque', 'online_card' => 'Online / Card'];
+    $payMethodLabels = ['cash' => 'Cash', 'bank_transfer' => 'Bank transfer', 'cheque' => 'Cheque', 'online_card' => 'Online / card'];
 @endphp
-<div class="m-screen">
-    <div class="ps-stat-strip">
-        <div class="ps-stat"><div class="ps-stat-label">Collected &middot; {{ now()->format('M') }}</div><div class="ps-stat-value">BHD {{ number_format($stats['this_month'], 0) }}</div></div>
-        <div class="ps-stat"><div class="ps-stat-label">All-time</div><div class="ps-stat-value is-gold">BHD {{ number_format($stats['total_collected'], 0) }}</div></div>
-    </div>
-    <div class="m-chip-row no-sb">
-        <a href="{{ route('payments.index') }}" class="m-chip {{ !request('method') ? 'active' : '' }}">All</a>
-        @foreach($payMethodLabels as $val => $label)
-            <a href="{{ route('payments.index', ['method' => $val]) }}" class="m-chip {{ request('method') === $val ? 'active' : '' }}">{{ $label }}</a>
-        @endforeach
-    </div>
-    <div class="m-row-list">
-        @forelse($payments as $pmt)
-            @php $mInv = $pmt->invoice; @endphp
-            <a href="{{ $mInv ? route('invoices.show', $mInv) : '#' }}" class="m-row-card">
-                <div class="m-row-icon" style="background:var(--ps-success-bg);color:var(--ps-success);"><i class="fa-solid fa-money-bill-transfer"></i></div>
-                <div style="flex:1;min-width:0;">
-                    <div class="m-row-title">{{ $pmt->payment_number }}</div>
-                    <div class="m-row-sub">{{ $mInv?->tenant_name ?? '—' }} &middot; {{ $pmt->payment_date->format('d M Y') }}</div>
-                </div>
-                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-                    <div style="font-size:1rem;font-weight:700;color:var(--ps-success);">BHD {{ number_format($pmt->amount, 0) }}</div>
-                    <span class="m-row-badge" style="background:var(--ps-bg);color:var(--ps-muted-deep);">{{ $pmt->method_label }}</span>
-                </div>
-            </a>
-        @empty
-            <div class="m-empty">
-                <div class="m-empty-icon"><i class="fa-solid fa-money-bill-transfer"></i></div>
-                <div class="m-empty-title">No payments recorded yet</div>
-                <div class="m-empty-sub">Try adjusting your filters.</div>
-            </div>
-        @endforelse
-    </div>
-</div>
+@php
+    $payMethod = request('method');
+    $payChips  = [[
+        'label'  => 'All',
+        'href'   => route('payments.index', array_filter(['search' => request('search')])),
+        'active' => ! $payMethod,
+    ]];
+    foreach ($payMethodLabels as $payVal => $payLabel) {
+        $payChips[] = [
+            'label'  => $payLabel,
+            'href'   => route('payments.index', array_filter(['search' => request('search'), 'method' => $payVal])),
+            'active' => $payMethod === $payVal,
+        ];
+    }
+@endphp
+<x-mobile-list
+    :stats="[
+        ['money' => $stats['this_month'],           'label' => now()->format('M').' BHD'],
+        ['money' => $stats['total_collected'],      'label' => 'All-time BHD'],
+        ['value' => number_format($stats['count']), 'label' => 'Payments'],
+    ]"
+    :search="[
+        'action'      => route('payments.index'),
+        'placeholder' => 'Search payment, tenant or reference',
+        'aria'        => 'Search payments',
+        'keep'        => ['method'],
+    ]"
+    :chips="$payChips">
+
+    @forelse($payments as $pmt)
+        @php $mInv = $pmt->invoice; @endphp
+        <a href="{{ $mInv ? route('invoices.show', $mInv) : '#' }}" class="m-row-card ps-reveal">
+            <span class="m-row-thumb"><i class="fa-solid fa-money-bill-transfer" aria-hidden="true"></i></span>
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $pmt->payment_number }}</span>
+                <span class="m-row-sub">{{ $mInv?->tenant_name ?? '—' }} &middot; {{ $pmt->payment_date->format('d M Y') }}</span>
+                <span class="m-row-sub">@unless(request('method')){{ $pmt->method_label }}@endunless{{ $pmt->reference ? (request('method') ? '' : ' · ').'Ref '.$pmt->reference : '' }}</span>
+            </span>
+            <span class="m-row-amount">BHD {{ number_format($pmt->amount, 0) }}</span>
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+        </a>
+    @empty
+        <div class="m-empty">
+            <div class="m-empty-icon"><i class="fa-solid fa-money-bill-transfer" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No payments here</div>
+            <div class="m-empty-sub">Record a payment from the invoice it settles.</div>
+        </div>
+    @endforelse
+</x-mobile-list>
 
 <div class="stats-grid m-hide-desktop-index">
     <div class="stat-card">

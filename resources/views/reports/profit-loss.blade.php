@@ -5,18 +5,22 @@
 
 @section('content')
 
-@section('page-title', 'Profit &amp; Loss Statement')
+@section('page-title', 'Profit & Loss Statement')
 @section('page-subtitle', 'Cash collected against costs incurred, per building, tenant, or unit')
+@section('page-back')
+    <a href="{{ route('reports.index') }}" class="btn btn-outline" aria-label="Back to Reports">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Reports</span>
+    </a>
+@endsection
+
 @section('page-actions')
-    <a href="{{ route('reports.index') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Reports</a>
     <button type="button" class="btn btn-outline"
             onclick="openReportPdf('{{ route('reports.profit-loss.pdf', request()->only(['building_id','tenant_id','unit_id','date_from','date_to'])) }}', 'Profit &amp; Loss Statement')">
         <i class="fa-solid fa-eye"></i> Preview
     </button>
     <a href="{{ route('reports.profit-loss.pdf', request()->only(['building_id','tenant_id','unit_id','date_from','date_to'])) }}"
        target="_blank" class="btn btn-outline"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
-    <a href="{{ route('reports.profit-loss.export', request()->only(['building_id','tenant_id','unit_id','date_from','date_to'])) }}"
-       class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export XLSX</a>
+    <x-export-button href="{{ route('reports.profit-loss.export', request()->only(['building_id','tenant_id','unit_id','date_from','date_to'])) }}" label="Export XLSX" icon="fa-file-excel" />
 @endsection
 
 @php

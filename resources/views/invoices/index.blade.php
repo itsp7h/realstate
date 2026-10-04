@@ -2,6 +2,7 @@
 
 @section('title', 'Invoices')
 @section('topbar-title', 'Invoices')
+@section('topbar-count', number_format($invoices->total()))
 
 @section('page-title', 'Invoices')
 @section('page-subtitle', 'Manage and track invoices issued to tenants')
@@ -67,54 +68,71 @@
 @section('content')
 
 
-{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
+     The status pill is the row's one slot when nothing is filtered by
+     status; when a chip is filtering, every pill would say the same word,
+     so the amount takes the slot instead. ── --}}
 @php
-    $invStatusLabels = ['issued' => 'Issued', 'partially_paid' => 'Partially Paid', 'paid' => 'Paid', 'overdue' => 'Overdue'];
-    // Status pills use the Promoseven semantic pairs, not app-core's
-    // theme-flipping tones: this mobile layer is a fixed light system.
-    $invBadgeColors = [
-        'paid'           => ['var(--ps-success-bg)', 'var(--ps-success)'],
-        'partially_paid' => ['var(--ps-warning-bg)', 'var(--ps-warning)'],
-        'issued'         => ['var(--ps-info-bg)',    'var(--ps-info)'],
-        'overdue'        => ['var(--ps-danger-bg)',  'var(--ps-danger)'],
-        'draft'          => ['var(--ps-bg)',         'var(--ps-muted-deep)'],
-        'cancelled'      => ['var(--ps-bg)',         'var(--ps-muted-deep)'],
-    ];
+    $invStatusLabels = ['issued' => 'Issued', 'partially_paid' => 'Partially paid', 'paid' => 'Paid', 'overdue' => 'Overdue'];
 @endphp
-<div class="m-screen">
-    <div class="ps-stat-strip">
-        <div class="ps-stat"><div class="ps-stat-label">Collected &middot; {{ now()->format('M') }}</div><div class="ps-stat-value">BHD {{ number_format($collectedThisMonth, 0) }}</div></div>
-        <div class="ps-stat"><div class="ps-stat-label">Outstanding</div><div class="ps-stat-value is-gold">BHD {{ number_format($outstanding, 0) }}</div></div>
-    </div>
-    <div class="m-chip-row no-sb">
-        <a href="{{ route('invoices.index') }}" class="m-chip {{ !request('status') ? 'active' : '' }}">All</a>
-        @foreach($invStatusLabels as $val => $label)
-            <a href="{{ route('invoices.index', ['status' => $val]) }}" class="m-chip {{ request('status') === $val ? 'active' : '' }}">{{ $label }}</a>
-        @endforeach
-    </div>
-    <div class="m-row-list">
-        @forelse($invoices as $inv)
-            @php [$bg, $fg] = $invBadgeColors[$inv->status] ?? ['var(--ps-bg)', 'var(--ps-muted-deep)']; @endphp
-            <a href="{{ route('invoices.show', $inv) }}" class="m-row-card">
-                <div class="m-row-icon" style="background:var(--ps-gold-tint);color:var(--ps-gold-text);"><i class="fa-solid fa-file-invoice"></i></div>
-                <div style="flex:1;min-width:0;">
-                    <div class="m-row-title">{{ $inv->invoice_number }}</div>
-                    <div class="m-row-sub">{{ $inv->tenant_name }}</div>
-                </div>
-                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-                    <div style="font-size:13.5px;font-weight:800;">BHD {{ number_format($inv->amount, 0) }}</div>
-                    <span class="m-row-badge" style="background:{{ $bg }};color:{{ $fg }};">{{ $inv->status_label }}</span>
-                </div>
+@php
+    $invStatus = request('status');
+    $invChips  = [[
+        'label'  => 'All',
+        'href'   => route('invoices.index', array_filter(['search' => request('search')])),
+        'active' => ! $invStatus,
+    ]];
+    foreach ($invStatusLabels as $invVal => $invLabel) {
+        $invChips[] = [
+            'label'  => $invLabel,
+            'href'   => route('invoices.index', array_filter(['search' => request('search'), 'status' => $invVal])),
+            'active' => $invStatus === $invVal,
+        ];
+    }
+@endphp
+<x-mobile-list
+    :actions="['primary' => ['label' => 'New invoice', 'href' => route('invoices.create')]]"
+    :stats="[
+        ['money' => $collectedThisMonth,               'label' => now()->format('M').' BHD'],
+        {{-- "Owed", the same word the dashboard uses for the same figure: one
+             name per thing, and it fits the column without wrapping. --}}
+        ['money' => $outstanding,                      'label' => 'Owed BHD', 'owed' => true],
+        ['value' => number_format($invoices->total()), 'label' => 'Invoices'],
+    ]"
+    :search="[
+        'action'      => route('invoices.index'),
+        'placeholder' => 'Search invoice or tenant',
+        'aria'        => 'Search invoices',
+        'keep'        => ['status'],
+    ]"
+    :chips="$invChips">
+
+    @forelse($invoices as $inv)
+        <a href="{{ route('invoices.show', $inv) }}" class="m-row-card ps-reveal">
+            <span class="m-row-thumb"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i></span>
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $inv->invoice_number }}</span>
+                <span class="m-row-sub">{{ $inv->tenant_name }}</span>
+                {{-- The status word repeats the active chip, so it only
+                     earns a line when nothing is filtering by it. --}}
+                <span class="m-row-sub">
+                    Due {{ $inv->due_date?->format('d M Y') ?? '—' }}@unless(request('status')) &middot; {{ $inv->status_label }}@endunless
+                </span>
+            </span>
+            <span class="m-row-amount">BHD {{ number_format($inv->amount, 0) }}</span>
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+        </a>
+    @empty
+        <div class="m-empty">
+            <div class="m-empty-icon"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No invoices here</div>
+            <div class="m-empty-sub">Raise one against a lease, and it shows up here.</div>
+            <a href="{{ route('invoices.create') }}" class="m-action-btn primary">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>New invoice
             </a>
-        @empty
-            <div class="m-empty">
-                <div class="m-empty-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                <div class="m-empty-title">No invoices found</div>
-                <div class="m-empty-sub">Try adjusting your filters.</div>
-            </div>
-        @endforelse
-    </div>
-</div>
+        </div>
+    @endforelse
+</x-mobile-list>
 
 <div class="stats-grid m-hide-desktop-index">
     <div class="stat-card">

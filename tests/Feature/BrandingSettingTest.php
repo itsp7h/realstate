@@ -54,6 +54,65 @@ class BrandingSettingTest extends TestCase
         $this->assertSame('#AABBCC', $setting->secondary_color);
     }
 
+    // ── Letterhead contact email ─────────────────────────────────────────────
+
+    public function test_admin_can_save_the_contact_email(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+
+        $this->put(route('settings.branding.update'), [
+            'company_email' => 'realestateaccounts@promoseven.com',
+        ])->assertRedirect(route('settings.branding.edit'));
+
+        $this->assertSame('realestateaccounts@promoseven.com', BrandingSetting::current()->company_email);
+    }
+
+    public function test_the_contact_email_field_is_on_the_form(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+        BrandingSetting::current()->update(['company_email' => 'accounts@example.com']);
+
+        $this->get(route('settings.branding.edit'))
+            ->assertOk()
+            ->assertSee('name="company_email"', false)
+            ->assertSee('type="email"', false)
+            ->assertSee('accounts@example.com', false);
+    }
+
+    /** It prints on tenant-facing documents, so free text is not acceptable. */
+    public function test_validates_the_contact_email_is_an_address(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+
+        $this->put(route('settings.branding.update'), [
+            'company_email' => 'not-an-email',
+        ])->assertSessionHasErrors(['company_email']);
+
+        $this->assertNull(BrandingSetting::current()->company_email);
+    }
+
+    public function test_validates_the_contact_email_length(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+
+        $this->put(route('settings.branding.update'), [
+            'company_email' => str_repeat('a', 250) . '@example.com',
+        ])->assertSessionHasErrors(['company_email']);
+    }
+
+    /** Optional: the letterhead simply drops the line when it is blank. */
+    public function test_the_contact_email_may_be_cleared(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+        BrandingSetting::current()->update(['company_email' => 'accounts@example.com']);
+
+        $this->put(route('settings.branding.update'), [
+            'company_email' => '',
+        ])->assertRedirect(route('settings.branding.edit'));
+
+        $this->assertNull(BrandingSetting::current()->company_email);
+    }
+
     public function test_validates_color_fields_are_hex(): void
     {
         $this->actingAs(User::factory()->admin()->create());

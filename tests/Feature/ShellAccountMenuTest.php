@@ -26,7 +26,12 @@ class ShellAccountMenuTest extends TestCase
 
         // The desktop top bar only; the mobile drawer and the "more" sheet have
         // their own, deliberately explicit, sign-out rows.
-        return Str::between($html, 'shell-topbar', '</header>');
+        //
+        // Ends at the page header, not the last </header>: the page header can
+        // carry dropdowns of its own now (Export → xlsx | pdf), and those are
+        // not top-bar panels. Counting them here would make this guard drift
+        // every time a page adds a header action.
+        return Str::between($html, 'shell-topbar', 'shell-pagehead');
     }
 
     /**
@@ -93,13 +98,15 @@ class ShellAccountMenuTest extends TestCase
     {
         $topbar = $this->topbar();
 
-        // Four: bell, help and account in the shell bar, plus the help panel in
-        // the ≤768px bar (this slice runs to the last </header>, so it covers
-        // both bars). One handler drives them all, keyed off these hooks;
-        // renaming one without the others silently leaves a panel that cannot
-        // be opened — which is exactly how the help button shipped inert.
-        $this->assertSame(4, substr_count($topbar, 'data-pop>'), 'Expected four top-bar dropdowns.');
-        $this->assertSame(4, substr_count($topbar, 'data-pop-toggle'));
-        $this->assertSame(4, substr_count($topbar, 'class="shell-pop '));
+        // Three: bell, help and account, all in the shell bar. The fourth was
+        // the help panel in the ≤768px bar; that header now carries exactly
+        // three slots (theme, bell, avatar) and help moved to More → Help, so
+        // the phone has no popover left to share. One handler still drives the
+        // remaining three, keyed off these hooks; renaming one without the
+        // others silently leaves a panel that cannot be opened — which is
+        // exactly how the help button shipped inert.
+        $this->assertSame(3, substr_count($topbar, 'data-pop>'), 'Expected three top-bar dropdowns.');
+        $this->assertSame(3, substr_count($topbar, 'data-pop-toggle'));
+        $this->assertSame(3, substr_count($topbar, 'class="shell-pop '));
     }
 }

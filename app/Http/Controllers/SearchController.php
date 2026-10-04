@@ -41,17 +41,26 @@ class SearchController extends Controller
         $user = $request->user();
         $groups = [];
 
-        // The Maintenance role reaches nothing but its own module, so it gets
-        // maintenance results and nothing else.
-        if (! $user->isMaintenance()) {
+        // A group is offered only where the role can open the record it links
+        // to, asked area by area rather than role by role — the same capability
+        // methods the sidebar and the palette's jump list gate on. Maintenance
+        // gets its own module and nothing else; an Accountant gets invoices and
+        // no portfolio, because every portfolio row here links to a show page
+        // that would answer 403.
+        if ($user->canAccessPortfolio()) {
             $groups[] = $this->group('Buildings', 'fa-building', $this->buildings($q));
             $groups[] = $this->group('Units', 'fa-door-open', $this->units($q));
             $groups[] = $this->group('Tenants', 'fa-users', $this->tenants($q));
             $groups[] = $this->group('Leases', 'fa-file-contract', $this->leases($q));
+        }
+
+        if ($user->canAccessAccounting()) {
             $groups[] = $this->group('Invoices', 'fa-file-invoice', $this->invoices($q));
         }
 
-        $groups[] = $this->group('Maintenance', 'fa-screwdriver-wrench', $this->maintenance($q));
+        if ($user->canAccessMaintenance()) {
+            $groups[] = $this->group('Maintenance', 'fa-screwdriver-wrench', $this->maintenance($q));
+        }
 
         return response()->json([
             'query'  => $q,

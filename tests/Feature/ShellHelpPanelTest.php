@@ -82,7 +82,7 @@ class ShellHelpPanelTest extends TestCase
         $this->actingAs($user)->get(route('roles.index'))->assertForbidden();
     }
 
-    public function test_the_mobile_bar_gets_its_own_panel_without_the_keyboard_block(): void
+    public function test_the_phone_reaches_help_from_the_more_sheet_not_the_header(): void
     {
         $html = $this->actingAs(User::factory()->admin()->create())
             ->get(route('dashboard'))
@@ -91,13 +91,19 @@ class ShellHelpPanelTest extends TestCase
         $mobile = Str::after($html, '<header class="topbar"');
         $mobile = Str::before($mobile, '</header>');
 
-        // A separate id, because the shell bar is display:none below 769px and
-        // two elements may not share one.
-        $this->assertStringContainsString('id="topbar-help" hidden', $mobile);
-        $this->assertStringContainsString('aria-controls="topbar-help"', $mobile);
+        // The ≤768px header carries exactly three slots — theme, bell, avatar
+        // — so there is no fourth for a "?" popover. Help is a bottom sheet
+        // opened from More → Help instead.
+        $this->assertStringNotContainsString('topbar-help', $mobile);
+        $this->assertStringNotContainsString('circle-question', $mobile);
+
+        // The sheet is rendered immediately before the sign-out dialog.
+        $sheet = Str::before(Str::after($html, 'id="helpSheet"'), 'id="signOutDialog"');
+        $this->assertStringContainsString('id="moreHelpBtn"', $html);
+        $this->assertStringContainsString('aria-controls="helpSheet"', $html);
 
         // No command palette and no keyboard down there, so no ⌘K.
-        $this->assertStringNotContainsString('⌘K', $mobile);
-        $this->assertStringContainsString('Tap any row', $mobile);
+        $this->assertStringNotContainsString('⌘K', $sheet);
+        $this->assertStringContainsString('Tap any row', $sheet);
     }
 }

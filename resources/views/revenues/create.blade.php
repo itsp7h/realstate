@@ -34,11 +34,13 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     {{ $record ? 'Edit Revenue' : 'New Revenue' }}
 @endsection
 @section('page-subtitle', 'Record income against a building or unit')
-@section('page-actions')
-    <a href="{{ route('revenues.index') }}" class="btn btn-outline">
-        <i class="fa-solid fa-arrow-left"></i> Back to Revenue
+@section('page-back')
+    <a href="{{ route('revenues.index') }}" class="btn btn-outline" aria-label="Back to Revenue">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back to Revenue</span>
     </a>
 @endsection
+
+
 
 
 <form method="POST" action="{{ $record ? route('revenues.update', $record) : route('revenues.store') }}">

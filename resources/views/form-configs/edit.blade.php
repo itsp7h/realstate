@@ -14,10 +14,13 @@
     Edit {{ $title }}
 @endsection
 @section('page-subtitle', 'Drag to reorder, toggle to show/hide fields')
-@section('page-actions')
-    <a href="{{ route('form-configs.index') }}" class="btn btn-outline">
-        <i class="fa-solid fa-arrow-left"></i> Back
+@section('page-back')
+    <a href="{{ route('form-configs.index') }}" class="btn btn-outline" aria-label="Back">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back</span>
     </a>
+@endsection
+
+@section('page-actions')
     @if($configType === 'form')
     <button type="button" class="btn btn-primary" id="openAddFieldModal">
         <i class="fa-solid fa-plus"></i> Add New Field

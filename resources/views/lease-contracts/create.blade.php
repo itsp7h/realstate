@@ -14,11 +14,13 @@
 @endsection
 @section('page-title', 'New Lease Contract')
 @section('page-subtitle', 'Fill in all sections below to create a new lease agreement')
-@section('page-actions')
-    <a href="{{ route('lease-contracts.index') }}" class="btn btn-outline">
-        <i class="fa-solid fa-arrow-left"></i> Back
+@section('page-back')
+    <a href="{{ route('lease-contracts.index') }}" class="btn btn-outline" aria-label="Back">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back</span>
     </a>
 @endsection
+
+
 
 
 <form method="POST" action="{{ route('lease-contracts.store') }}" novalidate>

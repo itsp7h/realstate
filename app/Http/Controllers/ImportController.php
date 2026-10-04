@@ -13,8 +13,10 @@ use App\Models\Floor;
 use App\Models\LeaseContract;
 use App\Models\PropertyUnit;
 use App\Models\Tenant;
+use App\Support\ListingPdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -361,36 +363,75 @@ class ImportController extends Controller
 
     // ── EXPORTS ───────────────────────────────────────────────────────────────
 
-    public function exportBuildings(Request $request): BinaryFileResponse
+    public function exportBuildings(Request $request, string $format = 'xlsx'): BinaryFileResponse|Response
     {
         $filters = $request->only(['search', 'property_type', 'type_of_ownership']);
-        return Excel::download(new BuildingsExport($filters), 'buildings-' . now()->format('Y-m-d') . '.xlsx');
+        $export  = new BuildingsExport($filters);
+        $name    = 'buildings-' . now()->format('Y-m-d');
+
+        if ($format === 'pdf') {
+            return ListingPdf::fromExport($export, 'Buildings', 'property', $name, $filters);
+        }
+
+        return Excel::download($export, $name . '.xlsx');
     }
 
-    public function exportFloors(Request $request): BinaryFileResponse
+    public function exportFloors(Request $request, string $format = 'xlsx'): BinaryFileResponse|Response
     {
-        return Excel::download(
-            new FloorsExport($request->integer('building_id') ?: null),
-            'floors-' . now()->format('Y-m-d') . '.xlsx'
-        );
+        $buildingId = $request->integer('building_id') ?: null;
+        $export     = new FloorsExport($buildingId);
+        $name       = 'floors-' . now()->format('Y-m-d');
+
+        if ($format === 'pdf') {
+            // The filter is an id in the URL but a name on the page, so the
+            // document names the building rather than printing "building_id = 7".
+            $building = $buildingId ? Building::find($buildingId) : null;
+
+            return ListingPdf::fromExport($export, 'Floors', 'floor', $name, array_filter([
+                'Property' => $building?->property_name,
+            ]));
+        }
+
+        return Excel::download($export, $name . '.xlsx');
     }
 
-    public function exportUnits(Request $request): BinaryFileResponse
+    public function exportUnits(Request $request, string $format = 'xlsx'): BinaryFileResponse|Response
     {
         $filters = $request->only(['search', 'property_code', 'unit_type', 'unit_condition']);
-        return Excel::download(new UnitsExport($filters), 'units-' . now()->format('Y-m-d') . '.xlsx');
+        $export  = new UnitsExport($filters);
+        $name    = 'units-' . now()->format('Y-m-d');
+
+        if ($format === 'pdf') {
+            return ListingPdf::fromExport($export, 'Property units', 'unit', $name, $filters);
+        }
+
+        return Excel::download($export, $name . '.xlsx');
     }
 
-    public function exportTenants(Request $request): BinaryFileResponse
+    public function exportTenants(Request $request, string $format = 'xlsx'): BinaryFileResponse|Response
     {
         $filters = $request->only(['search', 'tenant_type', 'company_name']);
-        return Excel::download(new TenantsExport($filters), 'tenants-' . now()->format('Y-m-d') . '.xlsx');
+        $export  = new TenantsExport($filters);
+        $name    = 'tenants-' . now()->format('Y-m-d');
+
+        if ($format === 'pdf') {
+            return ListingPdf::fromExport($export, 'Tenants', 'tenant', $name, $filters);
+        }
+
+        return Excel::download($export, $name . '.xlsx');
     }
 
-    public function exportContracts(Request $request): BinaryFileResponse
+    public function exportContracts(Request $request, string $format = 'xlsx'): BinaryFileResponse|Response
     {
         $filters = $request->only(['search', 'property_code']);
-        return Excel::download(new LeaseContractsExport($filters), 'lease-contracts-' . now()->format('Y-m-d') . '.xlsx');
+        $export  = new LeaseContractsExport($filters);
+        $name    = 'lease-contracts-' . now()->format('Y-m-d');
+
+        if ($format === 'pdf') {
+            return ListingPdf::fromExport($export, 'Lease contracts', 'contract', $name, $filters);
+        }
+
+        return Excel::download($export, $name . '.xlsx');
     }
 
     // ── IMPORTS ───────────────────────────────────────────────────────────────

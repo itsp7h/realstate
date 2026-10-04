@@ -1,7 +1,12 @@
 @extends('layouts.admin')
 
 @section('title', 'Maintenance Requests')
-@section('topbar-title', 'Maintenance Management')
+{{-- "Requests", matching the bottom tab: the phone header truncated
+     "Maintenance Management" to "Maintenanc…" beside its count, and the tab
+     directly under it already said Requests. The desktop page title below is
+     unchanged. --}}
+@section('topbar-title', 'Requests')
+@section('topbar-count', number_format($requests->total()))
 
 @section('page-title', 'Maintenance Requests')
 @section('page-subtitle', 'Track and manage all property maintenance work orders')
@@ -166,54 +171,63 @@
 @section('content')
 
 
-{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
+     The row was a two-line block with its own flex-direction override —
+     the only list screen not built from the shared row. It is the shared
+     row now: thumbnail, job order + where + when, status in the one
+     slot. ── --}}
 @php
-    $mntStatusLabels = ['waiting_supervisor' => 'Pending Assessment','waiting_approval' => 'Pending Approval','approved' => 'Approved','in_progress' => 'In Progress','completed' => 'Completed','cancelled' => 'Cancelled'];
-    // Six status colours collapse onto four Promoseven tones — the
-    // language has one accent, so 'orange' and 'purple' stop being
-    // their own hues and read as warning / navy-info instead.
-    $mntBadgeColors = [
-        'orange' => ['var(--ps-warning-bg)', 'var(--ps-warning)'],
-        'purple' => ['var(--ps-info-bg)',    'var(--ps-info)'],
-        'green'  => ['var(--ps-success-bg)', 'var(--ps-success)'],
-        'blue'   => ['var(--ps-info-bg)',    'var(--ps-info)'],
-        'teal'   => ['var(--ps-success-bg)', 'var(--ps-success)'],
-        'red'    => ['var(--ps-danger-bg)',  'var(--ps-danger)'],
-        'gray'   => ['var(--ps-bg)',         'var(--ps-muted-deep)'],
-    ];
+    $mntStatusLabels = ['waiting_supervisor' => 'Pending assessment','waiting_approval' => 'Pending approval','approved' => 'Approved','in_progress' => 'In progress','completed' => 'Completed','cancelled' => 'Cancelled'];
 @endphp
-<div class="m-screen">
-    <div class="m-chip-row no-sb">
-        <a href="{{ route('maintenance.index') }}" class="m-chip {{ !request('status') ? 'active' : '' }}">All</a>
-        @foreach($mntStatusLabels as $val => $label)
-            <a href="{{ route('maintenance.index', ['status' => $val]) }}" class="m-chip {{ request('status') === $val ? 'active' : '' }}">{{ $label }}</a>
-        @endforeach
-    </div>
-    <div class="m-row-list">
-        @forelse($requests as $req)
-            @php [$bg, $fg] = $mntBadgeColors[$req->status_color] ?? ['var(--ps-bg)', 'var(--ps-muted-deep)']; @endphp
-            <a href="{{ route('maintenance.show', $req) }}" class="m-row-card" style="flex-direction:column;align-items:stretch;gap:9px;">
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <div class="m-row-title" style="flex:1;">{{ $req->job_order ?? 'Request #'.$req->id }}</div>
-                    <span class="m-row-badge" style="background:{{ $bg }};color:{{ $fg }};">{{ $req->status_label }}</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--ps-muted-deep);flex-wrap:wrap;">
-                    @if($req->flat)<span class="m-row-chip" style="font-size:10px;">{{ $req->flat }}</span>@endif
-                    <span>{{ $req->property }}</span>
-                    <span>{{ optional($req->date)->format('M j') }}</span>
-                </div>
-            </a>
-        @empty
-            <div class="m-empty">
-                <div class="m-empty-icon"><i class="fa-solid fa-wrench"></i></div>
-                <div class="m-empty-title">No maintenance requests found</div>
-                <div class="m-empty-sub">Try adjusting your filters or add a new request.</div>
-            </div>
-        @endforelse
-    </div>
+@php
+    $mntStatus = request('status');
+    $mntChips  = [[
+        'label'  => 'All',
+        'href'   => route('maintenance.index', array_filter(['search' => request('search')])),
+        'active' => ! $mntStatus,
+    ]];
+    foreach ($mntStatusLabels as $mntVal => $mntLabel) {
+        $mntChips[] = [
+            'label'  => $mntLabel,
+            'href'   => route('maintenance.index', array_filter(['search' => request('search'), 'status' => $mntVal])),
+            'active' => $mntStatus === $mntVal,
+        ];
+    }
+@endphp
+<x-mobile-list
+    :actions="['primary' => ['label' => 'New request', 'onclick' => 'openMaintenanceModal()']]"
+    :search="[
+        'action'      => route('maintenance.index'),
+        'placeholder' => 'Search job order, property or flat',
+        'aria'        => 'Search requests',
+        'keep'        => ['status'],
+    ]"
+    :chips="$mntChips">
 
-    <button type="button" class="pm-fab" style="position:fixed;border:0;" onclick="openMaintenanceModal()" title="New request"><i class="fa-solid fa-plus"></i></button>
-</div>
+    @forelse($requests as $req)
+        <a href="{{ route('maintenance.show', $req) }}" class="m-row-card ps-reveal">
+            <span class="m-row-thumb"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i></span>
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $req->job_order ?? 'Request #'.$req->id }}</span>
+                <span class="m-row-sub">{{ $req->property }}{{ $req->flat ? ' · '.$req->flat : '' }}</span>
+                <span class="m-row-sub">{{ optional($req->date)->format('d M Y') ?? 'No date' }}</span>
+            </span>
+            @unless(request('status'))
+                <span class="status-badge {{ $req->status }}">{{ $req->status_label }}</span>
+            @endunless
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+        </a>
+    @empty
+        <div class="m-empty">
+            <div class="m-empty-icon"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No requests here</div>
+            <div class="m-empty-sub">Try another filter, or raise a request.</div>
+            <button type="button" class="m-action-btn primary" onclick="openMaintenanceModal()">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>New request
+            </button>
+        </div>
+    @endforelse
+</x-mobile-list>
 
 {{-- STATS --}}
 <div class="stats-grid is-compact m-hide-desktop-index">

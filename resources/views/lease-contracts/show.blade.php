@@ -39,11 +39,13 @@
 @section('page-subtitle')
     Full breakdown of lease agreement {{ $leaseContract->lease_agreement_no }}
 @endsection
-@section('page-actions')
-    <a href="{{ route('lease-contracts.index') }}" class="btn btn-outline">
-        <i class="fa-solid fa-arrow-left"></i> Back
+@section('page-back')
+    <a href="{{ route('lease-contracts.index') }}" class="btn btn-outline" aria-label="Back">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back</span>
     </a>
 @endsection
+
+
 
 
 {{-- HERO --}}

@@ -44,7 +44,13 @@ class AlertsSheetTest extends TestCase
             'contact_no'         => '+973 3300 0000',
             'available_datetime' => '2026-05-22 10:00:00',
             'apartment_status'   => 'occupied',
-            'status'             => 'pending',
+            // A real status. This said 'pending', which is not one of the
+            // statuses the app uses for a request (MaintenanceBoard lists the
+            // live ones as open / waiting_supervisor / waiting_approval) — it
+            // only counted because the dashboard's own alert list swept up
+            // "anything not completed or cancelled". The shared feed asks a
+            // sharper question, so the fixture has to be a real row.
+            'status'             => 'waiting_supervisor',
         ]);
     }
 
@@ -75,7 +81,9 @@ class AlertsSheetTest extends TestCase
 
         $sheet = $this->sheet();
 
-        $this->assertStringContainsString('2 open requests', $sheet);
+        // The feed's wording, not the dashboard's own: this sheet reads
+        // App\Services\AttentionFeed like every other bell in the app.
+        $this->assertStringContainsString('2 requests awaiting a decision', $sheet);
         $this->assertStringContainsString('--tone-warning-bg', $sheet);
         $this->assertStringContainsString(route('maintenance.index'), $sheet);
         $this->assertStringNotContainsString('all clear', $sheet);

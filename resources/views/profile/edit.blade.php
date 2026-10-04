@@ -6,7 +6,7 @@
 @section('content')
 
 @section('page-title', 'Your profile')
-@section('page-subtitle', 'Your sign-in details. Only an administrator can change which role an account holds.')
+@section('page-subtitle', 'Your photo, sign-in details and password. Only an administrator can change which role an account holds.')
 
 @if(session('success'))
     <div class="alert alert-success" role="status">
@@ -15,7 +15,11 @@
     </div>
 @endif
 
-<div class="card-grid is-pair is-natural">
+{{-- Equalised, not is-natural: these are two forms that each end in a footer
+     button, so their actions belong on one line. Left as natural, the photo
+     field made Details 160px taller than Password and left a dead gap under
+     it with the Save footer reading as detached. --}}
+<div class="card-grid is-pair">
 
     {{-- ── Who you are ─────────────────────────────────────────────────── --}}
     <div class="card">
@@ -26,10 +30,43 @@
                 <div class="card-subtitle">The name and address you sign in with</div>
             </div>
         </div>
-        <form method="POST" action="{{ route('profile.update') }}" novalidate>
+        <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data" novalidate>
             @csrf @method('PUT')
             <div class="card-body">
                 <div class="form-grid cols-1">
+                    {{-- Photo first: it is the only field on this page that
+                         other people see, and the preview is the actual circle
+                         the account chip will draw, so what you check here is
+                         what ships. --}}
+                    <div class="form-group">
+                        <label class="form-label" for="photo">Photo</label>
+                        <div class="upload-row">
+                            <div class="upload-preview is-round" id="photo-preview">
+                                @if($user->photoUrl())
+                                    <img src="{{ $user->photoUrl() }}" alt="Your current photo">
+                                @else
+                                    {{ $user->initial() }}
+                                @endif
+                            </div>
+                            <div class="upload-fields">
+                                <input type="file" id="photo" name="photo" data-preview="photo-preview"
+                                       class="form-control @error('photo') is-invalid @enderror"
+                                       accept=".jpg,.jpeg,.png,.webp"
+                                       @error('photo') aria-invalid="true" aria-describedby="photo-error" @enderror>
+                                <div class="field-help">JPG, PNG or WebP, at least 96 &times; 96 pixels, up to 2 MB. Shown in the account menu and the sidebar.</div>
+                                @error('photo')
+                                    <div class="field-error" id="photo-error"><i class="fa-solid fa-circle-exclamation"></i><span>{{ $message }}</span></div>
+                                @enderror
+                                @if($user->photo_path)
+                                    <div class="form-check" style="margin-top:8px">
+                                        <input type="checkbox" id="remove_photo" name="remove_photo" value="1">
+                                        <label for="remove_photo">Remove my photo &mdash; go back to the initial</label>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label class="form-label" for="name">Name <span class="req">*</span></label>
                         <input type="text" id="name" name="name" class="form-control @error('name') is-invalid @enderror"
@@ -125,6 +162,132 @@
             </div>
         </form>
     </div>
+</div>
+
+{{-- ── Account activity ────────────────────────────────────────────────────
+     Outside the pair grid and full width: it is a list, not a form, and a third
+     card inside a two-column grid leaves a hole beside it.
+
+     Every figure here is already being written — LoginController audits
+     signed_in / sign_in_failed / locked_out, and this controller audits
+     password_changed and profile_updated. Until now only an Admin could see
+     any of it, so the account it happened to could not check its own. --}}
+<div class="card" style="margin-top:var(--sp-5)">
+    <div class="card-header">
+        <div class="card-header-icon is-info"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="card-header-text">
+            <div class="card-title">Account activity</div>
+            <div class="card-subtitle">Sign-ins and security changes on this account &mdash; only you and an administrator can see this</div>
+        </div>
+    </div>
+
+    <div class="card-body">
+        <div class="stats-grid is-triple">
+            <div class="stat-tile">
+                <div class="stat-tile-label"><i class="fa-solid fa-right-to-bracket"></i> Previous sign-in</div>
+                {{-- The previous one, not the latest: the latest IS the session
+                     reading this page, and telling you that you are signed in
+                     now is not information. --}}
+                <div class="stat-tile-value" style="font-size:15px">
+                    @if($previousSignIn)
+                        {{ $previousSignIn->created_at->format('d M Y, H:i') }}
+                    @else
+                        <span style="color:var(--text-muted)">&mdash;</span>
+                    @endif
+                </div>
+                @if($previousSignIn?->ip_address)
+                    <div class="field-help" style="font-family:var(--font-data)">from {{ $previousSignIn->ip_address }}</div>
+                @elseif(! $previousSignIn)
+                    <div class="field-help">This is the first sign-in on record.</div>
+                @endif
+            </div>
+
+            <div class="stat-tile">
+                <div class="stat-tile-label"><i class="fa-solid fa-key"></i> Password last changed</div>
+                <div class="stat-tile-value" style="font-size:15px">
+                    @if($lastPasswordChange)
+                        {{ $lastPasswordChange->created_at->format('d M Y') }}
+                    @else
+                        <span style="color:var(--text-muted)">&mdash;</span>
+                    @endif
+                </div>
+                <div class="field-help">
+                    @if($lastPasswordChange)
+                        {{ $lastPasswordChange->created_at->diffForHumans() }}
+                    @else
+                        Never changed since the account was created.
+                    @endif
+                </div>
+            </div>
+
+            <div class="stat-tile @if($failedAttempts > 0) is-danger @endif">
+                <div class="stat-tile-label"><i class="fa-solid fa-triangle-exclamation"></i> Failed sign-ins</div>
+                <div class="stat-tile-value">{{ number_format($failedAttempts) }}</div>
+                <div class="field-help">
+                    @if($failedAttempts > 0)
+                        In the last 30 days. If none of these were you, change your password.
+                    @else
+                        None in the last 30 days.
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if($events->isEmpty())
+        <div class="card-body" style="padding-top:0">
+            <div class="empty-state">
+                <div class="empty-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                <h4>Nothing recorded yet</h4>
+                <p>Sign-ins and password changes will appear here as they happen.</p>
+            </div>
+        </div>
+    @else
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>When</th>
+                        <th>Event</th>
+                        <th>Detail</th>
+                        <th>IP address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($events as $event)
+                        <tr>
+                            <td data-label="When">
+                                <div style="font-weight:600;color:var(--text-primary)">{{ $event->created_at->format('d M Y, H:i') }}</div>
+                                <div class="cell-muted">{{ $event->created_at->diffForHumans() }}</div>
+                            </td>
+                            <td data-label="Event">
+                                <span class="status-badge {{ $event->action }}">{{ $event->action_label }}</span>
+                            </td>
+                            <td data-label="Detail" class="cell-muted">
+                                @if($event->action === 'profile_updated' && ! empty($event->changes['photo']))
+                                    Photo {{ $event->changes['photo'] }}
+                                    @php $others = array_diff($event->changes['fields'] ?? [], ['photo']); @endphp
+                                    @if($others) &middot; changed {{ implode(', ', $others) }} @endif
+                                @elseif($event->action === 'profile_updated' && ! empty($event->changes['fields']))
+                                    Changed {{ implode(', ', $event->changes['fields']) }}
+                                @elseif($event->action === 'signed_in')
+                                    {{ ($event->changes['remember'] ?? false) ? 'Stayed signed in' : 'Single session' }}
+                                @else
+                                    &mdash;
+                                @endif
+                            </td>
+                            <td data-label="IP address" style="font-family:var(--font-data);font-size:var(--fs-sm)">
+                                {{ $event->ip_address ?? '—' }}
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer">
+            <span class="card-footer-note">The eight most recent events on this account.</span>
+        </div>
+    @endif
 </div>
 
 @endsection

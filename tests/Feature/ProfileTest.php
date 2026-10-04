@@ -232,7 +232,7 @@ class ProfileTest extends TestCase
 
     public function test_the_maintenance_role_reaches_its_profile_despite_the_allowlist(): void
     {
-        // RestrictMaintenanceRole is an opt-in allowlist, so a path that is not
+        // RestrictScopedRoles is an opt-in allowlist, so a path that is not
         // named is refused — including, before this, the role's own account.
         $this->actingAs(User::factory()->maintenance()->create(['password' => bcrypt('current-password')]));
 

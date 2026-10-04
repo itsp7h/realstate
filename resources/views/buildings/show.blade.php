@@ -3,6 +3,15 @@
 @section('title', $building->property_name)
 @section('topbar-title', 'Building Detail')
 
+{{-- The FAB rides in the layout's bottom bar, beside the tab pill: this
+     screen has no create verb of its own, so recording a cost is the one
+     thing worth a floating button here. --}}
+@section('mobile-fab')
+    <button type="button" class="pm-fab" onclick="openExpenseSheet()" title="Record an expense"
+            aria-label="Record an expense"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
+@endsection
+
+
 @section('page-breadcrumb')
     <a href="{{ url('/dashboard') }}">Home</a>
     <i class="fa-solid fa-chevron-right"></i>
@@ -183,7 +192,7 @@
          compute portfolio metrics — it's the way there, not the count. --}}
     <a href="{{ route('dashboard') }}#today" class="pm-icon-btn" title="Alerts"
        aria-label="Show what needs you today"><i class="fa-regular fa-bell" aria-hidden="true"></i></a>
-    <div class="pm-avatar">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
+    <x-avatar class="pm-avatar" tag="div" />
 </div>
 
 {{-- MOBILE: property detail (native app-style hero + row-card floors/units).
@@ -211,43 +220,56 @@
     </div>
 
     <div class="ps-stat-strip">
-        <div class="ps-stat"><div class="ps-stat-label">Income &middot; {{ now()->format('M') }}</div><div class="ps-stat-value">BHD {{ number_format($dashboard['kpis']['month_income'], 0) }}</div></div>
-        <div class="ps-stat"><div class="ps-stat-label">Net profit</div><div class="ps-stat-value {{ $dashboard['kpis']['month_profit'] < 0 ? 'is-danger' : 'is-gold' }}">BHD {{ number_format($dashboard['kpis']['month_profit'], 0) }}</div></div>
-    </div>
-
-    <div class="m-mini-row">
-        <div class="m-mini-stat"><div class="v">{{ $dashboard['kpis']['occupancy_percent'] }}%</div><div class="l">Occupancy</div></div>
-        <div class="m-mini-stat"><div class="v">{{ $dashboard['kpis']['occupied_units'] }}/{{ $dashboard['kpis']['total_units'] }}</div><div class="l">Units let</div></div>
-        <div class="m-mini-stat"><div class="v is-word">{{ $building->property_type ?? '—' }}</div><div class="l">Type</div></div>
+        <div class="ps-stat">
+            <div class="ps-stat-value {{ \App\Support\MoneyFormat::isZero($dashboard['kpis']['month_income']) ? 'is-zero' : '' }}">{{ \App\Support\MoneyFormat::figure($dashboard['kpis']['month_income']) }}</div>
+            <div class="ps-stat-label">{{ now()->format('M') }} BHD</div>
+        </div>
+        <div class="ps-stat">
+            <div class="ps-stat-value {{ \App\Support\MoneyFormat::isZero($dashboard['kpis']['month_profit']) ? 'is-zero' : '' }}">{{ \App\Support\MoneyFormat::figure($dashboard['kpis']['month_profit']) }}</div>
+            <div class="ps-stat-label">Net BHD</div>
+        </div>
+        <div class="ps-stat">
+            <div class="ps-stat-value">{{ $dashboard['kpis']['occupied_units'] }}/{{ $dashboard['kpis']['total_units'] }}</div>
+            <div class="ps-stat-label">Units let</div>
+        </div>
+        <div class="ps-stat">
+            <div class="ps-stat-value is-word">{{ $building->property_type ?? '—' }}</div>
+            <div class="ps-stat-label">Type</div>
+        </div>
     </div>
 
     <div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
             <div class="pm-section-label" style="margin-bottom:0;">Floors &amp; units</div>
-            <div style="font-size:.8rem;font-weight:500;color:var(--ps-muted-deep);">
-                Units <strong style="color:var(--ps-navy);">{{ $dashboard['kpis']['total_units'] }}</strong>
-                &nbsp;Let <strong style="color:var(--ps-success);">{{ $dashboard['kpis']['occupied_units'] }}</strong>
-                &nbsp;Vacant <strong style="color:var(--ps-danger);">{{ $dashboard['kpis']['vacant_units'] }}</strong>
+            {{-- One ink: three coloured numbers in a row read as a status
+                 board rather than as a tally of the list below. --}}
+            <div class="m-row-sub">
+                {{ $dashboard['kpis']['occupied_units'] }} let &middot;
+                {{ $dashboard['kpis']['vacant_units'] }} vacant
             </div>
         </div>
 
-        <form method="GET" action="{{ route('buildings.show', $building) }}" class="pm-search-field" style="margin-bottom:8px;">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" name="unit_search" value="{{ $unitSearch }}" placeholder="Search unit number or occupant" oninput="mDebounceSubmit(this)">
-            @if($unitFilter !== 'all')<input type="hidden" name="unit_filter" value="{{ $unitFilter }}">@endif
-        </form>
+        <div class="m-search" style="margin-bottom:10px;">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <form method="GET" action="{{ route('buildings.show', $building) }}">
+                <input type="search" name="unit_search" value="{{ $unitSearch }}"
+                       placeholder="Search unit number or occupant" aria-label="Search units"
+                       oninput="mDebounceSubmit(this)">
+                @if($unitFilter !== 'all')<input type="hidden" name="unit_filter" value="{{ $unitFilter }}">@endif
+            </form>
+        </div>
 
-        <div class="pm-chip-row" style="margin-bottom:12px;">
+        <div class="m-chip-row" style="margin-bottom:12px;">
             @foreach($mobileUnitFilters as $f)
                 <a href="{{ route('buildings.show', array_merge(['building' => $building], array_filter(['unit_search' => $unitSearch, 'unit_filter' => $f['id'] === 'all' ? null : $f['id']]))) }}"
-                   class="pm-chip {{ $unitFilter === $f['id'] ? 'active' : '' }}">{{ $f['label'] }}</a>
+                   class="m-chip {{ $unitFilter === $f['id'] ? 'active' : '' }}">{{ $f['label'] }}</a>
             @endforeach
         </div>
 
         @if($floors->count() > 6)
-        <div class="pm-chip-row" style="margin-bottom:12px;">
+        <div class="m-chip-row" style="margin-bottom:12px;">
             @foreach($floors as $jf)
-                <a href="#pm-floor-{{ $jf->id }}" class="pm-chip" style="min-width:34px;text-align:center;">{{ $jf->floor_name }}</a>
+                <a href="#pm-floor-{{ $jf->id }}" class="m-chip" style="justify-content:center;">{{ $jf->floor_name }}</a>
             @endforeach
         </div>
         @endif
@@ -261,7 +283,7 @@
                     $visibleRows = $capped ? $rows->take(8) : $rows;
                 @endphp
                 <div id="pm-floor-{{ $group['id'] }}" class="pm-floor-section">
-                    <button type="button" class="pm-floor-row pm-ripple {{ $isOpen ? 'is-open' : '' }}" onclick="pmToggleFloor({{ $group['id'] }})" data-floor-toggle="{{ $group['id'] }}">
+                    <button type="button" class="pm-floor-row {{ $isOpen ? 'is-open' : '' }}" onclick="pmToggleFloor({{ $group['id'] }})" data-floor-toggle="{{ $group['id'] }}">
                         <i class="fa-solid fa-layer-group" style="color:var(--ps-gold-dark);font-size:13px;width:16px;text-align:center;"></i>
                         <div style="flex:1;min-width:0;">
                             <div class="pm-floor-name">{{ $group['name'] }}</div>
@@ -276,7 +298,7 @@
                                 $unitHref = $row['status'] === 'vacant' ? null : ($row['unit']->activeContract?->tenant_id ? route('tenants.show', $row['unit']->activeContract->tenant_id) : null);
                             @endphp
                             @if($unitHref)
-                            <a href="{{ $unitHref }}" class="pm-unit-card pm-ripple">
+                            <a href="{{ $unitHref }}" class="pm-unit-card">
                             @else
                             <div class="pm-unit-card" title="Unit {{ $row['unit']->unit_name }} is vacant">
                             @endif
@@ -308,7 +330,6 @@
         </div>
     </div>
 
-    <button type="button" class="pm-fab" style="position:fixed;border:0;" onclick="openExpenseSheet()" title="Record expense"><i class="fa-solid fa-plus"></i></button>
 </div>
 
 @include('components.expense-sheet', ['presetBuildingId' => $building->id])

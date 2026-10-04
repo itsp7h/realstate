@@ -41,7 +41,10 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            // Root-relative on purpose: baking APP_URL in here pointed every
+            // uploaded file at whatever host APP_URL names, which breaks when the
+            // app is reached by another address (staging by IP vs. its subdomain).
+            'url' => '/storage',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,

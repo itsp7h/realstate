@@ -10,16 +10,18 @@ namespace App\Support;
  * and no permissions table. Authorisation comes from four places, and every
  * verdict below cites the one that produces it —
  *
- *   • EnsureUserHasRole          the `role:admin` middleware on a route group
- *   • RestrictMaintenanceRole    a global path allowlist for the Maintenance role
+ *   • EnsureUserHasRole          the `role:…` middleware on a route group
+ *   • RestrictScopedRoles        a global path allowlist for the confined
+ *                                roles — Maintenance and Accountant
  *   • RestrictDestructiveActions a global block on DELETE for non-admins
- *   • User::canDelete/canViewReports  the same rules, for view-level checks
+ *   • User::canAccessPortfolio, canAccessAccounting, canAccessMaintenance,
+ *     canViewReports, canDelete   the same rules, for view-level checks
  *
  * This class exists so the Roles & Permissions page cannot drift from the code
  * it describes: change who can reach what, and the matrix here is the one place
  * that has to be updated with it. RoleCatalogTest pins the role list to
- * StoreUserRequest's validation rule, so a fourth role cannot appear in the
- * app without appearing here too.
+ * StoreUserRequest's validation rule — which now reads the list from here — so a
+ * role cannot appear in the app without appearing on the page too.
  */
 final class RoleCatalog
 {
@@ -29,7 +31,7 @@ final class RoleCatalog
      *
      * @var list<string>
      */
-    public const ROLES = ['admin', 'user', 'maintenance'];
+    public const ROLES = ['admin', 'user', 'accountant', 'maintenance'];
 
     /** A capability is granted, refused, or granted with a limit. */
     public const FULL = 'full';
@@ -64,6 +66,14 @@ final class RoleCatalog
                 'scope'   => 'Portfolio & accounting',
             ],
             [
+                'key'     => 'accountant',
+                'label'   => 'Accountant',
+                'icon'    => 'fa-calculator',
+                'tone'    => 'success',
+                'summary' => 'The ledger and the reports drawn from it — invoices, payments, EWA bills, expenses and revenue, plus every financial report. Bills against the portfolio without being able to change it, and never deletes.',
+                'scope'   => 'Accounting & reports',
+            ],
+            [
                 'key'     => 'maintenance',
                 'label'   => 'Maintenance',
                 'icon'    => 'fa-screwdriver-wrench',
@@ -92,48 +102,49 @@ final class RoleCatalog
                 [
                     'label'  => 'View buildings, floors, units, tenants and leases',
                     'detail' => 'Read access to every portfolio record.',
-                    'by'     => 'RestrictMaintenanceRole (global path allowlist)',
-                    'verdicts' => ['admin' => self::FULL, 'user' => self::FULL, 'maintenance' => self::NONE],
+                    'by'     => 'RestrictScopedRoles (global path allowlist)',
+                    'verdicts' => ['admin' => self::FULL, 'user' => self::FULL, 'accountant' => self::PARTIAL, 'maintenance' => self::NONE],
+                    'notes'    => ['accountant' => "Can look a tenant up by name from an invoice's payer field, which is a JSON lookup. The tenant, building, unit and lease pages themselves are refused."],
                 ],
                 [
                     'label'  => 'Create and edit portfolio records',
                     'detail' => 'Add a building, edit a unit, register a tenant, write a lease.',
-                    'by'     => 'RestrictMaintenanceRole (global path allowlist)',
-                    'verdicts' => ['admin' => self::FULL, 'user' => self::FULL, 'maintenance' => self::NONE],
+                    'by'     => 'RestrictScopedRoles (global path allowlist)',
+                    'verdicts' => ['admin' => self::FULL, 'user' => self::FULL, 'accountant' => self::NONE, 'maintenance' => self::NONE],
                 ],
                 [
                     'label'  => 'Delete any record',
                     'detail' => 'Every DELETE request in the app, not just the portfolio ones.',
                     'by'     => 'RestrictDestructiveActions (global) · User::canDelete()',
-                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'maintenance' => self::NONE],
+                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'accountant' => self::NONE, 'maintenance' => self::NONE],
                 ],
             ],
             'Accounting' => [
                 [
                     'label'  => 'Invoices, payments, EWA bills, expenses and revenue',
                     'detail' => 'Raise an invoice, record a payment, enter a bill or an expense.',
-                    'by'     => 'RestrictMaintenanceRole (global path allowlist)',
-                    'verdicts' => ['admin' => self::FULL, 'user' => self::FULL, 'maintenance' => self::NONE],
+                    'by'     => 'RestrictScopedRoles (global path allowlist)',
+                    'verdicts' => ['admin' => self::FULL, 'user' => self::FULL, 'accountant' => self::FULL, 'maintenance' => self::NONE],
                 ],
                 [
                     'label'  => 'Financial reports',
                     'detail' => 'Profit & loss, VAT return, collections, ageing, tenant statements and ledgers.',
-                    'by'     => "role:admin on the /reports group · User::canViewReports()",
-                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'maintenance' => self::NONE],
+                    'by'     => 'role:admin,accountant on the /reports group · User::canViewReports()',
+                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'accountant' => self::FULL, 'maintenance' => self::NONE],
                 ],
             ],
             'Maintenance' => [
                 [
                     'label'  => 'Raise, view and update maintenance requests',
-                    'detail' => 'The one module every role can reach.',
-                    'by'     => 'Signed-in users (no additional gate)',
-                    'verdicts' => ['admin' => self::FULL, 'user' => self::FULL, 'maintenance' => self::FULL],
+                    'detail' => 'Raising and tracking work on the portfolio.',
+                    'by'     => 'RestrictScopedRoles (Accountant is outside the module)',
+                    'verdicts' => ['admin' => self::FULL, 'user' => self::FULL, 'accountant' => self::NONE, 'maintenance' => self::FULL],
                 ],
                 [
                     'label'  => 'Assess and approve a request',
                     'detail' => 'Record an assessment, then approve or reject the quoted work.',
-                    'by'     => 'Signed-in users (no additional gate)',
-                    'verdicts' => ['admin' => self::FULL, 'user' => self::FULL, 'maintenance' => self::FULL],
+                    'by'     => 'RestrictScopedRoles (Accountant is outside the module)',
+                    'verdicts' => ['admin' => self::FULL, 'user' => self::FULL, 'accountant' => self::NONE, 'maintenance' => self::FULL],
                 ],
             ],
             'Configuration' => [
@@ -141,26 +152,26 @@ final class RoleCatalog
                     'label'  => 'Forms & Templates',
                     'detail' => 'Which fields appear on the add/edit forms, and the import templates.',
                     'by'     => 'role:admin on form-configs.update',
-                    'verdicts' => ['admin' => self::FULL, 'user' => self::PARTIAL, 'maintenance' => self::NONE],
+                    'verdicts' => ['admin' => self::FULL, 'user' => self::PARTIAL, 'accountant' => self::NONE, 'maintenance' => self::NONE],
                     'notes'    => ['user' => 'Can open and read a form config, but saving one is refused.'],
                 ],
                 [
                     'label'  => 'Custom fields',
                     'detail' => 'Adding or removing a custom field changes the forms for everybody.',
                     'by'     => 'role:admin on the custom-fields routes',
-                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'maintenance' => self::NONE],
+                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'accountant' => self::NONE, 'maintenance' => self::NONE],
                 ],
                 [
                     'label'  => 'Import & Export',
                     'detail' => 'Bulk create and overwrite across buildings, floors, units, tenants and leases.',
                     'by'     => 'role:admin on the /data, /import and /export groups',
-                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'maintenance' => self::NONE],
+                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'accountant' => self::NONE, 'maintenance' => self::NONE],
                 ],
                 [
                     'label'  => 'Branding and mail settings',
                     'detail' => 'Site name, logo, favicon, and the outgoing-mail account.',
                     'by'     => 'role:admin on the /settings group',
-                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'maintenance' => self::NONE],
+                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'accountant' => self::NONE, 'maintenance' => self::NONE],
                 ],
             ],
             'Administration' => [
@@ -168,25 +179,25 @@ final class RoleCatalog
                     'label'  => 'User accounts',
                     'detail' => "Create an account, change someone's role, remove access.",
                     'by'     => 'role:admin on the users resource',
-                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'maintenance' => self::NONE],
+                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'accountant' => self::NONE, 'maintenance' => self::NONE],
                 ],
                 [
                     'label'  => 'Roles & Permissions',
                     'detail' => 'This page.',
                     'by'     => 'role:admin on roles.index',
-                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'maintenance' => self::NONE],
+                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'accountant' => self::NONE, 'maintenance' => self::NONE],
                 ],
                 [
                     'label'  => 'Activity feed and error log',
                     'detail' => 'Who changed what, and what the application failed on.',
                     'by'     => 'role:admin on the /admin group',
-                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'maintenance' => self::NONE],
+                    'verdicts' => ['admin' => self::FULL, 'user' => self::NONE, 'accountant' => self::NONE, 'maintenance' => self::NONE],
                 ],
                 [
                     'label'  => 'Dashboard',
                     'detail' => 'The landing screen after sign-in.',
-                    'by'     => 'Signed-in users (allowlisted for Maintenance)',
-                    'verdicts' => ['admin' => self::FULL, 'user' => self::FULL, 'maintenance' => self::FULL],
+                    'by'     => 'Signed-in users (allowlisted for the confined roles)',
+                    'verdicts' => ['admin' => self::FULL, 'user' => self::FULL, 'accountant' => self::FULL, 'maintenance' => self::FULL],
                 ],
             ],
         ];

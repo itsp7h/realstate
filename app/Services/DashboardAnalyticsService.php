@@ -8,6 +8,7 @@ use App\Models\Expense;
 use App\Models\InvoiceNote;
 use App\Models\LeaseContract;
 use App\Models\MaintenanceRequest;
+use App\Support\Occupancy;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -159,7 +160,7 @@ class DashboardAnalyticsService
         return [
             'total_income'      => $pl['total_revenue'],
             'net_income'        => $pl['net_profit'],
-            'occupancy_percent' => $totalUnits > 0 ? round($occupiedUnits / $totalUnits * 100) : 0,
+            'occupancy_percent' => Occupancy::percent($occupiedUnits, $totalUnits),
             'tenant_count'      => $tenantCount,
             'expenses'          => [
                 'electricity' => round($electricity, 3),

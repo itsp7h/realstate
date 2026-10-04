@@ -175,6 +175,26 @@ class DesktopShellTest extends TestCase
         $response->assertDontSee('Bills &amp; Payments', false);
     }
 
+    public function test_an_accountant_sees_the_ledger_and_the_reports_and_nothing_else(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'accountant']));
+
+        $response = $this->get(route('invoices.index'));
+
+        $response->assertOk();
+        // Its own half of the app, including the Reports entry that used to be
+        // Admin's alone.
+        $response->assertSee('Bills &amp; Payments', false);
+        $response->assertSee('shell-navitem-label">Reports', false);
+
+        // The portfolio rows, the module it has no part in, and configuration.
+        $response->assertDontSee('shell-navitem-label">Buildings', false);
+        $response->assertDontSee('shell-navitem-label">Tenants', false);
+        $response->assertDontSee('shell-navitem-label">Leases', false);
+        $response->assertDontSee('shell-navitem-label">Maintenance', false);
+        $response->assertDontSee('CONFIGURATION', false);
+    }
+
     public function test_the_mobile_layer_is_untouched_underneath_the_shell(): void
     {
         $response = $this->get(route('dashboard'));
@@ -186,7 +206,12 @@ class DesktopShellTest extends TestCase
         $response->assertSee('id="sidebarBackdrop"', false);
         $response->assertSee('id="moreSheet"', false);
         $response->assertSee('id="bottomTabbar"', false);
-        $response->assertSee('id="menuBtn"', false);
+        // The drawer survives; the header button that opened it does not. The
+        // bottom tab bar is the only navigation on a phone, and the drawer is
+        // reached from More → Full menu, so a hamburger back in the header
+        // would mean two navigations again.
+        $response->assertDontSee('id="menuBtn"', false);
+        $response->assertSee('id="moreMenuBtn"', false);
     }
 
     public function test_the_command_palette_lists_the_same_destinations(): void

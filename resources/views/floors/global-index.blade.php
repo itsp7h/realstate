@@ -2,6 +2,7 @@
 
 @section('title', 'Floors')
 @section('topbar-title', 'Floors')
+@section('topbar-count', number_format($floors->total()))
 
 @push('styles')
 <style>
@@ -19,9 +20,11 @@
 @section('page-title', 'Floors')
 @section('page-subtitle', 'All floors across all buildings')
 @section('page-actions')
-    <a href="{{ route('export.floors', array_filter(['building_id' => $buildingId ?? null])) }}" class="btn btn-success">
-        <i class="fa-solid fa-file-excel"></i> Export
-    </a>
+    @include('partials.export-menu', [
+        'route'  => 'export.floors',
+        'params' => array_filter(['building_id' => $buildingId ?? null]),
+        'sub'    => 'All 7 columns, import-ready',
+    ])
     <button type="button" class="btn btn-outline" onclick="openImport_floors()">
         <i class="fa-solid fa-file-import"></i> Import
     </button>
@@ -32,41 +35,77 @@
 
 {{-- PAGE HEADER --}}
 
-{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════ --}}
-<div class="m-screen">
-    <div class="m-action-row">
-        <a href="{{ route('export.floors', array_filter(['building_id' => $buildingId ?? null])) }}" class="m-action-btn green-outline">Export</a>
-        <button type="button" class="m-action-btn outline" onclick="openImport_floors()">Import</button>
-        <button type="button" class="m-action-btn primary" onclick="openAddFloorModal()">+ Add Floor</button>
-    </div>
-    <div class="m-chip-row no-sb">
-        <a href="{{ route('floors.global') }}" class="m-chip {{ !$buildingId ? 'active' : '' }}">All</a>
-        @foreach($buildings as $b)
-            <a href="{{ route('floors.global', ['building_id' => $b->id]) }}" class="m-chip {{ (string) $buildingId === (string) $b->id ? 'active' : '' }}">{{ $b->property_code }}</a>
-        @endforeach
-    </div>
-    <div class="m-row-list">
-        @forelse($floors as $floor)
-            @php $uCount = $floor->total_no_of_units ?? $floor->units_count; @endphp
-            <a href="{{ route('buildings.show', $floor->building) }}?tab=floors" class="m-row-card">
-                <span class="m-row-chip">{{ $floor->building->property_code }}</span>
-                <div style="flex:1;min-width:0;">
-                    <div class="m-row-title">{{ $floor->floor_name }}</div>
-                    <div class="m-row-sub">{{ $floor->building->property_name }}{{ $floor->block_name ? ' · '.$floor->block_name : '' }}</div>
-                </div>
-                @if($floor->floor_code)
-                    <span class="m-row-badge" style="background:var(--ps-bg);color:var(--ps-muted-deep);">{{ $floor->floor_code }}</span>
-                @endif
-            </a>
-        @empty
-            <div class="m-empty">
-                <div class="m-empty-icon"><i class="fa-solid fa-layer-group"></i></div>
-                <div class="m-empty-title">No floors found</div>
-                <div class="m-empty-sub">Try a different building filter or add a new floor.</div>
-            </div>
-        @endforelse
-    </div>
-</div>
+{{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
+     Four peers became two: Add Floor is the primary, and XLSX, PDF and
+     Import are rows in the More sheet. ── --}}
+@php
+    /* No search pill: floors are filtered by building, which is what the
+       chips are, and the endpoint takes no search term. */
+    $floorChips = [[
+        'label'  => 'All',
+        'href'   => route('floors.global'),
+        'active' => ! $buildingId,
+    ]];
+    foreach ($buildings as $floorB) {
+        $floorChips[] = [
+            'label'  => $floorB->property_code,
+            'href'   => route('floors.global', ['building_id' => $floorB->id]),
+            'active' => (string) $buildingId === (string) $floorB->id,
+        ];
+    }
+@endphp
+<x-mobile-list
+    :actions="[
+        'primary' => ['label' => 'Add floor', 'onclick' => 'openAddFloorModal()'],
+        'sheet'   => [
+            'id'    => 'floorsMoreSheet',
+            'title' => 'More',
+            'sub'   => 'Import and export this list',
+            'items' => [
+                ['icon' => 'fa-wand-magic-sparkles', 'label' => 'Smart import',
+                 'desc' => 'Bring in floors from a spreadsheet',
+                 'onclick' => 'openImport_floors()'],
+                ['icon' => 'fa-file-excel', 'label' => 'Export to Excel',
+                 'desc' => 'The list as it is filtered now',
+                 'href' => route('export.floors', array_merge(array_filter(['building_id' => $buildingId ?? null]), ['format' => 'xlsx']))],
+                ['icon' => 'fa-file-pdf', 'label' => 'Export to PDF',
+                 'desc' => 'The list as it is filtered now',
+                 'href' => route('export.floors', array_merge(array_filter(['building_id' => $buildingId ?? null]), ['format' => 'pdf']))],
+            ],
+        ],
+    ]"
+    :stats="[
+        ['value' => $stats['total'],                     'label' => 'Floors'],
+        ['value' => $buildings->count(),                 'label' => 'Properties'],
+        ['value' => number_format($stats['filtered']),   'label' => 'Listed'],
+    ]"
+    :chips="$floorChips">
+
+    @forelse($floors as $floor)
+        @php $uCount = $floor->total_no_of_units ?? $floor->units_count; @endphp
+        <a href="{{ route('buildings.show', $floor->building) }}?tab=floors" class="m-row-card ps-reveal">
+            <span class="m-row-thumb"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span>
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $floor->floor_name }}</span>
+                <span class="m-row-sub">{{ $floor->building->property_name }}{{ $floor->block_name ? ' · '.$floor->block_name : '' }}</span>
+                <span class="m-row-sub">{{ $uCount }} {{ \Illuminate\Support\Str::plural('unit', $uCount) }}@if($floor->floor_code) &middot; {{ $floor->floor_code }}@endif</span>
+            </span>
+            @unless($buildingId)
+                <span class="m-row-badge">{{ $floor->building->property_code }}</span>
+            @endunless
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+        </a>
+    @empty
+        <div class="m-empty">
+            <div class="m-empty-icon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No floors here</div>
+            <div class="m-empty-sub">Try another property, or add a floor.</div>
+            <button type="button" class="m-action-btn primary" onclick="openAddFloorModal()">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>Add floor
+            </button>
+        </div>
+    @endforelse
+</x-mobile-list>
 
 @include('components.import-modal', [
     'type'        => 'floors',

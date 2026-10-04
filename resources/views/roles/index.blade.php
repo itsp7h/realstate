@@ -27,7 +27,10 @@
     .rl-verdict.is-full    { color: var(--tone-success-fg); }
     .rl-verdict.is-partial { color: var(--tone-warning-fg); }
     .rl-verdict.is-none    { color: var(--text-faint); }
-    .rl-col { width: 108px; text-align: center; }
+    /* Four verdict columns fit a desktop table beside the capability and the
+       gate that enforces it; a fifth would start the .table-wrap scrolling,
+       which is the correct failure and not a reason to shrink the type. */
+    .rl-col { width: 104px; text-align: center; }
     /* Legend beside the table's title. */
     .rl-legend {
         display: flex;
@@ -52,12 +55,14 @@
 @section('content')
 
 @section('page-title', 'Roles & Permissions')
-@section('page-subtitle', 'The three roles in this system, and exactly what each one is allowed to reach')
+@section('page-subtitle', 'Every role in this system, and exactly what each one is allowed to reach')
 
 @include('partials.access-tabs', ['active' => 'roles'])
 
 {{-- ── The roles ─────────────────────────────────────────────────────────── --}}
-<div class="card-grid is-3">
+{{-- Column count follows the catalog: three roles sat comfortably at is-3,
+     and a fourth would have stretched them across the row. --}}
+<div class="card-grid is-{{ count($roles) > 3 ? 4 : 3 }}">
     @foreach($roles as $role)
         @php
             $t = $tally[$role['key']];

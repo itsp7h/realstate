@@ -2,6 +2,7 @@
 
 @section('title', 'EWA Bills')
 @section('topbar-title', 'EWA Bills')
+@section('topbar-count', number_format($bills->total()))
 
 @section('page-title', 'EWA Bills')
 @section('page-subtitle', 'Electricity & Water Authority bills linked to lease contracts')
@@ -62,71 +63,83 @@
 {{-- STATS --}}
 
 {{-- ═══════════════════════ MOBILE SCREEN ═══════════════════════
-     Same .m-screen / .m-row-card architecture as Payments, Invoices and
-     Lease Contracts. Every value carries a visible label so nothing
-     renders as a bare figure. ── --}}
-<div class="m-screen">
-    <div class="m-mini-row">
-        <div class="m-mini-stat">
-            <div class="v">{{ $stats['total'] }}</div>
-            <div class="l">Total Bills</div>
-        </div>
-        <div class="m-mini-stat">
-            <div class="v">{{ $stats['paid'] }}</div>
-            <div class="l">Paid</div>
-        </div>
-        <div class="m-mini-stat">
-            <div class="v">{{ $stats['overdue'] }}</div>
-            <div class="l">Overdue</div>
-        </div>
-    </div>
+     One right-hand slot, not three: the row used to stack the total, the
+     balance and a status pill, which is three numbers to read in a space
+     sized for one. The status is the slot; the balance moved to the meta
+     line, where it only appears when there is one. ── --}}
+@php
+    $ewaStatusLabels = ['issued' => 'Issued', 'partially_paid' => 'Partially paid', 'paid' => 'Paid',
+                        'overdue' => 'Overdue', 'cancelled' => 'Cancelled', 'draft' => 'Draft'];
+    $ewaStatus = request('status');
+    $ewaChips  = [[
+        'label'  => 'All',
+        'href'   => route('ewa-bills.index', array_filter(['search' => request('search')])),
+        'active' => ! $ewaStatus,
+    ]];
+    foreach ($ewaStatusLabels as $ewaVal => $ewaLabel) {
+        $ewaChips[] = [
+            'label'  => $ewaLabel,
+            'href'   => route('ewa-bills.index', array_filter(['search' => request('search'), 'status' => $ewaVal])),
+            'active' => $ewaStatus === $ewaVal,
+        ];
+    }
+@endphp
+<x-mobile-list
+    :actions="[
+        'primary' => ['label' => 'Add bill', 'href' => route('ewa-bills.create')],
+        'sheet'   => [
+            'id'    => 'ewaMoreSheet',
+            'title' => 'More',
+            'sub'   => 'Bulk work on EWA bills',
+            'items' => [
+                ['icon' => 'fa-file-arrow-up', 'label' => 'Upload a summary',
+                 'desc' => 'Read a whole EWA statement at once',
+                 'href' => route('ewa-bills.summary.create')],
+            ],
+        ],
+    ]"
+    :stats="[
+        ['value' => $stats['total'],   'label' => 'Bills'],
+        ['value' => $stats['paid'],    'label' => 'Paid'],
+        ['value' => $stats['overdue'], 'label' => 'Overdue'],
+    ]"
+    :search="[
+        'action'      => route('ewa-bills.index'),
+        'placeholder' => 'Search bill, tenant or property',
+        'aria'        => 'Search EWA bills',
+        'keep'        => ['status'],
+    ]"
+    :chips="$ewaChips">
 
-    <div class="m-chip-row no-sb">
-        <a href="{{ route('ewa-bills.index') }}" class="m-chip {{ !request('status') ? 'active' : '' }}">All</a>
-        @foreach(['issued'=>'Issued','partially_paid'=>'Partially Paid','paid'=>'Paid','overdue'=>'Overdue','cancelled'=>'Cancelled','draft'=>'Draft'] as $val => $label)
-            <a href="{{ route('ewa-bills.index', ['status' => $val]) }}"
-               class="m-chip {{ request('status') === $val ? 'active' : '' }}">{{ $label }}</a>
-        @endforeach
-    </div>
-
-    <div class="m-row-list">
-        @forelse($bills as $bill)
-            @php
-                $mIsOverdue = $bill->status === 'overdue';
-                $mHasBalance = $bill->balance_due > 0 && $bill->status !== 'cancelled';
-            @endphp
-            <a href="{{ route('ewa-bills.show', $bill) }}" class="m-row-card">
-                <div class="m-row-icon" style="background:{{ $mIsOverdue ? 'var(--ps-danger-bg)' : 'var(--ps-info-bg)' }};color:{{ $mIsOverdue ? 'var(--ps-danger)' : 'var(--ps-info)' }};">
-                    <i class="fa-solid fa-bolt"></i>
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div class="m-row-title">{{ $bill->bill_number }}</div>
-                    <div class="m-row-sub">
-                        {{ $bill->tenant_name }} &middot; {{ $bill->property_name }}@if($bill->unit) / {{ $bill->unit }}@endif
-                    </div>
-                    <div class="m-row-sub">
-                        Period {{ $bill->billing_period }} &middot; Due {{ $bill->due_date->format('d M Y') }}
-                    </div>
-                </div>
-                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-                    <div style="font-family:'Poppins',system-ui,sans-serif;font-size:1rem;font-weight:700;color:var(--ps-navy);">
-                        BHD {{ number_format($bill->total_amount, 3) }}
-                    </div>
-                    <div style="font-size:.7rem;font-weight:600;color:{{ $mHasBalance ? 'var(--ps-danger)' : 'var(--ps-muted-deep)' }};">
-                        Balance BHD {{ number_format($bill->balance_due, 3) }}
-                    </div>
-                    <span class="status-badge {{ $bill->status }}">{{ $bill->status_label }}</span>
-                </div>
+    @forelse($bills as $bill)
+        @php $mBalance = $bill->balance_due > 0 && $bill->status !== 'cancelled' ? $bill->balance_due : null; @endphp
+        <a href="{{ route('ewa-bills.show', $bill) }}" class="m-row-card ps-reveal">
+            <span class="m-row-thumb"><i class="fa-solid fa-bolt" aria-hidden="true"></i></span>
+            <span class="m-row-text">
+                <span class="m-row-title">{{ $bill->bill_number }}</span>
+                <span class="m-row-sub">{{ $bill->tenant_name }} &middot; {{ $bill->property_name }}@if($bill->unit) / {{ $bill->unit }}@endif</span>
+                <span class="m-row-sub {{ $mBalance ? 'is-down' : '' }}">
+                    BHD {{ number_format($bill->total_amount, 0) }} &middot;
+                    @if($mBalance) BHD {{ number_format($mBalance, 0) }} due {{ $bill->due_date->format('d M') }}
+                    @else Settled @endif
+                </span>
+            </span>
+            @unless(request('status'))
+                <span class="status-badge {{ $bill->status }}">{{ $bill->status_label }}</span>
+            @endunless
+            <i class="fa-solid fa-chevron-right m-row-chevron" aria-hidden="true"></i>
+        </a>
+    @empty
+        <div class="m-empty">
+            <div class="m-empty-icon"><i class="fa-solid fa-bolt" aria-hidden="true"></i></div>
+            <div class="m-empty-title">No EWA bills yet</div>
+            <div class="m-empty-sub">Add a bill, or upload a whole statement and let it read them.</div>
+            <a href="{{ route('ewa-bills.create') }}" class="m-action-btn primary">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>Add bill
             </a>
-        @empty
-            <div class="m-empty">
-                <div class="m-empty-icon"><i class="fa-solid fa-bolt"></i></div>
-                <div class="m-empty-title">No EWA bills yet</div>
-                <div class="m-empty-sub">Try adjusting your filters.</div>
-            </div>
-        @endforelse
-    </div>
-</div>
+        </div>
+    @endforelse
+</x-mobile-list>
 
 <div class="stats-grid m-hide-desktop-index">
     <div class="stat-card">

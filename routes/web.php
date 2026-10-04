@@ -60,7 +60,12 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::get('/data',                      [DataController::class, 'index'])->name('data.index');
         Route::get('/data/template/{format?}',   [DataController::class, 'template'])->name('data.template');
-        Route::get('/data/export',               [DataController::class, 'export'])->name('data.export');
+        // {format?} defaults to xlsx, so every existing route('data.export')
+        // call keeps working; 'pdf' renders the same three datasets as a
+        // document instead of a workbook.
+        Route::get('/data/export/{format?}',      [DataController::class, 'export'])
+            ->whereIn('format', ['xlsx', 'pdf'])
+            ->name('data.export');
         Route::post('/data/import',              [DataController::class, 'import'])->name('data.import');
 
         Route::get('/import/template/{type}/{format?}', [ImportController::class, 'template'])->name('import.template');
@@ -71,11 +76,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/import/contracts', [ImportController::class, 'contracts'])->name('import.contracts');
         Route::post('/import/smart',    [ImportController::class, 'smart'])->name('import.smart');
 
-        Route::get('/export/buildings', [ImportController::class, 'exportBuildings'])->name('export.buildings');
-        Route::get('/export/floors',    [ImportController::class, 'exportFloors'])->name('export.floors');
-        Route::get('/export/units',     [ImportController::class, 'exportUnits'])->name('export.units');
-        Route::get('/export/tenants',   [ImportController::class, 'exportTenants'])->name('export.tenants');
-        Route::get('/export/contracts', [ImportController::class, 'exportContracts'])->name('export.contracts');
+        // Every list export takes a format: xlsx (the default, so existing
+        // links keep working) or pdf. whereIn keeps an unknown format a 404
+        // rather than a silent fall-through to the spreadsheet.
+        Route::get('/export/buildings/{format?}', [ImportController::class, 'exportBuildings'])->whereIn('format', ['xlsx', 'pdf'])->name('export.buildings');
+        Route::get('/export/floors/{format?}',    [ImportController::class, 'exportFloors'])->whereIn('format', ['xlsx', 'pdf'])->name('export.floors');
+        Route::get('/export/units/{format?}',     [ImportController::class, 'exportUnits'])->whereIn('format', ['xlsx', 'pdf'])->name('export.units');
+        Route::get('/export/tenants/{format?}',   [ImportController::class, 'exportTenants'])->whereIn('format', ['xlsx', 'pdf'])->name('export.tenants');
+        Route::get('/export/contracts/{format?}', [ImportController::class, 'exportContracts'])->whereIn('format', ['xlsx', 'pdf'])->name('export.contracts');
     });
 
     Route::get('/', fn() => redirect()->route('dashboard'));
@@ -93,7 +101,7 @@ Route::middleware('auth')->group(function () {
     // The ⌘K palette's search. Server-side and role-gated; see SearchController.
     Route::get('/search', SearchController::class)->name('search');
 
-    Route::get('/property-units/export', [PropertyUnitController::class, 'export'])->name('property-units.export');
+    Route::get('/property-units/export/{format?}', [PropertyUnitController::class, 'export'])->whereIn('format', ['xlsx', 'pdf'])->name('property-units.export');
     Route::get('/property-units/building/{building}/data', [PropertyUnitController::class, 'buildingData'])->name('property-units.building-data');
     Route::get('/property-units/building/{building}/floors', [PropertyUnitController::class, 'floorsByBuilding'])->name('property-units.building-floors');
     Route::resource('property-units', PropertyUnitController::class);
@@ -125,7 +133,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/ewa-bills/summary',               [EwaBillSummaryController::class, 'create'])->name('ewa-bills.summary.create');
     Route::post('/ewa-bills/summary',               [EwaBillSummaryController::class, 'store'])->name('ewa-bills.summary.store');
     Route::get('/ewa-bills/summary/{batch}',        [EwaBillSummaryController::class, 'show'])->name('ewa-bills.summary.show');
-    Route::get('/ewa-bills/summary/{batch}/export', [EwaBillSummaryController::class, 'export'])->name('ewa-bills.summary.export');
+    Route::get('/ewa-bills/summary/{batch}/export/{format?}', [EwaBillSummaryController::class, 'export'])->whereIn('format', ['xlsx', 'pdf'])->name('ewa-bills.summary.export');
     Route::resource('ewa-bills', EwaBillController::class);
     Route::post('/ewa-bills/{ewaBill}/payments',           [EwaBillController::class, 'storePayment'])->name('ewa-bills.payments.store');
     Route::delete('/ewa-bills/{ewaBill}/payments/{ewaPayment}', [EwaBillController::class, 'destroyPayment'])->name('ewa-bills.payments.destroy');
@@ -138,8 +146,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/invoices/{invoice}/payments/{payment}/receipt',  [PaymentController::class, 'receipt'])->name('invoices.payments.receipt');
     Route::get('/invoices/{invoice}/payments/{payment}/receipt/preview', [PaymentController::class, 'receiptPreview'])->name('invoices.payments.receipt.preview');
 
-    // Reports — financial data, kept to Admin only
-    Route::middleware('role:admin')->group(function () {
+    // Reports — financial data, so Admin's and the Accountant's, the role that
+    // exists to produce them. Mirrored by User::canViewReports(), which is what
+    // decides whether the nav entry is drawn.
+    Route::middleware('role:admin,accountant')->group(function () {
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/tenant-statement',        [ReportController::class, 'tenantStatement'])->name('reports.tenant-statement');
         Route::get('/reports/tenant-statement/pdf',    [ReportController::class, 'tenantStatementPdf'])->name('reports.tenant-statement.pdf');
@@ -219,4 +229,28 @@ Route::middleware('auth')->group(function () {
         Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
     });
 
+});
+
+// TEMP — local visual QA only, removed before commit.
+Route::get('/__qa-auth/{id}', function ($id) {
+    abort_unless(app()->environment('local') && request()->ip() === '127.0.0.1', 404);
+    auth()->loginUsingId((int) $id);
+    return redirect('/dashboard');
+});
+
+// TEMP-QA-AUTH (local screenshot harness only — removed before commit)
+Route::get('/__qa-auth/{id}', function ($id) {
+    abort_unless(request()->getHost() === '127.0.0.1', 404);
+    auth()->loginUsingId((int) $id);
+    return redirect('/');
+});
+
+// ── TEMPORARY, LOCAL VISUAL QA ONLY — remove before committing ───────────────
+// The qa-harness scripts sign in as qa-visual@example.com, which is not in this
+// database. This lets them attach to a real account without a DB write. Bound
+// to loopback so it cannot authenticate anyone off-box.
+Route::get('/__qa-auth/{id}', function (int $id) {
+    abort_unless(in_array(request()->ip(), ['127.0.0.1', '::1'], true), 404);
+    auth()->loginUsingId($id);
+    return redirect('/dashboard');
 });

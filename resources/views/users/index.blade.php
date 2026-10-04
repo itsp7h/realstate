@@ -32,9 +32,9 @@
                 <label>Role</label>
                 <select name="role" onchange="this.form.submit()">
                     <option value="">All Roles</option>
-                    <option value="admin" {{ request('role') === 'admin' ? 'selected' : '' }}>Admin</option>
-                    <option value="user" {{ request('role') === 'user' ? 'selected' : '' }}>User</option>
-                    <option value="maintenance" {{ request('role') === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                    @foreach($roles as $r)
+                    <option value="{{ $r['key'] }}" {{ request('role') === $r['key'] ? 'selected' : '' }}>{{ $r['label'] }}</option>
+                    @endforeach
                 </select>
             </div>
             <div class="filter-actions" style="display:flex;gap:8px;">

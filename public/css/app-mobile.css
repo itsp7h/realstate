@@ -61,11 +61,14 @@
 
 /* ── Mobile app system (≤768px) ───────────────────────────────────────────── */
 @media (max-width: 768px) {
-    #menuBtn { display: flex !important; }
+    /* No #menuBtn rule: the header hamburger was removed. The drawer it
+       opened is reached from More → Full menu; the bottom tab bar is the
+       only navigation on a phone. */
     body { font-family: 'Poppins', system-ui, sans-serif; }
     body.is-dashboard .topbar { display: none; }
-    body.is-dashboard .page-content,
-    body.is-mobile-screen .page-content { padding: 0 0 calc(78px + env(safe-area-inset-bottom)); }
+    /* Home scrolls inside .pm-scroll, which carries its own clearance. */
+    body.is-dashboard .page-content { padding: 0; }
+    body.is-mobile-screen .page-content { padding: 0 0 calc(96px + env(safe-area-inset-bottom)); }
     body.is-pushed-screen .topbar { display: none; }
 
     /* The lift/sink on the primary button and the FAB is motion, so
@@ -76,6 +79,8 @@
         .pm-tenant-actions .pm-btn-gold:hover, .pm-tenant-actions .pm-btn-gold:active {
             transform: none;
         }
+        .ps-reveal, .m-row-bar-fill { animation: none; }
+        .m-row-bar-fill { transform: none; }
     }
 
     /* ── Promoseven foundations ─────────────────────────────────
@@ -110,29 +115,33 @@
     a, button, [role="button"], input[type="submit"], input[type="button"] { touch-action: manipulation; }
 
     html, body { overscroll-behavior-y: contain; }
-    .pm-scroll, .page-content, .sidebar, .modal-box, .m-chip-row, .pm-chip-row {
+    .pm-scroll, .page-content, .sidebar, .modal-box, .m-chip-row {
         overscroll-behavior: contain;
         -webkit-overflow-scrolling: touch;
     }
 
     .sidebar, .bottom-tabbar, .pm-header, .topbar, .pm-push-header,
-    .m-action-row, .m-mini-row, .m-chip-row, .pm-chip-row, .more-sheet-item,
+    .m-action-row, .m-chip-row, .more-sheet-item,
     .pm-fab, .pm-icon-btn, .pm-avatar, .tabbar-item {
         -webkit-user-select: none; user-select: none;
     }
 
-    /* ── Pressed-state feedback in place of the killed tap flash ── */
-    .m-action-btn, .pm-fab, .pm-icon-btn, .pm-avatar, .pm-chip, .m-chip,
-    .pm-row-icon, .m-row-card, .pm-property-card, .pm-action-row,
+    /* ── Pressed-state feedback in place of the killed tap flash ──
+         ONE press treatment for the whole app: 0.98 over 120ms, nothing
+         else. The expanding-circle ripple that used to sit under this on
+         four screens is gone — two feedback systems firing on one tap read
+         as a glitch, not as depth. Anything tappable belongs in this list;
+         nothing tappable gets its own. ── */
+    .m-action-btn, .pm-fab, .pm-icon-btn, .pm-avatar, .m-chip,
+    .m-row-card, .pm-action-row, .pm-floor-row,
     .more-sheet-item, .pm-push-back, .nav-item, a.pm-unit-card, .pm-hero-edit-btn {
-        transition: transform .12s ease, opacity .12s ease;
+        transition: transform .12s var(--ease-out);
     }
     .m-action-btn:active, .pm-fab:active, .pm-icon-btn:active, .pm-avatar:active,
-    .pm-chip:active, .m-chip:active, .m-row-card:active, .pm-property-card:active,
+    .m-chip:active, .m-row-card:active, .pm-floor-row:active,
     .pm-action-row:active, .more-sheet-item:active, .pm-push-back:active, .nav-item:active,
     a.pm-unit-card:active, .pm-hero-edit-btn:active {
-        transform: scale(0.96);
-        opacity: .8;
+        transform: scale(0.98);
     }
     .tabbar-item:active { opacity: .55; }
 
@@ -140,16 +149,20 @@
     .pm-push-header {
         display: none;
     }
+    /* A pushed detail screen is not a tab, so it keeps its back chevron —
+       but it takes the same padding and the same control shape, so the
+       title still lands on the same left edge. */
     body.is-pushed-screen .pm-push-header {
         display: flex; align-items: center; gap: 12px;
-        padding: calc(14px + env(safe-area-inset-top)) 18px 12px;
-        background: var(--ps-surface); border-bottom: 1px solid var(--ps-border-soft);
-        box-shadow: 0 1px 2px rgba(30,44,79,.04);
+        padding: calc(16px + env(safe-area-inset-top)) 16px 16px;
+        background: var(--ps-surface); border-bottom: 1px solid transparent;
+        box-shadow: none;
+        transition: border-bottom-color .18s ease;
     }
     .pm-push-back {
-        flex: none; width: var(--ps-touch); height: var(--ps-touch); border-radius: var(--ps-r-btn);
+        flex: none; width: var(--ps-ctl); height: var(--ps-ctl); border-radius: var(--ps-r-pill);
         border: 1px solid var(--ps-border); background: var(--ps-surface); color: var(--ps-ink);
-        font-size: 15px; cursor: pointer; text-decoration: none;
+        font-size: 19px; cursor: pointer; text-decoration: none;
         display: flex; align-items: center; justify-content: center;
     }
 
@@ -196,60 +209,62 @@
     /* ── Shared mobile screen components (list pages) ───────
          Reused across Buildings/Floors/Units/Tenants/Maintenance/
          Invoices/Reports so each page doesn't repeat this CSS. ── */
+    /* One 16px grid: the screen's side padding, the header's padding and
+       the bottom bar's inset are the same number. The bottom clearance is
+       .page-content's job, not this element's. */
+    /* 12px between every section, on every screen. The order they come in
+       is not this file's business — components/mobile-list.blade.php owns
+       that — but the rhythm is: eleven list screens setting their own gap
+       is eleven ways for one to end up 14px while its neighbour is 10. The
+       16px is the page inset (it matches the side padding and the header's
+       own padding), not a section gap. */
     .m-screen {
         font-family: 'Poppins', system-ui, sans-serif; color: var(--ps-ink);
         font-size: 1rem; line-height: 1.65;
-        padding: 18px 18px calc(28px + env(safe-area-inset-bottom));
-        display: flex; flex-direction: column; gap: 16px;
+        padding: 16px 16px 0;
+        display: flex; flex-direction: column; gap: 12px;
     }
 
-    /* ── Buttons ────────────────────────────────────────────────
-         The system has exactly ONE filled button. Every other action
-         is a gold text link, which is why .outline / .green-outline
-         drop their fill and border here rather than being deleted:
-         the markup on eight screens keeps working, and the screens
-         stop showing three competing button weights in one row. ── */
-    .m-action-row { display: flex; align-items: center; gap: 12px; }
+    /* ── Page actions ───────────────────────────────────────────
+         Two buttons, never three: ONE primary create verb, and ONE
+         "More" that opens a sheet with everything else (export, import,
+         the occasional third verb). The first pass rendered the
+         secondary actions as bare gold text, which put four peers in a
+         row with no primary among them — a link is not a button, and a
+         list screen has exactly one thing it is for.
+
+         `.outline` is kept as an alias of `.more` so the eight screens
+         that still spell it that way keep working; both draw the white
+         bordered button. ── */
+    .m-action-row { display: flex; align-items: center; gap: 10px; }
     .m-action-btn {
-        flex: 1; min-height: var(--ps-h-btn); border-radius: var(--ps-r-btn);
-        font-weight: 600; font-size: .95rem; letter-spacing: .03em;
-        font-family: 'Poppins', system-ui, sans-serif; cursor: pointer; display: flex;
+        min-height: var(--ps-h-btn); border-radius: var(--ps-r-btn);
+        font-weight: 600; font-size: .84375rem;              /* 13.5px */
+        font-family: 'Poppins', system-ui, sans-serif; cursor: pointer; display: inline-flex;
         align-items: center; justify-content: center; gap: 8px; text-decoration: none;
         border: none; background: none; color: var(--ps-ink);
     }
     .m-action-btn.primary {
-        flex: 1.4; background: var(--ps-btn-grad); color: var(--ps-navy);
+        flex: 1; min-width: 0; background: var(--ps-btn-grad); color: var(--ps-navy);
         box-shadow: var(--ps-btn-shadow);
     }
     /* Lift on hover, sink on press — the shared :active scale below is
        overridden here so the primary reads as a physical key press. */
     .m-action-btn.primary:hover { transform: translateY(-1px); }
     .m-action-btn.primary:active {
-        transform: translateY(1px); opacity: 1;
+        transform: translateY(1px);
         box-shadow: 0 4px 12px rgba(202,161,79,.28);
     }
     .m-action-btn.primary:focus-visible {
         outline: none; box-shadow: var(--ps-btn-shadow), var(--ps-focus-ring);
     }
-    .m-action-btn.outline,
-    .m-action-btn.green-outline {
-        flex: 1; background: none; border: none; color: var(--ps-gold-text-deep);
+    .m-action-btn.more,
+    .m-action-btn.outline {
+        flex: none; padding: 0 16px; gap: 7px;
+        background: var(--ps-surface); border: 1px solid var(--ps-border); color: var(--ps-ink);
     }
-
-    .m-mini-row { display: flex; gap: 12px; min-width: 0; }
-    .m-mini-stat {
-        flex: 1; min-width: 0; background: var(--ps-surface); border-radius: var(--ps-r-card-sm);
-        border-top: 3px solid var(--ps-gold); padding: 14px 10px;
-        display: flex; flex-direction: column; align-items: center; gap: 4px;
-        box-shadow: var(--ps-card-shadow);
-    }
-    .m-mini-stat .v { font-size: clamp(1.05rem, 5vw, 1.35rem); line-height: 1.25; font-weight: 700; letter-spacing: -.01em; color: var(--ps-ink); overflow-wrap: break-word; }
-    /* A word-shaped value ("Commercial") in a slot sized for a number. */
-    .m-mini-stat .v.is-word { font-size: clamp(.75rem, 3.6vw, .9rem); }
-    .m-mini-stat .l {
-        font-size: .6rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
-        color: var(--ps-gold-text); text-align: center; line-height: 1.4;
-    }
+    .m-action-btn.more i,
+    .m-action-btn.outline i { font-size: 10px; color: var(--ps-muted); }
 
     /* ── Semantic tones inside the mobile app ───────────────────
          app-core's .badge / .status-badge vocabulary is theme-aware,
@@ -272,86 +287,246 @@
        screens inherit from app-core are square-ish and 700-weight. */
     .m-screen :is(.badge, .status-badge),
     .m-dash :is(.badge, .status-badge) {
+        flex: none;
         padding: 5px 11px; border-radius: var(--ps-r-pill);
         font-size: .625rem; font-weight: 600; letter-spacing: .04em;
+        white-space: nowrap;
     }
 
-    /* ── Dark stat strip ────────────────────────────────────────
-         The navy summary band at the top of Lease contracts,
-         Invoices, Payments and Building detail. It was four copies
-         of the same inline gradient; it is one class now, and the
-         only place besides the dashboard hero where the app goes
-         dark. ── */
+    /* ── Stat strip ─────────────────────────────────────────────
+         ONE way to show three or four figures, on every screen that
+         shows any. It replaces four things: the navy summary band
+         (Invoices / Payments / Lease contracts / Building detail), its
+         light `.is-quiet` twin (Buildings), the gold-top-bordered
+         `.m-mini-stat` tiles (Expenses / Revenues / EWA / Building
+         detail) and the dashboard's two money cards.
+
+         White card, equal columns, one ink. A figure is a figure — it
+         does not get a tone, an icon or a coloured top border to tell
+         you how to feel about it; the label says what it is and the
+         list under it says what to do. Columns are separated by a rule
+         rather than by a gap so the strip reads as one object.
+
+         `order` is set on the two children so a call site can write
+         them in either order and still get figure-over-label. ── */
     .ps-stat-strip {
-        display: flex; gap: 20px;
-        background: var(--ps-placeholder); border-radius: var(--ps-r-card);
-        padding: 20px; box-shadow: var(--ps-card-shadow-lift);
+        display: flex; align-items: stretch;
+        background: var(--ps-surface);
+        border: 1px solid var(--ps-border-soft);
+        border-radius: var(--ps-r-strip);
+        padding: 14px 0;
+        box-shadow: none;
     }
-    .ps-stat { flex: 1; min-width: 0; }
-    .ps-stat-label > * { min-width: 0; }
-    .ps-stat-label {
-        display: flex; align-items: center; gap: 8px;
-        font-size: .6rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
-        color: var(--ps-gold); line-height: 1.4;
+    .ps-stat {
+        flex: 1 1 0; min-width: 0; padding: 0 10px;
+        display: flex; flex-direction: column; align-items: center; text-align: center;
     }
-    .ps-stat-label::before {
-        content: ""; flex: none; width: 20px; height: 3px; border-radius: 2px; background: var(--ps-gold);
-    }
+    .ps-stat + .ps-stat { border-left: 1px solid var(--ps-divider); }
     .ps-stat-value {
-        font-size: clamp(1.15rem, 5.6vw, 1.45rem); line-height: 1.2; font-weight: 700; letter-spacing: -.01em;
-        color: var(--ps-ink-inverse); margin-top: 8px;
+        order: 0;
+        font-family: 'Poppins', system-ui, sans-serif; font-weight: 700;
+        font-size: 1.125rem; line-height: 1.25; letter-spacing: -.01em;   /* 18px */
+        color: var(--ps-ink); font-variant-numeric: tabular-nums;
+        overflow-wrap: anywhere;
     }
-    .ps-stat-value.is-gold { color: var(--ps-gold); }
-    .ps-stat-value.is-danger { color: #f0b4ac; }
+    /* A word-shaped value ("Commercial") in a slot sized for a number. */
+    .ps-stat-value.is-word { font-size: .8125rem; letter-spacing: 0; }
 
-    .m-search-input {
-        min-height: var(--ps-h-btn); border: 1px solid var(--ps-border); border-radius: var(--ps-r-btn);
-        padding: 0 16px; font-size: 1rem; font-family: 'Poppins', system-ui, sans-serif;
-        background: var(--ps-surface); outline: none; color: var(--ps-ink); width: 100%;
+    /* ── A zero is a zero ───────────────────────────────────────
+         These slots used to render a zero as an em dash, on the
+         reasoning that "BHD 0" three times across a strip reads as a
+         broken page. It reads as a *missing* one instead — a dash is
+         what a table prints when it has no value to print, and a
+         portfolio that has collected nothing this month has a value.
+         So the figure stays a figure and drops to the muted ink of
+         its surface: present, and plainly nothing.
+
+         --ps-muted, not the #97a1b4 --ps-faint: that token is the one
+         this file documents as decorative-only because it fails AA at
+         text sizes, and a figure is not a decoration. */
+    .ps-stat-value.is-zero { color: var(--ps-muted); font-weight: 600; }
+
+    /* ── The navy plate ─────────────────────────────────────────
+         The money strip on the mobile dashboard, and the one dark
+         surface on that screen. Same object as the white strip —
+         same columns, same rules, same figure-over-label — lit from
+         the top right so it reads as a plate set into the page
+         rather than a hole cut in it.
+
+         The gold marks exactly one figure: what is owed, which is
+         the only one of the three that asks for anything. A zero
+         owed asks for nothing, so .is-zero takes it back — gold on
+         a zero would flag an alert on good news. ── */
+    .ps-stat-strip.is-navy {
+        background-color: var(--ps-navy-card);
+        background-image: radial-gradient(120% 90% at 85% -10%, var(--ps-navy-sheen), transparent 60%);
+        border-color: transparent;
+    }
+    .ps-stat-strip.is-navy .ps-stat + .ps-stat { border-left-color: var(--ps-on-navy-line); }
+    .ps-stat-strip.is-navy .ps-stat-value { color: var(--ps-ink-inverse); }
+    .ps-stat-strip.is-navy .ps-stat-label { color: var(--ps-on-navy-quiet); }
+    .ps-stat-strip.is-navy .ps-stat-value.is-owed { color: var(--ps-gold-on-navy); }
+    .ps-stat-strip.is-navy .ps-stat-value.is-zero { color: var(--ps-on-navy-quiet); }
+    .ps-stat-label {
+        order: 1; margin-top: 3px;
+        font-size: .5625rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+        /* The spec's #97a1b4 is 2.9:1 on white — it is the token this file
+           documents as decorative-only, and this label is a word. Same grey
+           family, carried to 4.59:1. */
+        color: var(--ps-muted); line-height: 1.4;
+    }
+
+    /* ── Search field ───────────────────────────────────────────
+         A pill, 44px, one per screen, always directly above the chips.
+         The bare `.m-search-input` variant is gone: an input without the
+         magnifier reads as a text field, not as search. ── */
+    .m-search {
+        display: flex; align-items: center; gap: 10px; min-height: var(--ps-h-btn);
+        background: var(--ps-surface);
+        border: 1px solid var(--ps-border); border-radius: var(--ps-r-pill); padding: 0 16px;
         transition: border-color .15s ease, box-shadow .15s ease;
     }
-    .m-search-input::placeholder { color: var(--ps-muted); }
-    .m-search-input:focus-visible { border-color: var(--ps-gold-dark); box-shadow: var(--ps-focus-ring); }
+    .m-search:focus-within { border-color: var(--ps-gold-dark); box-shadow: var(--ps-focus-ring); }
+    .m-search > i { flex: none; color: var(--ps-muted); font-size: 14px; }
+    .m-search form { flex: 1; min-width: 0; display: flex; }
+    /* 1rem, not 13.5px: anything under 16px makes iOS zoom the viewport
+       on focus and the screen never zooms back out. min-width:0 is
+       load-bearing — an input's default intrinsic width (size=20) is its
+       flex min-content, which pushed the page 53px past a 320px viewport. */
+    .m-search input {
+        flex: 1; min-width: 0; border: 0; outline: none; font-size: 1rem; color: var(--ps-ink);
+        background: transparent; font-family: 'Poppins', system-ui, sans-serif;
+    }
+    .m-search input::placeholder { color: var(--ps-muted); }
 
+    /* ── Filter chips ───────────────────────────────────────────
+         One chip class. `.pm-chip` was a second spelling of it with a
+         different radius, and the two sat on the same screen. ── */
     /* min-width:0 is load-bearing: .m-screen is a flex column, so this row's
        automatic minimum size is its min-content width (all chips laid out),
        which made the whole page 27px wider than a 320px viewport on Lease
        contracts. overflow-x alone does not defeat that. */
-    .m-chip-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; min-width: 0; }
-    .m-chip-row.no-sb::-webkit-scrollbar { display: none; }
+    .m-chip-row {
+        display: flex; align-items: center; gap: 8px;
+        overflow-x: auto; padding-bottom: 2px; min-width: 0;
+        scrollbar-width: none;
+    }
+    .m-chip-row::-webkit-scrollbar { display: none; }
     .m-chip {
-        min-height: var(--ps-touch); padding: 0 16px; border-radius: var(--ps-r-btn);
-        font-size: .8rem; font-weight: 500;
+        min-height: var(--ps-touch); padding: 9px 16px; border-radius: var(--ps-r-pill);
+        font-size: .8rem; font-weight: 500; line-height: 1.4;
         font-family: 'Poppins', system-ui, sans-serif; cursor: pointer; flex-shrink: 0; display: flex;
-        align-items: center; text-decoration: none; border: 1px solid var(--ps-border);
+        align-items: center; gap: 6px; text-decoration: none; white-space: nowrap;
+        border: 1px solid var(--ps-border);
         background: var(--ps-surface); color: var(--ps-muted);
     }
     .m-chip.active { border-color: transparent; background: var(--ps-navy); color: var(--ps-ink-inverse); font-weight: 600; }
-
-    .m-row-list { display: flex; flex-direction: column; gap: 10px; }
-    .m-row-card {
-        background: var(--ps-surface); border-radius: var(--ps-r-card-sm); padding: 14px 16px; display: flex;
-        align-items: center; gap: 14px; box-shadow: var(--ps-card-shadow); text-decoration: none; color: inherit;
-        border: none; width: 100%; min-height: var(--ps-touch); text-align: left;
-        font-family: 'Poppins', system-ui, sans-serif; cursor: pointer;
+    /* The count rides inside the active chip ("Vacant · 63") — a second
+       pill inside the first was a badge on a badge. */
+    .m-chip-count { font-variant-numeric: tabular-nums; opacity: .72; }
+    /* Two facets, one row. Buildings filters by type AND by ownership, and
+       a flat row of ten chips would read as one radio group where tapping
+       Freehold looks like it drops Residential — it doesn't, the two
+       compose. The rule says "a new question starts here", borrowed from
+       the stat strip's column divider rather than adding a text label:
+       chips carry no labels anywhere else in the app. */
+    .m-chip-sep {
+        flex: none; align-self: center;
+        width: 1px; height: 20px; margin: 0 4px;
+        /* --ps-border, not --ps-divider: the divider token is the hairline
+           for the inside of a white card and is the same value as --ps-bg,
+           so out here on the page it draws nothing. This is the same
+           hairline the chips either side of it are outlined in. */
+        background: var(--ps-border);
     }
-    .m-row-icon { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 17px; }
+
+    /* ── List row ───────────────────────────────────────────────
+         The one row every list screen is built from: thumbnail, name +
+         meta, ONE right-hand data slot, chevron. The slot takes an
+         occupancy bar, a status badge or an amount — one of the three,
+         never two stacked, because a row read at arm's length can carry
+         exactly one number.
+
+         The whole row is the link. No shadow: it is a row in a list, not
+         a floating card, and eight of them stacked with a drop shadow
+         each read as corrugation. ── */
+    .m-row-list { display: flex; flex-direction: column; gap: 10px; }
+    /* The rows' reveal picks up where the chrome above them left off. The
+       screen component counts the sections it actually rendered and hands
+       the next free step down as --ps-row-step, so a row's delay is its
+       position in the list — not the `3 + $loop->index` each page used to
+       hard-code, a number that was silently wrong the moment a stat strip
+       appeared or disappeared above it. Four rows of stagger, then the
+       rest arrive together: a twenty-row list should not take a second to
+       finish landing. */
+    .m-row-list > *              { --ps-step: calc(var(--ps-row-step, 0) + 4); }
+    .m-row-list > :nth-child(1)  { --ps-step: var(--ps-row-step, 0); }
+    .m-row-list > :nth-child(2)  { --ps-step: calc(var(--ps-row-step, 0) + 1); }
+    .m-row-list > :nth-child(3)  { --ps-step: calc(var(--ps-row-step, 0) + 2); }
+    .m-row-list > :nth-child(4)  { --ps-step: calc(var(--ps-row-step, 0) + 3); }
+    .m-row-card {
+        background: var(--ps-surface); border: 1px solid var(--ps-border-soft);
+        border-radius: var(--ps-r-row); padding: 12px 14px;
+        display: flex; align-items: center; gap: 12px;
+        box-shadow: none; text-decoration: none; color: inherit;
+        width: 100%; min-height: var(--ps-touch); text-align: left;
+        font-family: 'Poppins', system-ui, sans-serif; cursor: pointer;
+        position: relative; overflow: hidden;
+    }
+    /* Photo when there is one, and when there isn't, a flat navy-grey tile
+       with a white outline glyph — one blank state, no tinted-by-status
+       icon washes and no clipart. */
+    .m-row-thumb {
+        flex: none; width: var(--ps-thumb); height: var(--ps-thumb);
+        border-radius: var(--ps-r-thumb); overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--ps-thumb-blank); color: var(--ps-ink-inverse); font-size: 17px;
+    }
+    .m-row-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    /* A tenant list of identical person glyphs carries no information, so
+       people get their initials in the same tile. */
+    .m-row-initials { font-size: .8125rem; font-weight: 600; letter-spacing: .02em; }
+    .m-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
     /* A record's own name can be an unbreakable run — "Seven Leisure
        Restaurant/Store/Pastry" has no spaces around its slashes — and at 320px
        that pushed the card 45px past its box and the page 27px past the
-       viewport. Let those break rather than widen the layout. */
-    .m-row-title { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-ink); overflow-wrap: anywhere; }
-    .m-row-sub { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); margin-top: 2px; overflow-wrap: anywhere; }
-    .m-row-chip {
-        padding: 6px 11px; border-radius: var(--ps-r-pill); background: var(--ps-gold-tint);
-        color: var(--ps-gold-text-deep); font-size: .625rem; font-weight: 600; letter-spacing: .04em; flex-shrink: 0;
+       viewport. Ellipsis rather than a wrap: the row is one line tall. */
+    .m-row-title {
+        font-size: .84375rem; line-height: 1.35; font-weight: 600; color: var(--ps-ink);   /* 13.5px */
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
-    /* Status pill — Paid green, Due amber, Overdue red; the tone pair
-       itself comes from the semantic tokens set on the element. */
-    .m-row-badge { padding: 5px 11px; border-radius: var(--ps-r-pill); font-size: .625rem; font-weight: 600; letter-spacing: .04em; flex-shrink: 0; }
-    .m-row-chevron { color: var(--ps-faint); font-size: 13px; flex-shrink: 0; }
+    .m-row-sub {
+        font-size: .6875rem; line-height: 1.45; font-weight: 500; color: var(--ps-muted);  /* 11px */
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .m-row-sub.is-strong { color: var(--ps-ink); font-weight: 600; }
+    .m-row-sub.is-down { color: var(--ps-danger); font-weight: 600; }
 
-    .m-empty { text-align: center; padding: 60px 24px; }
+    /* The right-hand slot, in its three forms. */
+    .m-row-occ { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .m-row-bar {
+        display: block; width: 60px; height: 6px; border-radius: 3px;
+        background: var(--ps-track); overflow: hidden;
+    }
+    .m-row-bar-fill {
+        display: block; height: 100%; border-radius: 3px;
+        background: var(--ps-btn-grad); width: var(--ps-pct, 0%);
+        transform-origin: left center;
+    }
+    .m-row-pct,
+    .m-row-amount {
+        flex: none; font-family: 'Poppins', system-ui, sans-serif; font-weight: 700;
+        font-size: .78125rem; line-height: 1.2; color: var(--ps-ink);      /* 12.5px */
+        font-variant-numeric: tabular-nums; white-space: nowrap;
+    }
+    .m-row-badge {
+        flex: none; padding: 5px 11px; border-radius: var(--ps-r-pill);
+        font-size: .625rem; font-weight: 600; letter-spacing: .04em; white-space: nowrap;
+        background: var(--ps-bg); color: var(--ps-muted-deep);
+    }
+    .m-row-chevron { flex: none; color: var(--ps-faint); font-size: 11px; }
+
+    .m-empty { text-align: center; padding: 48px 24px; }
     .m-empty-icon {
         width: 64px; height: 64px; border-radius: 18px; background: var(--ps-gold-tint);
         display: flex; align-items: center; justify-content: center; font-size: 22px;
@@ -359,6 +534,43 @@
     }
     .m-empty-title { font-size: 1.05rem; font-weight: 600; letter-spacing: -.01em; color: var(--ps-ink); margin-bottom: 6px; }
     .m-empty-sub { font-size: .875rem; line-height: 1.65; color: var(--ps-muted-deep); }
+    /* An empty screen is an invitation to act, so it carries the same
+       primary the actions row does. */
+    .m-empty .m-action-btn.primary { flex: none; display: inline-flex; padding: 0 24px; margin-top: 18px; }
+
+    /* ── Staggered reveal ───────────────────────────────────────
+         Search, actions, stats, then the rows — 40ms apart, capped at
+         eight steps so a long list does not spend three seconds
+         arriving. Transform and opacity only. ── */
+    .ps-reveal {
+        animation: ps-in 320ms var(--ease-out) both;
+        animation-delay: calc(var(--ps-step, 0) * 40ms);
+    }
+    @keyframes ps-in {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: none; }
+    }
+    /* Bars draw after the row they sit in has arrived. The fill already
+       has its final width, so the draw is a scaleX from its left edge —
+       animating the width itself would relayout the row 42 times a second. */
+    .m-row-bar-fill {
+        animation: ps-bar 700ms var(--ease-out) both;
+        animation-delay: calc(var(--ps-step, 0) * 40ms + 320ms);
+    }
+    @keyframes ps-bar {
+        from { transform: scaleX(0); }
+        to   { transform: scaleX(1); }
+    }
+    /* The bell's count pops once, on the tick where it went up. */
+    .shell-bell-badge.is-pop { animation: ps-badge-pop 420ms var(--ease-out); }
+    @keyframes ps-badge-pop {
+        0%   { transform: scale(1); }
+        45%  { transform: scale(1.35); }
+        100% { transform: scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .shell-bell-badge.is-pop { animation: none; }
+    }
 
     /* Desktop list-page chrome each redesigned mobile screen replaces —
        scoped to body.is-mobile-screen so untouched pages (Lease
@@ -400,6 +612,28 @@
         --ps-navy-text:       #a8b3c7;   /* muted text on navy — 6.50 on --ps-navy    */
         --ps-ink-inverse:     #ffffff;   /* text sitting on navy or on a gold fill    */
 
+        /* ── The navy plate ─────────────────────────────────────
+             ONE dark card per screen, and only under figures that
+             are that screen's subject. It is not a second card
+             style to reach for: two dark cards on one screen and
+             neither of them is emphasis any more.
+
+             The sheen is a gold light source at the top right, not
+             a gradient fill — it is what separates a lacquered
+             plate from a navy rectangle. These four hold in both
+             themes because the ground under them is navy in both,
+             so they are deliberately absent from the dark block. */
+        --ps-navy-card:       var(--ps-navy);
+        --ps-navy-sheen:      rgba(216,178,95,.10);  /* gold wash, top-right corner */
+        /* .6, not .5: the strip is the dark plate on every list screen now, and
+           over the hottest part of the sheen .5 measured 3.54:1 — a label is a
+           word, so it owes 4.5. This is 5.97 on the plate and 4.97 at the
+           sheen's hottest point. The figure beside it is full white at 13.7,
+           so "quiet" still reads as quiet. */
+        --ps-on-navy-quiet:   rgba(255,255,255,.6);   /* 5.97 plate / 4.97 sheen     */
+        --ps-on-navy-line:    rgba(255,255,255,.12);  /* column rule                 */
+        --ps-gold-on-navy:    #edcd85;   /* gold as a FIGURE on navy — 8.94          */
+
         --ps-gold:            #d8b25f;   /* accent dashes, 3px card top borders       */
         --ps-gold-dark:       #caa14f;   /* focus rings, borders — never text         */
         --ps-gold-text:       #8a6d20;   /* eyebrows/links on white   — 4.90          */
@@ -412,19 +646,23 @@
         --ps-muted:           #6b7689;   /* subtitles on white  — 4.59                */
         --ps-muted-deep:      #616c82;   /* subtitles on page   — 4.67                */
         --ps-faint:           #97a1b4;   /* DECORATIVE ONLY — fails AA at text sizes  */
+        --ps-nav-icon:        #8b95a8;   /* bottom-nav inactive icons — 3.02 on white,
+                                            which clears AA for non-text UI. Icon-only:
+                                            never put a label in this colour.          */
 
         /* Surfaces */
         --ps-bg:              #eef1f6;
         --ps-bg-alt:          #f6f8fb;
         --ps-surface:         #ffffff;
-        --ps-border:          #d5dae3;
-        --ps-border-soft:     #e7ebf2;
+        --ps-border:          #d5dae3;   /* input/control border            */
+        --ps-border-soft:     #e4e8ef;   /* card border                     */
         --ps-border-strong:   #c3cad7;
         --ps-track:           #e3e8f0;   /* segmented-control track                   */
 
         /* Semantic */
         --ps-success:         #2f7a4f;   --ps-success-bg: #e6f4ec;
         --ps-danger:          #b4483c;   --ps-danger-bg:  #fbeae8;
+        --ps-danger-line:     #e8c9c4;   /* border of a card that needs action        */
         --ps-warning:         #8a6d20;   --ps-warning-bg: #fdf6e6;
         --ps-info:            #3d5a8a;   --ps-info-bg:    #e8edf6;
 
@@ -442,8 +680,15 @@
         --ps-r-card-sm:       16px;
         --ps-r-btn:           12px;
         --ps-r-pill:          99px;
-        --ps-h-btn:           50px;      /* spec 48–52                                */
-        --ps-touch:           44px;
+        --ps-h-btn:           44px;      /* every button and field on a phone         */
+        --ps-touch:           44px;      /* minimum tap target                        */
+        --ps-ctl:             42px;      /* header discs: bell, avatar, back chevron  */
+        --ps-thumb:           46px;      /* list-row thumbnail                        */
+        --ps-r-row:           13px;      /* list row                                  */
+        --ps-r-thumb:         11px;      /* thumbnail inside a list row               */
+        --ps-r-strip:         14px;      /* stat strip                                */
+        --ps-divider:         #eef1f6;   /* hairline INSIDE a white card              */
+        --ps-thumb-blank:     #7386ad;   /* photoless thumbnail tile, white glyph     */
 
         /* ── Legacy aliases ──────────────────────────────────────
              The .pm-* and .m-* screens address the palette through
@@ -536,6 +781,8 @@
         --ps-border-soft:     #1c2740;
         --ps-border-strong:   #2c3c5f;
         --ps-track:           #1c2740;
+        --ps-divider:         #1c2740;
+        --ps-thumb-blank:     #2c3c5f;
 
         /* Gold as TEXT needs the light end of the ramp on a dark ground. */
         --ps-gold-text:       #edcd85;
@@ -546,6 +793,7 @@
            the card instead of punching a light hole in it. */
         --ps-success:         #57ae80;   --ps-success-bg: rgba(87,174,128,.16);
         --ps-danger:          #e28575;   --ps-danger-bg:  rgba(226,133,117,.16);
+        --ps-danger-line:     rgba(226,133,117,.34);
         --ps-warning:         #edcd85;   --ps-warning-bg: rgba(216,178,95,.16);
         --ps-info:            #7fa0d4;   --ps-info-bg:    rgba(127,160,212,.16);
 
@@ -556,26 +804,56 @@
     }
 
 
+    /* ── One header system, two variants ─────────────────────
+         .pm-header is the Home variant (eyebrow → 26px title → meta) and
+         .topbar is the compact one every other tab uses (22px title in a
+         single row). They share this padding — 18px block, 16px inline —
+         and the same 12px gutter between text and controls, so the title's
+         left edge and the controls' right edge don't move when you switch
+         tabs. Change one, change both. ── */
+    /* Both variants: --ps-surface, never --card-bg. They resolve to the same
+       white (and the same dark) today, which is exactly why the drift was
+       invisible until one of them changed — one token means they cannot
+       diverge. The hairline is transparent until the page is scrolled (JS
+       adds .is-scrolled), so an unscrolled header is an unbroken surface and
+       a scrolled one has an edge to sit against. No shadow on either. */
     .pm-header {
-        flex: none; display: flex; align-items: center; gap: 12px;
-        padding: calc(14px + env(safe-area-inset-top)) 18px 12px;
-        background: var(--ps-surface); border-bottom: 1px solid var(--ps-border-soft);
-        box-shadow: 0 1px 2px rgba(30,44,79,.04);
+        flex: none; display: flex; flex-direction: column; align-items: stretch;
+        padding: calc(16px + env(safe-area-inset-top)) 16px 16px;
+        background: var(--ps-surface); border-bottom: 1px solid transparent;
+        box-shadow: none;
+        transition: border-bottom-color .18s ease;
     }
+    .pm-header.is-scrolled,
+    .topbar.is-scrolled,
+    .pm-push-header.is-scrolled { border-bottom-color: var(--ps-border); }
+    /* Row two of the Home variant: the title block, then the controls. The
+       12px here is the title↔controls gutter; the 8px between the controls
+       themselves lives on .pm-header-actions, so it matches .topbar-actions. */
+    .pm-header-row { display: flex; align-items: center; gap: 12px; }
+    .pm-header-actions { display: flex; align-items: center; gap: 8px; }
     .pm-header-text { flex: 1; min-width: 0; }
     .pm-title {
-        font-family: 'Poppins', system-ui, sans-serif; font-weight: 700; font-size: 1.35rem;
+        font-family: 'Poppins', system-ui, sans-serif; font-weight: 700; font-size: 1.375rem; /* 22px */
         line-height: 1.25; letter-spacing: -.01em; color: var(--ps-ink);
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .pm-subtitle { font-size: .8rem; font-weight: 500; color: var(--ps-muted); margin-top: 2px; }
-    /* Chrome buttons carry the 44px floor, not the 38px the first pass
-       used — they are the only way out of several screens. */
+    .pm-subtitle { font-size: .75rem; font-weight: 500; color: var(--ps-muted); margin-top: 2px; }
+    /* The single header control: a 44px circle, hairline border, 19px icon.
+         Every action in either header variant is one of these — the theme
+         toggle, the bell, the back chevron — so nothing in the row is a
+         different shape or a different size. Chrome buttons carry the 44px
+         floor, not the 38px the first pass used: they are the only way out
+         of several screens. */
     .pm-icon-btn {
-        position: relative; flex: none; width: var(--ps-touch); height: var(--ps-touch);
-        border-radius: var(--ps-r-btn);
+        position: relative; flex: none; width: var(--ps-ctl); height: var(--ps-ctl);
+        border-radius: var(--ps-r-pill);
         border: 1px solid var(--ps-border); background: var(--ps-surface); color: var(--ps-ink);
-        font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        box-shadow: none;
+        /* Explicit, not inherited from the default: the badge hangs outside
+           this circle and a stray overflow:hidden here would clip it. */
+        overflow: visible;
     }
     .pm-icon-btn:active { background: var(--ps-bg); }
     /* The bell is an <a> on pushed screens (it links to the dashboard's alert
@@ -583,17 +861,36 @@
     a.pm-icon-btn { text-decoration: none; }
     .pm-icon-btn:focus-visible { outline: 2px solid var(--ps-gold); outline-offset: 2px; }
     .pm-dot { position: absolute; top: 8px; right: 9px; width: 8px; height: 8px; border-radius: var(--ps-r-pill); background: var(--ps-danger); border: 2px solid var(--ps-surface); }
+    /* No border and no lift shadow: it sits in a row of three 44px discs
+       and was the only one wearing a gold glow, which read as a fourth
+       style rather than the same control filled differently. */
     .pm-avatar {
-        flex: none; width: var(--ps-touch); height: var(--ps-touch); border-radius: var(--ps-r-pill); border: 0;
+        flex: none; width: var(--ps-ctl); height: var(--ps-ctl); border-radius: var(--ps-r-pill); border: 0;
         background: var(--ps-btn-grad); color: var(--ps-navy);
-        font-family: 'Poppins', system-ui, sans-serif; font-weight: 600; font-size: 1rem;
+        font-family: 'Poppins', system-ui, sans-serif; font-weight: 600; font-size: .9375rem;
         display: flex; align-items: center; justify-content: center; cursor: pointer;
-        box-shadow: var(--ps-btn-shadow);
+        box-shadow: none; padding: 0;
+    }
+    /* The bell's badge, both variants. One spelling of "unread" app-wide:
+       a numeric counter. .pm-dot is still defined above for a count that
+       genuinely isn't known — nothing uses it today. */
+    .shell-bell-badge {
+        top: -2px; right: -2px;
+        min-width: 18px; height: 18px; padding: 0 4px;
+        border-radius: 9px;
+        background: var(--ps-danger);
+        border: 2px solid var(--ps-surface);
+        box-shadow: none;
+        font-family: 'Poppins', system-ui, sans-serif;
+        font-size: 9.5px; font-weight: 600; line-height: 14px;
     }
     .pm-avatar:focus-visible { outline: 2px solid var(--ps-navy); outline-offset: 2px; }
 
-    .pm-scroll { position: relative; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
-    .pm-bottom-space { height: calc(96px + env(safe-area-inset-bottom)); }
+    .pm-scroll {
+        position: relative; flex: 1; overflow-y: auto; overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: calc(96px + env(safe-area-inset-bottom));
+    }
     /* Eyebrow — the one recurring signature of the language: a 26x3px
        gold dash, then uppercase gold caps at .65rem/.18em. */
     .pm-section-label {
@@ -602,109 +899,65 @@
         color: var(--ps-gold-text-deep); margin-bottom: 12px;
     }
     .pm-section-label::before {
-        content: ""; flex: none; width: 26px; height: 3px; border-radius: 2px; background: var(--ps-gold);
+        content: ""; flex: none; width: 28px; height: 3px; border-radius: 2px; background: var(--ps-gold);
     }
     .pm-empty { padding: 28px 16px; text-align: center; font-size: .875rem; line-height: 1.65; color: var(--ps-muted-deep); }
 
-    /* ── KPI cards (Home Portfolio, Property detail, ...) ──── */
-    /* minmax(0,1fr), not 1fr: a bare 1fr floors at the cell's min-content,
-       so a long "BHD 24,850" widened the grid past the viewport. */
-    .pm-kpi-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
-    .pm-kpi-card {
-        background: var(--ps-surface); border: 1px solid var(--ps-border);
-        border-top: 3px solid var(--ps-gold); border-radius: var(--ps-r-card-sm);
-        padding: 16px; box-shadow: var(--ps-card-shadow);
-    }
-    .pm-kpi-label {
-        font-size: .6rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
-        color: var(--ps-gold-text); line-height: 1.5;
-    }
-    .pm-kpi-value {
-        font-family: 'Poppins', system-ui, sans-serif; font-weight: 700;
-        font-size: clamp(1.15rem, 5.6vw, 1.55rem);
-        line-height: 1.2; letter-spacing: -.01em; color: var(--ps-ink); margin-top: 8px;
-        overflow-wrap: anywhere;
-    }
-    .pm-kpi-sub { font-size: .8rem; font-weight: 500; color: var(--ps-muted); margin-top: 4px; }
-    .pm-kpi-sub.is-green { color: var(--ps-success); }
 
-    /* ── Property card (Home/Properties) ──────────────────── */
-    .pm-property-card {
-        background: var(--ps-surface); border: 1px solid var(--ps-border);
-        border-top: 3px solid var(--ps-gold); border-radius: var(--ps-r-card);
-        overflow: hidden; box-shadow: var(--ps-card-shadow);
-        text-decoration: none; color: inherit; display: block;
-    }
-    /* Missing-photo state: navy gradient block, gold glyph at 35%. */
-    .pm-property-photo { position: relative; height: 132px; background: var(--ps-placeholder); background-size: cover; background-position: center; }
+
+    /* Missing-photo state for the building hero: navy gradient block, gold
+       glyph at 35%. (The property *card* it was written for is gone — every
+       list is rows now.) */
     .pm-property-photo-fallback { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--ps-gold); opacity: .35; font-size: 34px; }
-    .pm-property-kind {
-        position: absolute; top: 12px; right: 12px; padding: 5px 11px; border-radius: var(--ps-r-pill);
-        background: rgba(11,19,43,.72); color: var(--ps-gold);
-        font-size: .6rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
-    }
-    .pm-property-body { padding: 16px; }
-    .pm-property-name { font-family: 'Poppins', system-ui, sans-serif; font-weight: 600; font-size: 1.05rem; line-height: 1.35; letter-spacing: -.01em; color: var(--ps-ink); }
-    .pm-property-address { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); margin-top: 4px; }
-    .pm-property-address i { color: var(--ps-gold-dark); }
-    .pm-property-wells { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 14px; }
-    .pm-well { background: var(--ps-bg); border-radius: 10px; padding: 10px 11px; }
-    .pm-well-label { font-size: .6rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--ps-gold-text-deep); line-height: 1.4; }
-    .pm-well-value { font-family: 'Poppins', system-ui, sans-serif; font-weight: 700; font-size: clamp(.85rem, 3.6vw, 1rem); line-height: 1.3; color: var(--ps-ink); margin-top: 3px; overflow-wrap: anywhere; }
 
     /* ── Action / list rows (needs-you-today, empty states, etc.) ── */
     .pm-action-list { display: flex; flex-direction: column; gap: 10px; }
     .pm-action-row {
-        display: flex; align-items: center; gap: 13px; min-height: var(--ps-touch);
-        background: var(--ps-surface); border: 1px solid var(--ps-border);
-        border-radius: var(--ps-r-card-sm); padding: 13px 15px; text-decoration: none;
-        box-shadow: var(--ps-card-shadow);
+        display: flex; align-items: center; gap: 12px; min-height: var(--ps-touch);
+        background: var(--ps-surface); border: 1px solid var(--ps-border-soft);
+        border-radius: var(--ps-r-row); padding: 12px 14px; text-decoration: none;
+        box-shadow: none;
     }
     .pm-action-icon {
-        flex: none; width: 38px; height: 38px; border-radius: 11px;
+        flex: none; width: var(--ps-thumb); height: var(--ps-thumb); border-radius: var(--ps-r-thumb);
         background: var(--ps-gold-tint); color: var(--ps-gold-text);
-        display: flex; align-items: center; justify-content: center; font-size: 14px;
+        display: flex; align-items: center; justify-content: center; font-size: 15px;
     }
-    .pm-action-title { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-ink); }
-    .pm-action-sub { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); }
+    /* ── The row that needs action ──────────────────────────────
+         Gold is the brand's accent — it marks the primary verb, the
+         active chip, the figure worth reading. Red is "this needs
+         you". The chase-what's-owed row was wearing the gold tile
+         every other row wears, which made the one alert on the
+         dashboard look like a menu item. The two roles never share a
+         row: nothing in here is gold. ── */
+    .pm-action-row.is-alert { border-color: var(--ps-danger-line); }
+    .pm-action-row.is-alert .pm-action-icon {
+        background: var(--ps-danger-bg); color: var(--ps-danger);
+    }
+    /* display:block, because the row's anatomy is title-over-sub and that
+       must not depend on which element a call site reached for. Four of
+       the five write these as <div>; the dashboard's chase row wrote them
+       as <span>, so its title and its amount ran together into one
+       wrapping paragraph. */
+    .pm-action-title { display: block; font-size: .84375rem; line-height: 1.35; font-weight: 600; color: var(--ps-ink); }
+    .pm-action-sub { display: block; font-size: .6875rem; line-height: 1.45; color: var(--ps-muted); }
     .pm-action-chevron { color: var(--ps-faint); font-size: 12px; }
 
-    /* ── FAB ──────────────────────────────────────────────── */
+    /* ── FAB ──────────────────────────────────────────────────
+         A static child of .ps-bottom-bar, to the right of the tab pill.
+         It used to be `position: fixed` with the same inline override
+         repeated on five screens, and the bar had to dodge it. ── */
     .pm-fab {
-        position: absolute; right: 18px; bottom: calc(112px + env(safe-area-inset-bottom));
-        width: 56px; height: 56px; border-radius: var(--ps-r-pill); border: 0;
+        flex: none;
+        width: 52px; height: 52px; border-radius: var(--ps-r-pill); border: 0;
         background: var(--ps-btn-grad); color: var(--ps-navy);
-        font-size: 20px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center;
-        box-shadow: var(--ps-fab-shadow); z-index: 20;
+        font-size: 22px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 8px 20px rgba(202,161,79,.4);
     }
+    /* Deeper than the 0.96 the shared pressed-state block gives every
+       other control, and no dimming: the gradient is the affordance. */
+    .pm-fab:active { transform: scale(0.94); opacity: 1; }
 
-    /* ── Search field + filter chips (Tenants, Property detail units) ── */
-    .pm-search-field {
-        display: flex; align-items: center; gap: 10px; min-height: var(--ps-h-btn);
-        background: var(--ps-surface);
-        border: 1px solid var(--ps-border); border-radius: var(--ps-r-btn); padding: 0 14px;
-        transition: border-color .15s ease, box-shadow .15s ease;
-    }
-    .pm-search-field:focus-within { border-color: var(--ps-gold-dark); box-shadow: var(--ps-focus-ring); }
-    /* 1rem, not 13.5px: anything under 16px makes iOS zoom the viewport
-       on focus and the screen never zooms back out. */
-    .pm-search-field input {
-        /* min-width:0 is load-bearing: an <input>'s default intrinsic width
-           (size=20) is its flex min-content, which pushed the page 53px past
-           a 320px viewport before this. */
-        flex: 1; min-width: 0; border: 0; outline: none; font-size: 1rem; color: var(--ps-ink);
-        background: transparent; font-family: 'Poppins', system-ui, sans-serif;
-    }
-    .pm-search-field input::placeholder { color: var(--ps-muted); }
-    .pm-search-field i { color: var(--ps-muted); font-size: 14px; }
-    .pm-chip-row { display: flex; align-items: center; gap: 8px; overflow-x: auto; }
-    .pm-chip {
-        display: inline-flex; align-items: center; min-height: var(--ps-touch); padding: 0 15px;
-        border-radius: var(--ps-r-btn); font-size: .8rem; font-weight: 500;
-        text-decoration: none; white-space: nowrap; flex-shrink: 0;
-        border: 1px solid var(--ps-border); background: var(--ps-surface); color: var(--ps-muted);
-    }
-    .pm-chip.active { border-color: transparent; background: var(--ps-navy); color: var(--ps-ink-inverse); font-weight: 600; }
 
     /* ── Property detail: photo hero + floors & units native list ──
          Redesigned so the screen reads as an app detail screen (photo
@@ -717,7 +970,7 @@
        hero starts exactly at .m-screen's own top padding (see the
        `.m-screen` top padding left in place in buildings/show.blade.php)
        instead of being pulled up on top of the pm-push-header above it. */
-    .pm-hero-wrap { position: relative; margin: 0 -18px 0; }
+    .pm-hero-wrap { position: relative; margin: 0 -16px 0; }
     .pm-hero-photo {
         position: relative; height: 232px; background: var(--ps-placeholder);
         background-size: cover; background-position: center;
@@ -759,20 +1012,21 @@
     .pm-floor-meta { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); margin-top: 2px; }
     .pm-floor-units { display: flex; flex-direction: column; gap: 10px; padding: 12px 0 16px; }
     .pm-unit-card {
-        display: flex; align-items: center; gap: 13px; min-height: var(--ps-touch);
-        padding: 12px 15px; text-decoration: none; color: inherit;
-        background: var(--ps-surface); border: 1px solid var(--ps-border); border-radius: var(--ps-r-card-sm);
-        box-shadow: var(--ps-card-shadow);
+        display: flex; align-items: center; gap: 12px; min-height: var(--ps-touch);
+        padding: 12px 14px; text-decoration: none; color: inherit;
+        background: var(--ps-surface); border: 1px solid var(--ps-border-soft); border-radius: var(--ps-r-row);
+        box-shadow: none;
     }
     div.pm-unit-card { cursor: default; }
     .pm-unit-tile {
-        flex: none; width: 44px; height: 44px; border-radius: 13px; font-family: 'Poppins', system-ui, sans-serif;
+        flex: none; width: var(--ps-thumb); height: var(--ps-thumb); border-radius: var(--ps-r-thumb);
+        font-family: 'Poppins', system-ui, sans-serif;
         font-weight: 600; font-size: .8rem; display: flex; align-items: center; justify-content: center;
     }
     .pm-unit-tile.is-let { background: var(--ps-navy); color: var(--ps-gold); }
     .pm-unit-tile.is-vacant { background: var(--ps-bg); color: var(--ps-muted); }
-    .pm-unit-name { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pm-unit-rent { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); margin-top: 2px; }
+    .pm-unit-name { font-size: .84375rem; line-height: 1.35; font-weight: 600; color: var(--ps-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pm-unit-rent { font-size: .6875rem; line-height: 1.45; color: var(--ps-muted); margin-top: 1px; }
     .pm-unit-badge { padding: 5px 11px; border-radius: var(--ps-r-pill); font-size: .625rem; font-weight: 600; letter-spacing: .04em; flex-shrink: 0; }
     .pm-unit-more {
         display: flex; align-items: center; justify-content: center; min-height: var(--ps-touch);
@@ -798,40 +1052,7 @@
        reading as native on both platforms rather than leaning
        hard into one. ═══════════════════════════════════════════ */
 
-    /* Two-layer elevation: a soft ambient shadow + a tighter key
-       shadow, the way Material 3 composes elevation instead of a
-       single flat rgba blur. Reused directly on pm-property-card /
-       pm-kpi-card / pm-unit-card since those three are exclusive
-       to the screens in scope. */
-    /* Promoseven runs one card shadow, so the three elevation steps
-       collapse to that shadow plus a lift for anything genuinely
-       floating. Kept as tokens because the Depth & Motion rules below
-       and dashboard.blade.php both address them by name. */
-    :root {
-        --pm-elev-1: var(--ps-card-shadow);
-        --pm-elev-2: var(--ps-card-shadow);
-        --pm-elev-3: var(--ps-card-shadow-lift);
-    }
-    .pm-property-card { box-shadow: var(--pm-elev-2); transition: box-shadow .18s ease, transform .12s ease; }
-    .pm-kpi-card { box-shadow: var(--pm-elev-1); transition: box-shadow .18s ease, transform .12s ease; }
-    .pm-unit-card { box-shadow: var(--pm-elev-1); }
 
-    /* Material-style ripple: opt in per element with class
-       `pm-ripple`. JS (below) spawns a `.pm-ripple-wave` span at
-       the touch point on pointerdown; this alone provides the
-       expanding-circle feedback, layered on top of the existing
-       scale-press so it reads as one native system rather than
-       two competing effects. */
-    .pm-ripple { position: relative; overflow: hidden; }
-    .pm-ripple-wave {
-        position: absolute; border-radius: 50%; pointer-events: none;
-        background: radial-gradient(circle, rgba(216,178,95,.35) 0%, rgba(216,178,95,0) 72%);
-        transform: scale(0); opacity: .9;
-        animation: pm-ripple-expand .5s cubic-bezier(.22,.72,.24,1) forwards;
-    }
-    @keyframes pm-ripple-expand {
-        to { transform: scale(1); opacity: 0; }
-    }
 
     /* Large title + collapsing header, opt-in via `.pm-title.is-lg`
        and `.pm-header.is-collapsible`. JS toggles `.is-collapsed`
@@ -840,23 +1061,25 @@
        — the same "large title deflates into a compact bar" motion
        as iOS navigation bars / Android's collapsing toolbar. */
     .pm-title.is-lg {
-        font-size: 1.55rem; font-weight: 700; letter-spacing: -.01em;
+        font-size: 1.5625rem; font-weight: 700; letter-spacing: -.01em;   /* 25px */
         transition: font-size .28s var(--ease-spring);
     }
     .pm-header.is-collapsible {
         transition: box-shadow .22s ease, background-color .22s ease;
     }
-    .pm-header.is-collapsible.is-collapsed .pm-title.is-lg { font-size: 1.15rem; }
+    /* Collapses to the compact variant's 22px, not smaller: the scrolled
+       Home header and every other tab's header are then the same title. */
+    .pm-header.is-collapsible.is-collapsed .pm-title.is-lg { font-size: 1.375rem; }
     /* The greeting is the screen's eyebrow — same dash + gold caps as
        .pm-section-label, so the language reads the same on every screen. */
     .pm-greeting {
-        display: flex; align-items: center; gap: 10px;
-        font-size: .65rem; font-weight: 600; letter-spacing: .18em; text-transform: uppercase;
+        display: flex; align-items: center; gap: 10px; min-width: 0;
+        font-size: .625rem; font-weight: 600; letter-spacing: .18em; text-transform: uppercase;
         color: var(--ps-gold-text); margin-bottom: 6px;
         transition: opacity .2s ease, max-height .2s ease;
     }
     .pm-greeting::before {
-        content: ""; flex: none; width: 26px; height: 3px; border-radius: 2px; background: var(--ps-gold);
+        content: ""; flex: none; width: 28px; height: 3px; border-radius: 2px; background: var(--ps-gold);
     }
     .pm-header.is-collapsible.is-collapsed .pm-greeting { opacity: 0; max-height: 0; margin: 0; overflow: hidden; }
 
@@ -871,19 +1094,11 @@
         position: absolute; top: 4px; bottom: 4px; left: 4px;
         background: var(--ps-surface); border-radius: 9px;
         box-shadow: 0 2px 6px rgba(30,44,79,.10);
-        transition: transform .32s var(--ease-spring), width .32s var(--ease-spring);
+        transition: transform .24s var(--ease-spring), width .24s var(--ease-spring);
         will-change: transform;
     }
     .pm-seg-btn { position: relative; z-index: 1; transition: color .18s ease; }
 
-    /* Tonal KPI stat chip — a small icon badge + trend row that
-       gives the flat KPI numbers below in dashboard.blade.php more
-       visual hierarchy than plain stacked text. */
-    .pm-kpi-icon {
-        width: 28px; height: 28px; border-radius: 9px; flex-shrink: 0;
-        display: flex; align-items: center; justify-content: center; font-size: 11px;
-    }
-    .pm-kpi-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
     /* Pull-to-refresh affordance — opt in with `data-pull-refresh`
        on a `.pm-scroll` container. Pure CSS visual; JS below
@@ -903,22 +1118,7 @@
     .pm-ptr-spinner.is-loading { animation: pm-ptr-spin .6s linear infinite; }
     @keyframes pm-ptr-spin { to { transform: rotate(360deg); } }
 
-    /* Pill-shaped iOS-style search field — opt in with
-       `.pm-search-field.is-pill` (buildings index only; the
-       default `.pm-search-field` used elsewhere is untouched). */
-    .pm-search-field.is-pill {
-        background: var(--ps-surface); border: 1px solid var(--ps-border);
-        border-radius: var(--ps-r-btn); padding: 0 14px; box-shadow: none;
-    }
 
-    /* Roomier "big" empty state — opt in with `.pm-empty.is-lg`
-       (used only where explicitly added below). */
-    .pm-empty.is-lg { padding: 48px 24px; }
-    .pm-empty-icon-lg {
-        width: 64px; height: 64px; border-radius: 18px; margin: 0 auto 16px;
-        background: var(--ps-gold-tint); color: var(--ps-gold-text);
-        display: flex; align-items: center; justify-content: center; font-size: 22px;
-    }
 
     /* Hero parallax (Buildings detail) — the cover image lives in
        its own layer (`.pm-hero-photo-img`) so the translate/scale
@@ -991,21 +1191,32 @@
     #signOutDialog .modal-body { padding: 4px 18px 14px; }
     #alertsSheet .modal-body { padding: 14px 18px; }
 
-    /* ── Standard mobile header ───────────────────────────── */
+    /* ── Compact header variant (every tab except Home) ─────
+         Padding and gutter match .pm-header exactly — see the note there. ── */
     .topbar {
         height: auto;
-        padding: calc(18px + env(safe-area-inset-top)) 18px 12px;
-        gap: 10px;
+        padding: calc(16px + env(safe-area-inset-top)) 16px 16px;
+        gap: 12px;
         font-family: 'Poppins', system-ui, sans-serif;
+        background: var(--ps-surface);
+        border-bottom: 1px solid transparent;
+        box-shadow: none;
+        transition: border-bottom-color .18s ease;
     }
     .topbar-title {
-        font-size: 1.35rem; font-weight: 700; letter-spacing: -.01em;
+        display: flex; align-items: baseline; gap: 8px;
+        font-size: 1.375rem; font-weight: 700; letter-spacing: -.01em;
         font-family: 'Poppins', system-ui, sans-serif; color: var(--ps-ink);
     }
-    #menuBtn, .topbar-actions .topbar-icon-btn {
-        width: var(--ps-touch); height: var(--ps-touch); border-radius: var(--ps-r-btn);
+    .topbar-title-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    /* The count reads as a quiet annotation on the title, not a second
+       heading — same size and colour as Home's meta line. */
+    .topbar-count {
+        flex: none; font-size: .78125rem; font-weight: 500; letter-spacing: 0;   /* 12.5px */
+        color: var(--ps-muted); font-variant-numeric: tabular-nums;
     }
-    .topbar .user-avatar { width: var(--ps-touch); height: var(--ps-touch); font-size: .9375rem; }
+    /* 8px between the discs on both variants — see .pm-header-actions. */
+    .topbar-actions { gap: 8px; }
 
     /* ── More sheet ───────────────────────────────────────── */
     .more-sheet-item {
@@ -1016,59 +1227,117 @@
         text-decoration: none; color: inherit;
     }
     .more-sheet-item:active { background: var(--ps-bg); }
+    /* One wash, set here rather than as an inline pair per row: the sheet
+       had eleven rows in five different tints, three of them green/blue/
+       purple, which made a list of destinations read as a status board. */
     .more-sheet-icon {
-        width: var(--ps-touch); height: var(--ps-touch); border-radius: 13px; flex-shrink: 0;
-        display: flex; align-items: center; justify-content: center; font-size: 17px;
+        width: var(--ps-thumb); height: var(--ps-thumb); border-radius: var(--ps-r-thumb); flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center; font-size: 16px;
+        background: var(--ps-gold-tint); color: var(--ps-gold-text);
     }
+    .more-sheet-icon.is-danger { background: var(--ps-danger-bg); color: var(--ps-danger); }
     .more-sheet-label { font-size: .9375rem; line-height: 1.4; font-weight: 600; color: var(--ps-ink); }
     .more-sheet-desc { font-size: .8rem; line-height: 1.5; color: var(--ps-muted); margin-top: 2px; }
     .more-sheet-item.danger .more-sheet-label { color: var(--ps-danger); }
 
-    /* ── Bottom tab bar ──────────────────────────────────── */
-    .page-content { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+    /* ── Bottom bar — floating tab pill + FAB, one row ───────
+         `.ps-bottom-bar` is the fixed row; the pill and the FAB are
+         both static children of it, so the FAB cannot overlap a tab and
+         the pill needs no `:has()` trick to make room for one. It is
+         rendered once, in the layout — no screen ships its own.
 
-    /* White bar, one hairline, no lift shadow — the nav is a rule at
-       the bottom of the page, not a floating slab. */
+         Every scroll container clears it by 96px, also set here rather
+         than page by page. ── */
+    .ps-bottom-bar {
+        position: fixed;
+        left: 16px; right: 16px;
+        bottom: calc(14px + env(safe-area-inset-bottom));
+        z-index: var(--z-tabbar);
+        display: flex; align-items: center; gap: 8px;
+        pointer-events: none;   /* the gap between pill and FAB is page, not bar */
+    }
+    .ps-bottom-bar > * { pointer-events: auto; }
+
+    .page-content { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+
     .bottom-tabbar {
         display: flex;
-        position: fixed;
-        left: 0; right: 0; bottom: 0;
-        z-index: 95;
+        align-items: center;
+        flex: 1; min-width: 0;
         background: var(--ps-surface);
-        border-top: 1px solid var(--ps-border-soft);
-        padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
-        box-shadow: none;
+        border: 0;
+        border-radius: var(--ps-r-pill);
+        padding: 7px;
+        box-shadow: 0 10px 26px rgba(11,19,43,.16);
     }
-    /* Inactive is --ps-muted, not the spec's #96a0b3: that grey lands at
-       2.63:1 on white, and these are 0.625rem labels. Same read, AA-clean. */
+
+    /* Icon-only, so the colour is --ps-nav-icon rather than the text
+       greys: at 21px this is non-text content and only owes 3:1. */
     .tabbar-item {
         flex: 1;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         align-items: center;
         justify-content: center;
-        gap: 5px;
+        /* No gap — the label owns its own margin so it can collapse to
+           nothing without leaving a 7px hole beside the icon. */
         min-height: var(--ps-touch);
-        padding: 6px 2px;
+        padding: 9px 0;
         border: none;
         background: none;
-        color: var(--ps-muted);
+        border-radius: var(--ps-r-pill);
+        color: var(--ps-nav-icon);
         text-decoration: none;
         font-family: 'Poppins', system-ui, sans-serif;
-        font-size: .625rem;
-        font-weight: 500;
-        letter-spacing: .02em;
-        transition: color 0.15s ease;
+        font-size: .6875rem;       /* 11px */
+        font-weight: 600;
+        letter-spacing: .01em;
+        white-space: nowrap;
+        transition: background-color .24s var(--ease-out), color .24s var(--ease-out),
+                    flex-basis .24s var(--ease-out), padding .24s var(--ease-out);
     }
-    .tabbar-item i { font-size: 20px; transition: transform 0.15s var(--ease-spring); }
-    .tabbar-item.active { color: var(--ps-gold-text); font-weight: 600; }
-    .tabbar-item.active i { transform: translateY(-1px); }
-    .tabbar-item:active i { transform: scale(0.88); }
+    .tabbar-item i { font-size: 21px; line-height: 1; }
+
+    /* Clipped, not display:none — the tab keeps its accessible name and
+       the expand animates from a real width. */
+    .tabbar-label {
+        max-width: 0;
+        margin-left: 0;
+        opacity: 0;
+        overflow: hidden;
+        transition: max-width .24s var(--ease-out), margin-left .24s var(--ease-out),
+                    opacity .24s var(--ease-out);
+    }
+
+    .tabbar-item.active {
+        flex: 0 0 auto;
+        padding: 9px 14px;
+        background: rgba(216,178,95,.18);
+        color: var(--ps-ink);
+    }
+    .tabbar-item.active .tabbar-label { max-width: 100px; margin-left: 7px; opacity: 1; }
+
+    /* The expanded pill is ~120px of a bar that is only ~212px wide inside
+       its padding on a 320px screen, which squeezes the four icon-only tabs
+       under 24px each. Tightening the pill's own padding buys them back the
+       width; the tabs keep their full 44px height either way. */
+    @media (max-width: 360px) {
+        .tabbar-item.active { padding: 9px 10px; }
+        .tabbar-item.active .tabbar-label { margin-left: 5px; }
+    }
+
+    /* The pill's expand and the FAB's press are motion like the rest of
+       it. Sits down here, after both rules, because the block up top
+       runs before them and would lose on order. */
+    @media (prefers-reduced-motion: reduce) {
+        .tabbar-item, .tabbar-label { transition: none; }
+        .pm-fab:active { transform: none; }
+    }
 }
 
 @media (min-width: 769px) {
     .sheet-handle { display: none; }
-    .bottom-tabbar { display: none; }
+    .ps-bottom-bar { display: none; }
     .logo-mobile { display: none; }
     #moreSheet { display: none !important; }
     .m-screen { display: none !important; }

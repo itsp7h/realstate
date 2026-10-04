@@ -16,12 +16,15 @@
 @section('page-subtitle')
     Updating {{ $leaseContract->lease_agreement_no }}
 @endsection
+@section('page-back')
+    <a href="{{ route('lease-contracts.index') }}" class="btn btn-outline" aria-label="Back">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back</span>
+    </a>
+@endsection
+
 @section('page-actions')
     <a href="{{ route('lease-contracts.show', $leaseContract) }}" class="btn btn-outline">
         <i class="fa-regular fa-eye"></i> View
-    </a>
-    <a href="{{ route('lease-contracts.index') }}" class="btn btn-outline">
-        <i class="fa-solid fa-arrow-left"></i> Back
     </a>
 @endsection
 

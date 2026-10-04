@@ -6,6 +6,7 @@ use App\Models\Invoice;
 use App\Models\LeaseContract;
 use App\Models\MaintenanceRequest;
 use App\Models\User;
+use App\Support\RoleCatalog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 
@@ -130,11 +131,26 @@ class AttentionFeed
         return $items;
     }
 
-    /** Called after a write that would change the feed. */
+    /**
+     * Called after a write that would change the feed. AppServiceProvider
+     * wires this to the three models below, so no caller has to remember it.
+     *
+     * The role list comes from RoleCatalog rather than being spelled out
+     * here: it used to read ['admin', 'user', 'maintenance'], which silently
+     * stopped covering every role the day 'accountant' was added — an
+     * accountant's badge then only refreshed when the minute's cache expired.
+     */
     public static function forget(): void
     {
-        foreach (['admin', 'user', 'maintenance'] as $role) {
+        foreach (RoleCatalog::ROLES as $role) {
             Cache::forget("attention-feed:{$role}");
         }
     }
+
+    /** The models whose rows this feed is derived from. */
+    public const SOURCE_MODELS = [
+        Invoice::class,
+        LeaseContract::class,
+        MaintenanceRequest::class,
+    ];
 }

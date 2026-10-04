@@ -21,12 +21,15 @@
     <span class="badge badge-gold">{{ $building->property_code }}</span>
     &nbsp;Manage floors for this building
 @endsection
+@section('page-back')
+    <a href="{{ route('buildings.index') }}" class="btn btn-outline" aria-label="Back to Buildings">
+        <i class="fa-solid fa-arrow-left"></i><span class="pagehead-back-label"> Back to Buildings</span>
+    </a>
+@endsection
+
 @section('page-actions')
     <a href="{{ route('buildings.floors.create', $building) }}" class="btn btn-primary">
         <i class="fa-solid fa-plus"></i> Add Floor
-    </a>
-    <a href="{{ route('buildings.index') }}" class="btn btn-outline">
-        <i class="fa-solid fa-arrow-left"></i> Back to Buildings
     </a>
 @endsection
 

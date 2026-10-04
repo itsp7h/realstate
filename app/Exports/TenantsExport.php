@@ -44,9 +44,31 @@ class TenantsExport implements FromQuery, WithHeadings, WithMapping, WithStyles,
         return $q;
     }
 
+    /**
+     * Ordering for the PDF of this list — see ListingPdf::fromExport().
+     *
+     * @return array<int, string>
+     */
+    public function pdfNaturalOrder(): array
+    {
+        return ['name'];
+    }
+
     public function headings(): array
     {
         return ['Name', 'Tenant Type', 'Company Name', 'ID / CR Number', 'Phone', 'Email', 'Nationality / Country'];
+    }
+
+    public function pdfColumns(): array
+    {
+        return [
+            'Name'                  => ['label' => 'NAME',    'align' => 'left', 'width' => 22],
+            'Tenant Type'           => ['label' => 'TYPE',    'align' => 'left', 'width' => 11],
+            'Company Name'          => ['label' => 'COMPANY', 'align' => 'left', 'width' => 20],
+            'ID / CR Number'        => ['label' => 'ID / CR', 'align' => 'left', 'width' => 14],
+            'Phone'                 => ['label' => 'PHONE',   'align' => 'left', 'width' => 14],
+            'Nationality / Country' => ['label' => 'COUNTRY', 'align' => 'left', 'width' => 19],
+        ];
     }
 
     public function map($row): array

@@ -95,6 +95,41 @@ class UiConsistencyTest extends TestCase
             "These pages draw their own header instead of @section('page-title'):\n  ".implode("\n  ", $offenders));
     }
 
+    public function test_every_back_button_uses_the_shared_header_slot(): void
+    {
+        // The way up is one object across the app: @section('page-back'), which
+        // the layout renders into .shell-pagehead-back and app-core turns into
+        // a 44px icon button beside the title under 600px. A page that opens
+        // its own action row with a Back instead gets the full-width button
+        // below the title that this replaced — on that page only.
+        $offenders = [];
+
+        foreach ($this->views(true) as $path => $c) {
+            if (preg_match_all("/@section\(['\"]page-actions['\"]\)(.*?)@endsection/s", $c, $m)) {
+                foreach ($m[1] as $block) {
+                    if (str_contains($block, 'fa-arrow-left')) {
+                        $offenders[] = "{$path}: Back lives in page-actions, not page-back";
+                    }
+                }
+            }
+
+            if (! preg_match("/@section\(['\"]page-back['\"]\)(.*?)@endsection/s", $c, $b)) {
+                continue;
+            }
+            // Icon-only on a phone, so the control needs a name of its own and
+            // the label needs the hook that hides it.
+            if (! str_contains($b[1], 'aria-label')) {
+                $offenders[] = "{$path}: page-back has no aria-label";
+            }
+            if (! str_contains($b[1], 'pagehead-back-label')) {
+                $offenders[] = "{$path}: page-back label is not in a .pagehead-back-label";
+            }
+        }
+
+        $this->assertSame([], $offenders,
+            "Back belongs to the shared header slot:\n  ".implode("\n  ", $offenders));
+    }
+
     public function test_kpi_cards_all_use_the_shared_anatomy(): void
     {
         $offenders = [];

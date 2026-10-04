@@ -205,7 +205,17 @@ class AttentionFeedTest extends TestCase
         $response->assertSee('Nothing needs your attention.');
     }
 
-    public function test_the_feed_is_cached_and_can_be_forgotten(): void
+    /**
+     * The cache saves the queries, not a stale number.
+     *
+     * This used to assert the opposite — that a write left the old figure
+     * standing until the minute expired or someone remembered to call
+     * forget(). That was the trade when nothing invalidated the cache; it is
+     * also how a badge ends up disagreeing with the page under it, so
+     * AppServiceProvider now hooks the three source models and the count
+     * refreshes on the write itself.
+     */
+    public function test_a_write_refreshes_the_cached_feed(): void
     {
         $admin = User::factory()->admin()->create();
         Cache::flush();
@@ -214,11 +224,29 @@ class AttentionFeedTest extends TestCase
 
         $this->makeInvoice(['status' => 'overdue']);
 
-        // Still the cached figure — that is the trade the cache buys.
+        $this->assertSame(1, app(AttentionFeed::class)->count($admin));
+    }
+
+    public function test_the_feed_is_cached_and_can_be_forgotten(): void
+    {
+        $admin = User::factory()->admin()->create();
+        Cache::flush();
+
         $this->assertSame(0, app(AttentionFeed::class)->count($admin));
+
+        // Written straight to the table, so no model event fires and the
+        // cached figure is genuinely the stale one — which is what forget()
+        // is for.
+        \Illuminate\Support\Facades\Cache::put(
+            "attention-feed:{$admin->role}",
+            [['key' => 'stub', 'count' => 7]],
+            60
+        );
+
+        $this->assertSame(7, app(AttentionFeed::class)->count($admin));
 
         AttentionFeed::forget();
 
-        $this->assertSame(1, app(AttentionFeed::class)->count($admin));
+        $this->assertSame(0, app(AttentionFeed::class)->count($admin));
     }
 }

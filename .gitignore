@@ -32,3 +32,6 @@ Thumbs.db
 # not project assets, and some have contained real email addresses baked in.
 /draft
 graphify-out/cache/
+
+# DomPDF's font cache — regenerated on demand from public/fonts.
+/storage/fonts
