@@ -246,6 +246,46 @@ class ShowcaseSeederTest extends TestCase
         }
     }
 
+    /**
+     * Meters are read on the 5th of the following month, so on the 1st–4th
+     * the newest period has no bill yet. Every EWA status and reading type
+     * must still be on show when the seeder runs in that window.
+     */
+    public function test_ewa_bills_cover_every_status_before_the_monthly_reading(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-02 09:00'));
+        $this->seed(ShowcaseSeeder::class);
+
+        $bills = EwaBill::all();
+
+        foreach (['paid', 'partially_paid', 'issued', 'overdue'] as $status) {
+            $this->assertGreaterThan(0, $bills->where('status', $status)->count(), "no '{$status}' EWA bills");
+        }
+
+        foreach (['actual', 'estimated'] as $type) {
+            $this->assertGreaterThan(0, $bills->where('reading_type', $type)->count(), "no {$type} readings");
+        }
+    }
+
+    public function test_it_refuses_to_run_in_production(): void
+    {
+        $this->app['env'] = 'production';
+        $tenants = Tenant::count();
+
+        try {
+            // Called directly: db:seed would stop at its own production prompt
+            // first, and --force skips that prompt, which is what this guards.
+            $this->app->make(ShowcaseSeeder::class)->run();
+            $this->fail('the seeder ran in production');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('must not run in production', $e->getMessage());
+        } finally {
+            $this->app['env'] = 'testing';
+        }
+
+        $this->assertSame($tenants, Tenant::count());
+    }
+
     public function test_ewa_charges_follow_the_readings(): void
     {
         foreach (EwaBill::where('property_name', self::NAME)->get() as $bill) {

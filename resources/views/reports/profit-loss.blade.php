@@ -103,10 +103,12 @@
                 <tr><td class="val-muted">Utilities collected</td><td class="right num">{{ $fmt($statement['revenue']['utilities_collected']) }}</td></tr>
                 <tr><td class="val-muted">Other invoices collected</td><td class="right num">{{ $fmt($statement['revenue']['other_collected']) }}</td></tr>
                 <tr><td class="val-muted">EWA collected from tenants</td><td class="right num">{{ $fmt($statement['revenue']['ewa_collected']) }}</td></tr>
+                <tr><td class="val-muted">Manually recorded revenue</td><td class="right num">{{ $fmt($statement['revenue']['manual_revenue']) }}</td></tr>
                 <tr class="subtotal-row"><td>Total Revenue</td><td class="right num">{{ $fmt($statement['total_revenue']) }}</td></tr>
 
                 <tr><td class="val-muted">EWA charges not recovered from tenant</td><td class="right num">{{ $fmt($statement['expenses']['ewa_landlord_expense']) }}</td></tr>
                 <tr><td class="val-muted">Approved maintenance cost</td><td class="right num">{{ $fmt($statement['expenses']['maintenance_expense']) }}</td></tr>
+                <tr><td class="val-muted">Manually recorded expenses</td><td class="right num">{{ $fmt($statement['expenses']['manual_expense']) }}</td></tr>
                 <tr class="subtotal-row"><td>Total Expense</td><td class="right num">{{ $fmt($statement['total_expense']) }}</td></tr>
 
                 <tr class="grand-total-row">

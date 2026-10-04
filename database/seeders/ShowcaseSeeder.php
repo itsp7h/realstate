@@ -153,6 +153,12 @@ class ShowcaseSeeder extends Seeder
 
     public function run(): void
     {
+        // ENRICH writes demo tenants and leases into real buildings, so this
+        // must never reach live data.
+        if (app()->environment('production')) {
+            throw new \RuntimeException('ShowcaseSeeder writes demo data into real buildings and must not run in production.');
+        }
+
         $this->today = Carbon::today();
 
         mt_srand(self::SEED);
@@ -1351,6 +1357,10 @@ class ShowcaseSeeder extends Seeder
             $elecReading  = 10000 + $i * 137;
             $waterReading = 900 + $i * 7;
 
+            // The newest period with a reading: last month's is read on the
+            // 5th, so before then the month prior is the latest on record.
+            $newest = $this->today->copy()->startOfMonth()->day(5)->gt($this->today) ? 2 : 1;
+
             for ($m = 6; $m >= 1; $m--) {
                 $period      = $this->today->copy()->startOfMonth()->subMonths($m);
                 $readingDate = $period->copy()->addMonth()->day(5);
@@ -1379,7 +1389,10 @@ class ShowcaseSeeder extends Seeder
                 $cap           = $lease->ewa_cap !== null ? (float) $lease->ewa_cap : null;
                 $tenantPortion = EwaBill::computeTenantPortion($total, $cap);
 
-                $age = (int) $period->copy()->startOfMonth()
+                // Aged from the reading, not the period: before the 5th the
+                // newest period has no reading yet, and aging by period would
+                // then leave no recent bill to carry the open statuses.
+                $age = (int) $readingDate->copy()->startOfMonth()
                     ->diffInMonths($this->today->copy()->startOfMonth());
 
                 // Same reasoning as invoiceStatus(): dealt from a pattern so
@@ -1406,7 +1419,7 @@ class ShowcaseSeeder extends Seeder
                     'ewa_account_number' => '1' . str_pad((string) (2000000 + $unit->id * 311), 8, '0', STR_PAD_LEFT),
                     'billing_period'     => $period->format('F Y'),
                     'reading_date'       => $readingDate->toDateString(),
-                    'reading_type'       => $m === 1 && $i % 6 === 0 ? 'estimated' : 'actual',
+                    'reading_type'       => $m === $newest && $i % 6 === 0 ? 'estimated' : 'actual',
                     'elec_prev_reading'  => $elecPrev,
                     'elec_curr_reading'  => $elecReading,
                     'elec_consumption'   => $elecUse,
