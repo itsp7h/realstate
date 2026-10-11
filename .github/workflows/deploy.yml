@@ -81,16 +81,6 @@ jobs:
           php artisan route:cache
           php artisan view:cache
 
-      - name: Generate missing building photo thumbnails
-        # Grids and cards show a ≤800px copy of each photo instead of the
-        # 1.5-3 MB original. This only creates the ones that don't exist yet
-        # (photos uploaded before thumbnails, or a failed generation), reads
-        # the DB without writing to it, and never fails the deploy. It runs
-        # before the permissions step so php-fpm can write to any thumbs/
-        # directory it creates.
-        working-directory: ${{ env.DEPLOY_PATH }}
-        run: php artisan buildings:thumbnails
-
       - name: Fix storage/cache/database permissions for php-fpm
         # php-fpm runs as www-data and writes into storage/ (logs, cache,
         # sessions if file-based) and database/database.sqlite on every
@@ -102,6 +92,14 @@ jobs:
         working-directory: ${{ env.DEPLOY_PATH }}
         run: |
           sudo chown -R actionsrunner:actionsrunner storage bootstrap/cache database
+          # Grids and cards show a ≤800px copy of each photo instead of the
+          # 1.5-3 MB original; create any that are missing (older photos, or a
+          # failed generation). Reads the DB without writing to it and never
+          # fails the deploy. It runs here, after the chown: photo folders
+          # created by uploads since the last deploy belong to www-data and the
+          # runner can't add thumbs/ to them until then, and the chmod below
+          # lets php-fpm write into the thumbs/ folders it creates.
+          php artisan buildings:thumbnails
           # storage/ is excluded from the rsync, so directories added to the
           # repo under it never reach the server; DomPDF needs this one for
           # its font cache and will not create it.

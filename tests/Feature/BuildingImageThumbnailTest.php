@@ -107,6 +107,15 @@ class BuildingImageThumbnailTest extends TestCase
         Storage::disk('public')->assertMissing('buildings/1/thumbs/broken.jpg');
     }
 
+    public function test_generate_returns_false_when_the_thumbnail_cannot_be_written(): void
+    {
+        UploadedFile::fake()->image('a.jpg', 1600, 1200)->storeAs('buildings/1', 'a.jpg', 'public');
+        // A file where the thumbs/ folder should be, so it can't be created.
+        Storage::disk('public')->put('buildings/1/thumbs', 'in the way');
+
+        $this->assertFalse((new BuildingImageThumbnailer())->generate('buildings/1/a.jpg'));
+    }
+
     public function test_deleting_a_photo_removes_its_thumbnail(): void
     {
         $building = $this->building();
@@ -166,13 +175,18 @@ class BuildingImageThumbnailTest extends TestCase
             ->assertSee($image->thumb_url, false);
     }
 
-    public function test_both_deploys_backfill_thumbnails_before_fixing_permissions(): void
+    public function test_both_deploys_backfill_thumbnails_between_reclaiming_ownership_and_chmod(): void
     {
+        // Photo folders uploaded since the last deploy belong to www-data; the
+        // runner can only add thumbs/ to them after the chown, and php-fpm can
+        // only write into the thumbs/ folders the runner made after the chmod.
         foreach (['.github/workflows/deploy.yml', '.github/workflows/deploy-staging.yml'] as $file) {
             $yaml = file_get_contents(base_path($file));
             $thumbs = strpos($yaml, 'php artisan buildings:thumbnails');
             $this->assertNotFalse($thumbs, "$file never generates thumbnails");
-            $this->assertLessThan(strpos($yaml, 'sudo chown -R actionsrunner'), $thumbs, "$file must generate thumbnails before the permissions fix");
+            $this->assertSame(1, substr_count($yaml, 'php artisan buildings:thumbnails'), "$file generates thumbnails more than once");
+            $this->assertGreaterThan(strpos($yaml, 'sudo chown -R actionsrunner'), $thumbs, "$file must generate thumbnails after reclaiming ownership");
+            $this->assertLessThan(strpos($yaml, 'chmod -R ug+rwX storage'), $thumbs, "$file must generate thumbnails before the chmod");
         }
     }
 }
