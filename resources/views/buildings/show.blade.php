@@ -173,7 +173,7 @@
 @section('content')
 
 @php
-    $mobilePhoto = $building->images->first()?->url;
+    $mobilePhoto = $building->images->first()?->thumb_url;
     $mobileAddress = trim(implode(', ', array_filter([$building->area, $building->city])));
     $mobileUnitFilters = [
         ['id' => 'all',     'label' => 'All'],
@@ -411,7 +411,7 @@ if (window.pmInitHeroParallax) {
         <div class="ident">
             <div class="ident-mark">
                 @if($firstImage = $building->images->first())
-                    <img src="{{ $firstImage->url }}" alt="{{ $building->property_name }}">
+                    <img src="{{ $firstImage->thumb_url }}" alt="{{ $building->property_name }}">
                 @else
                     <i class="fa-solid fa-building" aria-hidden="true"></i>
                 @endif
@@ -1048,7 +1048,7 @@ if (window.pmInitHeroParallax) {
                         <div class="bd-photo-grid">
                             @foreach($building->images as $img)
                                 <div class="bd-thumb">
-                                    <img src="{{ $img->url }}" alt="Photo of {{ $building->property_name }}" onclick="openLightbox('{{ $img->url }}')">
+                                    <img src="{{ $img->thumb_url }}" alt="Photo of {{ $building->property_name }}" loading="lazy" onclick="openLightbox('{{ $img->url }}')">
                                     <form method="POST" action="{{ route('buildings.images.destroy', [$building, $img]) }}" onsubmit="return confirm('Remove photo?')">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="bd-thumb-remove" aria-label="Remove photo"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>

@@ -424,7 +424,7 @@
             $fin        = $financials[$building->id] ?? null;
             $totalUnits = $building->units_count ?? 0;
             $occupied   = $building->occupied_units_count ?? 0;
-            $photo      = $building->images->first()?->url;
+            $photo      = $building->images->first()?->thumb_url;
             $occPct     = $fin['occupancy_percent'] ?? \App\Support\Occupancy::percent($occupied, $totalUnits);
             $net        = $fin['net_income'] ?? 0;
             // The three wells said "BHD 0" three times on a portfolio with
@@ -694,7 +694,7 @@
                         <div class="photo-slides" id="{{ $cardId }}-slides">
                             @foreach($images as $i => $img)
                                 <div class="photo-slide {{ $i === 0 ? 'active' : '' }}">
-                                    <img src="{{ $img->url }}" alt="Building photo {{ $i + 1 }}" loading="lazy">
+                                    <img src="{{ $img->thumb_url }}" alt="Building photo {{ $i + 1 }}" loading="lazy">
                                 </div>
                             @endforeach
                         </div>
