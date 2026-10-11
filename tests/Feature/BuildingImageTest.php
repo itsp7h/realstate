@@ -123,6 +123,124 @@ class BuildingImageTest extends TestCase
             ->assertSessionHasErrors('images');
     }
 
+    public function test_successful_upload_returns_to_photos_tab_with_count(): void
+    {
+        Storage::fake('public');
+        $building = $this->building();
+
+        $this->post(route('buildings.images.store', $building), [
+            'images' => [UploadedFile::fake()->image('a.jpg'), UploadedFile::fake()->image('b.jpg')],
+        ])
+            ->assertRedirect(route('buildings.show', [$building, 'tab' => 'photos']))
+            ->assertSessionHas('success', '2 photos uploaded.');
+    }
+
+    public function test_rejected_upload_returns_to_photos_tab_whatever_the_referrer(): void
+    {
+        Storage::fake('public');
+        $building = $this->building();
+
+        $this->from(route('buildings.index'))
+            ->post(route('buildings.images.store', $building), [
+                'images' => [UploadedFile::fake()->image('big.jpg')->size(5000)],
+            ])
+            ->assertRedirect(route('buildings.show', [$building, 'tab' => 'photos']));
+    }
+
+    public function test_oversized_photo_error_names_the_file(): void
+    {
+        Storage::fake('public');
+        $building = $this->building();
+
+        $this->post(route('buildings.images.store', $building), [
+            'images' => [UploadedFile::fake()->image('MP4.jpg')->size(10367)],
+        ])->assertSessionHasErrors([
+            'images.0' => '"MP4.jpg" is larger than 4 MB. Compress or resize it and try again.',
+        ]);
+
+        $this->assertCount(0, $building->fresh()->images);
+    }
+
+    public function test_non_image_error_names_the_file(): void
+    {
+        Storage::fake('public');
+        $building = $this->building();
+
+        $this->post(route('buildings.images.store', $building), [
+            'images' => [UploadedFile::fake()->create('lease.pdf', 100, 'application/pdf')],
+        ])->assertSessionHasErrors([
+            'images.0' => '"lease.pdf" isn\'t a JPG, PNG or WEBP image.',
+        ]);
+    }
+
+    public function test_more_than_ten_photos_is_rejected(): void
+    {
+        Storage::fake('public');
+        $building = $this->building();
+
+        $files = [];
+        for ($i = 0; $i < 11; $i++) {
+            $files[] = UploadedFile::fake()->image("p$i.jpg");
+        }
+
+        $this->post(route('buildings.images.store', $building), ['images' => $files])
+            ->assertSessionHasErrors(['images' => 'You can upload up to 10 photos at a time.']);
+
+        $this->assertCount(0, $building->fresh()->images);
+    }
+
+    public function test_one_bad_photo_rejects_the_whole_batch(): void
+    {
+        Storage::fake('public');
+        $building = $this->building();
+
+        $this->post(route('buildings.images.store', $building), [
+            'images' => [UploadedFile::fake()->image('ok.jpg'), UploadedFile::fake()->image('huge.jpg')->size(5000)],
+        ])->assertSessionHasErrors('images.1');
+
+        $this->assertCount(0, $building->fresh()->images);
+    }
+
+    public function test_photos_tab_shows_upload_errors_after_rejection(): void
+    {
+        Storage::fake('public');
+        $building = $this->building();
+
+        $this->followingRedirects()
+            ->post(route('buildings.images.store', $building), [
+                'images' => [UploadedFile::fake()->image('MP4.jpg')->size(10367)],
+            ])
+            ->assertOk()
+            ->assertSee('No photos were uploaded')
+            ->assertSee('&quot;MP4.jpg&quot; is larger than 4 MB', false);
+    }
+
+    public function test_photos_tab_error_box_is_hidden_without_errors_and_form_carries_limits(): void
+    {
+        $building = $this->building();
+
+        $this->get(route('buildings.show', $building))
+            ->assertOk()
+            ->assertSee('id="photoUploadErrors" role="alert" tabindex="-1"  hidden', false)
+            ->assertSee('data-max-kb="4096"', false)
+            ->assertSee('data-max-files="10"', false);
+    }
+
+    /**
+     * Large JPEGs are re-encoded in the browser at full resolution before
+     * upload (the server's 4 MB cap still applies to what arrives).
+     */
+    public function test_photos_tab_compresses_large_photos_before_upload(): void
+    {
+        $building = $this->building();
+
+        $this->get(route('buildings.show', $building))
+            ->assertOk()
+            ->assertSee('large photos are optimised automatically, at full resolution', false)
+            ->assertSee("canvas.toBlob(done, 'image/jpeg', QUALITY)", false)
+            ->assertSee("imageOrientation: 'from-image'", false);
+    }
+
     public function test_destroy_removes_image_and_file(): void
     {
         Storage::fake('public');

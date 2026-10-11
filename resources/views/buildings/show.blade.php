@@ -114,6 +114,15 @@
     .bd-drop.is-secondary { margin-top: var(--sp-6); padding: var(--sp-6); }
     .bd-drop-title { font-size: var(--fs-md); font-weight: 600; color: var(--text-primary); margin-bottom: var(--sp-1); }
     .bd-drop-sub { font-size: var(--fs-sm); color: var(--text-muted); }
+    /* Uploading: the zone stops taking clicks and its icon becomes a spinner. */
+    .bd-drop.is-uploading { cursor: progress; border-style: solid; border-color: var(--accent); background: var(--tone-accent-bg); }
+    .bd-drop.is-uploading .spinner { width: 24px; height: 24px; border-width: 3px; vertical-align: middle; }
+
+    .bd-upload-alert[hidden] { display: none; }
+    .bd-upload-alert:focus { outline: none; }
+    .bd-upload-alert-title { display: block; font-weight: 600; }
+    .bd-upload-alert-list { margin: var(--sp-1) 0 0; padding-left: var(--sp-5); }
+    .bd-upload-alert-list li + li { margin-top: var(--sp-1); }
 
     /* The settings column: a form is read down one line at a time, so it is
        capped rather than stretched across a 1400px content column. */
@@ -1018,6 +1027,23 @@ if (window.pmInitHeroParallax) {
                     </div>
                 </div>
                 <div class="card-body">
+                    {{-- One place for upload problems, filled by the server after a
+                         rejected upload and by the browser check before one. --}}
+                    @php
+                        $photoErrors = array_merge($errors->get('images'), ...array_values($errors->get('images.*')));
+                    @endphp
+                    <div class="alert alert-danger bd-upload-alert" id="photoUploadErrors" role="alert" tabindex="-1" @if(empty($photoErrors)) hidden @endif>
+                        <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+                        <div>
+                            <strong class="bd-upload-alert-title">No photos were uploaded</strong>
+                            <ul class="bd-upload-alert-list" id="photoUploadErrorList">
+                                @foreach($photoErrors as $message)
+                                    <li>{{ $message }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+
                     @if($building->images->isNotEmpty())
                         <div class="bd-photo-grid">
                             @foreach($building->images as $img)
@@ -1032,16 +1058,17 @@ if (window.pmInitHeroParallax) {
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('buildings.images.store', $building) }}" enctype="multipart/form-data" id="photoUploadForm">
+                    <form method="POST" action="{{ route('buildings.images.store', $building) }}" enctype="multipart/form-data" id="photoUploadForm"
+                          data-max-kb="{{ \App\Http\Requests\StoreBuildingImageRequest::MAX_KB }}"
+                          data-max-files="{{ \App\Http\Requests\StoreBuildingImageRequest::MAX_FILES }}">
                         @csrf
-                        <button type="button" class="bd-drop {{ $building->images->isNotEmpty() ? 'is-secondary' : '' }}"
-                                onclick="document.getElementById('photoFileInput').click()">
-                            <div class="empty-icon"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i></div>
-                            <div class="bd-drop-title">{{ $building->images->isEmpty() ? 'No photos yet' : 'Add more photos' }}</div>
-                            <div class="bd-drop-sub">Drop files here or click to browse &middot; JPG, PNG or WEBP &middot; max 4 MB &middot; up to 10 photos</div>
+                        <button type="button" class="bd-drop {{ $building->images->isNotEmpty() ? 'is-secondary' : '' }}" id="photoDrop"
+                                aria-describedby="photoDropHint">
+                            <div class="empty-icon" id="photoDropIcon"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i></div>
+                            <div class="bd-drop-title" id="photoDropTitle" aria-live="polite">{{ $building->images->isEmpty() ? 'No photos yet' : 'Add more photos' }}</div>
+                            <div class="bd-drop-sub" id="photoDropHint">Drop files here or click to browse &middot; JPG, PNG or WEBP &middot; up to 10 photos &middot; large photos are optimised automatically, at full resolution</div>
                         </button>
-                        <input type="file" id="photoFileInput" name="images[]" multiple accept="image/jpeg,image/png,image/webp" hidden
-                               onchange="document.getElementById('photoUploadForm').submit();">
+                        <input type="file" id="photoFileInput" name="images[]" multiple accept="image/jpeg,image/png,image/webp" hidden>
                     </form>
                 </div>
             </div>
@@ -1162,6 +1189,128 @@ if (window.pmInitHeroParallax) {
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
+    // ── Photo upload ────────────────────────────────────────────────────
+    // Large JPEGs are re-encoded in the browser before upload, at their full
+    // resolution (quality 0.8, camera metadata dropped), so a 10-16 MB camera
+    // original goes up as ~1.5-3 MB without ever being sent whole. Type,
+    // count and the post-compression size are then checked against the same
+    // limits as StoreBuildingImageRequest (data-max-*). Rejections land in
+    // #photoUploadErrors, the same box the server's validation messages use.
+    (function () {
+        const form  = document.getElementById('photoUploadForm');
+        if (!form) return;
+        const input = document.getElementById('photoFileInput');
+        const drop  = document.getElementById('photoDrop');
+        const box   = document.getElementById('photoUploadErrors');
+        const list  = document.getElementById('photoUploadErrorList');
+        const icon  = document.getElementById('photoDropIcon');
+        const title = document.getElementById('photoDropTitle');
+        const hint  = document.getElementById('photoDropHint');
+        const idle  = { icon: icon.innerHTML, title: title.textContent, hint: hint.innerHTML };
+        const maxKb    = Number(form.dataset.maxKb);
+        const maxFiles = Number(form.dataset.maxFiles);
+        const types    = ['image/jpeg', 'image/png', 'image/webp'];
+        const COMPRESS_OVER = 1024 * 1024;   // leave photos under 1 MB alone
+        const QUALITY       = 0.8;
+
+        function mb(bytes) { return (bytes / 1048576).toFixed(1) + ' MB'; }
+        function photos(n) { return n === 1 ? '1 photo' : n + ' photos'; }
+
+        function showErrors(messages) {
+            list.replaceChildren(...messages.map(function (m) {
+                const li = document.createElement('li');
+                li.textContent = m;
+                return li;
+            }));
+            box.hidden = false;
+            box.focus();
+        }
+
+        function busy(text, note) {
+            drop.classList.add('is-uploading');
+            drop.disabled = true;
+            drop.setAttribute('aria-busy', 'true');
+            icon.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
+            title.textContent = text;
+            hint.textContent = note;
+        }
+
+        function reset() {
+            drop.classList.remove('is-uploading');
+            drop.disabled = false;
+            drop.removeAttribute('aria-busy');
+            icon.innerHTML = idle.icon;
+            title.textContent = idle.title;
+            hint.innerHTML = idle.hint;
+            input.value = '';
+        }
+
+        // Same pixels, smaller file. Anything that can't be decoded, or that
+        // wouldn't get smaller, is sent as it is and judged by the size check.
+        async function compress(file) {
+            if (file.type !== 'image/jpeg' || file.size <= COMPRESS_OVER) return file;
+            try {
+                const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+                const canvas = document.createElement('canvas');
+                canvas.width = bitmap.width;
+                canvas.height = bitmap.height;
+                canvas.getContext('2d').drawImage(bitmap, 0, 0);
+                bitmap.close();
+                const blob = await new Promise(function (done) { canvas.toBlob(done, 'image/jpeg', QUALITY); });
+                if (!blob || blob.size >= file.size) return file;
+                return new File([blob], file.name, { type: 'image/jpeg', lastModified: file.lastModified });
+            } catch (e) {
+                return file;
+            }
+        }
+
+        async function submit(fileList) {
+            let files = [...fileList];
+            const errors = [];
+            if (files.length === 0) errors.push('Choose at least one photo to upload.');
+            if (files.length > maxFiles) errors.push('You can upload up to ' + maxFiles + ' photos at a time. You chose ' + files.length + '.');
+            files.forEach(function (f) {
+                if (!types.includes(f.type)) errors.push('"' + f.name + '" isn\'t a JPG, PNG or WEBP image.');
+            });
+            if (errors.length) { showErrors(errors); input.value = ''; return; }
+
+            box.hidden = true;
+            if (files.some(function (f) { return f.type === 'image/jpeg' && f.size > COMPRESS_OVER; })) {
+                busy('Optimising ' + photos(files.length) + '…', 'Keeping full resolution, shrinking the file size.');
+                files = await Promise.all(files.map(compress));
+            }
+
+            files.forEach(function (f) {
+                if (f.size > maxKb * 1024) {
+                    errors.push('"' + f.name + '" is ' + mb(f.size) + ', larger than 4 MB'
+                        + (f.type === 'image/png' ? '. Save it as a JPG and try again.' : ' even after optimising. Resize it and try again.'));
+                }
+            });
+            if (errors.length) { reset(); showErrors(errors); return; }
+
+            const picked = new DataTransfer();
+            files.forEach(function (f) { picked.items.add(f); });
+            input.files = picked.files;
+
+            busy('Uploading ' + photos(files.length) + '…', 'Keep this page open until it finishes.');
+            form.submit();
+        }
+
+        drop.addEventListener('click', function () { input.click(); });
+        input.addEventListener('change', function () { if (input.files.length) submit(input.files); });
+
+        drop.addEventListener('dragover', function (e) { e.preventDefault(); drop.classList.add('is-over'); });
+        drop.addEventListener('dragleave', function () { drop.classList.remove('is-over'); });
+        drop.addEventListener('drop', function (e) {
+            e.preventDefault();
+            drop.classList.remove('is-over');
+            if (!drop.disabled && e.dataTransfer.files.length) submit(e.dataTransfer.files);
+        });
+
+        // Coming back to a page frozen mid-upload would show a spinner forever.
+        window.addEventListener('pageshow', function (e) { if (e.persisted) window.location.reload(); });
+    })();
+
     // ── Tabs ────────────────────────────────────────────────────────────
     // Each .tab-btn carries data-tab-target, panels are hidden until shown,
     // ?tab=<id> deep-links, and a programmatic .click() on a tab button still
