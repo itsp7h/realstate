@@ -60,7 +60,18 @@ jobs:
             --exclude='.env' \
             --exclude='database/database.sqlite' \
             --exclude='storage/' \
+            --exclude='/public/storage' \
             ./ "$DEPLOY_PATH/"
+
+      - name: Link public/storage to storage/app/public
+        # Uploaded files (building photos, branding logos, maintenance
+        # quotations) live on the 'public' disk under storage/app/public
+        # and are served from /storage/... through this symlink. It isn't
+        # in git, so the rsync above excludes it (otherwise --delete would
+        # remove it) and this step (re)creates it — without it every
+        # uploaded file 404s even though it was saved fine.
+        working-directory: ${{ env.DEPLOY_PATH }}
+        run: php artisan storage:link --force
 
       - name: Migrate & cache
         working-directory: ${{ env.DEPLOY_PATH }}
