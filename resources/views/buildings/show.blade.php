@@ -1066,7 +1066,7 @@ if (window.pmInitHeroParallax) {
                                 aria-describedby="photoDropHint">
                             <div class="empty-icon" id="photoDropIcon"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i></div>
                             <div class="bd-drop-title" id="photoDropTitle" aria-live="polite">{{ $building->images->isEmpty() ? 'No photos yet' : 'Add more photos' }}</div>
-                            <div class="bd-drop-sub" id="photoDropHint">Drop files here or click to browse &middot; JPG, PNG or WEBP &middot; max 4 MB each &middot; up to 10 photos</div>
+                            <div class="bd-drop-sub" id="photoDropHint">Drop files here or click to browse &middot; JPG, PNG or WEBP &middot; up to 10 photos &middot; large photos are optimised automatically, at full resolution</div>
                         </button>
                         <input type="file" id="photoFileInput" name="images[]" multiple accept="image/jpeg,image/png,image/webp" hidden>
                     </form>
@@ -1190,11 +1190,12 @@ if (window.pmInitHeroParallax) {
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
     // ── Photo upload ────────────────────────────────────────────────────
-    // Checks type, size and count in the browser before anything is sent,
-    // using the same limits as StoreBuildingImageRequest (data-max-*), so a
-    // 10 MB camera original is caught instantly instead of after a long
-    // upload. Rejections land in #photoUploadErrors, the same box the
-    // server's validation messages render into.
+    // Large JPEGs are re-encoded in the browser before upload, at their full
+    // resolution (quality 0.8, camera metadata dropped), so a 10-16 MB camera
+    // original goes up as ~1.5-3 MB without ever being sent whole. Type,
+    // count and the post-compression size are then checked against the same
+    // limits as StoreBuildingImageRequest (data-max-*). Rejections land in
+    // #photoUploadErrors, the same box the server's validation messages use.
     (function () {
         const form  = document.getElementById('photoUploadForm');
         if (!form) return;
@@ -1202,11 +1203,18 @@ if (window.pmInitHeroParallax) {
         const drop  = document.getElementById('photoDrop');
         const box   = document.getElementById('photoUploadErrors');
         const list  = document.getElementById('photoUploadErrorList');
+        const icon  = document.getElementById('photoDropIcon');
+        const title = document.getElementById('photoDropTitle');
+        const hint  = document.getElementById('photoDropHint');
+        const idle  = { icon: icon.innerHTML, title: title.textContent, hint: hint.innerHTML };
         const maxKb    = Number(form.dataset.maxKb);
         const maxFiles = Number(form.dataset.maxFiles);
         const types    = ['image/jpeg', 'image/png', 'image/webp'];
+        const COMPRESS_OVER = 1024 * 1024;   // leave photos under 1 MB alone
+        const QUALITY       = 0.8;
 
         function mb(bytes) { return (bytes / 1048576).toFixed(1) + ' MB'; }
+        function photos(n) { return n === 1 ? '1 photo' : n + ' photos'; }
 
         function showErrors(messages) {
             list.replaceChildren(...messages.map(function (m) {
@@ -1218,38 +1226,73 @@ if (window.pmInitHeroParallax) {
             box.focus();
         }
 
-        function check(files) {
+        function busy(text, note) {
+            drop.classList.add('is-uploading');
+            drop.disabled = true;
+            drop.setAttribute('aria-busy', 'true');
+            icon.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
+            title.textContent = text;
+            hint.textContent = note;
+        }
+
+        function reset() {
+            drop.classList.remove('is-uploading');
+            drop.disabled = false;
+            drop.removeAttribute('aria-busy');
+            icon.innerHTML = idle.icon;
+            title.textContent = idle.title;
+            hint.innerHTML = idle.hint;
+            input.value = '';
+        }
+
+        // Same pixels, smaller file. Anything that can't be decoded, or that
+        // wouldn't get smaller, is sent as it is and judged by the size check.
+        async function compress(file) {
+            if (file.type !== 'image/jpeg' || file.size <= COMPRESS_OVER) return file;
+            try {
+                const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+                const canvas = document.createElement('canvas');
+                canvas.width = bitmap.width;
+                canvas.height = bitmap.height;
+                canvas.getContext('2d').drawImage(bitmap, 0, 0);
+                bitmap.close();
+                const blob = await new Promise(function (done) { canvas.toBlob(done, 'image/jpeg', QUALITY); });
+                if (!blob || blob.size >= file.size) return file;
+                return new File([blob], file.name, { type: 'image/jpeg', lastModified: file.lastModified });
+            } catch (e) {
+                return file;
+            }
+        }
+
+        async function submit(fileList) {
+            let files = [...fileList];
             const errors = [];
             if (files.length === 0) errors.push('Choose at least one photo to upload.');
             if (files.length > maxFiles) errors.push('You can upload up to ' + maxFiles + ' photos at a time. You chose ' + files.length + '.');
             files.forEach(function (f) {
-                if (!types.includes(f.type)) {
-                    errors.push('"' + f.name + '" isn\'t a JPG, PNG or WEBP image.');
-                } else if (f.size > maxKb * 1024) {
-                    errors.push('"' + f.name + '" is ' + mb(f.size) + ', larger than 4 MB. Compress or resize it and try again.');
+                if (!types.includes(f.type)) errors.push('"' + f.name + '" isn\'t a JPG, PNG or WEBP image.');
+            });
+            if (errors.length) { showErrors(errors); input.value = ''; return; }
+
+            box.hidden = true;
+            if (files.some(function (f) { return f.type === 'image/jpeg' && f.size > COMPRESS_OVER; })) {
+                busy('Optimising ' + photos(files.length) + '…', 'Keeping full resolution, shrinking the file size.');
+                files = await Promise.all(files.map(compress));
+            }
+
+            files.forEach(function (f) {
+                if (f.size > maxKb * 1024) {
+                    errors.push('"' + f.name + '" is ' + mb(f.size) + ', larger than 4 MB'
+                        + (f.type === 'image/png' ? '. Save it as a JPG and try again.' : ' even after optimising. Resize it and try again.'));
                 }
             });
-            return errors;
-        }
+            if (errors.length) { reset(); showErrors(errors); return; }
 
-        function submit(fileList) {
-            const files = [...fileList];
-            const errors = check(files);
-            if (errors.length) {
-                showErrors(errors);
-                input.value = '';
-                return;
-            }
-            box.hidden = true;
-            if (fileList !== input.files) input.files = fileList;
+            const picked = new DataTransfer();
+            files.forEach(function (f) { picked.items.add(f); });
+            input.files = picked.files;
 
-            drop.classList.add('is-uploading');
-            drop.disabled = true;
-            drop.setAttribute('aria-busy', 'true');
-            document.getElementById('photoDropIcon').innerHTML = '<span class="spinner" aria-hidden="true"></span>';
-            document.getElementById('photoDropTitle').textContent =
-                'Uploading ' + (files.length === 1 ? '1 photo' : files.length + ' photos') + '\u2026';
-            document.getElementById('photoDropHint').textContent = 'Large photos can take a moment. Keep this page open.';
+            busy('Uploading ' + photos(files.length) + '…', 'Keep this page open until it finishes.');
             form.submit();
         }
 
@@ -1264,7 +1307,7 @@ if (window.pmInitHeroParallax) {
             if (!drop.disabled && e.dataTransfer.files.length) submit(e.dataTransfer.files);
         });
 
-        // Coming Back to a page frozen mid-upload would show a spinner forever.
+        // Coming back to a page frozen mid-upload would show a spinner forever.
         window.addEventListener('pageshow', function (e) { if (e.persisted) window.location.reload(); });
     })();
 

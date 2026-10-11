@@ -226,6 +226,21 @@ class BuildingImageTest extends TestCase
             ->assertSee('data-max-files="10"', false);
     }
 
+    /**
+     * Large JPEGs are re-encoded in the browser at full resolution before
+     * upload (the server's 4 MB cap still applies to what arrives).
+     */
+    public function test_photos_tab_compresses_large_photos_before_upload(): void
+    {
+        $building = $this->building();
+
+        $this->get(route('buildings.show', $building))
+            ->assertOk()
+            ->assertSee('large photos are optimised automatically, at full resolution', false)
+            ->assertSee("canvas.toBlob(done, 'image/jpeg', QUALITY)", false)
+            ->assertSee("imageOrientation: 'from-image'", false);
+    }
+
     public function test_destroy_removes_image_and_file(): void
     {
         Storage::fake('public');
