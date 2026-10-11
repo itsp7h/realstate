@@ -4,18 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Building;
 use App\Models\BuildingImage;
+use App\Http\Requests\StoreBuildingImageRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class BuildingImageController extends Controller
 {
-    public function store(Request $request, Building $building)
+    public function store(StoreBuildingImageRequest $request, Building $building)
     {
-        $request->validate([
-            'images'   => ['required', 'array', 'max:10'],
-            'images.*' => ['required', 'image', 'mimes:jpeg,png,webp', 'max:4096'],
-        ]);
-
         $nextOrder = $building->images()->max('sort_order') + 1;
 
         foreach ($request->file('images') as $file) {
@@ -23,7 +19,11 @@ class BuildingImageController extends Controller
             $building->images()->create(['path' => $path, 'sort_order' => $nextOrder++]);
         }
 
-        return back()->with('success', 'Images uploaded successfully.');
+        $count = count($request->file('images'));
+
+        return redirect()
+            ->route('buildings.show', [$building, 'tab' => 'photos'])
+            ->with('success', $count === 1 ? '1 photo uploaded.' : "$count photos uploaded.");
     }
 
     public function destroy(Building $building, BuildingImage $image)
