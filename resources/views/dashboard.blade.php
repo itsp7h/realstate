@@ -1157,7 +1157,7 @@ function smartImportFileChosen(input) {
                     @forelse($buildingPerformance as $perf)
                         @php
                             $b = $perf['building'];
-                            $photo = $b->images->first()?->url;
+                            $photo = $b->images->first()?->thumb_url;
                             $occ = (int) $perf['occupancy_percent'];
                             $step = min(8, $loop->index);
                         @endphp
@@ -1645,7 +1645,7 @@ function smartImportFileChosen(input) {
                     <a href="{{ route('buildings.show', $building) }}" class="dash-prop">
                         <div class="dash-prop-top">
                             @if($photo)
-                                <img src="{{ $photo->url }}" alt="{{ $building->property_name }}" class="dash-prop-photo">
+                                <img src="{{ $photo->thumb_url }}" alt="{{ $building->property_name }}" class="dash-prop-photo">
                             @else
                                 <span class="dash-prop-photo-empty" aria-hidden="true"><i class="fa-solid fa-building"></i></span>
                             @endif
