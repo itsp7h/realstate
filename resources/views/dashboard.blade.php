@@ -432,33 +432,55 @@
 }
 .dash-prop:hover { border-color: var(--input-border); }
 .dash-prop-top { display: flex; align-items: center; gap: 12px; padding: var(--sp-4); }
+/* The photo takes the room the initials tile used to (80 + 12 gap + 34).
+   Several photos slide through on a timer; one photo just sits there. */
 .dash-prop-photo {
-    width: 80px; height: 64px;
+    position: relative;
+    width: 126px; height: 84px;
     border-radius: var(--radius-sm);
-    object-fit: cover;
+    overflow: hidden;
     flex: none;
+    background: var(--page-bg);
+}
+.dash-prop-track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.dash-prop-track img {
+    flex: 0 0 100%;
+    width: 100%; height: 100%;
+    object-fit: cover;
     display: block;
+}
+.dash-prop-dots {
+    position: absolute;
+    left: 0; right: 0; bottom: 6px;
+    display: flex; justify-content: center; gap: 4px;
+    pointer-events: none;
+}
+.dash-prop-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    /* Sits on the photo, not on a themed surface, so it is the same in
+       light and dark: a light pip with a soft shadow to survive bright skies. */
+    background: rgb(255 255 255 / 0.6);
+    box-shadow: 0 0 2px rgb(0 0 0 / 0.5);
+    transition: background-color 0.3s, transform 0.3s;
+}
+.dash-prop-dot.is-active { background: var(--shell-gold-lit); transform: scale(1.3); }
+@media (prefers-reduced-motion: reduce) {
+    .dash-prop-track { transition: none; }
 }
 /* No photo of their building: a neutral tile, never someone else's building. */
 .dash-prop-photo-empty {
-    width: 80px; height: 64px;
+    width: 126px; height: 84px;
     border-radius: var(--radius-sm);
     background: var(--page-bg);
     color: var(--text-muted);
     display: flex; align-items: center; justify-content: center;
     font-size: var(--fs-md);
     opacity: 0.35;
-    flex: none;
-}
-.dash-prop-tile {
-    width: 34px; height: 34px;
-    border-radius: var(--radius-sm);
-    background: var(--dash-navy);
-    color: var(--dash-gold);
-    font-family: var(--font-data);
-    font-size: var(--fs-sm);
-    font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
     flex: none;
 }
 .dash-prop-id { flex: 1; min-width: 0; }
@@ -932,6 +954,31 @@ function smartImportFileChosen(input) {
     if (window.pmInitCollapsingHeader) window.pmInitCollapsingHeader(header, scroll, 24);
     if (window.pmInitPullToRefresh) window.pmInitPullToRefresh(scroll);
 })();
+
+    /* Property cards: a building with several photos slides through them.
+       Cards start staggered so the grid doesn't flip in unison, a card
+       holds still while hovered, and nothing moves under reduced motion. */
+    (function () {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        document.querySelectorAll('[data-prop-slider]').forEach(function (slider, i) {
+            const track = slider.querySelector('.dash-prop-track');
+            const dots  = slider.querySelectorAll('.dash-prop-dot');
+            const count = track.children.length;
+            const card  = slider.closest('.dash-prop');
+            let index = 0, paused = false;
+            card.addEventListener('mouseenter', function () { paused = true; });
+            card.addEventListener('mouseleave', function () { paused = false; });
+            setTimeout(function () {
+                setInterval(function () {
+                    if (paused || document.hidden) return;
+                    dots[index].classList.remove('is-active');
+                    index = (index + 1) % count;
+                    dots[index].classList.add('is-active');
+                    track.style.transform = 'translateX(-' + (index * 100) + '%)';
+                }, 3500);
+            }, i * 700);
+        });
+    })();
 </script>
 @endpush
 
@@ -1636,20 +1683,30 @@ function smartImportFileChosen(input) {
                 @foreach($buildingPerformance as $perf)
                     @php
                         $building = $perf['building'];
-                        $initials = Str::upper(
-                            collect(explode(' ', trim((string) $building->property_name)))
-                                ->filter()->take(2)->map(fn ($w) => Str::substr($w, 0, 1))->implode('')
-                        );
-                        $photo = $building->images->first();
+                        $photos = $building->images;
                     @endphp
                     <a href="{{ route('buildings.show', $building) }}" class="dash-prop">
                         <div class="dash-prop-top">
-                            @if($photo)
-                                <img src="{{ $photo->thumb_url }}" alt="{{ $building->property_name }}" class="dash-prop-photo">
+                            @if($photos->isNotEmpty())
+                                <span class="dash-prop-photo" @if($photos->count() > 1) data-prop-slider @endif>
+                                    <span class="dash-prop-track">
+                                        @foreach($photos as $photo)
+                                            <img src="{{ $photo->thumb_url }}"
+                                                 alt="{{ $loop->first ? $building->property_name : '' }}"
+                                                 @unless($loop->first) loading="lazy" aria-hidden="true" @endunless>
+                                        @endforeach
+                                    </span>
+                                    @if($photos->count() > 1)
+                                        <span class="dash-prop-dots" aria-hidden="true">
+                                            @foreach($photos as $photo)
+                                                <span class="dash-prop-dot {{ $loop->first ? 'is-active' : '' }}"></span>
+                                            @endforeach
+                                        </span>
+                                    @endif
+                                </span>
                             @else
                                 <span class="dash-prop-photo-empty" aria-hidden="true"><i class="fa-solid fa-building"></i></span>
                             @endif
-                            <span class="dash-prop-tile">{{ $initials ?: '—' }}</span>
                             <span class="dash-prop-id">
                                 <span class="dash-prop-name">{{ $building->property_name }}</span>
                                 <span class="dash-prop-meta">{{ $building->property_code }}@if($building->property_type) · {{ $building->property_type }}@endif</span>
