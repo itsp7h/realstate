@@ -85,9 +85,9 @@ class BuildingImageThumbnailer
             ob_start();
             imageinterlace($thumb, true);
             imagejpeg($thumb, null, self::QUALITY);
-            $disk->put(self::thumbPath($path), ob_get_clean());
-
-            return true;
+            // A folder that can't be created throws (caught below); a file that
+            // can't be written makes put() return false instead.
+            return $disk->put(self::thumbPath($path), ob_get_clean());
         } catch (Throwable $e) {
             Log::warning('Building photo thumbnail failed', ['path' => $path, 'error' => $e->getMessage()]);
 
